@@ -1,0 +1,44 @@
+# # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+# name: accl-codegeneration-genericaccelerator-1
+# metadata:
+#     template: azd-init@1.13.0
+# services:
+#     backend:
+#         project: src/backend
+#         host: containerapp
+#         language: python
+#     frontend:
+#         project: src/frontend
+#         host: containerapp
+#         language: python
+
+
+
+environment:
+  name: accl-codegeneration-genericaccelerator-1
+  location: eastus
+name: accl-codegeneration-genericaccelerator-1
+metadata:
+  template: accl-codegeneration-genericaccelerator-1@1.0
+
+parameters:
+  solutionPrefix:
+    type: string
+    default: bs-azdtest  
+  otherLocation:
+    type: string
+    default: eastus2
+#   baseUrl:
+#     type: string
+#     default: 'https://raw.githubusercontent.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/'
+
+deployment:
+  mode: Incremental
+  template: ./infra/main2.bicep  # Path to the main.bicep file inside the 'deployment' folder
+  parameters:
+    solutionPrefix: ${parameters.solutionPrefix}
+    otherLocation: ${parameters.otherLocation}
+    #baseUrl: ${parameters.baseUrl}
+
+ 

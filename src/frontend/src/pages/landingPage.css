@@ -1,0 +1,41 @@
+.main-content {
+  transition: margin-right 0.3s ease-in-out; /* Smooth transition */
+  margin-right: 0px; /* Default margin */
+}
+
+.main-content.shifted {
+  margin-right: 300px; /* Adjust to panel width */
+}
+
+/* html, body {
+  overflow: auto;
+  scrollbar-width: none;
+} */
+
+html, body {
+overflow: auto;
+scrollbar-width: none; /* Ensures scrollbar is visible */
+}
+
+/* For WebKit-based browsers (Chrome, Safari) */
+html::-webkit-scrollbar {
+width: 8px; /* Adjust width as needed */
+}
+
+html::-webkit-scrollbar-thumb {
+background: #888; /* Scrollbar color */
+border-radius: 4px;
+}
+
+html::-webkit-scrollbar-track {
+background: #f1f1f1; /* Track color */
+}
+
+.main-content {
+  overflow: hidden;
+  overflow-y: auto;
+  flex: 1;
+  /* //margin-top: 60px; Same as header height */
+  margin-bottom: 50px; /* Adjust based on bottom bar height */
+  scrollbar-width: none;
+}
