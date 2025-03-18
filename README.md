@@ -1,14 +1,13 @@
 # Modernize your code solution accelerator
 
-Table of contents: [**User story**](#user-story) \| [**One-click deploy**](#one-click-deploy) \| [**Supporting documents**](#supporting-documents) \|  [**Customer truth**](#customer-truth)
+MENU: [**USER STORY**](#user-story) \| [**QUICK DEPLOY**](#quick-deploy) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
 
-</br></br>
-<img src="./documentation/images/userStory.png" width="64" style="max-width: 100%;">
+<h2><img src="./docs/images/read_me/userStory.png" width="64">
+<br/>
+User story
+</h2>
 
-
-## User story
-
-**Overview**
+### Overview
 
 Welcome to the *Modernize your code* solution accelerator, designed to help customers transition their SQL queries to new environments quickly and efficiently. This accelerator is particularly useful for organizations modernizing their data estates, as it simplifies the process of translating SQL queries from various dialects.
 
@@ -16,25 +15,24 @@ When dealing with legacy code, users often face significant challenges, includin
 
 The *Modernize your code* solution accelerator allows users to specify a group of SQL queries and the target SQL dialect for translation. It then initiates a batch process where each query is translated using a group of Large Language Model (LLM) agents. This automation not only saves time but also ensures accuracy and consistency in query translation.
 
-**Key features**
+### Technical Key features
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset=".\documentation\images\keyFeaturesDark.png">
-  <source media="(prefers-color-scheme: light)" srcset=".\documentation\images\keyFeaturesLight.png">
-  <img src=".\documentation\images\keyFeaturesLight.png" alt="KeyFeatures">
+  <source media="(prefers-color-scheme: dark)" srcset=".\docs\images\read_me\keyFeaturesDark.png">
+  <source media="(prefers-color-scheme: light)" srcset=".\docs\images\read_me\keyFeaturesLight.png">
+  <img src=".\docs\images\read_me\keyFeaturesLight.png" alt="KeyFeatures">
 </picture>
 
 </br>
 </br>
 
-
 Below is an image of the solution accelerator:
 
-<img src="./documentation/images/webappHero.png" alt="image" style="max-width: 100%;">
+<img src="./docs/images/read_me/webappHero.png" alt="image" style="max-width: 100%;">
 
 </br>
 
-**Scenario**
+### Use case / scenario
 
 Companies maintaining and modernizing their data estates often face large migration projects. They may have volumes of files in various dialects, which need to be translated into a modern alternative. Some of the challenges they face include:
 
@@ -45,17 +43,19 @@ Companies maintaining and modernizing their data estates often face large migrat
 
 By using the *Modernize your code* solution accelerator, users can automate this process, ensuring that all queries are accurately translated and ready for use in the new modern environment.
 
+For an in-depth look at the applicability of using multiple agents for this code modernization use case, please see the [supporting AI Research paper](./documentation/modernize_report.pdf).
+
 The sample data used in this repository is synthetic and generated using Azure Open AI service. The data is intended for use as sample data only.
 
-**Accelerator architecture**
+### Solution architecture
 
-<img src="./documentation/images/solArchitecture.png" alt="image" style="max-width: 100%;">
+<img src="./docs/images/read_me/solArchitecture.png" alt="image" style="max-width: 100%;">
 
 <br/>
 
-**Agentic architecture**
+### Agentic architecture
 
-<img src="./documentation/images/agentArchitecture.png" alt="image" style="max-width: 100%;">
+<img src="./docs/images/read_me/agentArchitecture.png" alt="image" style="max-width: 100%;">
 
 <br/>
 
@@ -70,77 +70,177 @@ This diagram double-clicks into the agentic framework for the code conversion pr
 
 **Step 4:** Once the SQL is found to run without errors, it is sent for a final check to the Semantic checker agent. This agent makes sure that the query in the new syntax will have the same logical effects as the old query, with no extra effects. It can find edge cases which don’t apply to most scenarios, so, if it finds an issue, this issue is sent to the query logs, and the query is generated and the file will be present in storage, but its state will be listed as “warning”.  If no semantic issues are found, the query is generated and placed into Azure storage with a state of success.
 
+<h2><img src="./docs/images/read_me/quickDeploy.png" width="64">
 <br/>
+QUICK DEPLOY
+</h2>
 
-<img src="./documentation/images/quickDeploy.png" width="64" style="max-width: 100%;">
-<br/>
 
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarktayl1%2Ftestdeploy%2Frefs%2Fheads%2Fmain%2FCodeGenDeploy.json) |
+|---|---|---|
 
-## One-click deploy
+### **Prerequisites**
 
-**Prerequisites**
+To deploy this solution accelerator, ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the necessary permissions to create **resource groups and resources**. Follow the steps in  [Azure Account Set Up](./docs/AzureAccountSetUp.md) 
 
-* To use this solution accelerator, you will need access to an [Azure subscription](https://azure.microsoft.com/free/) with permission to create resource groups and resources. For more detailed prerequisites, review the deployment options in the following section.
+Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available:  
 
-* This accelerator can be deployed with or without authentication. 
+- Azure AI Foundry 
+- Azure OpenAI Service 
+- Azure AI Search
+- Azure AI Content Understanding
+- Embedding Deployment Capacity  
+- GPT Model Capacity
+- [Azure Semantic Search](./docs/AzureSemanticSearchRegion.md)  
 
-  * To install with authentication requires that the installer have the rights to create and register an application identity in their Azure environment.
-  This is controlled through the Authorization field in the installation form. If you do not have this permission, or are not sure, you can start with the no authorization option to view and experiment with the accelerator.
-  * Note: If you install with authentication, all processing history and current processing will be performed for your specific user. If you deploy without authentication, all batch history from the tool will be visible to all users.
+Here are some example regions where the services are available: East US, East US2, Australia East, UK South, France Central.
+
+This accelerator can be deployed with or without authentication. 
+
+* To install with authentication requires that the installer have the rights to create and register an application identity in their Azure environment.
+This is controlled through the Authorization field in the installation form. If you do not have this permission, or are not sure, you can start with the no authorization option to view and experiment with the accelerator.
+* Note: If you install with authentication, all processing history and current processing will be performed for your specific user. If you deploy without authentication, all batch history from the tool will be visible to all users.
  
-**Deploy with Bicep**
+### **Configurable Deployment Settings**  
 
-1. Please check the link [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) and choose a region where Azure AI Search, Azure OpenAI services, Azure AI Foundry Services are available. 
+When you start the deployment, most parameters will have **default values**, but you can update the following settings:  
 
-1. **Deploy Azure resources**  
+| **Setting** | **Description** |  **Default value** |
+|------------|----------------|  ------------|
+| **Azure Region** | The region where resources will be created. | East US| 
+| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
+| **Authorization** | Authorization requires permission to create an app identity in the subscription. See readme for details |  false |
+| **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location | None |
+| **Capacity** | Configure capacity for **GPT models**. |  5k |
+
+### [Optional] Quota Recommendations  
+By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
+> **We recommend increasing the capacity to 30k tokens for optimal performance.** 
+
+To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)  
+
+**⚠️ Warning:**  **Insufficient quota can cause application errors.** Please ensure you have the recommended capacity or request for additional capacity before deploying this solution. 
+
+### Deployment Options
+Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
+
+<details>
+  <summary><b>Deploy with Bicep/ARM template</b></summary>
+
+### Bicep
+
    Click the following deployment button to create the required resources for this accelerator directly in your Azure Subscription.
 
    [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarktayl1%2Ftestdeploy%2Frefs%2Fheads%2Fmain%2FCodeGenDeploy.json)
 
+</details>
+
+### Deploying
+
+Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure following the following steps. 
+
+To change the azd parameters from the default values, follow the steps [here](./docs/CustomizingAzdParameters.md). 
 
 
-   Most fields will have a default name set already. You will need to update the following Azure OpenAI settings:
+1. Login to Azure:
 
-    -  Region - the region where the resources will be created in
+    ```shell
+    azd auth login
+    ```
 
-    -  Authorization - Controls whether you would like to install with authorization enabled
+    #### To authenticate with Azure Developer CLI (`azd`), use the following command with your **Tenant ID**:
 
-    -  Solution Prefix - provide a 6 alphanumeric value that will be used to prefix resources
+    ```sh
+    azd auth login --tenant-id <tenant-id>
+   ```
 
-    -  Other Location - location of resources (required for Azure SQL and CosmoDB resources)
+2. Provision and deploy all the resources:
 
-<br/>
+    ```shell
+    azd up
+    ```
 
-<img src="./documentation/images/supportingDocuments.png" width="64" style="max-width: 100%;">
+3. Provide an `azd` environment name (like "ckmapp")
+4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
+    * This deployment will take *7-10 minutes* to provision the resources in your account and set up the solution with sample data. 
+    * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.
 
-## Supporting documents
+5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the App Service and get the app URL from `Default domain`.
 
-**Additional resources**
+6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
 
-- [Microsoft Fabric documentation - Microsoft Fabric | Microsoft Learn](https://learn.microsoft.com/en-us/fabric/)
-- [Azure OpenAI Service - Documentation, quickstarts, API reference - Azure AI services | Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/use-your-data)
-- [Azure AI Content Understanding documentation](https://learn.microsoft.com/en-us/azure/ai-services/content-understanding/)
-- [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/)
-- [Speech service documentation - Tutorials, API Reference - Azure AI services - Azure AI services | Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/)
+<h2>
+Additional Steps
+</h2>
 
+1. **Add App Authentication**
+   
+    If you chose to enable authentication for the deployment, follow the steps in [App Authentication](./docs/AddAuthentication.md)
 
-**Version history**
+1. **Deleting Resources After a Failed Deployment**
 
-This is the first version of the *Modernize your code* solution accelerator.
+     Follow steps in [Delete Resource Group](./docs/DeleteResourceGroup.md) If your deployment fails and you need to clean up the resources.
 
-**Responsible AI Transparency FAQ**
+## Sample Questions
+
+To help you get started, here are some **Sample Questions** you can ask in the app:
+
+- < Add how to run here >
+
+These questions serve as a great starting point to explore insights from the data.
+
+<h2>
+Responsible AI Transparency FAQ 
+</h2>
 
 Please refer to [Transparency FAQ](./TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
 
-<br/>
+<h2><img src="./docs/images/read_me/supportingDocuments.png" width="64" style="max-width: 100%;">
+</br>
+  Supporting Documentation
+</h2>
 
-<img src="./documentation/images/customerTruth.png" width="64" style="max-width: 100%;">
+### Costs
 
-## Customer truth
+Pricing varies per region and usage, so it isn't possible to predict exact costs for your usage.
+The majority of the Azure resources used in this infrastructure are on usage-based pricing tiers.
+However, Azure Container Registry has a fixed cost per registry per day.
 
-Customer stories coming soon.
+You can try the [Azure pricing calculator](https://azure.microsoft.com/en-us/pricing/calculator) for the resources:
 
-<br/>
+* Azure AI Foundry: Free tier. [Pricing](https://azure.microsoft.com/pricing/details/ai-studio/)
+* Azure Storage Account: Standard tier, LRS. Pricing is based on storage and operations. [Pricing](https://azure.microsoft.com/pricing/details/storage/blobs/)
+* Azure Key Vault: Standard tier. Pricing is based on the number of operations. [Pricing](https://azure.microsoft.com/pricing/details/key-vault/)
+* Azure AI Services: S0 tier, defaults to gpt-4o-mini and text-embedding-ada-002 models. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
+* Azure Container App: Consumption tier with 0.5 CPU, 1GiB memory/storage. Pricing is based on resource allocation, and each month allows for a certain amount of free usage. [Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
+* Azure Container Registry: Basic tier. [Pricing](https://azure.microsoft.com/pricing/details/container-registry/)
+* Log analytics: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
+* Azure Cosmos DB: [Pricing](https://azure.microsoft.com/en-us/pricing/details/cosmos-db/autoscale-provisioned/)
+
+⚠️ To avoid unnecessary costs, remember to take down your app if it's no longer in use,
+either by deleting the resource group in the Portal or running `azd down`.
+
+### Security guidelines
+
+This template uses Azure Key Vault to store all connections to communicate between resources.
+
+This template also uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for local development and deployment.
+
+To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
+
+You may want to consider additional security measures, such as:
+
+* Enabling Microsoft Defender for Cloud to [secure your Azure resources](https://learn.microsoft.com/azure/security-center/defender-for-cloud).
+* Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
+
+**Additional resources**
+
+- [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/)
+- [Semantic Kernel Agent Framework](https://learn.microsoft.com/en-us/semantic-kernel/frameworks/agent/?pivots=programming-language-python)
+- [Azure Cosmos DB Documentation](https://learn.microsoft.com/en-us/azure/cosmos-db/)
+- [Azure OpenAI Service - Documentation, quickstarts, API reference - Azure AI services | Microsoft Learn](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/use-your-data)
+- [Azure Container Apps documentation](https://learn.microsoft.com/en-us/azure/container-apps/)
+
 
 ## Disclaimers
 
