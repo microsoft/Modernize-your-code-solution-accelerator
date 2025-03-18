@@ -197,7 +197,7 @@ Please refer to [Transparency FAQ](./TRANSPARENCY_FAQ.md) for responsible AI tra
 
 <h2><img src="./docs/images/read_me/supportingDocuments.png" width="64" style="max-width: 100%;">
 </br>
-  Supporting Documentation
+Supporting Documentation
 </h2>
 
 ### Costs
