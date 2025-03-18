@@ -108,9 +108,9 @@ When you start the deployment, most parameters will have **default values**, but
 | **Setting** | **Description** |  **Default value** |
 |------------|----------------|  ------------|
 | **Azure Region** | The region where resources will be created. | East US| 
-| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. |  ? |
+| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
 | **Authorization** | Authorization requires permission to create an app identity in the subscription. See readme for details |  false |
-| **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location |  ? |
+| **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **GPT models**. |  5k |
 
 ### [Optional] Quota Recommendations  
