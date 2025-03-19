@@ -33,7 +33,7 @@ import PanelRight from "../components/Panels/PanelRight";
 import PanelRightToolbar from "../components/Panels/PanelRightToolbar";
 import BatchHistoryPanel from "../components/batchHistoryPanel";
 import ConfirmationDialog from "../commonComponents/ConfirmationDialog/confirmationDialogue";
-import { determineFileStatus, filesLogsBuilder, renderErrorSection, useStyles, renderFileError, filesErrorCounter, completedFiles, hasFiles, fileErrorCounter, BatchSummary,fileWarningCounter } from "../api/utils";
+import { determineFileStatus, filesLogsBuilder, renderErrorSection, useStyles, renderFileError, filesErrorCounter, completedFiles, hasFiles, fileErrorCounter, BatchSummary, fileWarningCounter } from "../api/utils";
 export const History = bundleIcon(HistoryFilled, HistoryRegular);
 import { format } from "sql-formatter";
 
@@ -86,94 +86,94 @@ const BatchStoryPage = () => {
     }
 
     const fetchBatchData = async () => {
-        try {
-          setLoading(true);
-          setDataLoaded(false);
-          const apiUrl = getApiUrl();
+      try {
+        setLoading(true);
+        setDataLoaded(false);
+        const apiUrl = getApiUrl();
 
-          const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, headerBuilder({}));
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch batch data: ${response.statusText}`);
-          }
-          
-          const responseData = await response.json();
-          
-          // Handle the new response format
-          if (!responseData || !responseData.files) {
-            throw new Error("Invalid data format received from server");
-          }
-          
-          // Adapt the new response format to match our expected BatchSummary format
-          const data: BatchSummary = {
-            batch_id: responseData.batch.batch_id,
-            upload_id: responseData.batch.id, // Use id as upload_id
-            date_created: responseData.batch.created_at,
-            total_files: responseData.batch.file_count,
-            status: responseData.batch.status,
-            completed_files: completedFiles(responseData.files),
-            error_count: filesErrorCounter(responseData.files),
-            warning_count: responseData.files.reduce((count, file) => count + (file.syntax_count || 0), 0),
-            hasFiles: hasFiles(responseData),
-            files: responseData.files.map(file => ({
-              file_id: file.file_id,
-              name: file.original_name, // Use original_name here
-              status: file.status,
-              file_result: file.file_result,
-              error_count: fileErrorCounter(file),
-              warning_count: file.syntax_count || 0,
-              file_logs: filesLogsBuilder(file),
-            }))
-          };
-          
-          setBatchSummary(data);
-          setUploadId(data.upload_id);
-          
-          // Set batch title with date and file count
-          const formattedDate = new Date(data.date_created).toLocaleDateString();
-          setBatchTitle(
-            `${formattedDate} (${data.total_files} file${data.total_files === 1 ? '' : 's'})`
-          );
-          
-          
-          // Create file list from API response
-          const fileItems: FileItem[] = data.files.map(file => ({
-            id: file.file_id,
-            name: file.name, // This is now the original_name from API
-            type: "code",
-            status: determineFileStatus(file),
-            code: "", // Don't store content here, will fetch on demand
-            translatedCode: "", // Don't store content here, will fetch on demand
-            errorCount: file.error_count,
-            file_logs: file.file_logs,
-            warningCount: file.warning_count
-          }));
-          
-          // Add summary file
-          const updatedFiles: FileItem[] = [
-            {
-              id: "summary",
-              name: "Summary",
-              type: "summary",
-              status: "completed",
-              errorCount: data.error_count,
-              warningCount: data.warning_count,
-              file_logs: []
-            },
-            ...fileItems
-          ];
-          
-          setFiles(updatedFiles as FileItem[]);
-          setSelectedFileId("summary"); // Default to summary view
-          setDataLoaded(true);
-          setLoading(false);
-        } catch (err) {
-          console.error("Error fetching batch data:", err);
-          setError(err instanceof Error ? err.message : "An unknown error occurred");
-          setLoading(false);
+        const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, { headers: headerBuilder({}) });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch batch data: ${response.statusText}`);
         }
-      };
-    
+
+        const responseData = await response.json();
+
+        // Handle the new response format
+        if (!responseData || !responseData.files) {
+          throw new Error("Invalid data format received from server");
+        }
+
+        // Adapt the new response format to match our expected BatchSummary format
+        const data: BatchSummary = {
+          batch_id: responseData.batch.batch_id,
+          upload_id: responseData.batch.id, // Use id as upload_id
+          date_created: responseData.batch.created_at,
+          total_files: responseData.batch.file_count,
+          status: responseData.batch.status,
+          completed_files: completedFiles(responseData.files),
+          error_count: filesErrorCounter(responseData.files),
+          warning_count: responseData.files.reduce((count, file) => count + (file.syntax_count || 0), 0),
+          hasFiles: hasFiles(responseData),
+          files: responseData.files.map(file => ({
+            file_id: file.file_id,
+            name: file.original_name, // Use original_name here
+            status: file.status,
+            file_result: file.file_result,
+            error_count: fileErrorCounter(file),
+            warning_count: file.syntax_count || 0,
+            file_logs: filesLogsBuilder(file),
+          }))
+        };
+
+        setBatchSummary(data);
+        setUploadId(data.upload_id);
+
+        // Set batch title with date and file count
+        const formattedDate = new Date(data.date_created).toLocaleDateString();
+        setBatchTitle(
+          `${formattedDate} (${data.total_files} file${data.total_files === 1 ? '' : 's'})`
+        );
+
+
+        // Create file list from API response
+        const fileItems: FileItem[] = data.files.map(file => ({
+          id: file.file_id,
+          name: file.name, // This is now the original_name from API
+          type: "code",
+          status: determineFileStatus(file),
+          code: "", // Don't store content here, will fetch on demand
+          translatedCode: "", // Don't store content here, will fetch on demand
+          errorCount: file.error_count,
+          file_logs: file.file_logs,
+          warningCount: file.warning_count
+        }));
+
+        // Add summary file
+        const updatedFiles: FileItem[] = [
+          {
+            id: "summary",
+            name: "Summary",
+            type: "summary",
+            status: "completed",
+            errorCount: data.error_count,
+            warningCount: data.warning_count,
+            file_logs: []
+          },
+          ...fileItems
+        ];
+
+        setFiles(updatedFiles as FileItem[]);
+        setSelectedFileId("summary"); // Default to summary view
+        setDataLoaded(true);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error fetching batch data:", err);
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setLoading(false);
+      }
+    };
+
     fetchBatchData();
   }, [batchId]);
 
@@ -187,7 +187,7 @@ const BatchStoryPage = () => {
       try {
         setFileLoading(true);
         const apiUrl = getApiUrl();
-        const response = await fetch(`${apiUrl}/file/${selectedFileId}`, headerBuilder({}));
+        const response = await fetch(`${apiUrl}/file/${selectedFileId}`, { headers: headerBuilder({}) });
         if (!response.ok) {
           throw new Error(`Failed to fetch file content: ${response.statusText}`);
         }
@@ -492,8 +492,8 @@ const BatchStoryPage = () => {
     if (batchId) {
       try {
         const apiUrl = getApiUrl();
-        const response = await fetch(`${apiUrl}/download/${uploadId}?batch_id=${batchId}`, headerBuilder({}));
-        
+        const response = await fetch(`${apiUrl}/download/${uploadId}?batch_id=${batchId}`, { headers: headerBuilder({}) });
+
         if (!response.ok) {
           throw new Error("Failed to download file");
         }
@@ -599,15 +599,15 @@ const BatchStoryPage = () => {
                     </>
                   ) : file.status?.toLowerCase() === "error" ? (
                     <>
-                    <Text>{file.errorCount}</Text>
-                    <DismissCircle24Regular style={{ color: tokens.colorStatusDangerForeground1, width: "16px", height: "16px" }} />
+                      <Text>{file.errorCount}</Text>
+                      <DismissCircle24Regular style={{ color: tokens.colorStatusDangerForeground1, width: "16px", height: "16px" }} />
                     </>
                   ) : file.id !== "summary" && file.status === "completed" && file.warningCount ? (
-                      <>
-                        <Text>{file.warningCount}</Text>
-                        <Warning24Regular style={{ color: "#B89500", width: "16px", height: "16px" }} />
-                      </>
-                    ): file.status?.toLowerCase() === "completed" ? (
+                    <>
+                      <Text>{file.warningCount}</Text>
+                      <Warning24Regular style={{ color: "#B89500", width: "16px", height: "16px" }} />
+                    </>
+                  ) : file.status?.toLowerCase() === "completed" ? (
                     <CheckmarkCircle24Regular style={{ color: "0B6A0B", width: "16px", height: "16px" }} />
                   ) : (
                     // No icon for other statuses

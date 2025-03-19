@@ -12,10 +12,11 @@ export const uploadFiles = async (files: File[]): Promise<any[]> => {
     console.log(formData)
     try {
       const apiUrl = getApiUrl();
-      const response = await axios.post(`${apiUrl}/upload`, file, headerBuilder({
+      const response = await axios.post(`${apiUrl}/upload`, file, {
+        headers: headerBuilder({
           'Content-Type': 'multipart/form-data',
-        }),
-      );
+        })
+      });
       responses.push(response.data);
     } catch (error) {
       console.error(`Error uploading file ${file.name}:`, error);

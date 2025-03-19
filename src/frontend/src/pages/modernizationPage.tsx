@@ -360,7 +360,7 @@ interface FileItem {
 const fetchFileFromAPI = async (fileId: string): Promise<any> => {
   const apiUrl = getApiUrl();
   try {
-    const response = await fetch(`${apiUrl}/file/${fileId}`, headerBuilder({}));
+    const response = await fetch(`${apiUrl}/file/${fileId}`, { headers: headerBuilder({}) });
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
@@ -375,7 +375,7 @@ const fetchFileFromAPI = async (fileId: string): Promise<any> => {
 const fetchBatchSummary = async (batchId: string): Promise<any> => {
   try {
     const apiUrl = getApiUrl();
-    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, headerBuilder({}));
+    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, { headers: headerBuilder({}) });
     if (!response.ok) {
       throw new Error(`Failed to fetch batch data: ${response.statusText}`);
     }
@@ -597,7 +597,7 @@ const ModernizationPage = () => {
     if (batchId) {
       try {
         const apiUrl = getApiUrl();
-        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, headerBuilder({}));
+        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, { headers: headerBuilder({}) });
 
         if (!response.ok) {
           throw new Error("Failed to download file");
