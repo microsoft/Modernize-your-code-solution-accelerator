@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "9660674520198312441"
+      "templateHash": "10448854434840069172"
     }
   },
   "parameters": {
@@ -79,6 +79,7 @@
     "gptModelVersion": "2024-08-06",
     "storageNameCleanedContainer": "[replace(variables('storageContainerName'), '-', '')]",
     "aiServicesName": "[format('{0}-aiservices', variables('prefixCleaned'))]",
+    "imageName": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', variables('frontEndVersion'))]",
     "aiModelDeployments": [
       {
         "name": "[variables('llmModel')]",
@@ -5419,7 +5420,7 @@
                     "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01').configuration.ingress.fqdn)]"
                   }
                 ],
-                "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('frontEndVersion'))]",
+                "image": "[variables('imageName')]",
                 "name": "cmsafrontend",
                 "resources": {
                   "cpu": "1",
