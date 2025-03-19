@@ -1,27 +1,14 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { CheckmarkCircle24Regular, DismissRegular } from "@fluentui/react-icons";
 import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
 import { CircleCheck, X } from 'lucide-react';
 import { 
   Button,
-  Dialog,
-  DialogSurface,
-  DialogBody,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  ToastTrigger,
   Toast,
   ToastTitle,
-  Link,
   useToastController,
-  useId,
-  Toaster,
-  MessageBarActions,
   Tooltip,
 } from "@fluentui/react-components";
-import { ProgressIndicator, MessageBar, MessageBarType, IconButton, Icon, TooltipHost } from "@fluentui/react";
-import ArrowUploadIcon from "../assets/Arrow-Upload.png";
+import { MessageBar, MessageBarType } from "@fluentui/react";
 import { deleteBatch, deleteFileFromBatch, uploadFile, startProcessing } from '../slices/batchSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import ConfirmationDialog from '../commonComponents/ConfirmationDialog/confirmationDialogue';
@@ -449,7 +436,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img
-                src={ArrowUploadIcon}
+                src="/images/Arrow-Upload.png"
                 alt="Upload Icon"
                 style={{ width: 32, height: 32 }}
               />
@@ -491,7 +478,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         ) : (
           <>
             <img
-              src={ArrowUploadIcon}
+              src="/images/Arrow-Upload.png"
               alt="Upload Icon"
               style={{ width: 64, height: 64 }}
             />
