@@ -7,7 +7,6 @@ import ConfirmationDialog from "../commonComponents/ConfirmationDialog/confirmat
 import "./batchHistoryPanel.css"
 import { deleteBatch, fetchBatchHistory, deleteAllBatches } from '../slices/batchSlice';
 import { AppDispatch } from '../store/store';
-import { selectAuthHeaders } from '../slices/authSlice';
 
 interface HistoryPanelProps {
   isOpen: boolean;
@@ -22,7 +21,7 @@ interface BatchHistoryItem {
   status: string;
 }
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
-  const headers = useSelector(selectAuthHeaders);
+  const headers ={}
   const [batchHistory, setBatchHistory] = useState<BatchHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

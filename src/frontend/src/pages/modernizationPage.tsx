@@ -4,7 +4,6 @@ import Header from "../components/Header/Header";
 import HeaderTools from "../components/Header/HeaderTools";
 import PanelLeft from "../components/Panels/PanelLeft";
 import webSocketService from "../api/WebSocketService";
-import { useDispatch } from 'react-redux';
 import {
   Button,
   Text,
@@ -1299,12 +1298,12 @@ const ModernizationPage = () => {
                     const displayStatus = getPrintFileStatus(file.status);
                     const isProcessing = displayStatus === "Processing";
                     const fileClass = `${styles.fileCard} 
-              ${selectedFileId === file.id ? styles.selectedCard : ""} 
-              ${isQueued ? styles.queuedFile : ""} 
-              ${isInProgress ? styles.completedFile : ""} 
-              ${isCompleted ? styles.completedFile : ""} 
-              ${isSummaryDisabled ? styles.summaryDisabled : ""}
-            `;
+                                       ${selectedFileId === file.id ? styles.selectedCard : ""} 
+                                       ${isQueued ? styles.queuedFile : ""} 
+                                       ${isInProgress ? styles.completedFile : ""} 
+                                       ${isCompleted ? styles.completedFile : ""} 
+                                       ${isSummaryDisabled ? styles.summaryDisabled : ""}
+                                      `;
                     return (
                       <div
                         key={file.id}

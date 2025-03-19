@@ -19,7 +19,7 @@ export async function getUserInfo(): Promise<UserInfo | null> {
 
       let authData;
       const contentType = response.headers.get("content-type");
-
+      console.log("Content-Type:", contentType);
       if (contentType && contentType.includes("application/json")) {
         authData = await response.json();
       } else {

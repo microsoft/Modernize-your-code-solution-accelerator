@@ -7,15 +7,13 @@ import LandingPage from './pages/landingPage';
 import ModernizationPage from './pages/modernizationPage';
 import BatchViewPage from './pages/batchView';
 import { initializeIcons } from '@fluentui/react';
-import { fetchAuthDetails } from './slices/authSlice';
-import { useDispatch } from 'react-redux';
 import { setApiUrl, setEnvData } from './api/config';  // Add this import
 
 initializeIcons();
 
 function App() {
   const [config, setConfig] = useState(null);
-  const dispatch = useDispatch();
+
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -45,12 +43,7 @@ function App() {
 
     fetchConfig();
 
-    dispatch(fetchAuthDetails())
-      .unwrap()
-      .catch(error => {
-        console.error('Failed to fetch auth details:', error);
-      });
-  }, [dispatch]);
+  }, []);
 
   async function checkConnection() {
     if (!config) return;
