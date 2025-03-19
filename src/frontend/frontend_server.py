@@ -42,6 +42,7 @@ async def get_config():
         "REACT_APP_MSAL_AUTH_AUTHORITY": os.getenv("REACT_APP_MSAL_AUTH_AUTHORITY", "Authority not set"),
         "REACT_APP_MSAL_REDIRECT_URL": os.getenv("REACT_APP_MSAL_REDIRECT_URL", "Redirect URL not set"),
         "REACT_APP_MSAL_POST_REDIRECT_URL": os.getenv("REACT_APP_MSAL_POST_REDIRECT_URL", "Post Redirect URL not set"),
+        "ENABLE_AUTH": os.getenv("ENABLE_AUTH", "false"),
     }
     return config
 

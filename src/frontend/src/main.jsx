@@ -12,6 +12,7 @@ import { initializeMsalInstance } from './msal-auth/msalInstance';
 const Main = () => {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [msalInstance, setMsalInstance] = useState(null);
+  
   const [config, setConfig] = useState(null);
   useEffect(() => {
     const initMsal = async () => {
@@ -22,7 +23,8 @@ const Main = () => {
           REACT_APP_MSAL_AUTH_CLIENTID: "",
           REACT_APP_MSAL_AUTH_AUTHORITY: "",
           REACT_APP_MSAL_REDIRECT_URL: "",
-          REACT_APP_MSAL_POST_REDIRECT_URL: ""
+          REACT_APP_MSAL_POST_REDIRECT_URL: "",
+          ENABLE_AUTH: true,
         };
   
         if (response.ok) {
@@ -68,9 +70,14 @@ const Main = () => {
     <StrictMode>
       <Provider store={store}>
         <FluentProvider theme={webLightTheme}>
+          {config && config.ENABLE_AUTH  ? (
           <AuthProvider msalInstance={msalInstance}>
             <App />
           </AuthProvider>
+          ) : ( 
+            
+            <App />
+          )}
         </FluentProvider>
       </Provider>
     </StrictMode>

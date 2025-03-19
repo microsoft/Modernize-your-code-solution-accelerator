@@ -1,5 +1,6 @@
 import { MsalProvider } from '@azure/msal-react';
 import AuthWrapper from './AuthWrapper';
+import React from 'react';
 
 interface AuthProviderProps {
   children: React.ReactNode;
