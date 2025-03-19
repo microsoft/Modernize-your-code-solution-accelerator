@@ -1,5 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
+
+
+environment:
+  name: modernize-your-code-solution-accelerator
+  location: eastus
 name: modernize-your-code-solution-accelerator
 #KEEP OFF UNTIL WE ARE READY TO PUBLISH ISH
 # metadata:
