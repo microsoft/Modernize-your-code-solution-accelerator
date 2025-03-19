@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "10448854434840069172"
+      "templateHash": "234966597453008945"
     }
   },
   "parameters": {
@@ -56,11 +56,18 @@
     "capacity": {
       "type": "int",
       "defaultValue": 5
+    },
+    "environmentName": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 10,
+      "metadata": {
+        "description": "A unique prefix for all resources in this deployment. This should be 3-10 characters long:"
+      }
     }
   },
   "variables": {
-    "uniqueSuffix": "[uniqueString(resourceGroup().id, parameters('ResourcePrefix'))]",
-    "randomSuffix": "[substring(variables('uniqueSuffix'), 0, 4)]",
+    "randomSuffix": "[substring(parameters('environmentName'), 3, 10)]",
     "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomSuffix'))]",
     "backEndVersion": "[if(parameters('Authorization'), 'rcauth', 'rcnoauth')]",
     "frontEndVersion": "[if(parameters('Authorization'), 'rcauth', 'rcnoauth')]",
