@@ -33,12 +33,17 @@ param Authorization bool = false
 param AiLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
+@minLength(3)
+@maxLength(10)
+@description('A unique prefix for all resources in this deployment. This should be 3-10 characters long:')
+param environmentName string 
+
 @description('The location used for all deployed resources')
 // Generate a unique string based on the base name and a unique identifier
-var uniqueSuffix = uniqueString(resourceGroup().id, ResourcePrefix)
+//var uniqueSuffix = uniqueString(resourceGroup().id, ResourcePrefix)
 
 // Take the first 4 characters of the unique string to use as a suffix
-var randomSuffix = substring(uniqueSuffix, 0, 4)
+var randomSuffix = substring(environmentName, 3, 10)
 
 // Combine the base name with the random suffix
 var finalName = '${ResourcePrefix}-${randomSuffix}'
