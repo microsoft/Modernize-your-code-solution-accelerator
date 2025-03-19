@@ -4,6 +4,7 @@ export let API_URL = null;
 export let USER_ID = null;
 
 const config = {
+  API_URL: "http://localhost:8000",
   REACT_APP_MSAL_AUTH_CLIENTID: "",
   REACT_APP_MSAL_AUTH_AUTHORITY: "",
   REACT_APP_MSAL_REDIRECT_URL: "",
@@ -18,6 +19,7 @@ export function setApiUrl(url) {
 
 export function setEnvData(configData) {
   if (configData) {
+    config.API_URL = configData.API_URL || "";
     config.REACT_APP_MSAL_AUTH_CLIENTID = configData.REACT_APP_MSAL_AUTH_CLIENTID || "";
     config.REACT_APP_MSAL_AUTH_AUTHORITY = configData.REACT_APP_MSAL_AUTH_AUTHORITY || "";
     config.REACT_APP_MSAL_REDIRECT_URL = configData.REACT_APP_MSAL_REDIRECT_URL || "";
