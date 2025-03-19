@@ -10,12 +10,15 @@ name: modernize-your-code-solution-accelerator
 # metadata:
 #     template: azd-init@1.13.0
 parameters:
-  solutionPrefix:
+  environmentName:
     type: string
     default: azdtest  
-  otherLocation:
+  AiLocation:
     type: string
-    default: eastus2
+    default: japaneast
+  ResourcePrefix:
+    type: string
+    default: bs-azdtest
   baseUrl:
     type: string
     default: 'https://github.com/microsoft/Modernize-your-code-solution-accelerator'
