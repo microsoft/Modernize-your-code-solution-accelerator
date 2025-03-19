@@ -60,6 +60,11 @@ var storageContainerName = '${prefixCleaned}contstorage'
 var gptModelVersion = '2024-08-06'
 var storageNameCleanedContainer = replace(storageContainerName, '-', '')
 var aiServicesName = '${prefixCleaned}-aiservices'
+
+var imageName = 'cmsacontainerreg.azurecr.io/cmsabackend:${frontEndVersion}'
+
+
+
 var aiModelDeployments = [
   {
     name: llmModel
@@ -244,7 +249,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
             value: 'https://${containerAppBackend.properties.configuration.ingress.fqdn}'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${frontEndVersion}'
+        image: imageName
         name: 'cmsafrontend'
         resources: {
           cpu: '1'
