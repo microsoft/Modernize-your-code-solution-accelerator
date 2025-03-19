@@ -10,7 +10,7 @@ import {
 } from "@fluentui/react-components";
 import { MessageBar, MessageBarType } from "@fluentui/react";
 import { deleteBatch, deleteFileFromBatch, uploadFile, startProcessing } from '../slices/batchSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import ConfirmationDialog from '../commonComponents/ConfirmationDialog/confirmationDialogue';
 import { AppDispatch } from '../store/store'
 import { v4 as uuidv4 } from 'uuid';
