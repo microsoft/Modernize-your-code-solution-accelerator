@@ -36,7 +36,6 @@ const Main = () => {
         // Wait for MSAL to initialize before setting state
         const instance = await initializeMsalInstance(config);
         setMsalInstance(instance);
-  
         setIsConfigLoaded(true);
       } catch (error) {
         console.error("Error fetching config:", error);

@@ -31,7 +31,7 @@ import { vs } from "react-syntax-highlighter/dist/esm/styles/hljs"
 import sql from "react-syntax-highlighter/dist/cjs/languages/hljs/sql"
 import { useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getApiUrl, getUserId } from '../api/config';
+import { getApiUrl, headerBuilder } from '../api/config';
 import BatchHistoryPanel from "../components/batchHistoryPanel"
 import PanelRight from "../components/Panels/PanelRight";
 import PanelRightToolbar from "../components/Panels/PanelRightToolbar";
@@ -359,14 +359,8 @@ interface FileItem {
 // Updated function to fetch file content with translated content
 const fetchFileFromAPI = async (fileId: string): Promise<any> => {
   const apiUrl = getApiUrl();
-  const userId = getUserId();
   try {
-    const response = await fetch(`${apiUrl}/file/${fileId}`, {
-      method: "GET", // Specify the HTTP method
-      headers: {  // Example content type
-        "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-      },
-    });
+    const response = await fetch(`${apiUrl}/file/${fileId}`, headerBuilder({}));
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
@@ -381,13 +375,7 @@ const fetchFileFromAPI = async (fileId: string): Promise<any> => {
 const fetchBatchSummary = async (batchId: string): Promise<any> => {
   try {
     const apiUrl = getApiUrl();
-    const userId = getUserId();
-    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, {
-      method: "GET", // Specify the HTTP method
-      headers: {  // Example content type
-        "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-      },
-    });
+    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, headerBuilder({}));
     if (!response.ok) {
       throw new Error(`Failed to fetch batch data: ${response.statusText}`);
     }
@@ -609,13 +597,7 @@ const ModernizationPage = () => {
     if (batchId) {
       try {
         const apiUrl = getApiUrl();
-        const userId = getUserId();
-        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, {
-          method: "GET",
-          headers: {  // Example content type
-            "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-          }
-        });
+        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, headerBuilder({}));
 
         if (!response.ok) {
           throw new Error("Failed to download file");

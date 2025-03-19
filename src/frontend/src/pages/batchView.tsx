@@ -6,7 +6,7 @@ import Content from "../components/Content/Content";
 import Header from "../components/Header/Header";
 import HeaderTools from "../components/Header/HeaderTools";
 import PanelLeft from "../components/Panels/PanelLeft";
-import { getApiUrl, getUserId } from '../api/config';
+import { getApiUrl, headerBuilder } from '../api/config';
 import {
   Button,
   Text,
@@ -90,14 +90,8 @@ const BatchStoryPage = () => {
           setLoading(true);
           setDataLoaded(false);
           const apiUrl = getApiUrl();
-          const userId = getUserId();
-          
-          const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, {
-            method: "GET", // Specify the HTTP method
-            headers: {  // Example content type
-              "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-            },
-          });
+
+          const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, headerBuilder({}));
           
           if (!response.ok) {
             throw new Error(`Failed to fetch batch data: ${response.statusText}`);
@@ -193,13 +187,7 @@ const BatchStoryPage = () => {
       try {
         setFileLoading(true);
         const apiUrl = getApiUrl();
-        const userId = getUserId();
-        const response = await fetch(`${apiUrl}/file/${selectedFileId}`, {
-          method: "GET",
-          headers: {  // Adjust based on API requirements
-            "x-ms-client-principal-id": String(userId) ?? "", // Ensure userId is a string
-          },
-        });
+        const response = await fetch(`${apiUrl}/file/${selectedFileId}`, headerBuilder({}));
         if (!response.ok) {
           throw new Error(`Failed to fetch file content: ${response.statusText}`);
         }
@@ -504,13 +492,7 @@ const BatchStoryPage = () => {
     if (batchId) {
       try {
         const apiUrl = getApiUrl();
-        const userId = getUserId();
-        const response = await fetch(`${apiUrl}/download/${uploadId}?batch_id=${batchId}`, {
-          method: "GET",
-          headers: {  // Example content type
-            "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-          },
-        });
+        const response = await fetch(`${apiUrl}/download/${uploadId}?batch_id=${batchId}`, headerBuilder({}));
         
         if (!response.ok) {
           throw new Error("Failed to download file");

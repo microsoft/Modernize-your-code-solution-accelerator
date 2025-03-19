@@ -35,7 +35,7 @@ export function getConfigData() {
     }
   }
 
-  return {...config};
+  return { ...config };
 }
 
 export function getApiUrl() {
@@ -54,12 +54,25 @@ export function getApiUrl() {
   return API_URL;
 }
 
+
 export function getUserId() {
-  
   USER_ID = window.activeUserId;
   console.log("USER_ID", USER_ID);
   return USER_ID;
 }
+
+export function headerBuilder(headers) {
+  let userId = getUserId();
+  let defaultHeaders = {
+    "x-ms-client-principal-id": String(userId) || "",  // Custom header
+  };
+  return { 
+    ...defaultHeaders, ...(headers ? headers : {})
+  };
+
+
+}
+
 
 export default {
   setApiUrl,
