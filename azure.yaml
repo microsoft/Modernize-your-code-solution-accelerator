@@ -4,7 +4,16 @@ name: modernize-your-code-solution-accelerator
 #KEEP OFF UNTIL WE ARE READY TO PUBLISH ISH
 # metadata:
 #     template: azd-init@1.13.0
-
+parameters:
+  solutionPrefix:
+    type: string
+    default: azdtest  
+  otherLocation:
+    type: string
+    default: eastus2
+  baseUrl:
+    type: string
+    default: 'https://github.com/microsoft/Modernize-your-code-solution-accelerator'
 deployment:
   mode: Incremental
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
