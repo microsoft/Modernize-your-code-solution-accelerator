@@ -16,7 +16,7 @@ type HeaderProps = {
   children?: React.ReactNode;
 };
 
-const Header: React.FC<HeaderProps> = ({title = "Contoso", subtitle, children }) => {
+const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }) => {
   return (
     <header
       style={{
@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({title = "Contoso", subtitle, children })
         boxSizing: "border-box",
         gap: "12px",
         position: 'fixed',
-        zIndex:1000,
+        zIndex: 1000,
       }}
       data-figma-component="Header"
     >

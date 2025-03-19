@@ -361,7 +361,7 @@ const fetchFileFromAPI = async (fileId: string): Promise<any> => {
   const apiUrl = getApiUrl();
   const userId = getUserId();
   try {
-    const response = await fetch(`${apiUrl}/file/${fileId}`,  {
+    const response = await fetch(`${apiUrl}/file/${fileId}`, {
       method: "GET", // Specify the HTTP method
       headers: {  // Example content type
         "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
@@ -1127,10 +1127,10 @@ const ModernizationPage = () => {
               </div>
             </div>
           ) : (
-              <div style={{ padding: "20px", textAlign: "center" }}>
-                <Spinner />
-                <Text>Loading file status...</Text>
-              </div>
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              <Spinner />
+              <Text>Loading file status...</Text>
+            </div>
           )
           }
 

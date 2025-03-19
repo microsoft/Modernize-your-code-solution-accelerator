@@ -24,11 +24,11 @@ const Main = () => {
           REACT_APP_MSAL_REDIRECT_URL: "",
           REACT_APP_MSAL_POST_REDIRECT_URL: ""
         };
-  
+
         if (response.ok) {
           config = await response.json();
         }
-  
+
         window.appConfig = config;
         setEnvData(config);
         setApiUrl(config.API_URL);
@@ -36,13 +36,13 @@ const Main = () => {
         // Wait for MSAL to initialize before setting state
         const instance = await initializeMsalInstance(config);
         setMsalInstance(instance);
-  
+
         setIsConfigLoaded(true);
       } catch (error) {
         console.error("Error fetching config:", error);
       }
     };
-  
+
     initMsal(); // Call the async function inside useEffect
   }, []);
   async function checkConnection() {
@@ -51,7 +51,7 @@ const Main = () => {
     const baseURL = config.API_URL.replace(/\/api$/, ''); // Remove '/api' if it appears at the end
     console.log('Checking connection to:', baseURL);
     try {
-        const response = await fetch(`${baseURL}/health`);
+      const response = await fetch(`${baseURL}/health`);
     } catch (error) {
       console.error('Error connecting to backend:', error);
     }
