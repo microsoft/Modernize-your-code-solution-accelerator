@@ -167,10 +167,12 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
     zoneRedundant: false
     managedIdentities: managedIdentityModule
   }
+  scope: resourceGroup(resourceGroup().name)
 }
 
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
   name: toLower('${prefixCleaned}database')
+  scope: resourceGroup(resourceGroup().name)
   params: {
     // Required parameters
     name: toLower('${prefixCleaned}databaseAccount')
@@ -238,6 +240,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
   name: toLower('${prefixCleaned}containerAppFrontend')
+  scope: resourceGroup(resourceGroup().name)
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -460,6 +463,7 @@ var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group 
 
 module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
   name: 'deploymentScriptCLI'
+  scope: resourceGroup(resourceGroup().name)
   params: {
     // Required parameters
     kind: 'AzureCLI'
