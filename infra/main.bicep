@@ -66,8 +66,6 @@ var gptModelVersion = '2024-08-06'
 var storageNameCleanedContainer = replace(storageContainerName, '-', '')
 var aiServicesName = '${prefixCleaned}-aiservices'
 
-var imageName = 'cmsacontainerreg.azurecr.io/cmsabackend:${frontEndVersion}'
-
 
 
 var aiModelDeployments = [
@@ -167,12 +165,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
     zoneRedundant: false
     managedIdentities: managedIdentityModule
   }
-  scope: resourceGroup(resourceGroup().name)
 }
 
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
   name: toLower('${prefixCleaned}database')
-  scope: resourceGroup(resourceGroup().name)
   params: {
     // Required parameters
     name: toLower('${prefixCleaned}databaseAccount')
@@ -240,7 +236,6 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
   name: toLower('${prefixCleaned}containerAppFrontend')
-  scope: resourceGroup(resourceGroup().name)
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -257,7 +252,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
             value: 'https://${containerAppBackend.properties.configuration.ingress.fqdn}'
           }
         ]
-        image: imageName
+        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${frontEndVersion}'
         name: 'cmsafrontend'
         resources: {
           cpu: '1'
@@ -448,7 +443,6 @@ var containerNames = [
 // Create a blob container resource for each container name.
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for containerName in containerNames: {
   name: '${storageNameCleanedContainer}/default/${containerName}'
-
   properties: {
     publicAccess: 'None'
   }
@@ -464,7 +458,6 @@ var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group 
 
 module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
   name: 'deploymentScriptCLI'
-  scope: resourceGroup(resourceGroup().name)
   params: {
     // Required parameters
     kind: 'AzureCLI'
