@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "17465000776634471517"
+      "templateHash": "4845784968033668710"
     }
   },
   "parameters": {
@@ -13,13 +13,6 @@
       "type": "string",
       "metadata": {
         "description": "Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group."
-      }
-    },
-    "Authorization": {
-      "type": "bool",
-      "defaultValue": false,
-      "metadata": {
-        "description": "Authorization requires permission to create an app identity in the subscription.  See readme for details."
       }
     },
     "AiLocation": {
@@ -69,8 +62,7 @@
   "variables": {
     "randomSuffix": "[substring(parameters('environmentName'), 0, min(10, length(parameters('environmentName'))))]",
     "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomSuffix'))]",
-    "backEndVersion": "[if(parameters('Authorization'), 'rcauth', 'rcnoauth')]",
-    "frontEndVersion": "[if(parameters('Authorization'), 'rcauth', 'rcnoauth')]",
+    "imageVersion": "rc1",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
     "cosmosdbDatabase": "cmsadb",
@@ -170,7 +162,7 @@
           "containers": [
             {
               "name": "cmsabackend",
-              "image": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', variables('backEndVersion'))]",
+              "image": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', variables('imageVersion'))]",
               "env": [
                 {
                   "name": "COSMOSDB_ENDPOINT",
@@ -5426,7 +5418,7 @@
                     "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01').configuration.ingress.fqdn)]"
                   }
                 ],
-                "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('frontEndVersion'))]",
+                "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('imageVersion'))]",
                 "name": "cmsafrontend",
                 "resources": {
                   "cpu": "1",

@@ -1,9 +1,6 @@
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
 param ResourcePrefix string
 
-@description('Authorization requires permission to create an app identity in the subscription.  See readme for details.')
-param Authorization bool = false
-
 @allowed([
   'australiaeast'
   'brazilsouth'
@@ -48,8 +45,7 @@ var randomSuffix = substring(environmentName, 0, min(10, length(environmentName)
 // Combine the base name with the random suffix
 var finalName = '${ResourcePrefix}-${randomSuffix}'
 
-var backEndVersion = Authorization ? 'rcauth' : 'rcnoauth'
-var frontEndVersion = Authorization ? 'rcauth' : 'rcnoauth'
+var imageVersion = 'rc1'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -252,7 +248,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
             value: 'https://${containerAppBackend.properties.configuration.ingress.fqdn}'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${frontEndVersion}'
+        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
         resources: {
           cpu: '1'
@@ -294,7 +290,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
       containers: [
         {
           name: 'cmsabackend'
-          image: 'cmsacontainerreg.azurecr.io/cmsabackend:${backEndVersion}'
+          image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
           env: [
             {
               name: 'COSMOSDB_ENDPOINT'

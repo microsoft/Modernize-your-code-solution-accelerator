@@ -57,6 +57,7 @@ Follow the [directions in the documentation ](https://learn.microsoft.com/en-us/
       REACT_APP_MSAL_AUTH_AUTHORITY="https://login.microsoftonline.com/<your tenant ID>"
       REACT_APP_MSAL_REDIRECT_URL="/"
       REACT_APP_MSAL_POST_REDIRECT_URL="/"
+      ENV ENABLE_AUTH=true
       ```
 
       For local debugging, configure your local variables as follows:
