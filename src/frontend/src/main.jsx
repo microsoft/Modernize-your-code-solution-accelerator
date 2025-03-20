@@ -29,7 +29,7 @@ const Main = () => {
           REACT_APP_MSAL_AUTH_AUTHORITY: "",
           REACT_APP_MSAL_REDIRECT_URL: "",
           REACT_APP_MSAL_POST_REDIRECT_URL: "",
-          ENABLE_AUTH: true,
+          ENABLE_AUTH: false,
         };
 
         if (response.ok) {
