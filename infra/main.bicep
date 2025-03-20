@@ -43,7 +43,7 @@ param environmentName string
 //var uniqueSuffix = uniqueString(resourceGroup().id, ResourcePrefix)
 
 // Take the first 4 characters of the unique string to use as a suffix
-var randomSuffix = substring(environmentName, 3, 10)
+var randomSuffix = substring(environmentName, 0, min(10, length(environmentName)))
 
 // Combine the base name with the random suffix
 var finalName = '${ResourcePrefix}-${randomSuffix}'
@@ -448,6 +448,7 @@ var containerNames = [
 // Create a blob container resource for each container name.
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for containerName in containerNames: {
   name: '${storageNameCleanedContainer}/default/${containerName}'
+
   properties: {
     publicAccess: 'None'
   }
