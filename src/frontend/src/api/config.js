@@ -4,10 +4,12 @@ export let API_URL = null;
 export let USER_ID = null;
 
 const config = {
+  API_URL: "http://localhost:8000",
   REACT_APP_MSAL_AUTH_CLIENTID: "",
   REACT_APP_MSAL_AUTH_AUTHORITY: "",
   REACT_APP_MSAL_REDIRECT_URL: "",
-  REACT_APP_MSAL_POST_REDIRECT_URL: ""
+  REACT_APP_MSAL_POST_REDIRECT_URL: "",
+  ENABLE_AUTH: false,
 };
 
 export function setApiUrl(url) {
@@ -18,10 +20,12 @@ export function setApiUrl(url) {
 
 export function setEnvData(configData) {
   if (configData) {
+    config.API_URL = configData.API_URL || "";
     config.REACT_APP_MSAL_AUTH_CLIENTID = configData.REACT_APP_MSAL_AUTH_CLIENTID || "";
     config.REACT_APP_MSAL_AUTH_AUTHORITY = configData.REACT_APP_MSAL_AUTH_AUTHORITY || "";
     config.REACT_APP_MSAL_REDIRECT_URL = configData.REACT_APP_MSAL_REDIRECT_URL || "";
     config.REACT_APP_MSAL_POST_REDIRECT_URL = configData.REACT_APP_MSAL_POST_REDIRECT_URL || "";
+    config.ENABLE_AUTH = configData.ENABLE_AUTH || false;
   }
 }
 
@@ -33,7 +37,7 @@ export function getConfigData() {
     }
   }
 
-  return {...config};
+  return { ...config };
 }
 
 export function getApiUrl() {
@@ -52,12 +56,25 @@ export function getApiUrl() {
   return API_URL;
 }
 
+
 export function getUserId() {
-  
   USER_ID = window.activeUserId;
-  console.log("USER_ID", USER_ID);
-  return USER_ID;
+  const userId = USER_ID??  "00000000-0000-0000-0000-000000000000";
+  return userId;
 }
+
+export function headerBuilder(headers) {
+  let userId = getUserId();
+  let defaultHeaders = {
+    "x-ms-client-principal-id": String(userId) || "",  // Custom header
+  };
+  return { 
+    ...defaultHeaders, ...(headers ? headers : {})
+  };
+
+
+}
+
 
 export default {
   setApiUrl,

@@ -1,7 +1,5 @@
 // msalConfig.ts
 import { Configuration, LogLevel } from '@azure/msal-browser';
-import { getConfigData } from '../api/config';
-
 
 export const createMsalConfig = (configData: any): Configuration => ({
   auth: {

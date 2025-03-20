@@ -4,7 +4,6 @@ import Header from "../components/Header/Header";
 import HeaderTools from "../components/Header/HeaderTools";
 import PanelLeft from "../components/Panels/PanelLeft";
 import webSocketService from "../api/WebSocketService";
-import { useDispatch } from 'react-redux';
 import {
   Button,
   Text,
@@ -32,7 +31,7 @@ import { vs } from "react-syntax-highlighter/dist/esm/styles/hljs"
 import sql from "react-syntax-highlighter/dist/cjs/languages/hljs/sql"
 import { useNavigate, useParams } from "react-router-dom"
 import { useState, useEffect, useCallback, useRef } from "react"
-import { getApiUrl, getUserId } from '../api/config';
+import { getApiUrl, headerBuilder } from '../api/config';
 import BatchHistoryPanel from "../components/batchHistoryPanel"
 import PanelRight from "../components/Panels/PanelRight";
 import PanelRightToolbar from "../components/Panels/PanelRightToolbar";
@@ -360,14 +359,8 @@ interface FileItem {
 // Updated function to fetch file content with translated content
 const fetchFileFromAPI = async (fileId: string): Promise<any> => {
   const apiUrl = getApiUrl();
-  const userId = getUserId();
   try {
-    const response = await fetch(`${apiUrl}/file/${fileId}`,  {
-      method: "GET", // Specify the HTTP method
-      headers: {  // Example content type
-        "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-      },
-    });
+    const response = await fetch(`${apiUrl}/file/${fileId}`, { headers: headerBuilder({}) });
     if (!response.ok) {
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
@@ -382,13 +375,7 @@ const fetchFileFromAPI = async (fileId: string): Promise<any> => {
 const fetchBatchSummary = async (batchId: string): Promise<any> => {
   try {
     const apiUrl = getApiUrl();
-    const userId = getUserId();
-    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, {
-      method: "GET", // Specify the HTTP method
-      headers: {  // Example content type
-        "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-      },
-    });
+    const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, { headers: headerBuilder({}) });
     if (!response.ok) {
       throw new Error(`Failed to fetch batch data: ${response.statusText}`);
     }
@@ -610,13 +597,7 @@ const ModernizationPage = () => {
     if (batchId) {
       try {
         const apiUrl = getApiUrl();
-        const userId = getUserId();
-        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, {
-          method: "GET",
-          headers: {  // Example content type
-            "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-          }
-        });
+        const response = await fetch(`${apiUrl}/download/${batchId}?batch_id=${batchId}`, { headers: headerBuilder({}) });
 
         if (!response.ok) {
           throw new Error("Failed to download file");
@@ -1128,10 +1109,10 @@ const ModernizationPage = () => {
               </div>
             </div>
           ) : (
-              <div style={{ padding: "20px", textAlign: "center" }}>
-                <Spinner />
-                <Text>Loading file status...</Text>
-              </div>
+            <div style={{ padding: "20px", textAlign: "center" }}>
+              <Spinner />
+              <Text>Loading file status...</Text>
+            </div>
           )
           }
 
@@ -1299,12 +1280,12 @@ const ModernizationPage = () => {
                     const displayStatus = getPrintFileStatus(file.status);
                     const isProcessing = displayStatus === "Processing";
                     const fileClass = `${styles.fileCard} 
-              ${selectedFileId === file.id ? styles.selectedCard : ""} 
-              ${isQueued ? styles.queuedFile : ""} 
-              ${isInProgress ? styles.completedFile : ""} 
-              ${isCompleted ? styles.completedFile : ""} 
-              ${isSummaryDisabled ? styles.summaryDisabled : ""}
-            `;
+                                       ${selectedFileId === file.id ? styles.selectedCard : ""} 
+                                       ${isQueued ? styles.queuedFile : ""} 
+                                       ${isInProgress ? styles.completedFile : ""} 
+                                       ${isCompleted ? styles.completedFile : ""} 
+                                       ${isSummaryDisabled ? styles.summaryDisabled : ""}
+                                      `;
                     return (
                       <div
                         key={file.id}

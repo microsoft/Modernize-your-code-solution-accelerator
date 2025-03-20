@@ -1,29 +1,16 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { CheckmarkCircle24Regular, DismissRegular } from "@fluentui/react-icons";
 import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
 import { CircleCheck, X } from 'lucide-react';
-import { 
+import {
   Button,
-  Dialog,
-  DialogSurface,
-  DialogBody,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  ToastTrigger,
   Toast,
   ToastTitle,
-  Link,
   useToastController,
-  useId,
-  Toaster,
-  MessageBarActions,
   Tooltip,
 } from "@fluentui/react-components";
-import { ProgressIndicator, MessageBar, MessageBarType, IconButton, Icon, TooltipHost } from "@fluentui/react";
-import ArrowUploadIcon from "../assets/Arrow-Upload.png";
+import { MessageBar, MessageBarType } from "@fluentui/react";
 import { deleteBatch, deleteFileFromBatch, uploadFile, startProcessing } from '../slices/batchSlice';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import ConfirmationDialog from '../commonComponents/ConfirmationDialog/confirmationDialogue';
 import { AppDispatch } from '../store/store'
 import { v4 as uuidv4 } from 'uuid';
@@ -70,16 +57,16 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const MAX_FILES = 20;
   const dispatch = useDispatch<AppDispatch>();
-  
+
   useEffect(() => {
-    if(uploadingFiles.length === 0) {
+    if (uploadingFiles.length === 0) {
       setAllUploadsComplete(false);
     }
   });
-  
+
   useEffect(() => {
     let newState: 'IDLE' | 'UPLOADING' | 'COMPLETED' = 'IDLE';
-    
+
     if (uploadingFiles.length > 0) {
       const activeFiles = uploadingFiles.filter(f => f.status !== 'error');
       if (activeFiles.length > 0 && activeFiles.every(f => f.status === 'completed')) {
@@ -97,7 +84,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const startNewBatch = () => {
     setBatchId(uuidv4()); // Generate a new batchId for each new batch of uploads
   };
-  
+
   const simulateFileUpload = (file: File) => {
     if (batchId == "") {
       startNewBatch(); // Ensure batchId is set before starting any upload
@@ -123,15 +110,15 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     let hasStartedUpload = false; // To ensure dispatch is called once
     const intervalId = setInterval(() => {
       currentProgress += increment;
-      
-      setUploadingFiles(prev => 
-        prev.map(f => 
-          f.id === frontendFileId 
-            ? { 
-                ...f, 
-                progress: Math.min(currentProgress, 99),
-                status: 'uploading'
-              }
+
+      setUploadingFiles(prev =>
+        prev.map(f =>
+          f.id === frontendFileId
+            ? {
+              ...f,
+              progress: Math.min(currentProgress, 99),
+              status: 'uploading'
+            }
             : f
         )
       );
@@ -140,29 +127,29 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         hasStartedUpload = true;
 
         dispatch(uploadFile({ batchId, file }))
-        .unwrap()
-        .then((response) => {
-          if (response?.file.file_id) {
-            // Update the file list with the correct fileId from backend
+          .unwrap()
+          .then((response) => {
+            if (response?.file.file_id) {
+              // Update the file list with the correct fileId from backend
+              setUploadingFiles((prev) =>
+                prev.map((f) =>
+                  f.id === frontendFileId ? { ...f, id: response.file.file_id, progress: 100, status: 'completed' } : f
+                )
+              );
+            }
+            clearInterval(intervalId);
+          })
+          .catch((error) => {
+            console.error("Upload failed:", error);
+
+            // Mark the file upload as failed
             setUploadingFiles((prev) =>
               prev.map((f) =>
-                f.id === frontendFileId ? { ...f, id: response.file.file_id, progress: 100, status: 'completed' } : f
+                f.id === frontendFileId ? { ...f, status: 'error' } : f
               )
             );
-          }
-          clearInterval(intervalId);
-        })
-        .catch((error) => {
-          console.error("Upload failed:", error);
-      
-          // Mark the file upload as failed
-          setUploadingFiles((prev) =>
-            prev.map((f) =>
-              f.id === frontendFileId ? { ...f, status: 'error' } : f
-            )
-          );
-          clearInterval(intervalId);
-        });
+            clearInterval(intervalId);
+          });
 
         setUploadIntervals(prev => {
           const next = { ...prev };
@@ -177,21 +164,21 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       // Check current files count and determine how many more can be added
       const remainingSlots = MAX_FILES - uploadingFiles.length;
-      
+
       if (remainingSlots <= 0) {
         // Already at max files, show dialog
         setShowFileLimitDialog(true);
         return;
       }
-      
+
       // If more files are dropped than slots available
       if (acceptedFiles.length > remainingSlots) {
         // Take only the first `remainingSlots` files
         const filesToUpload = acceptedFiles.slice(0, remainingSlots);
         filesToUpload.forEach(file => simulateFileUpload(file));
-        
+
         if (onFileUpload) onFileUpload(filesToUpload);
-        
+
         // Show dialog about exceeding limit
         setShowFileLimitDialog(true);
       } else {
@@ -199,7 +186,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         acceptedFiles.forEach(file => simulateFileUpload(file));
         if (onFileUpload) onFileUpload(acceptedFiles);
       }
-      
+
       if (onFileReject && fileRejections.length > 0) {
         onFileReject(fileRejections);
       }
@@ -219,33 +206,33 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const removeFile = (fileId: string) => {
     setUploadingFiles((prev) => {
-        const updatedFiles = prev.filter((f) => f.id !== fileId);
-        console.log("Updated uploadingFiles:", updatedFiles);
-        return updatedFiles;
+      const updatedFiles = prev.filter((f) => f.id !== fileId);
+      console.log("Updated uploadingFiles:", updatedFiles);
+      return updatedFiles;
     });
 
     // Clear any running upload interval
     if (uploadIntervals[fileId]) {
-        clearInterval(uploadIntervals[fileId]);
-        setUploadIntervals((prev) => {
-            const { [fileId]: _, ...rest } = prev;
-            return rest;
-        });
+      clearInterval(uploadIntervals[fileId]);
+      setUploadIntervals((prev) => {
+        const { [fileId]: _, ...rest } = prev;
+        return rest;
+      });
     }
 
     // Backend deletion only if file was uploaded successfully
     const fileToRemove = uploadingFiles.find((f) => f.id === fileId);
     if (fileToRemove && fileToRemove.status !== "error") {
-        dispatch(deleteFileFromBatch(fileToRemove.id))
-            .unwrap()
-            .catch((error) => console.error("Failed to delete file:", error));
+      dispatch(deleteFileFromBatch(fileToRemove.id))
+        .unwrap()
+        .catch((error) => console.error("Failed to delete file:", error));
     }
   };
 
   const cancelAllUploads = useCallback(() => {
     // Clear all upload intervals
-    dispatch(deleteBatch({batchId, headers:null}));
-    
+    dispatch(deleteBatch({ batchId, headers: null }));
+
     Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
     setUploadIntervals({});
     setUploadingFiles([]);
@@ -261,7 +248,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     if (typeof window !== 'undefined') {
       // Store the original function if it exists
       const originalCancelLogoUploads = (window as any).cancelLogoUploads;
-      
+
       // Override with our new function that shows the dialog
       (window as any).cancelLogoUploads = () => {
         // Show dialog regardless of upload state
@@ -270,17 +257,17 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         }
       };
       // Cleanup: Restore original function on unmount
-    return () => {
-      (window as any).cancelLogoUploads = originalCancelLogoUploads;
-    };
-  }
-}, [uploadingFiles.length]); // Runs when uploadingFiles.length changes
+      return () => {
+        (window as any).cancelLogoUploads = originalCancelLogoUploads;
+      };
+    }
+  }, [uploadingFiles.length]); // Runs when uploadingFiles.length changes
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Store the original function if it exists
       const originalCancelUploads = (window as any).cancelUploads;
-      
+
       // Override with our new function that shows the dialog
       (window as any).cancelUploads = () => {
         // Show dialog regardless of upload state
@@ -298,18 +285,18 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const originalStartTranslating = (window as any).startTranslating;
-      
+
       (window as any).startTranslating = async () => {
         const payload = {
           batchId: batchId,
           translateFrom: selectedCurrentLanguage[0],
           translateTo: selectedTargetLanguage[0],
         };
-        
+
         if (uploadingFiles.length > 0) {
           // First navigate to loading page before starting processing
           navigate(`/batch-process/${batchId}`);
-          
+
           // Then dispatch the action and wait for it to complete
           try {
             dispatch(startProcessing(payload));
@@ -322,7 +309,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         }
         return null;
       };
-      
+
       // Cleanup
       return () => {
         (window as any).startTranslating = originalStartTranslating;
@@ -332,7 +319,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const toasterId = "uploader-toast";
   const { dispatchToast } = useToastController(toasterId);
-  
+
   useEffect(() => {
     if (allUploadsComplete) {
       // Show success toast when uploads are complete
@@ -353,15 +340,15 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       const timer = setTimeout(() => {
         setFileLimitExceeded(false);
       }, 5000);
-      
+
       return () => clearTimeout(timer);
     }
   }, [fileLimitExceeded]);
 
   return (
-    <div style={{ width: '100%', minWidth: '720px', maxWidth: '800px', margin: '0 auto',marginTop:'0', padding: '16px', paddingBottom: '60px'}}>
-      <ConfirmationDialog 
-        open={showCancelDialog} 
+    <div style={{ width: '100%', minWidth: '720px', maxWidth: '800px', margin: '0 auto', marginTop: '0', padding: '16px', paddingBottom: '60px' }}>
+      <ConfirmationDialog
+        open={showCancelDialog}
         setOpen={setShowCancelDialog}
         title="Cancel upload?"
         message="If you cancel the upload, all the files and any progress will be deleted."
@@ -370,9 +357,9 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         confirmText="Cancel upload"
         cancelText="Continue upload"
       />
-      
-      <ConfirmationDialog 
-        open={showLogoCancelDialog} 
+
+      <ConfirmationDialog
+        open={showLogoCancelDialog}
         setOpen={setShowLogoCancelDialog}
         title="Leave without completing?"
         message="If you leave this page, you'll land on the homepage and lose all progress"
@@ -381,34 +368,34 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         confirmText="Leave and lose progress"
         cancelText="Stay here"
       />
-      <ConfirmationDialog 
-      open={showFileLimitDialog} 
-      setOpen={setShowFileLimitDialog}
-      title="File Limit Exceeded"
-      message={`Maximum of ${MAX_FILES} files allowed. Only the first ${MAX_FILES} files were uploaded.`}
-      onConfirm={() => setShowFileLimitDialog(false)}
-      onCancel={() => setShowFileLimitDialog(false)}
-      confirmText="OK"
-      cancelText=""
-    />
+      <ConfirmationDialog
+        open={showFileLimitDialog}
+        setOpen={setShowFileLimitDialog}
+        title="File Limit Exceeded"
+        message={`Maximum of ${MAX_FILES} files allowed. Only the first ${MAX_FILES} files were uploaded.`}
+        onConfirm={() => setShowFileLimitDialog(false)}
+        onCancel={() => setShowFileLimitDialog(false)}
+        confirmText="OK"
+        cancelText=""
+      />
 
       {uploadingFiles.length === 0 && (
-        <div style={{ 
-          display: 'flex', 
+        <div style={{
+          display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: '16px',
           marginBottom: '90px',
           textAlign: 'center'
         }}>
-          <h1 style={{ 
+          <h1 style={{
             fontSize: '24px',
             fontWeight: 'bold',
             margin: 0
           }}>
             Modernize your code
           </h1>
-          <p style={{ 
+          <p style={{
             fontSize: '16px',
             fontWeight: '600',
             margin: 0
@@ -420,7 +407,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h2 style={{ fontSize: '16px', margin: 0 }}>
-          {uploadingFiles.length > 0 
+          {uploadingFiles.length > 0
             ? `Uploading (${uploadingFiles.filter(f => f.status === 'completed').length}/${uploadingFiles.length})`
             : 'Upload files in batch'
           }
@@ -444,27 +431,27 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         }}
       >
         <input {...getInputProps()} />
-        
+
         {uploadingFiles.length > 0 ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <img
-                src={ArrowUploadIcon}
+                src="/images/Arrow-Upload.png"
                 alt="Upload Icon"
                 style={{ width: 32, height: 32 }}
               />
               <div>
-                <p style={{ 
-                  margin: '0', 
-                  fontSize: '16px', 
+                <p style={{
+                  margin: '0',
+                  fontSize: '16px',
                   color: '#333'
                 }}>
                   Drag and drop files here
                 </p>
-                <p style={{ 
-                  margin: '4px 0 0 0', 
-                  fontSize: '12px', 
-                  color: '#666' 
+                <p style={{
+                  margin: '4px 0 0 0',
+                  fontSize: '12px',
+                  color: '#666'
                 }}>
                   Limit {Math.floor(maxSize / (1024 * 1024))}MB per file • SQL Only • {uploadingFiles.length}/{MAX_FILES} files
                 </p>
@@ -491,13 +478,13 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         ) : (
           <>
             <img
-              src={ArrowUploadIcon}
+              src="/images/Arrow-Upload.png"
               alt="Upload Icon"
               style={{ width: 64, height: 64 }}
             />
-            <p style={{ 
-              margin: '16px 0 0 0', 
-              fontSize: '18px', 
+            <p style={{
+              margin: '16px 0 0 0',
+              fontSize: '18px',
               color: '#333',
               fontWeight: '600'
             }}>
@@ -522,10 +509,10 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             >
               Browse files
             </Button>
-            <p style={{ 
-              margin: '8px 0 0 0', 
-              fontSize: '12px', 
-              color: '#666' 
+            <p style={{
+              margin: '8px 0 0 0',
+              fontSize: '12px',
+              color: '#666'
             }}>
               Limit {Math.floor(maxSize / (1024 * 1024))}MB per file • SQL Only • {MAX_FILES} files max
             </p>
@@ -534,60 +521,60 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
-          {allUploadsComplete && (
-            <MessageBar
-              messageBarType={MessageBarType.success}
-              isMultiline={false}
-              styles={{
-                root: { display: "flex", alignItems: "left" }, // Align the icon and text
-                icon: { display: "none"  },
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "left" }}> 
-                <CircleCheck
-                  strokeWidth="2.5px"
-                  color="#37a04c"
-                  size="16px" // Slightly larger for better balance
-                  style={{ marginRight: "8px" }}
-                />
-                <span>All valid files uploaded successfully!</span>
-              </div>
-            </MessageBar>
-          )}
-          
-          {fileLimitExceeded && (
-            <MessageBar
-              messageBarType={MessageBarType.warning}
-              isMultiline={false}
-              onDismiss={() => setFileLimitExceeded(false)}
-              dismissButtonAriaLabel="Close"
-              styles={{
-                root: { display: "flex", alignItems: "center" },
-              }}
-            >
-              <X 
-                strokeWidth= "2.5px"
-                color='#d83b01'
-                size= '14px'
-                style={{ marginRight: "12px", paddingTop: 3 }}
+        {allUploadsComplete && (
+          <MessageBar
+            messageBarType={MessageBarType.success}
+            isMultiline={false}
+            styles={{
+              root: { display: "flex", alignItems: "left" }, // Align the icon and text
+              icon: { display: "none" },
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "left" }}>
+              <CircleCheck
+                strokeWidth="2.5px"
+                color="#37a04c"
+                size="16px" // Slightly larger for better balance
+                style={{ marginRight: "8px" }}
               />
-              Maximum of {MAX_FILES} files allowed. Some files were not uploaded.
-            </MessageBar>
-          )}
+              <span>All valid files uploaded successfully!</span>
+            </div>
+          </MessageBar>
+        )}
+
+        {fileLimitExceeded && (
+          <MessageBar
+            messageBarType={MessageBarType.warning}
+            isMultiline={false}
+            onDismiss={() => setFileLimitExceeded(false)}
+            dismissButtonAriaLabel="Close"
+            styles={{
+              root: { display: "flex", alignItems: "center" },
+            }}
+          >
+            <X
+              strokeWidth="2.5px"
+              color='#d83b01'
+              size='14px'
+              style={{ marginRight: "12px", paddingTop: 3 }}
+            />
+            Maximum of {MAX_FILES} files allowed. Some files were not uploaded.
+          </MessageBar>
+        )}
       </div>
 
       {uploadingFiles.length > 0 && (
-        <div style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '8px', 
-                width: '837px', 
-                maxHeight: '300px',
-                overflowY: 'auto',
-                scrollbarWidth: 'thin'
-         }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+          width: '837px',
+          maxHeight: '300px',
+          overflowY: 'auto',
+          scrollbarWidth: 'thin'
+        }}>
           {uploadingFiles.map((file) => (
-            <div 
+            <div
               key={file.id}
               style={{
                 display: 'flex',
@@ -603,9 +590,9 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 📄
               </div>
               <Tooltip content={file.file.name} relationship="label">
-                <div 
-                  style={{ 
-                    width: 80, 
+                <div
+                  style={{
+                    width: 80,
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -629,9 +616,9 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                   style={{
                     width: `${file.progress}%`,
                     height: '100%',
-                    backgroundColor: file.status === 'error' ? '#ff4444' : 
-                                  file.status === 'completed' ? '#4CAF50' : 
-                                  '#2196F3',
+                    backgroundColor: file.status === 'error' ? '#ff4444' :
+                      file.status === 'completed' ? '#4CAF50' :
+                        '#2196F3',
                     transition: 'width 0.3s ease'
                   }}
                 />
@@ -657,7 +644,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 >
                   ✕
                 </button>
-                </Tooltip>
+              </Tooltip>
             </div>
           ))}
         </div>

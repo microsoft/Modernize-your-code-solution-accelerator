@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getApiUrl, getUserId } from './config';
+import { getApiUrl, headerBuilder } from './config';
 
 export const uploadFiles = async (files: File[]): Promise<any[]> => {
   const responses: any[] = [];
@@ -12,12 +12,10 @@ export const uploadFiles = async (files: File[]): Promise<any[]> => {
     console.log(formData)
     try {
       const apiUrl = getApiUrl();
-      const userId = getUserId();
       const response = await axios.post(`${apiUrl}/upload`, file, {
-        headers: {
+        headers: headerBuilder({
           'Content-Type': 'multipart/form-data',
-          "x-ms-client-principal-id": String(userId) ?? "",  // Custom header
-        },
+        })
       });
       responses.push(response.data);
     } catch (error) {

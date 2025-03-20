@@ -1,8 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
 import { Subtitle2 } from "@fluentui/react-components";
-import {getUserInfo}  from "../../api/auth";
-import ContosoLogo from "../../assets/Contoso.png";
-
 /**
  * @component
  * @name Header
@@ -14,37 +11,12 @@ import ContosoLogo from "../../assets/Contoso.png";
  * @prop {React.ReactNode} [children] - Optional header toolbar (e.g., buttons, menus).
  */
 type HeaderProps = {
-  logo?: React.ReactNode;
   title?: string;
   subtitle?: string;
   children?: React.ReactNode;
 };
 
-
-
-
-const Header: React.FC<HeaderProps> = ({ logo, title = "Contoso", subtitle, children }) => {
-  const [showAuthMessage, setShowAuthMessage] = useState<boolean | undefined>();
-  const firstRender = useRef(true);
-  useEffect(() => {
-    console.log("calling list ");
-    getUserInfoList();
-  }, []);
-
-  const getUserInfoList = async () => {
-  const userInfoList = await getUserInfo();
-  if (
-    (!userInfoList || userInfoList.length === 0) &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1"
-  ) {
-    setShowAuthMessage(true);
-  } else {
-    setShowAuthMessage(false);
-  }
-  };
-
-
+const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }) => {
   return (
     <header
       style={{
@@ -59,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ logo, title = "Contoso", subtitle, chil
         boxSizing: "border-box",
         gap: "12px",
         position: 'fixed',
-        zIndex:1000,
+        zIndex: 1000,
       }}
       data-figma-component="Header"
     >
@@ -73,7 +45,7 @@ const Header: React.FC<HeaderProps> = ({ logo, title = "Contoso", subtitle, chil
       >
         {/* Render custom logo or default MsftColor logo */}
         {/* <Avatar shape="square" color={null} icon={logo || <MsftColor />} /> */}
-        <img src={ContosoLogo} alt="Contoso" style={{ width: "25px", height: "25px" }} />
+        <img src="/images/Contoso.png" alt="Contoso" style={{ width: "25px", height: "25px" }} />
 
         {/* Render title and optional subtitle */}
         <Subtitle2 style={{ whiteSpace: "nowrap", marginTop: "-2px" }}>
