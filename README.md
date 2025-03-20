@@ -90,7 +90,7 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 - Embedding Deployment Capacity  
 - GPT Model Capacity
 
-JaHere are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
+Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
 
 This accelerator can be deployed with or without authentication. 
 
