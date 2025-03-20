@@ -87,18 +87,15 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 
 - Azure AI Foundry 
 - Azure OpenAI Service 
-- Azure AI Search
-- Azure AI Content Understanding
 - Embedding Deployment Capacity  
 - GPT Model Capacity
-- [Azure Semantic Search](./docs/AzureSemanticSearchRegion.md)  
 
-Here are some example regions where the services are available: East US, East US2, Australia East, UK South, France Central.
+JaHere are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
 
 This accelerator can be deployed with or without authentication. 
 
 * To install with authentication requires that the installer have the rights to create and register an application identity in their Azure environment.
-This is controlled through the Authorization field in the installation form. If you do not have this permission, or are not sure, you can start with the no authorization option to view and experiment with the accelerator.
+After installation is complete, follow the directions in the [App Authentication](./docs/AddAuthentication.md) document to enable authentication.
 * Note: If you install with authentication, all processing history and current processing will be performed for your specific user. If you deploy without authentication, all batch history from the tool will be visible to all users.
  
 ### **Configurable Deployment Settings**  
@@ -109,7 +106,6 @@ When you start the deployment, most parameters will have **default values**, but
 |------------|----------------|  ------------|
 | **Azure Region** | The region where resources will be created. | East US| 
 | **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **Authorization** | Authorization requires permission to create an app identity in the subscription. See readme for details |  false |
 | **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **GPT models**. |  5k |
 
@@ -124,6 +120,65 @@ To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)
 ### Deployment Options
 Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
 
+<details>
+  <summary><b>Deploy in GitHub Codespaces</b></summary>
+
+### GitHub Codespaces
+
+You can run this solution using GitHub Codespaces. The button will open a web-based VS Code instance in your browser:
+
+1. Open the solution accelerator (this may take several minutes):
+
+    [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator)
+2. Accept the default values on the create Codespaces page
+3. Open a terminal window if it is not already open
+4. Continue with the [deploying steps](#deploying)
+
+</details>
+
+<details>
+  <summary><b>Deploy in VS Code</b></summary>
+
+ ### VS Code Dev Containers
+
+You can run this solution in VS Code Dev Containers, which will open the project in your local VS Code using the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
+
+1. Start Docker Desktop (install it if not already installed)
+2. Open the project:
+
+    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator)
+
+
+3. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
+4. Continue with the [deploying steps](#deploying)
+
+</details>
+
+<details>
+  <summary><b>Deploy in your local environment</b></summary>
+
+ ### Local environment
+
+If you're not using one of the above options for opening the project, then you'll need to:
+
+1. Make sure the following tools are installed:
+
+    * [Azure Developer CLI (azd)](https://aka.ms/install-azd)
+    * [Python 3.9+](https://www.python.org/downloads/)
+    * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+    * [Git](https://git-scm.com/downloads)
+
+2. Download the project code:
+
+    ```shell
+    azd init -t microsoft/Modernize-your-Code-Solution-Accelerator/
+    ```
+
+3. Open the project folder in your terminal or editor.
+
+4. Continue with the [deploying steps](#deploying).
+
+</details>
 <details>
   <summary><b>Deploy with Bicep/ARM template</b></summary>
 
@@ -148,7 +203,7 @@ To change the azd parameters from the default values, follow the steps [here](./
     azd auth login
     ```
 
-    #### To authenticate with Azure Developer CLI (`azd`), use the following command with your **Tenant ID**:
+    #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
 
     ```sh
     azd auth login --tenant-id <tenant-id>
@@ -160,12 +215,12 @@ To change the azd parameters from the default values, follow the steps [here](./
     azd up
     ```
 
-3. Provide an `azd` environment name (like "ckmapp")
+3. Provide an `azd` environment name (like "cmsaapp")
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
-    * This deployment will take *7-10 minutes* to provision the resources in your account and set up the solution with sample data. 
+    * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
     * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.
 
-5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the App Service and get the app URL from `Default domain`.
+5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the container app with "frontend" in the name, and get the app URL from `Application URI`.
 
 6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
 
@@ -173,21 +228,17 @@ To change the azd parameters from the default values, follow the steps [here](./
 Additional Steps
 </h2>
 
-1. **Add App Authentication**
-   
-    If you chose to enable authentication for the deployment, follow the steps in [App Authentication](./docs/AddAuthentication.md)
-
 1. **Deleting Resources After a Failed Deployment**
 
      Follow steps in [Delete Resource Group](./docs/DeleteResourceGroup.md) If your deployment fails and you need to clean up the resources.
 
-## Sample Questions
+1. **Add App Authentication**
+   
+    If you chose to enable authentication for the deployment, follow the steps in [App Authentication](./docs/AddAuthentication.md)
 
-To help you get started, here are some **Sample Questions** you can ask in the app:
+## Running the application
 
-- < Add how to run here >
-
-These questions serve as a great starting point to explore insights from the data.
+To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
 
 <h2>
 Responsible AI Transparency FAQ 
@@ -222,9 +273,9 @@ either by deleting the resource group in the Portal or running `azd down`.
 
 ### Security guidelines
 
-This template uses Azure Key Vault to store all connections to communicate between resources.
+This installs Azure Key Vault for use by AI Foundry.
 
-This template also uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for local development and deployment.
+This template uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for all Azure service communication.
 
 To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
 
