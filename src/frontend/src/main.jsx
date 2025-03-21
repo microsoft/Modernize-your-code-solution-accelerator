@@ -6,7 +6,7 @@ import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import AuthProvider from './msal-auth/AuthProvider';
-import { setEnvData, setApiUrl } from './api/config';
+import { setEnvData, setApiUrl, config as defaultConfig } from './api/config';
 import { initializeMsalInstance } from './msal-auth/msalInstance';
 
 const Main = () => {
@@ -23,15 +23,7 @@ const Main = () => {
     const initMsal = async () => {
       try {
         const response = await fetch('/config');
-        let config = {
-          API_URL: "http://localhost:8000",
-          REACT_APP_MSAL_AUTH_CLIENTID: "",
-          REACT_APP_MSAL_AUTH_AUTHORITY: "",
-          REACT_APP_MSAL_REDIRECT_URL: "",
-          REACT_APP_MSAL_POST_REDIRECT_URL: "",
-          ENABLE_AUTH: false,
-        };
-
+        let config = defaultConfig;
         if (response.ok) {
           config = await response.json();
           config.ENABLE_AUTH = toBoolean(config.ENABLE_AUTH);

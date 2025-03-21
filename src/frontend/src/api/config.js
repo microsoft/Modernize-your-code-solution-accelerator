@@ -3,7 +3,7 @@
 export let API_URL = null;
 export let USER_ID = null;
 
-const config = {
+export let config = {
   API_URL: "http://localhost:8000",
   REACT_APP_MSAL_AUTH_CLIENTID: "",
   REACT_APP_MSAL_AUTH_AUTHORITY: "",
@@ -56,10 +56,9 @@ export function getApiUrl() {
   return API_URL;
 }
 
-
 export function getUserId() {
   USER_ID = window.activeUserId;
-  const userId = USER_ID??  "00000000-0000-0000-0000-000000000000";
+  const userId = USER_ID ?? "00000000-0000-0000-0000-000000000000";
   return userId;
 }
 
@@ -68,13 +67,10 @@ export function headerBuilder(headers) {
   let defaultHeaders = {
     "x-ms-client-principal-id": String(userId) || "",  // Custom header
   };
-  return { 
+  return {
     ...defaultHeaders, ...(headers ? headers : {})
   };
-
-
 }
-
 
 export default {
   setApiUrl,
