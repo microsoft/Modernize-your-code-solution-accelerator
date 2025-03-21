@@ -122,25 +122,55 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
   // const { todayBatches, past7DaysBatches, past30DaysBatches } = categorizeBatches();
 
   const deleteBatchFromHistory = (batchId: string) => {
-
+    // Get the current URL path
+    const currentPath = window.location.pathname;
+    
+    // Check if the current URL contains the batch ID being deleted
+    const isCurrentBatch = currentPath.includes(`/batch-view/${batchId}`) || 
+                           currentPath.includes(`/batch-process/${batchId}`);
+    
     const headers = {
       "Content-Type": "application/json",
       "user_id": "<authenticated_user_id>"
     };
+    
     try {
       dispatch(deleteBatch({ batchId, headers })).unwrap();
       const updatedBatchHistory = batchHistory.filter(batch => batch.batch_id !== batchId);
       setBatchHistory(updatedBatchHistory);
+      
+      // If the deleted batch is the current one, navigate to home page
+      if (isCurrentBatch) {
+        onClose(); // Close the panel first
+        requestAnimationFrame(() => {
+          navigate('/'); // Navigate to homepage
+        });
+      }
     } catch (error) {
       console.error("Batch deletion failed:", error);
     }
   };
 
   const deleteAllBatchesFromHistory = async () => {
+    // Get the current URL path
+    const currentPath = window.location.pathname;
+    
+    // Check if the current URL contains "/batch-view/" or "/batch-process/"
+    const isViewingBatch = currentPath.includes("/batch-view/") || 
+                           currentPath.includes("/batch-process/");
+    
     try {
       const headers = { "Content-Type": "application/json", user_id: "<authenticated_user_id>" };
       await dispatch(deleteAllBatches({ headers })).unwrap();
       setBatchHistory([]);
+      
+      // If the user is currently viewing any batch, navigate to home page
+      if (isViewingBatch) {
+        onClose(); // Close the panel first
+        requestAnimationFrame(() => {
+          navigate('/'); // Navigate to homepage
+        });
+      }
     } catch (error) {
       setError("Failed to clear batch history. Please try again later.");
       setTimeout(() => {
