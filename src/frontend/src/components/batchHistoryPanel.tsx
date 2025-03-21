@@ -21,7 +21,7 @@ interface BatchHistoryItem {
   status: string;
 }
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
-  const headers ={}
+  const headers = {}
   const [batchHistory, setBatchHistory] = useState<BatchHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
         navigate(`/batch-process/${batch.batch_id}`);
       }
     });
-};
+  };
 
   useEffect(() => {
     if (isOpen && !hasFetched.current) {
@@ -124,21 +124,20 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
   const deleteBatchFromHistory = (batchId: string) => {
     // Get the current URL path
     const currentPath = window.location.pathname;
-    
+
     // Check if the current URL contains the batch ID being deleted
-    const isCurrentBatch = currentPath.includes(`/batch-view/${batchId}`) || 
-                           currentPath.includes(`/batch-process/${batchId}`);
-    
+    const isCurrentBatch = currentPath.includes(`/batch-view/${batchId}`) ||
+      currentPath.includes(`/batch-process/${batchId}`);
+
     const headers = {
-      "Content-Type": "application/json",
-      "user_id": "<authenticated_user_id>"
+      "Content-Type": "application/json"
     };
-    
+
     try {
       dispatch(deleteBatch({ batchId, headers })).unwrap();
       const updatedBatchHistory = batchHistory.filter(batch => batch.batch_id !== batchId);
       setBatchHistory(updatedBatchHistory);
-      
+
       // If the deleted batch is the current one, navigate to home page
       if (isCurrentBatch) {
         onClose(); // Close the panel first
@@ -154,16 +153,16 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
   const deleteAllBatchesFromHistory = async () => {
     // Get the current URL path
     const currentPath = window.location.pathname;
-    
+
     // Check if the current URL contains "/batch-view/" or "/batch-process/"
-    const isViewingBatch = currentPath.includes("/batch-view/") || 
-                           currentPath.includes("/batch-process/");
-    
+    const isViewingBatch = currentPath.includes("/batch-view/") ||
+      currentPath.includes("/batch-process/");
+
     try {
-      const headers = { "Content-Type": "application/json", user_id: "<authenticated_user_id>" };
+      const headers = { "Content-Type": "application/json" };
       await dispatch(deleteAllBatches({ headers })).unwrap();
       setBatchHistory([]);
-      
+
       // If the user is currently viewing any batch, navigate to home page
       if (isViewingBatch) {
         onClose(); // Close the panel first
@@ -268,7 +267,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
                     return dateFormatter.format(date);
                   })()} ({batch.file_count} {batch.file_count === 1 ? "file" : "files"})
                 </span>
-                {hoveredBatchId === batch.batch_id ? (
+                {hoveredBatchId === batch.batch_id && batch.status === "completed" ? (
                   <Tooltip content="Delete Batch" relationship="label">
                     <button className="delete-button"
                       onClick={() => {
