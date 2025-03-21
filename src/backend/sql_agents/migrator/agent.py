@@ -3,8 +3,8 @@
 import logging
 
 from common.models.api import AgentType
-from helpers.sk_utils import create_kernel_with_chat_completion
-from helpers.utils import get_prompt
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
+from sql_agents.helpers.utils import get_prompt
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.functions import KernelArguments
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect

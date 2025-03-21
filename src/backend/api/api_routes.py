@@ -3,14 +3,11 @@
 import asyncio
 import io
 import zipfile
-from typing import Dict
 
 from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
-from azure.storage.blob import BlobServiceClient
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
-from common.services.queue_service import QueueService
 from fastapi import (
     APIRouter,
     File,
@@ -21,13 +18,12 @@ from fastapi import (
     WebSocket,
     WebSocketDisconnect,
 )
-from fastapi.responses import Response, StreamingResponse
-from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
+from fastapi.responses import Response
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
 
-# Temp while waiting for queue implementation
+# start processing the batch
 from sql_agents_start import process_batch_async
 
 
@@ -129,7 +125,7 @@ async def download_files(batch_id: str):
 
     file_data = await batch_service.get_batch_for_zip(batch_id)
     if not file_data:
-        raise HTTPException(status_code=404, detail="Batch not found") from e
+        raise HTTPException(status_code=404, detail="Batch not found")
 
     # Create an in-memory bytes buffer for the zip file
     zip_stream = io.BytesIO()
@@ -168,7 +164,7 @@ async def download_files(batch_id: str):
     except Exception as e:
         raise HTTPException(
             status_code=404, detail=f"Error creating ZIP file: {str(e)}"
-        )
+        ) from e
 
 
 @router.websocket("/socket/{batch_id}")
@@ -400,58 +396,7 @@ async def get_batch_summary(request: Request, batch_id: str):
         raise e
     except Exception as e:
         logger.error("Error fetching batch summary", error=str(e))
-        raise HTTPException(status_code=404, detail="Batch not found")
-
-
-@router.get("/testplugin")
-async def test_plugin(request: Request):
-    """
-    Test the Syntax Checker Plugin
-
-    ---
-    tags:
-      - Syntax Checker
-    parameters:
-      - in: query
-        name: candidate_sql
-        type: string
-        required: true
-        description: The SQL query to check for syntax errors.
-    responses:
-      200:
-        description: A JSON list of syntax errors or an empty list if there are no errors.
-        schema:
-          type: array
-          items:
-            type: object
-            properties:
-              Line:
-                type: integer
-                description: The line number where the error occurred.
-              Column:
-                type: integer
-                description: The column number where the error occurred.
-              Error:
-                type: string
-                description: The error message.
-      500:
-        description: Internal server error.
-        schema:
-          type: object
-          properties:
-            detail:
-              type: string
-              description: Error details.
-    """
-    try:
-        # Set the environment variables for Azure OpenAI
-        candidate_sql = "-- Return the first 5 rows from the 'employees' table \n SELECT FIRST 5 * FROM employees;"
-        ccp = SyntaxCheckerPlugin()
-        result = await ccp.check_syntax(candidate_sql)
-        print(result)
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=404, detail="Batch not found") from e
 
 
 @router.post("/upload")
@@ -683,7 +628,7 @@ async def get_file_details(request: Request, file_id: str):
         raise e
     except Exception as e:
         logger.error("Error retrieving file details", error=str(e))
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.delete("/delete-batch/{batch_id}")
@@ -738,7 +683,7 @@ async def delete_batch_details(request: Request, batch_id: str):
         raise e
     except Exception as e:
         logger.error("Failed to delete batch from database", error=str(e))
-        raise HTTPException(status_code=500, detail="Database connection error")
+        raise HTTPException(status_code=500, detail="Database connection error") from e
 
 
 @router.delete("/delete-file/{file_id}")
@@ -796,7 +741,7 @@ async def delete_file_details(request: Request, file_id: str):
         raise e
     except Exception as e:
         logger.error("Failed to delete file from database", error=str(e))
-        raise HTTPException(status_code=500, detail="Database connection error")
+        raise HTTPException(status_code=500, detail="Database connection error") from e
 
 
 @router.delete("/delete_all")
@@ -845,89 +790,7 @@ async def delete_all_details(request: Request):
         raise e
     except Exception as e:
         logger.error("Failed to delete user data from database", error=str(e))
-        raise HTTPException(status_code=500, detail="Database connection error")
-
-
-@router.post("/queue-send")
-async def queue_send(request: Request):
-
-    queue_service = QueueService()
-    # Get the payload from the request body
-    payload = await request.json()
-    translate_from = payload.get("translate_from")
-    translate_to = payload.get("translate_to")
-    batch_id = payload.get("batch_id")
-
-    if not batch_id or not translate_to:
-        raise HTTPException(
-            status_code=400, detail="batch_id and translate_to are required"
-        )
-
-    # Create the message to be sent to the queue
-    message = {
-        "batch_id": batch_id,
-        "translate_from": translate_from,
-        "translate_to": translate_to,
-    }
-
-    # Send the message to the Azure Service Bus Queue
-    await queue_service.send_message_to_queue(message)
-
-
-@router.get("/queue-entry")
-async def queue_entry(request: Request):
-    """
-    Process queue entry
-    ---
-    tags:
-    - Queue Processing
-    parameters:
-    - in: body
-      name: queue_entry
-      schema:
-        type: object
-        properties:
-          batch_id:
-            type: string
-            format: uuid
-          translate_from:
-            type: string
-          translate_to:
-            type: string
-    responses:
-      200:
-        description: Queue entry processed successfully
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                message:
-                  type: string
-      400:
-        description: Invalid queue entry request
-      500:
-        description: Internal server error
-    """
-    try:
-        # Get the payload from the request body
-        queue_service = QueueService()
-
-        messages = await queue_service.receive_messages_from_queue()
-
-        batch_id = messages.get("batch_id")
-
-        await process_batch_async(batch_id)
-
-        return {
-            "batch_id": batch_id,
-            "status": "Processing started successfully",
-            "message": "Files queued for processing",
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail="Database connection error") from e
 
 
 @router.get("/batch-history")
@@ -1009,35 +872,6 @@ async def list_batch_history(request: Request, offset: int = 0, limit: int = 25)
         raise e
     except Exception as e:
         logger.error("Error fetching batch history", error=str(e))
-        raise HTTPException(status_code=500, detail="Error retrieving batch history")
-
-
-async def process_queue_tasks():
-    """Background task that polls the queue for processing tasks"""
-    queue_service = QueueService()
-
-    while True:
-        try:
-            # Get a message from the queue (a task to process)
-            messages = await queue_service.receive_messages_from_queue(max_messages=1)
-            logger.info(f"Received messages1: {messages} \n\n\n")
-            if messages and len(messages) > 0:
-                # Extract the batch_id from the message
-                logger.info("Received task from queue IF \n\n\n")
-                message = messages[0]
-                logger.info(f"print Message: {message}")
-                batch_id = message.get("batch_id")
-                logger.info(f"print batch_id: {batch_id} \n\n\n")
-                if batch_id:
-                    logger.info(f"Retrieved task for batchq: {batch_id} \n\n\n")
-                    # Process the batch based on the task
-                    await process_batch_async(batch_id)
-                else:
-                    logger.error("Received task without batch_id")
-
-            # Wait before checking again
-            await asyncio.sleep(20)
-
-        except Exception as e:
-            logger.error(f"Error processing queue task: {str(e)}")
-            await asyncio.sleep(60)  # Longer delay after errors
+        raise HTTPException(
+            status_code=500, detail="Error retrieving batch history"
+        ) from e

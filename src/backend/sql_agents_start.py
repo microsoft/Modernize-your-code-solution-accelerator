@@ -21,9 +21,9 @@ from common.models.api import (
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
 from fastapi import HTTPException
-from helpers.selection_function import setup_selection_function
-from helpers.termination_function import setup_termination_function
-from helpers.utils import is_text
+from sql_agents.helpers.selection_function import setup_selection_function
+from sql_agents.helpers.termination_function import setup_termination_function
+from sql_agents.helpers.utils import is_text
 from semantic_kernel.agents import AgentGroupChat
 from semantic_kernel.agents.strategies import (
     KernelFunctionSelectionStrategy,
