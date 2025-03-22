@@ -456,28 +456,33 @@ class BatchService:
         files = await self.database.get_batch_files(batch_id)
         for file in files:
             file_record = FileRecord.fromdb(file)
-            if file_record.status == ProcessStatus.COMPLETED:
+            if file["status"] == ProcessStatus.COMPLETED.value:
                 # nothing to do if the file is already completed
                 continue
             # file didn't completed successfully
             file_record.status = ProcessStatus.COMPLETED
-            file_record.file_result = FileResult.ERROR
-            error_count, syntax_count = await self.get_file_counts(
-                str(file_record.file_id)
-            )
-            file_record.error_count = error_count + 1
-            file_record.syntax_count = syntax_count
-            try:
-                await self.create_file_log(
-                    str(file_record.file_id),
-                    "File didn't finish successfully.",
-                    "",
-                    LogType.ERROR,
-                    AgentType.SEMANTIC_VERIFIER,
-                    AuthorRole.ASSISTANT,
+
+            if(file_record.translated_path == None or file_record.translated_path == ""):
+                file_record.file_result = FileResult.ERROR
+
+                error_count, syntax_count = await self.get_file_counts(
+                    str(file_record.file_id)
                 )
-            except (RuntimeError, ValueError, IOError) as e:
-                self.logger.error(f"Error creating file log: {str(e)}")
+                file_record.error_count = error_count + 1
+                file_record.syntax_count = syntax_count
+                try:
+                    await self.create_file_log(
+                        str(file_record.file_id),
+                        "File didn't finish successfully.",
+                        "",
+                        LogType.ERROR,
+                        AgentType.ALL,
+                        AuthorRole.ASSISTANT,
+                    )
+                except (RuntimeError, ValueError, IOError) as e:
+                    self.logger.error(f"Error creating file log: {str(e)}")
+            else:
+                file_record.file_result = FileResult.SUCCESS
             try:
                 await self.update_file_record(file_record)
             except Exception as e:

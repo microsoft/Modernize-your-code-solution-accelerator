@@ -476,7 +476,7 @@ async def process_batch_async(batch_id: str):
                         "File is not a valid text file. Skipping.",
                         "",
                         LogType.ERROR,
-                        AgentType.SEMANTIC_VERIFIER,
+                        AgentType.ALL,
                         AuthorRole.ASSISTANT,
                     )
                     # send status update to the client of type failed
