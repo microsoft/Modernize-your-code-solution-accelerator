@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.33.93.31351",
-      "templateHash": "4845784968033668710"
+      "version": "0.34.1.11899",
+      "templateHash": "2685036763676904152"
     }
   },
   "parameters": {
@@ -74,7 +74,7 @@
     "llmModel": "gpt-4o",
     "prefixCleaned": "[replace(toLower(variables('finalName')), '-', '')]",
     "storageSkuName": "Standard_LRS",
-    "storageContainerName": "[format('{0}contstorage', variables('prefixCleaned'))]",
+    "storageContainerName": "[format('{0}ctstor', variables('prefixCleaned'))]",
     "gptModelVersion": "2024-08-06",
     "storageNameCleanedContainer": "[replace(variables('storageContainerName'), '-', '')]",
     "aiServicesName": "[format('{0}-aiservices', variables('prefixCleaned'))]",
@@ -186,7 +186,7 @@
                 },
                 {
                   "name": "AZURE_BLOB_ACCOUNT_NAME",
-                  "value": "[variables('storageNameCleanedContainer')]"
+                  "value": "[variables('storageContainerName')]"
                 },
                 {
                   "name": "AZURE_BLOB_CONTAINER_NAME",
@@ -237,13 +237,13 @@
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry')]",
         "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned'))))]",
         "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned'))))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleanedContainer'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageContainerName'))]"
       ]
     },
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2022-09-01",
-      "name": "[variables('storageNameCleanedContainer')]",
+      "name": "[variables('storageContainerName')]",
       "location": "[variables('location')]",
       "sku": {
         "name": "[variables('storageSkuName')]"
@@ -296,7 +296,7 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
-      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageNameCleanedContainer'))]",
+      "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageContainerName'))]",
       "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), 'Storage Blob Data Contributor')]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
@@ -304,7 +304,7 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
-        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleanedContainer'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageContainerName'))]"
       ]
     },
     {
@@ -328,7 +328,7 @@
       },
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2021-08-01",
-      "name": "[format('{0}/default/{1}', variables('storageNameCleanedContainer'), variables('containerNames')[copyIndex()])]",
+      "name": "[format('{0}/default/{1}', variables('storageContainerName'), variables('containerNames')[copyIndex()])]",
       "properties": {
         "publicAccess": "None"
       },
@@ -360,8 +360,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "11665286146084422127"
+              "version": "0.34.1.11899",
+              "templateHash": "11366093186241764702"
             }
           },
           "parameters": {
@@ -458,8 +458,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "4388214478635448075"
+              "version": "0.34.1.11899",
+              "templateHash": "10079365566064414507"
             }
           },
           "parameters": {
@@ -596,8 +596,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "10270252950808398257"
+              "version": "0.34.1.11899",
+              "templateHash": "18164503561501536590"
             }
           },
           "parameters": {
