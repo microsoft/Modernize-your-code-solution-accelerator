@@ -59,7 +59,6 @@ var prefixCleaned = replace(toLower(finalName), '-', '')
 var storageSkuName = 'Standard_LRS'
 var storageContainerName = '${prefixCleaned}ctstor'
 var gptModelVersion = '2024-08-06'
-var storageNameCleanedContainer = replace(storageContainerName, '-', '')
 var aiServicesName = '${prefixCleaned}-aiservices'
 
 
