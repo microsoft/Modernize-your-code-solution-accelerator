@@ -57,7 +57,7 @@ var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
 var prefixCleaned = replace(toLower(finalName), '-', '')
 var storageSkuName = 'Standard_LRS'
-var storageContainerName = '${prefixCleaned}contstorage'
+var storageContainerName = '${prefixCleaned}ctstor'
 var gptModelVersion = '2024-08-06'
 var storageNameCleanedContainer = replace(storageContainerName, '-', '')
 var aiServicesName = '${prefixCleaned}-aiservices'
@@ -363,7 +363,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
   }
 }
 resource storageContianerApp 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: storageNameCleanedContainer
+  name: storageContainerName
   location: location
   sku: {
     name: storageSkuName
@@ -438,7 +438,7 @@ var containerNames = [
 
 // Create a blob container resource for each container name.
 resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for containerName in containerNames: {
-  name: '${storageNameCleanedContainer}/default/${containerName}'
+  name: '${storageContainerName}/default/${containerName}'
   properties: {
     publicAccess: 'None'
   }
