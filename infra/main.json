@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.1.11899",
-      "templateHash": "2685036763676904152"
+      "templateHash": "11242598392376937246"
     }
   },
   "parameters": {
@@ -76,7 +76,6 @@
     "storageSkuName": "Standard_LRS",
     "storageContainerName": "[format('{0}ctstor', variables('prefixCleaned'))]",
     "gptModelVersion": "2024-08-06",
-    "storageNameCleanedContainer": "[replace(variables('storageContainerName'), '-', '')]",
     "aiServicesName": "[format('{0}-aiservices', variables('prefixCleaned'))]",
     "aiModelDeployments": [
       {
