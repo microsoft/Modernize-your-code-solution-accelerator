@@ -39,7 +39,7 @@ jobs:
       with:
         registry: ${{ inputs.registry }}
         username: ${{ inputs.username }}
-        password: ${{ secrets[inputs.password_secret] }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
