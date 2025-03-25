@@ -6,9 +6,8 @@ environment:
   name: modernize-your-code-solution-accelerator
   location: eastus
 name: modernize-your-code-solution-accelerator
-#KEEP OFF UNTIL WE ARE READY TO PUBLISH ISH
-# metadata:
-#     template: azd-init@1.13.0
+metadata:
+    template: azd-init@1.13.0
 parameters:
   environmentName:
     type: string
