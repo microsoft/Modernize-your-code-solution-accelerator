@@ -65,13 +65,13 @@ jobs:
     - name: Determine Tag Name Based on Branch
       id: determine_tag
       run: |
-        if [[ "${{ github.ref_name }}" == "main" ]]; then
+        if [[ "${{ github.base_ref }}" == "main" ]]; then
           echo "tagname=latest" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+        elif [[ "${{ github.base_ref }}" == "dev" ]]; then
           echo "tagname=dev" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref_name }}" == "demo" ]]; then
+        elif [[ "${{ github.base_ref }}" == "demo" ]]; then
           echo "tagname=demo" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.ref_name }}" == "dependabotchanges" ]]; then
+        elif [[ "${{ github.base_ref }}" == "dependabotchanges" ]]; then
           echo "tagname=dependabotchanges" >> $GITHUB_OUTPUT
         else
           echo "tagname=default" >> $GITHUB_OUTPUT
