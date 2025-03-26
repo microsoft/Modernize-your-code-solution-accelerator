@@ -47,6 +47,14 @@ jobs:
       id: date
       run: echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
 
+    - name: Debug Inputs
+      run: |
+        echo "Registry: ${{ inputs.registry }}"
+        echo "Username: ${{ inputs.username }}"
+        echo "App Name: ${{ inputs.app_name }}"
+        echo "Dockerfile: ${{ inputs.dockerfile }}"
+        echo "Push: ${{ inputs.push }}"
+
     - name: Determine Tag Name Based on Branch
       id: determine_tag
       run: |
