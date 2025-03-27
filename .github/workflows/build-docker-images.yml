@@ -24,10 +24,10 @@ jobs:
     strategy:
       matrix:
         include:
-          - app_name: rag-backend
+          - app_name: backend
             dockerfile: docker/Backend.Dockerfile
             password_secret: DOCKER_PASSWORD
-          - app_name: rag-webapp
+          - app_name: webapp
             dockerfile: docker/Frontend.Dockerfile
             password_secret: DOCKER_PASSWORD
     uses: ./.github/workflows/build-docker.yml
