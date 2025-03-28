@@ -1,3 +1,7 @@
+main {
+  padding-top: 8rem !important;
+}
+
 .main-content {
   transition: margin-right 0.3s ease-in-out; /* Smooth transition */
   margin-right: 0px; /* Default margin */
@@ -36,6 +40,6 @@ background: #f1f1f1; /* Track color */
   overflow-y: auto;
   flex: 1;
   /* //margin-top: 60px; Same as header height */
-  margin-bottom: 50px; /* Adjust based on bottom bar height */
+  margin-bottom: 50px; /*Adjust based on bottom bar height */
   scrollbar-width: none;
 }
