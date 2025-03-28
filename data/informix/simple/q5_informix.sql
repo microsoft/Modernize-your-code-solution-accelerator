@@ -1,0 +1,1 @@
+CREATE DISTINCT TYPE phone_number AS VARCHAR(20);
