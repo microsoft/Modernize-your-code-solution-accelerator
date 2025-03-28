@@ -4,13 +4,15 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.34.1.11899",
-      "templateHash": "11242598392376937246"
+      "version": "0.34.44.8038",
+      "templateHash": "1800728255053565584"
     }
   },
   "parameters": {
     "ResourcePrefix": {
       "type": "string",
+      "minLength": 3,
+      "maxLength": 10,
       "metadata": {
         "description": "Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group."
       }
@@ -49,19 +51,11 @@
     "capacity": {
       "type": "int",
       "defaultValue": 5
-    },
-    "environmentName": {
-      "type": "string",
-      "minLength": 3,
-      "maxLength": 10,
-      "metadata": {
-        "description": "A unique prefix for all resources in this deployment. This should be 3-10 characters long:"
-      }
     }
   },
   "variables": {
-    "randomSuffix": "[substring(parameters('environmentName'), 0, min(10, length(parameters('environmentName'))))]",
-    "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomSuffix'))]",
+    "randomString": "[substring(uniqueString(resourceGroup().id), 0, 4)]",
+    "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomString'))]",
     "imageVersion": "rc1",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
@@ -359,8 +353,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.1.11899",
-              "templateHash": "11366093186241764702"
+              "version": "0.34.44.8038",
+              "templateHash": "17863870312619064541"
             }
           },
           "parameters": {
@@ -457,8 +451,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.1.11899",
-              "templateHash": "10079365566064414507"
+              "version": "0.34.44.8038",
+              "templateHash": "10664495342911727649"
             }
           },
           "parameters": {
@@ -595,8 +589,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.1.11899",
-              "templateHash": "18164503561501536590"
+              "version": "0.34.44.8038",
+              "templateHash": "12550713338937452696"
             }
           },
           "parameters": {

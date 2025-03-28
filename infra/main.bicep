@@ -1,5 +1,7 @@
+@minLength(3)
+@maxLength(10)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param ResourcePrefix string
+param ResourcePrefix string 
 
 @allowed([
   'australiaeast'
@@ -30,20 +32,19 @@ param ResourcePrefix string
 param AiLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
-@minLength(3)
-@maxLength(10)
-@description('A unique prefix for all resources in this deployment. This should be 3-10 characters long:')
-param environmentName string 
 
+@description('A unique prefix for all resources in this deployment. This should be 3-10 characters long:')
+//param environmentName string 
+var randomString = substring(uniqueString(resourceGroup().id), 0, 4)
 @description('The location used for all deployed resources')
 // Generate a unique string based on the base name and a unique identifier
 //var uniqueSuffix = uniqueString(resourceGroup().id, ResourcePrefix)
 
 // Take the first 4 characters of the unique string to use as a suffix
-var randomSuffix = substring(environmentName, 0, min(10, length(environmentName)))
+//var randomSuffix = substring(ResourcePrefix, 0, min(10, length(ResourcePrefix)))
 
 // Combine the base name with the random suffix
-var finalName = '${ResourcePrefix}-${randomSuffix}'
+var finalName = '${ResourcePrefix}-${randomString}'
 
 var imageVersion = 'rc1'
 var location  = resourceGroup().location
