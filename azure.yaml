@@ -1,17 +1,10 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
-
-
-
 environment:
   name: modernize-your-code-solution-accelerator
   location: eastus
 name: modernize-your-code-solution-accelerator
 metadata:
-    template: azd-init@1.13.0
+    template: modernize-your-code-solution-accelerator@1.0
 parameters:
-  # environmentName:
-  #   type: string
-  #   default: azdtest  
   AiLocation:
     type: string
     default: japaneast
@@ -20,7 +13,11 @@ parameters:
     default: bs-azdtest
   baseUrl:
     type: string
-    default: 'https://github.com/microsoft/Modernize-your-code-solution-accelerator'
+    default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
 deployment:
   mode: Incremental
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
+  prameters:
+    AiLocation: ${{ parameters.AiLocation }}
+    ResourcePrefix: ${{ parameters.ResourcePrefix }}
+    baseUrl: ${{ parameters.baseUrl }}
