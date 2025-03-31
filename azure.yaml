@@ -9,9 +9,9 @@ name: modernize-your-code-solution-accelerator
 metadata:
     template: azd-init@1.13.0
 parameters:
-  environmentName:
-    type: string
-    default: azdtest  
+  # environmentName:
+  #   type: string
+  #   default: azdtest  
   AiLocation:
     type: string
     default: japaneast
