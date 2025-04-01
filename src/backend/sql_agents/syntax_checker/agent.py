@@ -2,13 +2,16 @@
 
 import logging
 
+from azure.ai.projects.models import (
+    ResponseFormatJsonSchema,
+    ResponseFormatJsonSchemaType,
+)
+from common.config.config import app_config
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
-from semantic_kernel.agents import ChatCompletionAgent
-from semantic_kernel.connectors.ai import FunctionChoiceBehavior
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from semantic_kernel.kernel import KernelArguments
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
+from sql_agents.helpers.utils import get_prompt
 from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
 from sql_agents.syntax_checker.response import SyntaxCheckerResponse
 
@@ -16,13 +19,12 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def setup_syntax_checker_agent(
+async def setup_syntax_checker_agent(
     name: AgentType, config: AgentsConfigDialect, deployment_name: AgentModelDeployment
-) -> ChatCompletionAgent:
+) -> AzureAIAgent:
     """Setup the syntax checker agent."""
     _deployment_name = deployment_name.value
     _name = name.value
-    kernel = create_kernel_with_chat_completion(_name, _deployment_name)
 
     try:
         template_content = get_prompt(_name)
@@ -30,23 +32,32 @@ def setup_syntax_checker_agent(
         logger.error("Prompt file for %s not found.", _name)
         raise ValueError(f"Prompt file for {_name} not found.") from exc
 
-    settings = kernel.get_prompt_execution_settings_from_service_id(
-        service_id="syntax_checker"
-    )
-    settings.response_format = SyntaxCheckerResponse
-    settings.temperature = 0.0
-
     # Configure the function choice behavior to auto invoke kernel functions
-    settings.function_choice_behavior = FunctionChoiceBehavior.Required()
+    # settings.function_choice_behavior = FunctionChoiceBehavior.Required()
 
-    kernel_args = KernelArguments(target=config.sql_dialect_out, settings=settings)
+    kernel_args = KernelArguments(target=config.sql_dialect_out)
 
-    kernel.add_plugin(SyntaxCheckerPlugin(), plugin_name="check_syntax")
-
-    syntax_checker_agent = ChatCompletionAgent(
-        kernel=kernel,
+    # Define an agent on the Azure AI agent service
+    agent_definition = await app_config.ai_project_client.agents.create_agent(
+        model=_deployment_name,
         name=_name,
         instructions=template_content,
+        temperature=0.0,
+        response_format=ResponseFormatJsonSchemaType(
+            json_schema=ResponseFormatJsonSchema(
+                name="SyntaxCheckerResponse",
+                description="respond with SyntaxChecker response",
+                schema=SyntaxCheckerResponse.model_json_schema(),
+            )
+        ),
+    )
+
+    # Create a Semantic Kernel agent based on the agent definition.
+    # Add RAG with docs programmatically for this one
+    syntax_checker_agent = AzureAIAgent(
+        client=app_config.ai_project_client,
+        definition=agent_definition,
         arguments=kernel_args,
+        plugins=["check_syntax", SyntaxCheckerPlugin()],
     )
     return syntax_checker_agent

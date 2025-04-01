@@ -1,7 +1,7 @@
-﻿from pydantic import BaseModel
+﻿from semantic_kernel.kernel_pydantic import KernelBaseModel
 
 
-class FixerResponse(BaseModel):
+class FixerResponse(KernelBaseModel):
     """
     Model for the response of the fixer
     """

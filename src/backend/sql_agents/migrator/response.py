@@ -1,7 +1,7 @@
-﻿from pydantic import BaseModel
+﻿from semantic_kernel.kernel_pydantic import KernelBaseModel
 
 
-class MigratorCandidate(BaseModel):
+class MigratorCandidate(KernelBaseModel):
     """
     Model for a single candidate for migration
     """
@@ -10,7 +10,7 @@ class MigratorCandidate(BaseModel):
     candidate_query: str
 
 
-class MigratorResponse(BaseModel):
+class MigratorResponse(KernelBaseModel):
     """
     Model for the response of the migrator
     """

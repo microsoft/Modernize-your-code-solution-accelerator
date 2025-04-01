@@ -13,13 +13,13 @@ from sql_agents.syntax_checker.agent import setup_syntax_checker_agent
 from .agent_config import AgentsConfigDialect, create_config
 
 __all__ = [
+    "create_kernel_with_chat_completion",
     "setup_migrator_agent",
     "setup_fixer_agent",
     "setup_picker_agent",
     "setup_syntax_checker_agent",
     "setup_semantic_verifier_agent",
     "get_prompt",
-    "create_kernel_with_chat_completion",
     "create_config",
     "AgentType",
 ]
