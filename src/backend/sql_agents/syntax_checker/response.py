@@ -1,15 +1,15 @@
 ﻿from typing import List
 
-from pydantic import BaseModel
+from semantic_kernel.kernel_pydantic import KernelBaseModel
 
 
-class SyntaxErrorInt(BaseModel):
+class SyntaxErrorInt(KernelBaseModel):
     line: int
     column: int
     error: str
 
 
-class SyntaxCheckerResponse(BaseModel):
+class SyntaxCheckerResponse(KernelBaseModel):
     """
     Response model for the syntax checker agent
     """

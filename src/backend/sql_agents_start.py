@@ -21,9 +21,6 @@ from common.models.api import (
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
 from fastapi import HTTPException
-from sql_agents.helpers.selection_function import setup_selection_function
-from sql_agents.helpers.termination_function import setup_termination_function
-from sql_agents.helpers.utils import is_text
 from semantic_kernel.agents import AgentGroupChat
 from semantic_kernel.agents.strategies import (
     KernelFunctionSelectionStrategy,
@@ -46,6 +43,9 @@ from sql_agents import (
 )
 from sql_agents.agent_config import AgentModelDeployment, create_config
 from sql_agents.fixer.response import FixerResponse
+from sql_agents.helpers.selection_function import setup_selection_function
+from sql_agents.helpers.termination_function import setup_termination_function
+from sql_agents.helpers.utils import is_text
 from sql_agents.migrator.response import MigratorResponse
 from sql_agents.picker.response import PickerResponse
 from sql_agents.semantic_verifier.response import SemanticVerifierResponse
@@ -87,22 +87,22 @@ def extract_query(content):
 
 async def configure_agents():
     try:
-        agent_fixer = setup_fixer_agent(
+        agent_fixer = await setup_fixer_agent(
             AgentType.FIXER,
             agent_dialect_config,
             AgentModelDeployment.FIXER_AGENT_MODEL_DEPLOY,
         )
-        agent_migrator = setup_migrator_agent(
+        agent_migrator = await setup_migrator_agent(
             AgentType.MIGRATOR,
             agent_dialect_config,
             AgentModelDeployment.MIGRATOR_AGENT_MODEL_DEPLOY,
         )
-        agent_picker = setup_picker_agent(
+        agent_picker = await setup_picker_agent(
             AgentType.PICKER,
             agent_dialect_config,
             AgentModelDeployment.PICKER_AGENT_MODEL_DEPLOY,
         )
-        agent_syntax_checker = setup_syntax_checker_agent(
+        agent_syntax_checker = await setup_syntax_checker_agent(
             AgentType.SYNTAX_CHECKER,
             agent_dialect_config,
             AgentModelDeployment.SYNTAX_CHECKER_AGENT_MODEL_DEPLOY,
@@ -410,7 +410,7 @@ async def invoke_semantic_verifier(
             ChatMessageContent(role=AuthorRole.USER, content=user_message)
         )
 
-        agent_semantic_verifier = setup_semantic_verifier_agent(
+        agent_semantic_verifier = await setup_semantic_verifier_agent(
             AgentType.SEMANTIC_VERIFIER,
             agent_dialect_config,
             AgentModelDeployment.SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY,

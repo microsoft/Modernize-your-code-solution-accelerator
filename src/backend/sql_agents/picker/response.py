@@ -1,12 +1,12 @@
-﻿from pydantic import BaseModel
+﻿from semantic_kernel.kernel_pydantic import KernelBaseModel
 
 
-class PickerCandidateSummary(BaseModel):
+class PickerCandidateSummary(KernelBaseModel):
     candidate_index: int
     candidate_summary: str
 
 
-class PickerResponse(BaseModel):
+class PickerResponse(KernelBaseModel):
     """
     The response of the picker agent.
     """

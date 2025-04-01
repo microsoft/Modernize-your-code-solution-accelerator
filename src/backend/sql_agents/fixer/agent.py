@@ -2,30 +2,28 @@
 
 import logging
 
+from azure.ai.projects.models import (
+    ResponseFormatJsonSchema,
+    ResponseFormatJsonSchemaType,
+)
+from common.config.config import app_config
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
-from semantic_kernel.agents import ChatCompletionAgent
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from semantic_kernel.kernel import KernelArguments
-from semantic_kernel.prompt_template import PromptTemplateConfig
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
 from sql_agents.fixer.response import FixerResponse
+from sql_agents.helpers.utils import get_prompt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-
-
-def setup_fixer_agent(
+async def setup_fixer_agent(
     name: AgentType, config: AgentsConfigDialect, deployment_name: AgentModelDeployment
-) -> ChatCompletionAgent:
+) -> AzureAIAgent:
     """Setup the fixer agent."""
     _deployment_name = deployment_name.value
     _name = name.value
-    kernel = create_kernel_with_chat_completion(_name, _deployment_name)
 
     try:
         template_content = get_prompt(_name)
@@ -33,18 +31,28 @@ def setup_fixer_agent(
         logger.error("Prompt file for %s not found.", _name)
         raise ValueError(f"Prompt file for {_name} not found.") from exc
 
-    # prompt = replace_tags(template_content, {"target": config.sql_dialect_out})
+    kernel_args = KernelArguments(target=config.sql_dialect_out)
 
-    settings = kernel.get_prompt_execution_settings_from_service_id(service_id=_name)
-    settings.response_format = FixerResponse
-    settings.temperature = 0.0
-
-    kernel_args = KernelArguments(target=config.sql_dialect_out, settings=settings)
-
-    fixer_agent = ChatCompletionAgent(
-        kernel=kernel,
+    # Define an agent on the Azure AI agent service
+    agent_definition = await app_config.ai_project_client.agents.create_agent(
+        model=_deployment_name,
         name=_name,
         instructions=template_content,
+        temperature=0.0,
+        response_format=ResponseFormatJsonSchemaType(
+            json_schema=ResponseFormatJsonSchema(
+                name="FixerResponse",
+                description="respond with fixer response",
+                schema=FixerResponse.model_json_schema(),
+            )
+        ),
+    )
+
+    # Create a Semantic Kernel agent based on the agent definition.
+    # Add RAG with docs programmatically for this one
+    fixer_agent = AzureAIAgent(
+        client=app_config.ai_project_client,
+        definition=agent_definition,
         arguments=kernel_args,
     )
 

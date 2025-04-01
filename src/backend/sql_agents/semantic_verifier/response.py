@@ -1,7 +1,7 @@
-﻿from pydantic import BaseModel
+﻿from semantic_kernel.kernel_pydantic import KernelBaseModel
 
 
-class SemanticVerifierResponse(BaseModel):
+class SemanticVerifierResponse(KernelBaseModel):
     """
     Response model for the semantic verifier agent
     """
