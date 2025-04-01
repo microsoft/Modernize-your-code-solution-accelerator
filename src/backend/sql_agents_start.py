@@ -66,8 +66,6 @@ ch.setFormatter(formatter)
 # Add the handler to the logger
 logger.addHandler(ch)
 
-# DEPLOYMENT_NAME = os.environ["AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"]
-
 # configure agents
 agent_dialect_config = create_config(sql_dialect_in="informix", sql_dialect_out="tsql")
 
@@ -304,7 +302,7 @@ async def convert(
         semver_response or ""
     )
 
-    # Fake a problematic response for testing
+    # Fake a problematic response for testing warning condition
     # semver_response = SemanticVerifierResponse(
     #     analysis="",
     #     judgement="",
@@ -450,10 +448,18 @@ async def process_batch_async(batch_id: str):
             logger.error("Error updating batch status.{}".format(exc))
             # raise exc
 
+        # Add client and auto cleanup
+        #     async with (
+        #         DefaultAzureCredential() as creds,
+        #         AzureAIAgent.create_client(credential=creds) as client,
+        #     ):
+
         # setup agents once per batch
         agent_config = await configure_agents()
 
         # Walk through each file name and retrieve it from blob storage
+        # Send file to the agents for processing
+        # Send status update to the client of type in progress, completed, or failed
         for file in batch_files:
             # Get the file from blob storage
             try:
