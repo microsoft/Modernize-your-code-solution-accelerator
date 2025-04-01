@@ -1,0 +1,54 @@
+"""Factory for creating SQL migration agents."""
+
+import logging
+from typing import Type, TypeVar
+
+from common.models.api import AgentType
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
+from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
+from sql_agents.specific_agents import MigratorAgent, PickerAgent
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# Type variable for agent response types
+T = TypeVar('T')
+
+
+class SQLAgentFactory:
+    """Factory for creating SQL migration agents."""
+
+    _agent_classes = {
+        AgentType.PICKER: PickerAgent,
+        AgentType.MIGRATOR: MigratorAgent,
+    }
+
+    @classmethod
+    async def create_agent(
+        cls,
+        agent_type: AgentType,
+        config: AgentsConfigDialect,
+        deployment_name: AgentModelDeployment,
+    ) -> AzureAIAgent:
+        """Create and setup an agent of the specified type."""
+        agent_class = cls._agent_classes.get(agent_type)
+        if not agent_class:
+            raise ValueError(f"Unknown agent type: {agent_type}")
+
+        agent = agent_class(agent_type, config, deployment_name)
+        return await agent.setup()
+    
+    @classmethod
+    def get_agent_class(cls, agent_type: AgentType) -> Type[BaseSQLAgent]:
+        """Get the agent class for the specified type."""
+        agent_class = cls._agent_classes.get(agent_type)
+        if not agent_class:
+            raise ValueError(f"Unknown agent type: {agent_type}")
+        return agent_class
+    
+    @classmethod
+    def register_agent_class(cls, agent_type: AgentType, agent_class: Type[BaseSQLAgent]) -> None:
+        """Register a new agent class with the factory."""
+        cls._agent_classes[agent_type] = agent_class
+        logger.info("Registered agent class %s for type %s", agent_class.__name__, agent_type.value)
