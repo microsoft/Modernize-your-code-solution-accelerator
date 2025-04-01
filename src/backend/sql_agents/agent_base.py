@@ -2,7 +2,7 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, List, Optional, TypeVar, Union
 
 from azure.ai.projects.models import (
     ResponseFormatJsonSchema,
@@ -30,14 +30,21 @@ class BaseSQLAgent(Generic[T], ABC):
         agent_type: AgentType,
         config: AgentsConfigDialect,
         deployment_name: AgentModelDeployment,
-
+        temperature: float = 0.0,
     ):
-        """Initialize the base SQL agent."""
+        """Initialize the base SQL agent.
+        
+        Args:
+            agent_type: The type of agent to create.
+            config: The dialect configuration for the agent.
+            deployment_name: The model deployment to use.
+            temperature: The temperature parameter for the model.
+        """
         self.agent_type = agent_type
         self.config = config
         self.deployment_name = deployment_name
+        self.temperature = temperature
         self.agent: AzureAIAgent = None
-
 
     @property
     @abstractmethod
@@ -46,10 +53,38 @@ class BaseSQLAgent(Generic[T], ABC):
         pass
 
     @property
-    @abstractmethod
-    def num_candidates(self) -> int:
-        """Get the number of candidates for this agent."""
-        pass
+    def num_candidates(self) -> Optional[int]:
+        """Get the number of candidates for this agent.
+        
+        Returns:
+            The number of candidates, or None if not applicable.
+        """
+        return None
+
+    @property
+    def plugins(self) -> Optional[List[Union[str, Any]]]:
+        """Get the plugins for this agent.
+        
+        Returns:
+            A list of plugins, or None if not applicable.
+        """
+        return None
+
+    def get_kernel_arguments(self) -> KernelArguments:
+        """Get the kernel arguments for this agent.
+        
+        Returns:
+            A KernelArguments object with the necessary arguments.
+        """
+        args = {
+            "target": self.config.sql_dialect_out,
+            "source": self.config.sql_dialect_in,
+        }
+        
+        if self.num_candidates is not None:
+            args["numCandidates"] = str(self.num_candidates)
+            
+        return KernelArguments(**args)
 
     async def setup(self) -> AzureAIAgent:
         """Setup the agent with Azure AI."""
@@ -62,11 +97,7 @@ class BaseSQLAgent(Generic[T], ABC):
             logger.error("Prompt file for %s not found.", _name)
             raise ValueError(f"Prompt file for {_name} not found.") from exc
 
-        kernel_args = KernelArguments(
-            target=self.config.sql_dialect_out,
-            numCandidates=str(self.num_candidates),
-            source=self.config.sql_dialect_in,
-        )
+        kernel_args = self.get_kernel_arguments()
 
         # Define an agent on the Azure AI agent service
         agent_definition = await app_config.ai_project_client.agents.create_agent(
@@ -84,11 +115,17 @@ class BaseSQLAgent(Generic[T], ABC):
         )
 
         # Create a Semantic Kernel agent based on the agent definition
-        self.agent = AzureAIAgent(
-            client=app_config.ai_project_client,
-            definition=agent_definition,
-            arguments=kernel_args,
-        )
+        agent_kwargs = {
+            "client": app_config.ai_project_client,
+            "definition": agent_definition,
+            "arguments": kernel_args,
+        }
+        
+        # Add plugins if specified
+        if self.plugins:
+            agent_kwargs["plugins"] = self.plugins
+            
+        self.agent = AzureAIAgent(**agent_kwargs)
 
         return self.agent
 

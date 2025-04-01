@@ -1,13 +1,13 @@
 """Factory for creating SQL migration agents."""
 
 import logging
-from typing import Type, TypeVar
+from typing import Type, TypeVar, Optional, Dict, Any
 
 from common.models.api import AgentType
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
-from sql_agents.specific_agents import MigratorAgent, PickerAgent
+from sql_agents.specific_agents import MigratorAgent, PickerAgent, SyntaxCheckerAgent
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -22,6 +22,7 @@ class SQLAgentFactory:
     _agent_classes = {
         AgentType.PICKER: PickerAgent,
         AgentType.MIGRATOR: MigratorAgent,
+        AgentType.SYNTAX_CHECKER: SyntaxCheckerAgent,
     }
 
     @classmethod
@@ -30,13 +31,38 @@ class SQLAgentFactory:
         agent_type: AgentType,
         config: AgentsConfigDialect,
         deployment_name: AgentModelDeployment,
+        temperature: float = 0.0,
+        extra_params: Optional[Dict[str, Any]] = None,
     ) -> AzureAIAgent:
-        """Create and setup an agent of the specified type."""
+        """Create and setup an agent of the specified type.
+        
+        Args:
+            agent_type: The type of agent to create.
+            config: The dialect configuration for the agent.
+            deployment_name: The model deployment to use.
+            temperature: The temperature parameter for the model.
+            extra_params: Additional parameters to pass to the agent constructor.
+            
+        Returns:
+            A configured AzureAIAgent instance.
+        """
         agent_class = cls._agent_classes.get(agent_type)
         if not agent_class:
             raise ValueError(f"Unknown agent type: {agent_type}")
 
-        agent = agent_class(agent_type, config, deployment_name)
+        # Prepare constructor parameters
+        params = {
+            "agent_type": agent_type,
+            "config": config,
+            "deployment_name": deployment_name,
+            "temperature": temperature,
+        }
+        
+        # Add any extra parameters provided
+        if extra_params:
+            params.update(extra_params)
+            
+        agent = agent_class(**params)
         return await agent.setup()
     
     @classmethod
