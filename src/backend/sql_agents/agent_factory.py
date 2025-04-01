@@ -7,7 +7,12 @@ from common.models.api import AgentType
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
-from sql_agents.specific_agents import MigratorAgent, PickerAgent, SyntaxCheckerAgent
+from sql_agents.migrator.agent import MigratorAgent
+from sql_agents.picker.agent import PickerAgent 
+from sql_agents.syntax_checker.agent import SyntaxCheckerAgent
+from sql_agents.fixer.agent import FixerAgent   
+from sql_agents.semantic_verifier.agent import SemanticVerifierAgent
+from sql_agents.helpers.utils import get_prompt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -23,6 +28,8 @@ class SQLAgentFactory:
         AgentType.PICKER: PickerAgent,
         AgentType.MIGRATOR: MigratorAgent,
         AgentType.SYNTAX_CHECKER: SyntaxCheckerAgent,
+        AgentType.FIXER: FixerAgent,
+        AgentType.SEMANTIC_VERIFIER: SemanticVerifierAgent,
     }
 
     @classmethod
@@ -32,7 +39,7 @@ class SQLAgentFactory:
         config: AgentsConfigDialect,
         deployment_name: AgentModelDeployment,
         temperature: float = 0.0,
-        extra_params: Optional[Dict[str, Any]] = None,
+        **kwargs
     ) -> AzureAIAgent:
         """Create and setup an agent of the specified type.
         
@@ -41,7 +48,7 @@ class SQLAgentFactory:
             config: The dialect configuration for the agent.
             deployment_name: The model deployment to use.
             temperature: The temperature parameter for the model.
-            extra_params: Additional parameters to pass to the agent constructor.
+            **kwargs: Additional parameters to pass to the agent constructor.
             
         Returns:
             A configured AzureAIAgent instance.
@@ -56,11 +63,8 @@ class SQLAgentFactory:
             "config": config,
             "deployment_name": deployment_name,
             "temperature": temperature,
+            **kwargs
         }
-        
-        # Add any extra parameters provided
-        if extra_params:
-            params.update(extra_params)
             
         agent = agent_class(**params)
         return await agent.setup()
