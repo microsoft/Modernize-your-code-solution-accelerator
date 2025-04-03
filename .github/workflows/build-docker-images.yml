@@ -26,16 +26,16 @@ jobs:
     strategy:
       matrix:
         include:
-          - app_name: backend
+          - app_name: cmsabackend
             dockerfile: docker/Backend.Dockerfile
             password_secret: DOCKER_PASSWORD
-          - app_name: webapp
+          - app_name: cmsafrontend
             dockerfile: docker/Frontend.Dockerfile
             password_secret: DOCKER_PASSWORD
     uses: ./.github/workflows/build-docker.yml
     with:
-      registry: codegencontainerregpk.azurecr.io
-      username: codegencontainerregpk
+      registry: cmsacontainerreg.azurecr.io
+      username: cmsacontainerreg
       password_secret: ${{ matrix.password_secret }}
       app_name: ${{ matrix.app_name }}
       dockerfile: ${{ matrix.dockerfile }}
