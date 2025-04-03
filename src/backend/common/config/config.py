@@ -15,7 +15,6 @@ settings.json file in the .vscode folder should include the following:
 import os
 
 from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
-from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 
 
 class Config:
@@ -50,10 +49,6 @@ class Config:
         )
 
         self.__azure_credentials = DefaultAzureCredential()
-
-        self.ai_project_client = AzureAIAgent.create_client(
-            credential=self.get_azure_credentials()
-        )
 
     def get_azure_credentials(self):
         """Retrieve Azure credentials, either from environment variables or managed identity."""
