@@ -32,6 +32,9 @@ jobs:
 
     - name: Checkout
       uses: actions/checkout@v4
+    
+    - name: push debug
+      run: echo ${{ inputs.push }}
 
     - name: Docker Login
       if: ${{ inputs.push }}
@@ -51,15 +54,15 @@ jobs:
     - name: Determine Tag Name Based on Branch
       id: determine_tag
       run: |
-        if [[ "${{ github.base_ref }}" == "main" ]]; then
+        if [[ "${{ github.ref_name }}" == "main" ]]; then
           echo "tagname=latest" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.base_ref }}" == "dev" ]]; then
+        elif [[ "${{ github.ref_name }}" == "dev" ]]; then
           echo "tagname=dev" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.base_ref }}" == "demo" ]]; then
+        elif [[ "${{ github.ref_name }}" == "demo" ]]; then
           echo "tagname=demo" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.base_ref }}" == "hotfix" ]]; then
+        elif [[ "${{ github.ref_name }}" == "hotfix" ]]; then
           echo "tagname=hotfix" >> $GITHUB_OUTPUT
-        elif [[ "${{ github.base_ref }}" == "dependabotchanges" ]]; then
+        elif [[ "${{ github.ref_name }}" == "dependabotchanges" ]]; then
           echo "tagname=dependabotchanges" >> $GITHUB_OUTPUT
         else
           echo "tagname=default" >> $GITHUB_OUTPUT
