@@ -6,11 +6,13 @@ on:
       - main
       - dev
       - demo
+      - hotfix
   pull_request:
     branches:
       - main
       - dev
       - demo
+      - hotfix
     types:
       - opened
       - ready_for_review
@@ -37,5 +39,5 @@ jobs:
       password_secret: ${{ matrix.password_secret }}
       app_name: ${{ matrix.app_name }}
       dockerfile: ${{ matrix.dockerfile }}
-      push: ${{ github.event_name == 'push' || github.base_ref == 'main' || github.base_ref == 'dev' || github.base_ref == 'demo' }}
+      push: ${{ github.event_name == 'push' || github.base_ref == 'main' || github.base_ref == 'dev' || github.base_ref == 'demo' || github.base_ref == 'hotfix' }}
     secrets: inherit

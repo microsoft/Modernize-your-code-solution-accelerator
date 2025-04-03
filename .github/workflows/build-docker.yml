@@ -57,6 +57,8 @@ jobs:
           echo "tagname=dev" >> $GITHUB_OUTPUT
         elif [[ "${{ github.base_ref }}" == "demo" ]]; then
           echo "tagname=demo" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.base_ref }}" == "hotfix" ]]; then
+          echo "tagname=hotfix" >> $GITHUB_OUTPUT
         elif [[ "${{ github.base_ref }}" == "dependabotchanges" ]]; then
           echo "tagname=dependabotchanges" >> $GITHUB_OUTPUT
         else
