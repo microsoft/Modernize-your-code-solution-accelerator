@@ -34,22 +34,20 @@ from semantic_kernel.contents import (
     ChatMessageContent,
 )
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
-from sql_agents import (
-    create_kernel_with_chat_completion,
-    setup_fixer_agent,
-    setup_migrator_agent,
-    setup_picker_agent,
-    setup_semantic_verifier_agent,
-    setup_syntax_checker_agent,
-)
 from sql_agents.agent_config import AgentBaseConfig
 from sql_agents.fixer.response import FixerResponse
+from sql_agents.fixer.setup import setup_fixer_agent
 from sql_agents.helpers.selection_function import setup_selection_function
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
 from sql_agents.helpers.termination_function import setup_termination_function
 from sql_agents.helpers.utils import is_text
 from sql_agents.migrator.response import MigratorResponse
+from sql_agents.migrator.setup import setup_migrator_agent
 from sql_agents.picker.response import PickerResponse
+from sql_agents.picker.setup import setup_picker_agent
 from sql_agents.semantic_verifier.response import SemanticVerifierResponse
+from sql_agents.semantic_verifier.setup import setup_semantic_verifier_agent
+from sql_agents.syntax_checker.setup import setup_syntax_checker_agent
 
 # Loop through files from Cosmos DB.
 
@@ -84,28 +82,12 @@ TERMINATION_KEYWORD = "yes"
 #         return sub_str.split(":")[1].strip().strip('"')
 
 
-async def configure_agents():
+async def configure_agents(config: AgentBaseConfig):
     try:
-        agent_fixer = await setup_fixer_agent(
-            AgentType.FIXER,
-            agent_dialect_config,
-            AgentModelDeployment.FIXER_AGENT_MODEL_DEPLOY,
-        )
-        agent_migrator = await setup_migrator_agent(
-            AgentType.MIGRATOR,
-            agent_dialect_config,
-            AgentModelDeployment.MIGRATOR_AGENT_MODEL_DEPLOY,
-        )
-        agent_picker = await setup_picker_agent(
-            AgentType.PICKER,
-            agent_dialect_config,
-            AgentModelDeployment.PICKER_AGENT_MODEL_DEPLOY,
-        )
-        agent_syntax_checker = await setup_syntax_checker_agent(
-            AgentType.SYNTAX_CHECKER,
-            agent_dialect_config,
-            AgentModelDeployment.SYNTAX_CHECKER_AGENT_MODEL_DEPLOY,
-        )
+        agent_fixer = await setup_fixer_agent(config)
+        agent_migrator = await setup_migrator_agent(config)
+        agent_picker = await setup_picker_agent(config)
+        agent_syntax_checker = await setup_syntax_checker_agent(config)
         selection_function = setup_selection_function(
             SELECTION_FUNCTION_NAME,
             AgentType.MIGRATOR,
@@ -133,7 +115,10 @@ async def configure_agents():
 
 
 async def convert(
-    source_script, file: FileRecord, batch_service: BatchService, agent_config
+    source_script,
+    file: FileRecord,
+    batch_service: BatchService,
+    agent_config: AgentBaseConfig,
 ) -> str:
     """setup agents, selection and termination."""
     logger.info("Migrating query: %s\n", source_script)
@@ -149,7 +134,7 @@ async def convert(
             function=agent_config["selection_function"],
             kernel=create_kernel_with_chat_completion(
                 AgentType.SELECTION.value,
-                AgentModelDeployment.SELECTION_MODEL_DEPLOY.value,
+                agent_config.model_type[AgentType.SELECTION],
             ),
             result_parser=lambda result: (
                 str(result.value[0]) if result.value is not None else AgentType.MIGRATOR
@@ -163,7 +148,7 @@ async def convert(
             function=agent_config["termination_function"],
             kernel=create_kernel_with_chat_completion(
                 AgentType.TERMINATION.value,
-                AgentModelDeployment.TERMINATION_MODEL_DEPLOY.value,
+                agent_config.model_type[AgentType.TERMINATION],
             ),
             result_parser=lambda result: TERMINATION_KEYWORD
             in str(result.value[0]).lower(),
@@ -297,7 +282,7 @@ async def convert(
 
     # Invoke the semantic verifier agent to validate the migrated query
     semver_response = await invoke_semantic_verifier(
-        source_script, migrated_query, file, batch_service
+        agent_config, source_script, migrated_query
     )
     semver_response = SemanticVerifierResponse.model_validate_json(
         semver_response or ""
@@ -394,7 +379,9 @@ async def convert(
 
 
 async def invoke_semantic_verifier(
-    source_script, migrated_query, file: FileRecord, batch_service: BatchService
+    config: AgentBaseConfig,
+    source_script: str,
+    migrated_query: str,
 ):
     """Invoke the semantic verifier agent to validate the migrated query."""
     try:
@@ -410,9 +397,7 @@ async def invoke_semantic_verifier(
         )
 
         agent_semantic_verifier = await setup_semantic_verifier_agent(
-            AgentType.SEMANTIC_VERIFIER,
-            agent_dialect_config,
-            AgentModelDeployment.SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY,
+            config,
             source_script,
             migrated_query,
         )
