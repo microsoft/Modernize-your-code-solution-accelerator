@@ -2,9 +2,8 @@
 
 import logging
 
+from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.picker.response import PickerResponse
-
-from backend.sql_agents.agent_base import BaseSQLAgent
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

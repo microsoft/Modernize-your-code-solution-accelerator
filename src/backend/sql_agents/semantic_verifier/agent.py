@@ -4,10 +4,9 @@ import logging
 from typing import Any, Dict, Optional
 
 from common.models.api import AgentType
+from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.agent_config import AgentBaseConfig
 from sql_agents.semantic_verifier.response import SemanticVerifierResponse
-
-from backend.sql_agents.agent_base import BaseSQLAgent
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
