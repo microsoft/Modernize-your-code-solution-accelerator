@@ -7,9 +7,7 @@ class PickerCandidateSummary(BaseModel):
 
 
 class PickerResponse(BaseModel):
-    """
-    The response of the picker agent.
-    """
+    """The response of the picker agent."""
 
     source_summary: str
     candidate_summaries: list[PickerCandidateSummary]

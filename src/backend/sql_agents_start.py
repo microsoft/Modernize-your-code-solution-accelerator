@@ -1,15 +1,10 @@
-﻿"""
-This script demonstrates how to use the backend agents to migrate a query from one SQL dialect to another.
-"""
+﻿"""This script demonstrates how to use the backend agents to migrate a query from one SQL dialect to another."""
 
-import asyncio
 import json
 import logging
-import os
-import sys
-from pathlib import Path
 
-from api.status_updates import close_connection, send_status_update
+from api.status_updates import send_status_update
+
 from common.models.api import (
     AgentType,
     FileProcessUpdate,
@@ -20,10 +15,9 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
+
 from fastapi import HTTPException
-from sql_agents.helpers.selection_function import setup_selection_function
-from sql_agents.helpers.termination_function import setup_termination_function
-from sql_agents.helpers.utils import is_text
+
 from semantic_kernel.agents import AgentGroupChat
 from semantic_kernel.agents.strategies import (
     KernelFunctionSelectionStrategy,
@@ -36,6 +30,7 @@ from semantic_kernel.contents import (
     ChatMessageContent,
 )
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
+
 from sql_agents import (
     create_kernel_with_chat_completion,
     setup_fixer_agent,
@@ -46,6 +41,9 @@ from sql_agents import (
 )
 from sql_agents.agent_config import AgentModelDeployment, create_config
 from sql_agents.fixer.response import FixerResponse
+from sql_agents.helpers.selection_function import setup_selection_function
+from sql_agents.helpers.termination_function import setup_termination_function
+from sql_agents.helpers.utils import is_text
 from sql_agents.migrator.response import MigratorResponse
 from sql_agents.picker.response import PickerResponse
 from sql_agents.semantic_verifier.response import SemanticVerifierResponse
@@ -78,8 +76,11 @@ TERMINATION_KEYWORD = "yes"
 
 
 def extract_query(content):
-    """Extract the query from a chat that contains the following template:
-    # "migrated_query": 'SELECT TOP 10 * FROM mytable'"""
+    """
+    Extract the query from a chat that contains the following template:.
+
+    # "migrated_query": 'SELECT TOP 10 * FROM mytable'
+    """
     if "migrated_query" in content:
         sub_str = content.split("migrated_query")[1]
         return sub_str.split(":")[1].strip().strip('"')
@@ -136,7 +137,7 @@ async def configure_agents():
 async def convert(
     source_script, file: FileRecord, batch_service: BatchService, agent_config
 ) -> str:
-    """setup agents, selection and termination."""
+    """Set up agents, selection and termination."""
     logger.info("Migrating query: %s\n", source_script)
 
     history_reducer = ChatHistoryTruncationReducer(
@@ -432,7 +433,7 @@ async def invoke_semantic_verifier(
 
 
 async def process_batch_async(batch_id: str):
-    """Run main script with dummy Cosmos data"""
+    """Run main script with dummy Cosmos data."""
     logger.info("Processing batch: %s", batch_id)
     storage = await BlobStorageFactory.get_storage()
     batch_service = BatchService()
@@ -542,7 +543,7 @@ async def process_batch_async(batch_id: str):
 async def process_error(
     ex: Exception, file_record: FileRecord, batch_service: BatchService
 ):
-    """insert data base write to file record stating invalid file and send ws notification"""
+    """Insert data base write to file record stating invalid file and send ws notification."""
     await batch_service.create_file_log(
         str(file_record.file_id),
         "Error processing file {}".format(ex),
