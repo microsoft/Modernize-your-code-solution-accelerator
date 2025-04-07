@@ -18,8 +18,9 @@ async def setup_semantic_verifier_agent(
 ) -> AzureAIAgent:
     """Setup the semantic verifier agent using the factory."""
     return await SQLAgentFactory.create_agent(
-        AgentType.SEMANTIC_VERIFIER,
-        config,
+        agent_type=AgentType.SEMANTIC_VERIFIER,
+        config=config,
+        temperature=0.0,
         source_query=source_query,
         target_query=target_query,
     )

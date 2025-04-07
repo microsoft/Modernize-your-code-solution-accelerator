@@ -2,6 +2,7 @@
 
 import logging
 
+from common.models.api import AgentType
 from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
 from sql_agents.syntax_checker.response import SyntaxCheckerResponse
@@ -22,3 +23,8 @@ class SyntaxCheckerAgent(BaseSQLAgent[SyntaxCheckerResponse]):
     def plugins(self):
         """Get the plugins for the syntax checker agent."""
         return ["check_syntax", SyntaxCheckerPlugin()]
+
+    @property
+    def deployment_name(self) -> str:
+        """Get the name of the model to use for the picker agent."""
+        return self.config.model_type[AgentType.SYNTAX_CHECKER]

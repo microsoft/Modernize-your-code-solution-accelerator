@@ -28,7 +28,6 @@ class BaseSQLAgent(Generic[T], ABC):
         self,
         agent_type: AgentType,
         config: AgentBaseConfig,
-        deployment_name: None,
         temperature: float = 0.0,
     ):
         """Initialize the base SQL agent.
@@ -41,7 +40,6 @@ class BaseSQLAgent(Generic[T], ABC):
         """
         self.agent_type = agent_type
         self.config = config
-        self.deployment_name = deployment_name
         self.temperature = temperature
         self.agent: AzureAIAgent = None
 
@@ -57,6 +55,15 @@ class BaseSQLAgent(Generic[T], ABC):
 
         Returns:
             The number of candidates, or None if not applicable.
+        """
+        return None
+
+    @property
+    def deployment_name(self) -> Optional[str]:
+        """Get the name of the model to be used for this agent.
+
+        Returns:
+            The model name, or None if not applicable.
         """
         return None
 

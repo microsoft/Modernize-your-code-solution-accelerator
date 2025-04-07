@@ -18,15 +18,7 @@
 # Output structure description
 Your final answer should **strictly** adhere to the following JSON structure:
 {
-    "source_summary": "Here, you should provide a summary of the logic in the source query.",
-    "candidate_summaries": [
-        {
-            "candidate_index": "The index of the candidate in the list of candidates.",
-            "summary": "Here, you should provide a summary of the logic in this candidate query."
-        },
-        <more candidate summaries>
-    ],
     "conclusion": "A brief reasoning of which candidate you picked and why."
-    "summary": "A one sentence description about your activities."
     "picked_query": "The picked candidate query."
+    "summary": "A one sentence description about your activities."
 }
