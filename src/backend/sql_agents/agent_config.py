@@ -1,6 +1,5 @@
 """Configuration for the agents module."""
 
-import json
 import os
 from enum import Enum
 

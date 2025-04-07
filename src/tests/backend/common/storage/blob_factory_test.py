@@ -1,10 +1,7 @@
-# blob_factory_test.py
 import asyncio
-import json
 import os
 import sys
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 # Adjust sys.path so that the project root is found.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../")))
@@ -22,21 +19,26 @@ os.environ["AZURE_OPENAI_ENDPOINT"] = "https://dummy-openai-endpoint"
 sys.modules["azure.monitor.events.extension"] = MagicMock()
 
 # --- Import the module under test ---
-from common.storage.blob_factory import BlobStorageFactory
-from common.storage.blob_base import BlobStorageBase
-from common.storage.blob_azure import AzureBlobStorage
+from common.storage.blob_base import BlobStorageBase  # noqa: E402
+from common.storage.blob_factory import BlobStorageFactory  # noqa: E402
+
+import pytest  # noqa: E402
 
 # --- Dummy configuration for testing ---
+
+
 class DummyConfig:
     azure_blob_connection_string = "dummy_connection_string"
     azure_blob_container_name = "dummy_container"
 
 # --- Fixture to patch Config in our tests ---
+
+
 @pytest.fixture(autouse=True)
 def patch_config(monkeypatch):
     # Import the real Config from your project.
     from common.config.config import Config
-    
+
     def dummy_init(self):
         self.azure_blob_connection_string = DummyConfig.azure_blob_connection_string
         self.azure_blob_container_name = DummyConfig.azure_blob_container_name
@@ -81,12 +83,15 @@ class DummyAzureBlobStorage(BlobStorageBase):
         self.initialized = False
 
 # --- Fixture to patch AzureBlobStorage ---
+
+
 @pytest.fixture(autouse=True)
 def patch_azure_blob_storage(monkeypatch):
     monkeypatch.setattr("common.storage.blob_factory.AzureBlobStorage", DummyAzureBlobStorage)
     BlobStorageFactory._instance = None
 
 # -------------------- Tests for BlobStorageFactory --------------------
+
 
 @pytest.mark.asyncio
 async def test_get_storage_success():
@@ -99,19 +104,23 @@ async def test_get_storage_success():
     storage2 = await BlobStorageFactory.get_storage()
     assert storage is storage2
 
+
 @pytest.mark.asyncio
 async def test_get_storage_missing_config(monkeypatch):
     """
     Test that get_storage raises a ValueError when configuration is missing.
+
     We simulate missing connection string and container name.
     """
     from common.config.config import Config
+
     def dummy_init_missing(self):
         self.azure_blob_connection_string = ""
         self.azure_blob_container_name = ""
     monkeypatch.setattr(Config, "__init__", dummy_init_missing)
     with pytest.raises(ValueError, match="Azure Blob Storage configuration is missing"):
         await BlobStorageFactory.get_storage()
+
 
 @pytest.mark.asyncio
 async def test_close_storage_success():
@@ -124,6 +133,7 @@ async def test_close_storage_success():
     assert BlobStorageFactory._instance is None
 
 # -------------------- File Upload Tests --------------------
+
 
 @pytest.mark.asyncio
 async def test_upload_file_success():
@@ -139,6 +149,7 @@ async def test_upload_file_success():
     assert result["size"] == len(file_content)
     assert blob_path in storage.files
 
+
 @pytest.mark.asyncio
 async def test_upload_file_error(monkeypatch):
     """Test that an exception during file upload is propagated."""
@@ -149,6 +160,7 @@ async def test_upload_file_error(monkeypatch):
         await storage.upload_file(b"data", "file.txt", "text/plain", {})
 
 # -------------------- File Retrieval Tests --------------------
+
 
 @pytest.mark.asyncio
 async def test_get_file_success():
@@ -161,6 +173,7 @@ async def test_get_file_success():
     result = await storage.get_file(blob_path)
     assert result == file_content
 
+
 @pytest.mark.asyncio
 async def test_get_file_not_found():
     """Test that get_file raises FileNotFoundError when file does not exist."""
@@ -170,6 +183,7 @@ async def test_get_file_not_found():
         await storage.get_file("nonexistent.file")
 
 # -------------------- File Deletion Tests --------------------
+
 
 @pytest.mark.asyncio
 async def test_delete_file_success():
@@ -181,6 +195,7 @@ async def test_delete_file_success():
     await storage.delete_file(blob_path)
     assert blob_path not in storage.files
 
+
 @pytest.mark.asyncio
 async def test_delete_file_nonexistent():
     """Test that deleting a non-existent file does not raise an error."""
@@ -191,6 +206,7 @@ async def test_delete_file_nonexistent():
     assert True
 
 # -------------------- File Listing Tests --------------------
+
 
 @pytest.mark.asyncio
 async def test_list_files_with_prefix():
@@ -205,6 +221,7 @@ async def test_list_files_with_prefix():
     result = await storage.list_files("folder/")
     assert set(result) == {"folder/a.txt", "folder/b.txt"}
 
+
 @pytest.mark.asyncio
 async def test_list_files_no_files():
     """Test that list_files returns an empty list when no files match the prefix."""
@@ -216,6 +233,7 @@ async def test_list_files_no_files():
 
 # -------------------- Additional Basic Tests --------------------
 
+
 @pytest.mark.asyncio
 async def test_dummy_azure_blob_storage_initialize():
     """Test that initializing DummyAzureBlobStorage sets the initialized flag."""
@@ -223,6 +241,7 @@ async def test_dummy_azure_blob_storage_initialize():
     assert storage.initialized is False
     await storage.initialize()
     assert storage.initialized is True
+
 
 @pytest.mark.asyncio
 async def test_dummy_azure_blob_storage_upload_and_retrieve():
@@ -238,6 +257,7 @@ async def test_dummy_azure_blob_storage_upload_and_retrieve():
     retrieved = await storage.get_file(blob_path)
     assert retrieved == content
 
+
 @pytest.mark.asyncio
 async def test_dummy_azure_blob_storage_close():
     """Test that close() sets initialized to False."""
@@ -248,6 +268,7 @@ async def test_dummy_azure_blob_storage_close():
 
 # -------------------- Test for BlobStorageFactory Singleton Usage --------------------
 
+
 def test_common_usage_of_blob_factory():
     """Test that manually setting the singleton in BlobStorageFactory works as expected."""
     # Create a dummy storage instance.
@@ -256,6 +277,7 @@ def test_common_usage_of_blob_factory():
     BlobStorageFactory._instance = dummy_storage
     storage = asyncio.run(BlobStorageFactory.get_storage())
     assert storage is dummy_storage
+
 
 if __name__ == "__main__":
     # Run tests when this file is executed directly.

@@ -3,17 +3,17 @@
 import logging
 
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
+
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.kernel import KernelArguments
-from semantic_kernel.prompt_template import PromptTemplateConfig
+
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
 from sql_agents.fixer.response import FixerResponse
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
+from sql_agents.helpers.utils import get_prompt
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -22,7 +22,7 @@ logger.setLevel(logging.DEBUG)
 def setup_fixer_agent(
     name: AgentType, config: AgentsConfigDialect, deployment_name: AgentModelDeployment
 ) -> ChatCompletionAgent:
-    """Setup the fixer agent."""
+    """Set up the fixer agent."""
     _deployment_name = deployment_name.value
     _name = name.value
     kernel = create_kernel_with_chat_completion(_name, _deployment_name)
