@@ -1,9 +1,11 @@
-from fastapi import Request, HTTPException
-import logging
 import base64
 import json
+import logging
 from typing import Dict
+
 from api.auth.sample_user import sample_user
+
+from fastapi import HTTPException, Request
 
 logger = logging.getLogger(__name__)
 
@@ -26,19 +28,19 @@ class UserDetails:
 
 
 def get_tenant_id(client_principal_b64: str) -> str:
-    """Extract tenant ID from base64 encoded client principal"""
+    """Extract tenant ID from base64 encoded client principal."""
     try:
         decoded_bytes = base64.b64decode(client_principal_b64)
         decoded_string = decoded_bytes.decode("utf-8")
         user_info = json.loads(decoded_string)
         return user_info.get("tid", "")
-    except Exception as ex:
+    except Exception :
         logger.exception("Error decoding client principal")
         return ""
 
 
 def get_authenticated_user(request: Request) -> UserDetails:
-    """Get authenticated user details from request headers"""
+    """Get authenticated user details from request headers."""
     user_object = {}
     headers = dict(request.headers)
     # Check if we're in production with real headers

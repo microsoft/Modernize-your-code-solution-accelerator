@@ -1,16 +1,19 @@
-﻿"""This module contains the syntax checker agent."""
+﻿"""Set up the syntax checker agent."""
 
 import logging
 
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
+
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai import FunctionChoiceBehavior
 from semantic_kernel.kernel import KernelArguments
+
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
+from sql_agents.helpers.utils import get_prompt
 from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
 from sql_agents.syntax_checker.response import SyntaxCheckerResponse
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -19,7 +22,7 @@ logger.setLevel(logging.DEBUG)
 def setup_syntax_checker_agent(
     name: AgentType, config: AgentsConfigDialect, deployment_name: AgentModelDeployment
 ) -> ChatCompletionAgent:
-    """Setup the syntax checker agent."""
+    """Set up the syntax checker agent."""
     _deployment_name = deployment_name.value
     _name = name.value
     kernel = create_kernel_with_chat_completion(_name, _deployment_name)

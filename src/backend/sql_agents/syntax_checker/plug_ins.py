@@ -27,7 +27,7 @@ class SyntaxCheckerPlugin:
     ) -> Annotated[
         str,
         """
-        Returns a json list of errors in the format of 
+        Returns a json list of errors in the format of.
         [
             {
                 "Line": <line number>,
@@ -39,13 +39,11 @@ class SyntaxCheckerPlugin:
         """,
     ]:
         """Check the TSQL syntax using tsqlParser."""
-
         print(f"Called syntaxCheckerPlugin with: {candidate_sql}")
         return self._call_tsqlparser(candidate_sql)
 
     def _call_tsqlparser(self, param):
-        """Select the executable based on the operating system"""
-
+        """Select the executable based on the operating system."""
         print("cwd =" + os.getcwd())
         print(f"Calling tsqlParser with: {param}")
         if platform.system() == "Windows":

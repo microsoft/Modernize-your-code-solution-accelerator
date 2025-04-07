@@ -1,9 +1,8 @@
 from typing import Any, BinaryIO, Dict, Optional
 
-from azure.core.exceptions import ResourceExistsError
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
-from common.config.config import Config
+
 from common.logger.app_logger import AppLogger
 from common.storage.blob_base import BlobStorageBase
 
@@ -42,7 +41,7 @@ class AzureBlobStorage(BlobStorageBase):
         content_type: Optional[str] = None,
         metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
-        """Upload a file to Azure Blob Storage"""
+        """Upload a file to Azure Blob Storage."""
         try:
             blob_client = self.container_client.get_blob_client(blob_path)
 
@@ -51,7 +50,7 @@ class AzureBlobStorage(BlobStorageBase):
             raise
         try:
             # Upload the file
-            upload_results = blob_client.upload_blob(
+            upload_results = blob_client.upload_blob(  # noqa: F841
                 file_content,
                 content_type=content_type,
                 metadata=metadata,
@@ -78,7 +77,7 @@ class AzureBlobStorage(BlobStorageBase):
             raise
 
     async def get_file(self, blob_path: str) -> BinaryIO:
-        """Download a file from Azure Blob Storage"""
+        """Download a file from Azure Blob Storage."""
         try:
             blob_client = self.container_client.get_blob_client(blob_path)
             download_stream = blob_client.download_blob()
@@ -95,7 +94,7 @@ class AzureBlobStorage(BlobStorageBase):
             raise
 
     async def delete_file(self, blob_path: str) -> bool:
-        """Delete a file from Azure Blob Storage"""
+        """Delete a file from Azure Blob Storage."""
         try:
             blob_client = self.container_client.get_blob_client(blob_path)
             blob_client.delete_blob()
@@ -108,7 +107,7 @@ class AzureBlobStorage(BlobStorageBase):
             return False
 
     async def list_files(self, prefix: Optional[str] = None) -> list[Dict[str, Any]]:
-        """List files in Azure Blob Storage"""
+        """List files in Azure Blob Storage."""
         try:
             blobs = []
             async for blob in self.container_client.list_blobs(name_starts_with=prefix):
@@ -128,7 +127,7 @@ class AzureBlobStorage(BlobStorageBase):
             raise
 
     async def close(self) -> None:
-        """Close blob storage connections"""
+        """Close blob storage connections."""
         if self.service_client:
             self.service_client.close()
             self.logger.info("Closed blob storage connection")

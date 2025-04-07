@@ -1,6 +1,7 @@
 import os
 
 from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
+
 from dotenv import load_dotenv
 
 load_dotenv()

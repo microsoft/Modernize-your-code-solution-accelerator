@@ -10,9 +10,7 @@ class SyntaxErrorInt(BaseModel):
 
 
 class SyntaxCheckerResponse(BaseModel):
-    """
-    Response model for the syntax checker agent
-    """
+    """Response model for the syntax checker agent."""
 
     thought: str
     syntax_errors: List[SyntaxErrorInt]
