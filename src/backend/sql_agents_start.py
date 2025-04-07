@@ -85,12 +85,13 @@ TERMINATION_KEYWORD = "yes"
 class SqlAgents:
     """Class to setup the SQL agents for migration."""
 
-    agent_fixer = None
-    agent_migrator = None
-    agent_picker = None
-    agent_syntax_checker = None
+    agent_fixer: AzureAIAgent = None
+    agent_migrator: AzureAIAgent = None
+    agent_picker: AzureAIAgent = None
+    agent_syntax_checker: AzureAIAgent = None
     selection_function = None
     termination_function = None
+    agent_config: AgentBaseConfig = None
 
     def __init__(self):
         pass
@@ -101,6 +102,7 @@ class SqlAgents:
         Required as init cannot be async"""
         self = cls()  # Create an instance
         try:
+            self.agent_config = config
             self.agent_fixer = await setup_fixer_agent(config)
             self.agent_migrator = await setup_migrator_agent(config)
             self.agent_picker = await setup_picker_agent(config)
@@ -132,18 +134,24 @@ class SqlAgents:
             self.agent_fixer,
         ]
 
+    async def delete_agents(self):
+        """cleans up the agents"""
+        try:
+            for agent in self.agents:
+                await self.agent_config.ai_project_client.agents.delete_agent(agent.id)
+        except Exception as exc:
+            logger.error("Error deleting agents: %s", exc)
+
 
 async def convert(
     source_script,
     file: FileRecord,
     batch_service: BatchService,
+    sql_agents: SqlAgents,
     agent_config: AgentBaseConfig,
 ) -> str:
     """setup agents, selection and termination."""
     logger.info("Migrating query: %s\n", source_script)
-
-    # setup the agents
-    sql_agents = await SqlAgents.create(agent_config)
 
     history_reducer = ChatHistoryTruncationReducer(
         target_count=2
@@ -428,6 +436,9 @@ async def invoke_semantic_verifier(
         async for response in agent_semantic_verifier.invoke(messages=[user_message]):
             return response.content
 
+        # Clean up the agent
+        await config.ai_project_client.agents.delete_agent(agent_semantic_verifier.id)
+
     # Handle this as an exception from the Sematic Verifier is a warning
     except Exception as exc:
         logger.error(
@@ -465,10 +476,13 @@ async def process_batch_async(
             AzureAIAgent.create_client(credential=creds) as client,
         ):
 
-            # setup all agent settings per batch
+            # setup all agent settings and agents per batch
             agent_config = AgentBaseConfig(
                 project_client=client, sql_from=convert_from, sql_to=convert_to
             )
+
+            # setup the agents
+            sql_agents = await SqlAgents.create(agent_config)
 
             # Walk through each file name and retrieve it from blob storage
             # Send file to the agents for processing
@@ -519,7 +533,11 @@ async def process_batch_async(
 
                     # Convert the file
                     converted_query = await convert(
-                        sql_in_file, file_record, batch_service, agent_config
+                        sql_in_file,
+                        file_record,
+                        batch_service,
+                        sql_agents,
+                        agent_config,
                     )
                     if converted_query:
                         # Add RAI disclaimer to the converted query - split this into a function
@@ -547,6 +565,9 @@ async def process_batch_async(
                     logger.error("Error processing file.{}".format(exc))
                     # insert data base write to file record stating invalid file
                     await process_error(exc, file_record, batch_service)
+
+            # Cleanup the agents
+            await sql_agents.delete_agents()
 
         try:
             await batch_service.batch_files_final_update(batch_id)

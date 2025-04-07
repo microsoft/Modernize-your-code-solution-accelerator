@@ -7,21 +7,18 @@
 - Do not hallucinate or assume any functionality that is not explicitly mentioned in the queries.
 - Avoid using any first person language in any of the output.
 - You are allowed to make common sense assumptions about the data and return types.
-- Your final answer should be a JSON with the following fields: 'analysis', 'judgement', 'differences'.
-- If the scripts are not semantically equivalent, judgement would be 'Semantically Not Equivalent' and list the differences in the 'differences' field.
+- If the scripts are not semantically equivalent, judgement would be 'Semantically Not Equivalent' and the differences would be listed in the 'differences' field.
 - If the scripts are semantically equivalent, judgement would be 'Semantically Equivalent' and the differences filed would be an empty list.
 
-# Output structure description
-Your final answer should **strictly** adhere to the following JSON structure:
+# Output
+Return a JSON object with keys ‘analysis’, ‘judgement’, ‘differences’, and ‘summary’ containing the results of your analysis.
+Do not include any metadata, schema descriptions, or commentary—only output the JSON result.
+Your final output should be a JSON object like:
 {
-  "analysis": "Here, you should provide a brief analysis of the source and target queries and the differences you found.",
-  "judgement": "Semantically Equivalent/Semantically Not Equivalent",
-  "differences": [
-    "Description of the difference 1",
-    "Description of the difference 2",
-    <...>
-  ]
-  "summary": "A one sentence description about your activities."
+  "analysis": "Brief analysis of the queries.",
+  "judgement": "Semantically Equivalent or Semantically Not Equivalent",
+  "differences": ["Difference 1", "Difference 2"],
+  "summary": "One sentence summary of your analysis."
 }
 
 Source Query:
