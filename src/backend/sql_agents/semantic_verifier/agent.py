@@ -1,14 +1,17 @@
-﻿"""This module contains the setup for the semantic verifier agent."""
+﻿"""Set up the semantic verifier agent."""
 
 import logging
 
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
+
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.kernel import KernelArguments
+
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
+from sql_agents.helpers.utils import get_prompt
 from sql_agents.semantic_verifier.response import SemanticVerifierResponse
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -21,7 +24,7 @@ def setup_semantic_verifier_agent(
     source_query: str,
     target_query: str,
 ) -> ChatCompletionAgent:
-    """Setup the semantic verifier agent."""
+    """Set up the semantic verifier agent."""
     _deployment_name = deployment_name.value
     _name = name.value
     kernel = create_kernel_with_chat_completion(_name, _deployment_name)

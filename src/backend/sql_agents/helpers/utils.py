@@ -14,7 +14,7 @@ def get_prompt(agent_type: str) -> str:
 
 
 def is_text(content):
-    """Check if the content is text and not empty"""
+    """Check if the content is text and not empty."""
     if isinstance(content, str):
         if len(content) == 0:
             return False

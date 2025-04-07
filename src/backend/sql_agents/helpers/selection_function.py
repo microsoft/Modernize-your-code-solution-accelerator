@@ -1,4 +1,4 @@
-﻿"""selection_function.py"""
+﻿"""selection_function.py."""
 
 from semantic_kernel.functions import KernelFunctionFromPrompt
 
@@ -6,7 +6,7 @@ from semantic_kernel.functions import KernelFunctionFromPrompt
 def setup_selection_function(
     name, migrator_name, picker_name, syntax_checker_name, fixer_name
 ):
-    """Setup the selection function."""
+    """Set up the selection function."""
     selection_function = KernelFunctionFromPrompt(
         function_name=name,
         prompt=f"""
@@ -19,12 +19,12 @@ def setup_selection_function(
             - {picker_name.value}
             - {syntax_checker_name.value}
             - {fixer_name.value}
-        
+
             Follow these instructions to determine the next participant:
             1. After user input, it is always {migrator_name.value}'s turn.
             2. After {migrator_name.value}, it is always {picker_name.value}'s turn.
             3. After {picker_name.value}, it is always {syntax_checker_name.value}'s turn.
-            
+
             The next two steps are repeated until the migration is complete:
             4. After {syntax_checker_name.value}, it is {fixer_name.value}'s turn.
             5. After {fixer_name.value}, it is {syntax_checker_name.value}'s turn.

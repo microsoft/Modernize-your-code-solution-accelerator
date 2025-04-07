@@ -1,12 +1,11 @@
-import asyncio
 import uuid
-import pytest
-from datetime import datetime
 from enum import Enum
 
 # Import the abstract base class and related models/enums.
 from common.database.database_base import DatabaseBase
-from common.models.api import BatchRecord, FileRecord, ProcessStatus
+from common.models.api import ProcessStatus
+
+import pytest
 
 DatabaseBase.__abstractmethods__ = set()
 
@@ -63,6 +62,7 @@ def db_instance():
 def get_dummy_status():
     """
     Try to use a specific ProcessStatus value (e.g. PROCESSING).
+
     If that member is not available, just return the first member in the enum.
     """
     try:

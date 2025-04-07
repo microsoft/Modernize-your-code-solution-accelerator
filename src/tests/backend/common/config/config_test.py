@@ -22,7 +22,7 @@ class TestConfigInitialization(unittest.TestCase):
         clear=True,
     )
     def test_config_initialization(self):
-        """Test if all attributes are correctly assigned from environment variables"""
+        """Test if all attributes are correctly assigned from environment variables."""
         config = Config()
 
         # Ensure every attribute is accessed

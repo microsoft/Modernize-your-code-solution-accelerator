@@ -2,9 +2,7 @@
 
 
 class SemanticVerifierResponse(BaseModel):
-    """
-    Response model for the semantic verifier agent
-    """
+    """Response model for the semantic verifier agent."""
 
     analysis: str
     judgement: str
