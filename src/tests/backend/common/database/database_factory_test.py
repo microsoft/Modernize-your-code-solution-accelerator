@@ -1,6 +1,7 @@
-import pytest
 from common.config.config import Config
 from common.database.database_factory import DatabaseFactory
+
+import pytest
 
 
 class DummyConfig:
@@ -20,6 +21,7 @@ class DummyCosmosDBClient:
         self.file_container = file_container
         self.log_container = log_container
 
+
 def dummy_config_init(self):
     self.cosmosdb_endpoint = DummyConfig.cosmosdb_endpoint
     self.cosmosdb_database = DummyConfig.cosmosdb_database
@@ -29,19 +31,23 @@ def dummy_config_init(self):
     # Provide a dummy method for credentials.
     self.get_azure_credentials = lambda: "dummy_credential"
 
+
 @pytest.fixture(autouse=True)
 def patch_config(monkeypatch):
     # Patch the __init__ of Config so that an instance will have the required attributes.
     monkeypatch.setattr(Config, "__init__", dummy_config_init)
+
 
 @pytest.fixture(autouse=True)
 def patch_cosmosdb_client(monkeypatch):
     # Patch CosmosDBClient in the module under test to use our dummy client.
     monkeypatch.setattr("common.database.database_factory.CosmosDBClient", DummyCosmosDBClient)
 
+
 def test_get_database():
     """
-    Test that DatabaseFactory.get_database() correctly returns an instance of the
+    Test that DatabaseFactory.get_database() correctly returns an instance of the.
+
     dummy CosmosDB client with the expected configuration values.
     """
     # When get_database() is called, it creates a new Config() instance.

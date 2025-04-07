@@ -1,6 +1,5 @@
 from typing import Optional
 
-from azure.cosmos.aio import CosmosClient
 from common.config.config import Config
 from common.database.cosmosdb import CosmosDBClient
 from common.database.database_base import DatabaseBase

@@ -3,11 +3,13 @@
 import logging
 
 from common.models.api import AgentType
-from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
-from sql_agents.helpers.utils import get_prompt
+
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.functions import KernelArguments
+
 from sql_agents.agent_config import AgentModelDeployment, AgentsConfigDialect
+from sql_agents.helpers.sk_utils import create_kernel_with_chat_completion
+from sql_agents.helpers.utils import get_prompt
 from sql_agents.migrator.response import MigratorResponse
 
 logger = logging.getLogger(__name__)
@@ -17,7 +19,7 @@ logger.setLevel(logging.DEBUG)
 def setup_migrator_agent(
     name: AgentType, config: AgentsConfigDialect, deployment_name: AgentModelDeployment
 ) -> ChatCompletionAgent:
-    """Setup the migrator agent."""
+    """Set up the migrator agent."""
     _deployment_name = deployment_name.value
     _name = name.value
     NUM_CANDIDATES = 3
