@@ -216,7 +216,7 @@ async def test_list_files_failure(dummy_storage):
         # Return a plain string (which does not implement __aiter__)
         return "invalid"
     dummy_storage.container_client.list_blobs = invalid_list_blobs
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):   # noqa B017
         await dummy_storage.list_files("")
 
 
