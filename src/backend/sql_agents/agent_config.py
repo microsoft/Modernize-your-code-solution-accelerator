@@ -22,7 +22,7 @@ class AgentBaseConfig:
 
     def __init__(self, project_client: AIProjectClient, sql_from: str, sql_to: str):
 
-        self.ai_project_client: AIProjectClient = project_client
+        self.ai_project_client = project_client
         self.sql_from = sql_from
         self.sql_to = sql_to
 

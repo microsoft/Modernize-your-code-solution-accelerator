@@ -44,6 +44,11 @@ class SemanticVerifierAgent(BaseSQLAgent[SemanticVerifierResponse]):
         """Get the response schema for the semantic verifier agent."""
         return SemanticVerifierResponse
 
+    @property
+    def deployment_name(self) -> str:
+        """Get the name of the model to use for the picker agent."""
+        return self.config.model_type[AgentType.SEMANTIC_VERIFIER]
+
     def get_kernel_arguments(self) -> Dict[str, Any]:
         """Get the kernel arguments for this agent.
 

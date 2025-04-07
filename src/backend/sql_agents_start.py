@@ -82,36 +82,55 @@ TERMINATION_KEYWORD = "yes"
 #         return sub_str.split(":")[1].strip().strip('"')
 
 
-async def configure_agents(config: AgentBaseConfig):
-    try:
-        agent_fixer = await setup_fixer_agent(config)
-        agent_migrator = await setup_migrator_agent(config)
-        agent_picker = await setup_picker_agent(config)
-        agent_syntax_checker = await setup_syntax_checker_agent(config)
-        selection_function = setup_selection_function(
-            SELECTION_FUNCTION_NAME,
-            AgentType.MIGRATOR,
-            AgentType.PICKER,
-            AgentType.SYNTAX_CHECKER,
-            AgentType.FIXER,
-        )
-        termination_function = setup_termination_function(
-            TERMINATION_FUNCTION_NAME, TERMINATION_KEYWORD
-        )
-        return {
-            "agents": [
-                agent_migrator,
-                agent_picker,
-                agent_syntax_checker,
-                agent_fixer,
-            ],
-            "selection_function": selection_function,
-            "termination_function": termination_function,
-        }
+class SqlAgents:
+    """Class to setup the SQL agents for migration."""
 
-    except ValueError as exc:
-        logger.error("Error setting up agents.")
-        raise exc
+    agent_fixer = None
+    agent_migrator = None
+    agent_picker = None
+    agent_syntax_checker = None
+    selection_function = None
+    termination_function = None
+
+    def __init__(self):
+        pass
+
+    @classmethod
+    async def create(cls, config: AgentBaseConfig):
+        """Create the SQL agents for migration.
+        Required as init cannot be async"""
+        self = cls()  # Create an instance
+        try:
+            self.agent_fixer = await setup_fixer_agent(config)
+            self.agent_migrator = await setup_migrator_agent(config)
+            self.agent_picker = await setup_picker_agent(config)
+            self.agent_syntax_checker = await setup_syntax_checker_agent(config)
+            self.selection_function = setup_selection_function(
+                SELECTION_FUNCTION_NAME,
+                AgentType.MIGRATOR,
+                AgentType.PICKER,
+                AgentType.SYNTAX_CHECKER,
+                AgentType.FIXER,
+            )
+            self.termination_function = setup_termination_function(
+                TERMINATION_FUNCTION_NAME, TERMINATION_KEYWORD
+            )
+
+        except ValueError as exc:
+            logger.error("Error setting up agents.")
+            raise exc
+
+        return self
+
+    @property
+    def agents(self):
+        """Return a list of the main agents."""
+        return [
+            self.agent_migrator,
+            self.agent_picker,
+            self.agent_syntax_checker,
+            self.agent_fixer,
+        ]
 
 
 async def convert(
@@ -123,18 +142,21 @@ async def convert(
     """setup agents, selection and termination."""
     logger.info("Migrating query: %s\n", source_script)
 
+    # setup the agents
+    sql_agents = await SqlAgents.create(agent_config)
+
     history_reducer = ChatHistoryTruncationReducer(
         target_count=2
     )  # keep only the last two messages
 
     # setup the chat
     chat = AgentGroupChat(
-        agent_config["agents"].values(),
+        sql_agents.agents,
         selection_strategy=KernelFunctionSelectionStrategy(
-            function=agent_config["selection_function"],
+            function=sql_agents.selection_function,
             kernel=create_kernel_with_chat_completion(
-                AgentType.SELECTION.value,
-                agent_config.model_type[AgentType.SELECTION],
+                service_id=AgentType.SELECTION.value,
+                deployment_name=agent_config.model_type[AgentType.SELECTION],
             ),
             result_parser=lambda result: (
                 str(result.value[0]) if result.value is not None else AgentType.MIGRATOR
@@ -144,11 +166,11 @@ async def convert(
             history_reducer=history_reducer,
         ),
         termination_strategy=KernelFunctionTerminationStrategy(
-            agents=[agent_config["agents"][AgentType.SYNTAX_CHECKER.value]],
-            function=agent_config["termination_function"],
+            agents=[sql_agents.agent_syntax_checker],
+            function=sql_agents.termination_function,
             kernel=create_kernel_with_chat_completion(
-                AgentType.TERMINATION.value,
-                agent_config.model_type[AgentType.TERMINATION],
+                service_id=AgentType.TERMINATION.value,
+                deployment_name=agent_config.model_type[AgentType.TERMINATION],
             ),
             result_parser=lambda result: TERMINATION_KEYWORD
             in str(result.value[0]).lower(),
@@ -281,11 +303,11 @@ async def convert(
         return migrated_query
 
     # Invoke the semantic verifier agent to validate the migrated query
-    semver_response = await invoke_semantic_verifier(
+    semver_response_obj = await invoke_semantic_verifier(
         agent_config, source_script, migrated_query
     )
     semver_response = SemanticVerifierResponse.model_validate_json(
-        semver_response or ""
+        semver_response_obj.content or ""
     )
 
     # Fake a problematic response for testing warning condition
@@ -385,16 +407,16 @@ async def invoke_semantic_verifier(
 ):
     """Invoke the semantic verifier agent to validate the migrated query."""
     try:
-        chat_history = ChatHistory()
+        # chat_history = ChatHistory()
 
         # Add user message to chat history
         user_message = (
             "Provide me with the semantic verification of the source and migrated queries. "
             "Remember to adhere to the specified JSON format for your response."
         )
-        chat_history.add_message(
-            ChatMessageContent(role=AuthorRole.USER, content=user_message)
-        )
+        # chat_history.add_message(
+        #     ChatMessageContent(role=AuthorRole.USER, content=user_message)
+        # )
 
         agent_semantic_verifier = await setup_semantic_verifier_agent(
             config,
@@ -403,7 +425,7 @@ async def invoke_semantic_verifier(
         )
 
         # Invoke the agent and process the response
-        async for response in agent_semantic_verifier.invoke(chat_history):
+        async for response in agent_semantic_verifier.invoke(messages=[user_message]):
             return response.content
 
     # Handle this as an exception from the Sematic Verifier is a warning

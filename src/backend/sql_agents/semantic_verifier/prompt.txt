@@ -9,7 +9,7 @@
 - You are allowed to make common sense assumptions about the data and return types.
 - Your final answer should be a JSON with the following fields: 'analysis', 'judgement', 'differences'.
 - If the scripts are not semantically equivalent, judgement would be 'Semantically Not Equivalent' and list the differences in the 'differences' field.
-- If the scripts are semantically equivalent, judgement would be 'Semantically Equivalent' and skip the differences field.
+- If the scripts are semantically equivalent, judgement would be 'Semantically Equivalent' and the differences filed would be an empty list.
 
 # Output structure description
 Your final answer should **strictly** adhere to the following JSON structure:
