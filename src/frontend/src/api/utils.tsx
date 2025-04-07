@@ -75,7 +75,7 @@ export const useStyles = makeStyles({
   },
   selectedCard: {
     border: "var(--NeutralStroke2.Rest)",
-    backgroundColor: "rgb(221, 217, 217)",
+    backgroundColor: "#EBEBEB",
   },
   mainContent: {
     flex: 1,
