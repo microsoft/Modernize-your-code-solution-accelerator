@@ -38,7 +38,6 @@ if __name__ == "__main__":
     async def main():
         storage = await BlobStorageFactory.get_storage()
         # Use the storage instance...
-        files = await storage.list_files()
         blob = await storage.get_file("q1_informix.sql")
         print(blob)
         await BlobStorageFactory.close_storage()

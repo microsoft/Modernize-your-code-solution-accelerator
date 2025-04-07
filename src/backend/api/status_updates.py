@@ -1,5 +1,6 @@
 """
 Holds collection of websocket connections.
+
 from clients registering for status updates.
 These socket references are used to send updates to
 registered clients from the backend processing code.
@@ -11,6 +12,7 @@ import logging
 from typing import Dict
 
 from common.models.api import FileProcessUpdate, FileProcessUpdateJSONEncoder
+
 from fastapi import WebSocket
 
 logger = logging.getLogger(__name__)
