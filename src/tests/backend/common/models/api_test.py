@@ -1,19 +1,20 @@
-import pytest
-from uuid import uuid4
 from datetime import datetime
-from backend.common.models.api import (
-    FileLog, FileRecord, FileProcessUpdate, FileProcessUpdateJSONEncoder,
-    QueueBatch, BatchRecord,
-    LogType, AgentType, AuthorRole, ProcessStatus, FileResult, TranslateType
-)
+from uuid import uuid4
+
+from backend.common.models.api import AgentType, BatchRecord, FileLog, FileProcessUpdate, FileProcessUpdateJSONEncoder, FileRecord, FileResult, ProcessStatus, QueueBatch, TranslateType
+
+import pytest
+
 
 @pytest.fixture
 def common_datetime():
     return datetime.now()
 
+
 @pytest.fixture
 def uuid_pair():
     return str(uuid4()), str(uuid4())
+
 
 def test_filelog_fromdb_and_dict(uuid_pair, common_datetime):
     log_id, file_id = uuid_pair
@@ -32,6 +33,7 @@ def test_filelog_fromdb_and_dict(uuid_pair, common_datetime):
     assert log.dict()["log_type"] == "info"
 
     assert log.dict()["author_role"] == "user"
+
 
 def test_filerecord_fromdb_and_dict(uuid_pair, common_datetime):
     file_id, batch_id = uuid_pair
@@ -53,6 +55,7 @@ def test_filerecord_fromdb_and_dict(uuid_pair, common_datetime):
     assert record.dict()["status"] == "ready_to_process"
     assert record.dict()["file_result"] == "warning"
 
+
 def test_fileprocessupdate_dict(uuid_pair):
     file_id, batch_id = uuid_pair
     update = FileProcessUpdate(
@@ -69,6 +72,7 @@ def test_fileprocessupdate_dict(uuid_pair):
     assert result["agent_type"] == "fixer"
     assert result["agent_message"] == "Translation done"
 
+
 def test_fileprocessupdate_json_encoder(uuid_pair):
     file_id, batch_id = uuid_pair
     update = FileProcessUpdate(
@@ -82,6 +86,7 @@ def test_fileprocessupdate_json_encoder(uuid_pair):
     json_string = FileProcessUpdateJSONEncoder().encode(update)
     assert "failed" in json_string
     assert "human" in json_string
+
 
 def test_queuebatch_dict(uuid_pair, common_datetime):
     batch_id, _ = uuid_pair
@@ -97,6 +102,7 @@ def test_queuebatch_dict(uuid_pair, common_datetime):
     result = batch.dict()
     assert result["status"] == "in_process"
     assert result["user_id"] == "user123"
+
 
 def test_batchrecord_fromdb_and_dict(uuid_pair, common_datetime):
     batch_id, _ = uuid_pair
