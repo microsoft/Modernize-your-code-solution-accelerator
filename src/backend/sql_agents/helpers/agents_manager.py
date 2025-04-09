@@ -4,7 +4,7 @@ import logging
 
 from semantic_kernel.agents import AzureAIAgent  # pylint: disable=E0611
 
-from sql_agents.agent_config import AgentBaseConfig
+from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.fixer.setup import setup_fixer_agent
 from sql_agents.helpers.models import AgentType
 from sql_agents.migrator.setup import setup_migrator_agent

@@ -22,7 +22,7 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
-from sql_agents.agent_config import AgentBaseConfig
+from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.convert_script import convert_script
 from sql_agents.helpers.agents_manager import SqlAgents
 from sql_agents.helpers.models import AgentType

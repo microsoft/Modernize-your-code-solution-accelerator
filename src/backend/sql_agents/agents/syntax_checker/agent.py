@@ -2,10 +2,10 @@
 
 import logging
 
-from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.agents.agent_base import BaseSQLAgent
+from sql_agents.agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
+from sql_agents.agents.syntax_checker.response import SyntaxCheckerResponse
 from sql_agents.helpers.models import AgentType
-from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
-from sql_agents.syntax_checker.response import SyntaxCheckerResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

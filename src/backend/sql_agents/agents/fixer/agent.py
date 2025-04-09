@@ -2,8 +2,8 @@
 
 import logging
 
-from sql_agents.agent_base import BaseSQLAgent
-from sql_agents.fixer.response import FixerResponse
+from sql_agents.agents.agent_base import BaseSQLAgent
+from sql_agents.agents.fixer.response import FixerResponse
 from sql_agents.helpers.models import AgentType
 
 logger = logging.getLogger(__name__)

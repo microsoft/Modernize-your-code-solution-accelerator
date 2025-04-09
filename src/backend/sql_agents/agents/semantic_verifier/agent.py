@@ -2,9 +2,9 @@
 
 import logging
 
-from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.agents.agent_base import BaseSQLAgent
+from sql_agents.agents.semantic_verifier.response import SemanticVerifierResponse
 from sql_agents.helpers.models import AgentType
-from sql_agents.semantic_verifier.response import SemanticVerifierResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
