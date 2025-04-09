@@ -1,7 +1,7 @@
 @minLength(3)
 @maxLength(10)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param ResourcePrefix string 
+param ResourcePrefix string
 
 @allowed([
   'australiaeast'
@@ -29,7 +29,7 @@ param ResourcePrefix string
   'westus3'
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
-param AiLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+param AiLocation string   // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
 
@@ -46,7 +46,7 @@ var randomString = substring(uniqueString(resourceGroup().id), 0, 4)
 // Combine the base name with the random suffix
 var finalName = '${ResourcePrefix}-${randomString}'
 
-var imageVersion = 'rc1'
+var imageVersion = 'rc1' //Change to "Fnd01" when new container is available
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -351,6 +351,26 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'TERMINATION_MODEL_DEPLOY'
               value: llmModel
+            }
+            {
+              name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
+              value: llmModel
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_NAME'
+              value: aifoundry.outputs.aiProjectName
+            }
+            {
+              name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
+              value: resourceGroup().name
+            }
+            {
+              name: 'AZURE_AI_AGENT_SUBSCRIPTION_ID'
+              value: subscription().subscriptionId
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING'
+              value: aifoundry.outputs.projectConnectionString
             }
           ]
           resources: {
