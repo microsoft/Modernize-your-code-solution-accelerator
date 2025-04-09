@@ -6,8 +6,8 @@ from semantic_kernel.agents.strategies import (
     TerminationStrategy,
 )
 
+from sql_agents.agents.migrator.response import MigratorResponse
 from sql_agents.helpers.models import AgentType
-from sql_agents.migrator.response import MigratorResponse
 
 
 class CommsManager:
