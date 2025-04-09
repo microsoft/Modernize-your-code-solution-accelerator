@@ -4,7 +4,7 @@ Before deploying the accelerator, **ensure sufficient quota availability** for t
 
 ### 📌 Default Models & Capacities:
 ```
-gpt-4o:30, text-embedding-ada-002:80, gpt-4:30
+gpt-4o:30, gpt-4:30
 ```
 ### 📌 Default Regions:
 ```
@@ -27,7 +27,7 @@ eastus, uksouth, eastus2, northcentralus, swedencentral, westus, westus2, southc
   ```
 ✔️ Multiple models can be passed, separated by commas:
   ```
-  ./quota_check_params.sh gpt-4o:30,text-embedding-ada-002:80
+  ./quota_check_params.sh gpt-4o:30,gpt-4:80
   ```
 ✔️ Passing Both models and regions:  
   ```

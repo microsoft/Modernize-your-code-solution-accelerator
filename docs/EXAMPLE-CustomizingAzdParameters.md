@@ -11,12 +11,6 @@ Change the Content Understanding Location (allowed values: Sweden Central, Austr
 azd env set AZURE_ENV_CU_LOCATION 'swedencentral'
 ```
 
-Change the Secondary Location (example: eastus2, westus2, etc.)
-
-```shell
-azd env set AZURE_ENV_SECONDARY_LOCATION eastus2
-```
-
 Change the Model Deployment Type (allowed values: Standard, GlobalStandard)
 
 ```shell
@@ -33,16 +27,4 @@ Change the Model Capacity (choose a number based on available GPT model capacity
 
 ```shell
 azd env set AZURE_ENV_MODEL_CAPACITY 30
-```
-
-Change the Embedding Model 
-
-```shell
-azd env set AZURE_ENV_EMBEDDING_MODEL_NAME text-embedding-ada-002
-```
-
-Change the Embedding Deployment Capacity (choose a number based on available embedding model capacity in your subscription)
-
-```shell
-azd env set AZURE_ENV_EMBEDDING_MODEL_CAPACITY 80
 ```
