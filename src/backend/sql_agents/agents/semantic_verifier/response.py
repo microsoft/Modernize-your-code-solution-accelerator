@@ -14,4 +14,4 @@ class SemanticVerifierResponse(KernelBaseModel):
     analysis: str
     judgement: str
     differences: list[str]
-    summary: str | None
+    summary: str
