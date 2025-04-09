@@ -14,7 +14,8 @@ import os
 from enum import Enum
 
 from azure.ai.projects.aio import AIProjectClient
-from common.models.api import AgentType
+
+from sql_agents.helpers.models import AgentType
 
 
 class AgentBaseConfig:

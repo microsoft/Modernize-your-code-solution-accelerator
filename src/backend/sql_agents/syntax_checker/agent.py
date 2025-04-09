@@ -2,8 +2,8 @@
 
 import logging
 
-from common.models.api import AgentType
 from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.helpers.models import AgentType
 from sql_agents.syntax_checker.plug_ins import SyntaxCheckerPlugin
 from sql_agents.syntax_checker.response import SyntaxCheckerResponse
 
@@ -15,7 +15,7 @@ class SyntaxCheckerAgent(BaseSQLAgent[SyntaxCheckerResponse]):
     """Syntax checker agent for validating SQL syntax."""
 
     @property
-    def response_schema(self) -> type:
+    def response_object(self) -> type:
         """Get the response schema for the syntax checker agent."""
         return SyntaxCheckerResponse
 

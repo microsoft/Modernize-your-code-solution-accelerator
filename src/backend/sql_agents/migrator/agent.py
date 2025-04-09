@@ -2,8 +2,8 @@
 
 import logging
 
-from common.models.api import AgentType
 from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.helpers.models import AgentType
 from sql_agents.migrator.response import MigratorResponse
 
 logger = logging.getLogger(__name__)
@@ -14,7 +14,7 @@ class MigratorAgent(BaseSQLAgent[MigratorResponse]):
     """Migrator agent for translating SQL from one dialect to another."""
 
     @property
-    def response_schema(self) -> type:
+    def response_object(self) -> type:
         """Get the response schema for the migrator agent."""
         return MigratorResponse
 

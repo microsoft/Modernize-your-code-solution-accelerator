@@ -3,11 +3,12 @@
 import logging
 from typing import Any, Dict, Optional, Type, TypeVar
 
-from common.models.api import AgentType
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
+
 from sql_agents.agent_base import BaseSQLAgent
 from sql_agents.agent_config import AgentBaseConfig
 from sql_agents.fixer.agent import FixerAgent
+from sql_agents.helpers.models import AgentType
 from sql_agents.migrator.agent import MigratorAgent
 from sql_agents.picker.agent import PickerAgent
 from sql_agents.semantic_verifier.agent import SemanticVerifierAgent
@@ -62,8 +63,16 @@ class SQLAgentFactory:
             "temperature": temperature,
             **kwargs,
         }
-
-        agent = agent_class(**params)
+        try:
+            agent = agent_class(**params)
+        except TypeError as e:
+            logger.error(
+                "Error creating agent of type %s with parameters %s: %s",
+                agent_type,
+                params,
+                e,
+            )
+            raise
         return await agent.setup()
 
     @classmethod
