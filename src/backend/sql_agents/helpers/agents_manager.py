@@ -24,8 +24,6 @@ class SqlAgents:
     agent_picker: AzureAIAgent = None
     agent_syntax_checker: AzureAIAgent = None
     agent_semantic_verifier: AzureAIAgent = None
-    # selection_function = None
-    # termination_function = None
     agent_config: AgentBaseConfig = None
 
     def __init__(self):
