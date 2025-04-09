@@ -18,14 +18,14 @@ from common.models.api import (
     ProcessStatus,
 )
 from common.services.batch_service import BatchService
-from sql_agents.fixer.response import FixerResponse
+from sql_agents.agents.fixer.response import FixerResponse
+from sql_agents.agents.migrator.response import MigratorResponse
+from sql_agents.agents.picker.response import PickerResponse
+from sql_agents.agents.semantic_verifier.response import SemanticVerifierResponse
+from sql_agents.agents.syntax_checker.response import SyntaxCheckerResponse
 from sql_agents.helpers.agents_manager import SqlAgents
 from sql_agents.helpers.comms_manager import CommsManager
 from sql_agents.helpers.models import AgentType
-from sql_agents.migrator.response import MigratorResponse
-from sql_agents.picker.response import PickerResponse
-from sql_agents.semantic_verifier.response import SemanticVerifierResponse
-from sql_agents.syntax_checker.response import SyntaxCheckerResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

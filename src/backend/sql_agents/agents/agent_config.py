@@ -11,7 +11,6 @@ settings.json file in the .vscode folder should include the following:
 """
 
 import os
-from enum import Enum
 
 from azure.ai.projects.aio import AIProjectClient
 
