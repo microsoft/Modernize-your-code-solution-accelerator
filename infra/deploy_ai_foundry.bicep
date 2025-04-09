@@ -298,3 +298,5 @@ output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = logAnalytics.id
 output storageAccountId string = storage.id
+
+output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
