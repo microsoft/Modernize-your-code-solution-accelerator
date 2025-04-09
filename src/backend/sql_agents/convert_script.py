@@ -38,7 +38,7 @@ async def convert_script(
     sql_agents: SqlAgents,
     # agent_config: AgentBaseConfig,
 ) -> str:
-    """setup agents, selection and termination."""
+    """Use the team of agents to migrate a sql script."""
     logger.info("Migrating query: %s\n", source_script)
 
     # Setup the group chat for the agents

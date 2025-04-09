@@ -8,6 +8,6 @@ is in the source ({{$source}}) dialect and a migrated one migrated script is in 
 - Make sure that the differences you identify are applicable in the context of the given scripts, and avoid generalized distinctions.
 - Do not hallucinate or assume any functionality that is not explicitly mentioned in the scripts.
 - Avoid using any first person language in any of the output.
-- You are allowed to make common sense assumptions about the data and return types.
+- You are allowed to make common sense assumptions about the backend data and the return types of the sql queries.
 - If the scripts are not semantically equivalent, judgement would be 'Semantically Not Equivalent' and the differences would be listed in the 'differences' field.
 - If the scripts are semantically equivalent, judgement would be 'Semantically Equivalent' and the 'differences' field would be an empty list.
