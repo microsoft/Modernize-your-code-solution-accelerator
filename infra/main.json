@@ -4,15 +4,15 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.33.93.31351",
-      "templateHash": "11802129812634129151"
+      "version": "0.34.44.8038",
+      "templateHash": "13937422806437579370"
     }
   },
   "parameters": {
-    "ResourcePrefix": {
+    "Prefix": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 10,
+      "maxLength": 20,
       "metadata": {
         "description": "Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group."
       }
@@ -54,8 +54,8 @@
     }
   },
   "variables": {
-    "randomString": "[substring(uniqueString(resourceGroup().id), 0, 4)]",
-    "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomString'))]",
+    "uniqueId": "[toLower(uniqueString(subscription().id, parameters('Prefix'), resourceGroup().location))]",
+    "ResourcePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
     "imageVersion": "rc1",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
@@ -66,11 +66,10 @@
     "deploymentType": "GlobalStandard",
     "containerName": "appstorage",
     "llmModel": "gpt-4o",
-    "prefixCleaned": "[replace(toLower(variables('finalName')), '-', '')]",
     "storageSkuName": "Standard_LRS",
-    "storageContainerName": "[format('{0}ctstor', variables('prefixCleaned'))]",
+    "storageContainerName": "[format('{0}ctstor', variables('ResourcePrefix'))]",
     "gptModelVersion": "2024-08-06",
-    "aiServicesName": "[format('{0}-aiservices', variables('prefixCleaned'))]",
+    "aiServicesName": "[format('{0}-aiservices', variables('ResourcePrefix'))]",
     "aiModelDeployments": [
       {
         "name": "[variables('llmModel')]",
@@ -134,13 +133,13 @@
     {
       "type": "Microsoft.App/containerApps",
       "apiVersion": "2023-05-01",
-      "name": "[toLower(format('{0}containerBackend', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}Backend', variables('ResourcePrefix')))]",
       "location": "[variables('location')]",
       "identity": {
         "type": "SystemAssigned"
       },
       "properties": {
-        "managedEnvironmentId": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value]",
+        "managedEnvironmentId": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('ResourcePrefix')))), '2022-09-01').outputs.resourceId.value]",
         "configuration": {
           "ingress": {
             "external": true,
@@ -159,7 +158,7 @@
               "env": [
                 {
                   "name": "COSMOSDB_ENDPOINT",
-                  "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.endpoint.value]"
+                  "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('ResourcePrefix')))), '2022-09-01').outputs.endpoint.value]"
                 },
                 {
                   "name": "COSMOSDB_DATABASE",
@@ -228,8 +227,8 @@
       },
       "dependsOn": [
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry')]",
-        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned'))))]",
-        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('ResourcePrefix'))))]",
+        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('ResourcePrefix'))))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageContainerName'))]"
       ]
     },
@@ -290,13 +289,13 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageContainerName'))]",
-      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), 'Storage Blob Data Contributor')]",
+      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), 'Storage Blob Data Contributor')]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
+        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), '2023-05-01', 'full').identity.principalId]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix'))))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageContainerName'))]"
       ]
     },
@@ -304,14 +303,14 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', variables('aiServicesName'))]",
-      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), variables('openAiContributorRoleId'))]",
+      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), variables('openAiContributorRoleId'))]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('openAiContributorRoleId'))]",
-        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
+        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), '2023-05-01', 'full').identity.principalId]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]"
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix'))))]"
       ]
     },
     {
@@ -341,7 +340,7 @@
         "mode": "Incremental",
         "parameters": {
           "solutionName": {
-            "value": "[variables('prefixCleaned')]"
+            "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
             "value": "[variables('location')]"
@@ -353,8 +352,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "11665286146084422127"
+              "version": "0.34.44.8038",
+              "templateHash": "17863870312619064541"
             }
           },
           "parameters": {
@@ -436,7 +435,7 @@
         "mode": "Incremental",
         "parameters": {
           "solutionName": {
-            "value": "[variables('prefixCleaned')]"
+            "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
             "value": "[variables('location')]"
@@ -451,8 +450,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "4388214478635448075"
+              "version": "0.34.44.8038",
+              "templateHash": "10664495342911727649"
             }
           },
           "parameters": {
@@ -556,7 +555,7 @@
         "mode": "Incremental",
         "parameters": {
           "solutionName": {
-            "value": "[variables('prefixCleaned')]"
+            "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
             "value": "[parameters('AiLocation')]"
@@ -589,8 +588,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "10270252950808398257"
+              "version": "0.34.44.8038",
+              "templateHash": "12550713338937452696"
             }
           },
           "parameters": {
@@ -952,7 +951,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[toLower(format('{0}conAppsEnv', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}conAppsEnv', variables('ResourcePrefix')))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -963,7 +962,7 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.logAnalyticsId.value]"
           },
           "name": {
-            "value": "[toLower(format('{0}manenv', variables('prefixCleaned')))]"
+            "value": "[toLower(format('{0}manenv', variables('ResourcePrefix')))]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -1571,7 +1570,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[toLower(format('{0}database', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}database', variables('ResourcePrefix')))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -1579,7 +1578,7 @@
         "mode": "Incremental",
         "parameters": {
           "name": {
-            "value": "[toLower(format('{0}databaseAccount', variables('prefixCleaned')))]"
+            "value": "[toLower(format('{0}databaseAccount', variables('ResourcePrefix')))]"
           },
           "enableAnalyticalStorage": {
             "value": true
@@ -5387,7 +5386,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[toLower(format('{0}containerAppFrontend', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}Frontend', variables('ResourcePrefix')))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -5408,7 +5407,7 @@
                 "env": [
                   {
                     "name": "API_URL",
-                    "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01').configuration.ingress.fqdn)]"
+                    "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), '2023-05-01').configuration.ingress.fqdn)]"
                   }
                 ],
                 "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('imageVersion'))]",
@@ -5433,10 +5432,10 @@
             "value": 1
           },
           "environmentResourceId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('ResourcePrefix')))), '2022-09-01').outputs.resourceId.value]"
           },
           "name": {
-            "value": "[toLower(format('{0}containerFrontend', variables('prefixCleaned')))]"
+            "value": "[toLower(format('{0}Frontend', variables('ResourcePrefix')))]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -6608,8 +6607,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
-        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix'))))]",
+        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('ResourcePrefix'))))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
     },
@@ -6643,7 +6642,7 @@
             }
           },
           "scriptContent": {
-            "value": "[format('az cosmosdb sql role assignment create --resource-group \"{0}\" --account-name \"{1}\" --role-definition-id \"{2}\" --scope \"{3}\" --principal-id \"{4}\"', resourceGroup().name, reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.name.value, resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[0], split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[1]), reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value, reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId)]"
+            "value": "[format('az cosmosdb sql role assignment create --resource-group \"{0}\" --account-name \"{1}\" --role-definition-id \"{2}\" --scope \"{3}\" --principal-id \"{4}\"', resourceGroup().name, reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('ResourcePrefix')))), '2022-09-01').outputs.name.value, resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('ResourcePrefix')))), '/')[0], split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('ResourcePrefix')))), '/')[1]), reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('ResourcePrefix')))), '2022-09-01').outputs.resourceId.value, reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), '2023-05-01', 'full').identity.principalId)]"
           }
         },
         "template": {
@@ -7172,8 +7171,8 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
-        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix'))))]",
+        "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('ResourcePrefix'))))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
     }
