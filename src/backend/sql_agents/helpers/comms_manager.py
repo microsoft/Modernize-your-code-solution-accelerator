@@ -1,17 +1,13 @@
-"""Manages all agent communication and selection strategies for the SQL agents."""
+"""Manages all agent communication and chat strategies for the SQL agents."""
 
 from semantic_kernel.agents import AgentGroupChat  # pylint: disable=E0611
-from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from semantic_kernel.agents.strategies import (
     SequentialSelectionStrategy,
     TerminationStrategy,
 )
 
-from sql_agents.fixer.response import FixerResponse
 from sql_agents.helpers.models import AgentType
 from sql_agents.migrator.response import MigratorResponse
-from sql_agents.semantic_verifier.response import SemanticVerifierResponse
-from sql_agents.syntax_checker.response import SyntaxCheckerResponse
 
 
 class CommsManager:
