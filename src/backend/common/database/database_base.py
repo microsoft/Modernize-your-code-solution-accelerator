@@ -4,9 +4,11 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
-from common.logger.app_logger import AppLogger
-from common.models.api import AgentType, BatchRecord, FileRecord, LogType, ProcessStatus
 from semantic_kernel.contents import AuthorRole
+
+from common.logger.app_logger import AppLogger
+from common.models.api import BatchRecord, FileRecord, LogType, ProcessStatus
+from sql_agents.helpers.models import AgentType
 
 
 class DatabaseBase(ABC):
