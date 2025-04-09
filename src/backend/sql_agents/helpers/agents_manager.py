@@ -1,4 +1,5 @@
-import json
+"""Module to manage the SQL agents for migration."""
+
 import logging
 
 from semantic_kernel.agents import AzureAIAgent  # pylint: disable=E0611
