@@ -2,9 +2,9 @@
 
 import logging
 
-from sql_agents.agent_base import BaseSQLAgent
+from sql_agents.agents.agent_base import BaseSQLAgent
+from sql_agents.agents.migrator.response import MigratorResponse
 from sql_agents.helpers.models import AgentType
-from sql_agents.migrator.response import MigratorResponse
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

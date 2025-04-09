@@ -1,18 +1,18 @@
 """Factory for creating SQL migration agents."""
 
 import logging
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Type, TypeVar
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 
-from sql_agents.agent_base import BaseSQLAgent
-from sql_agents.agent_config import AgentBaseConfig
-from sql_agents.fixer.agent import FixerAgent
+from sql_agents.agents.agent_base import BaseSQLAgent
+from sql_agents.agents.agent_config import AgentBaseConfig
+from sql_agents.agents.fixer.agent import FixerAgent
+from sql_agents.agents.migrator.agent import MigratorAgent
+from sql_agents.agents.picker.agent import PickerAgent
+from sql_agents.agents.semantic_verifier.agent import SemanticVerifierAgent
+from sql_agents.agents.syntax_checker.agent import SyntaxCheckerAgent
 from sql_agents.helpers.models import AgentType
-from sql_agents.migrator.agent import MigratorAgent
-from sql_agents.picker.agent import PickerAgent
-from sql_agents.semantic_verifier.agent import SemanticVerifierAgent
-from sql_agents.syntax_checker.agent import SyntaxCheckerAgent
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
