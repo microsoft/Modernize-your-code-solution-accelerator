@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Default Models and Capacities (Comma-separated in "model:capacity" format)
-DEFAULT_MODEL_CAPACITY="gpt-4o:30,text-embedding-ada-002:80,gpt-4:30"
+DEFAULT_MODEL_CAPACITY="gpt-4o:30,gpt-4:30"
 
 # Convert the comma-separated string into an array
 IFS=',' read -r -a MODEL_CAPACITY_PAIRS <<< "$DEFAULT_MODEL_CAPACITY"
