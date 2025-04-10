@@ -287,10 +287,15 @@ resource azureLocatioEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview
     value: solutionLocation
   }
 }
-
+output aiHubProject object = {
+  id: aiHubProject.id
+  objectId: aiHubProject.identity.principalId
+  resourceId: aiHubProject.id
+}
 output keyvaultName string = keyvaultName
 output keyvaultId string = keyVault.id
 
+output aiHubResourceId string = aiHub.id
 output aiServicesName string = aiServicesName 
 output aiSearchName string = aiSearchName
 output aiProjectName string = aiHubProject.name

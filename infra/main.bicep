@@ -1,7 +1,7 @@
 @minLength(3)
 @maxLength(20)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param Prefix string = 'ttgww'
+param Prefix string 
 
 
 @allowed([
@@ -18,7 +18,7 @@ param Prefix string = 'ttgww'
   'westus3'
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
-param AiLocation string = 'francecentral'  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+param AiLocation string   // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 1
 
 var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
@@ -436,7 +436,10 @@ var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'  // Fixed Ro
 // }
 resource azureAiDeveloperRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(containerAppBackend.id, azureAiDeveloperRoleId)
-  scope: aiServices
+    // Placeholder scope for deployment-time validation
+    scope: resourceGroup()
+  
+  
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAiDeveloperRoleId)
     principalId: containerAppBackend.identity.principalId
@@ -487,5 +490,22 @@ module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1'
       ]
     }
     scriptContent: cosmosAssignCli
+  }
+}
+
+var aiProjectRoleAssignmentId = 'az role assignment create --assignee ${containerAppBackend.identity.principalId} --role ${azureAiDeveloperRoleId} --scope ${aifoundry.outputs.aiHubResourceId}'  // Fixed Role ID for OpenAI Contributor
+module postDeploymentScript 'br/public:avm/res/resources/deployment-script:0.5.1' = {
+  name: 'postDeploymentScript'
+  params: {
+    kind: 'AzureCLI'
+    name: 'assignAzureAiDeveloperRole'
+    azCliVersion: '2.69.0'
+    location: resourceGroup().location
+    managedIdentities: {
+      userAssignedResourceIds: [
+        managedIdentityModule.outputs.managedIdentityId
+      ]
+    }
+    scriptContent: aiProjectRoleAssignmentId
   }
 }
