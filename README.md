@@ -61,7 +61,7 @@ The sample data used in this repository is synthetic and generated using Azure O
 
 This diagram double-clicks into the agentic framework for the code conversion process. The conversion uses an agentic approach with each agent playing a specialized role in the process. The system gets a list of SQL files which are targeted for conversion. 
 
-**Step 1:** The system loops through the list of SQL files, converting each file, starting by passing the SQL to the Migrator agent. This agent will create several candidate SQL files that should be equivalent. It does this to ensure that the system acknowledges that most of these queries could be converted in a number of different ways. *Note that the processing time can vary depending on OpenAI and cloud services.*
+**Step 1:** The system loops through the list of SQL files, converting each file, starting by passing the SQL to the Migrator agent. This agent will create several candidate SQL files that should be equivalent. It does this to ensure that the system acknowledges that most of these queries could be converted in a number of different ways. *Note that the processing time can vary depending on Azure OpenAI service and cloud services.*
 
 **Step 2:** The Picker agent then examines these various possibilities and picks the one it believes is best using criteria such as simplicity, clarity of syntax, etc.
 
@@ -106,12 +106,12 @@ When you start the deployment, most parameters will have **default values**, but
 |------------|----------------|  ------------|
 | **Azure Region** | The region where resources will be created. | East US| 
 | **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location | None |
-| **Capacity** | Configure capacity for **GPT models**. |  5k |
+| **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
+| **Capacity** | Configure capacity for **gpt-4o**. |  5k |
 
 ### [Optional] Quota Recommendations  
 By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
-> **We recommend increasing the capacity to 30k tokens for optimal performance.** 
+> **We recommend increasing the capacity to 200k tokens for optimal performance.** 
 
 To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)  
 
@@ -262,7 +262,7 @@ You can try the [Azure pricing calculator](https://azure.microsoft.com/en-us/pri
 * Azure AI Foundry: Free tier. [Pricing](https://azure.microsoft.com/pricing/details/ai-studio/)
 * Azure Storage Account: Standard tier, LRS. Pricing is based on storage and operations. [Pricing](https://azure.microsoft.com/pricing/details/storage/blobs/)
 * Azure Key Vault: Standard tier. Pricing is based on the number of operations. [Pricing](https://azure.microsoft.com/pricing/details/key-vault/)
-* Azure AI Services: S0 tier, defaults to gpt-4o-mini and text-embedding-ada-002 models. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
+* Azure AI Services: S0 tier, defaults to gpt-4o-mini. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
 * Azure Container App: Consumption tier with 0.5 CPU, 1GiB memory/storage. Pricing is based on resource allocation, and each month allows for a certain amount of free usage. [Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 * Azure Container Registry: Basic tier. [Pricing](https://azure.microsoft.com/pricing/details/container-registry/)
 * Log analytics: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
