@@ -1,41 +1,29 @@
 @minLength(3)
 @maxLength(20)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param Prefix string 
+param Prefix string = 'ttgww'
 
 
 @allowed([
   'australiaeast'
-  'brazilsouth'
-  'canadacentral'
-  'canadaeast'
   'eastus'
   'eastus2'
   'francecentral'
-  'germanywestcentral'
   'japaneast'
-  'koreacentral'
-  'northcentralus'
   'norwayeast'
-  'polandcentral'
-  'southafricanorth'
-  'southcentralus'
   'southindia'
   'swedencentral'
-  'switzerlandnorth'
-  'uaenorth'
   'uksouth'
-  'westeurope'
   'westus'
   'westus3'
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
-param AiLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
-param capacity int = 5
+param AiLocation string = 'francecentral'  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+param capacity int = 1
 
 var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
 var ResourcePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
-var imageVersion = 'rc1'
+var imageVersion = 'fnd01'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -340,6 +328,26 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
               name: 'TERMINATION_MODEL_DEPLOY'
               value: llmModel
             }
+            {
+              name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
+              value: llmModel
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_NAME'
+              value: aifoundry.outputs.aiProjectName
+            }
+            {
+              name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
+              value: resourceGroup().name
+            }
+            {
+              name: 'AZURE_AI_AGENT_SUBSCRIPTION_ID'
+              value: subscription().subscriptionId
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING'
+              value: aifoundry.outputs.projectConnectionString
+            }
           ]
           resources: {
             cpu: 1
@@ -419,6 +427,30 @@ resource openAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-0
     principalId: containerAppBackend.identity.principalId
   }
 }
+
+var azureAiDeveloperRoleId = '64702f94-c441-49e6-a78b-ef80e0188fee'  // Fixed Role ID for Azure AI Developer
+
+// resource azureAiDeveloper 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+//   scope: subscription()
+//   name: '64702f94-c441-49e6-a78b-ef80e0188fee'
+// }
+resource azureAiDeveloperRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(containerAppBackend.id, azureAiDeveloperRoleId)
+  scope: aiServices
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAiDeveloperRoleId)
+    principalId: containerAppBackend.identity.principalId
+  }
+}
+
+// resource aiHubAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: guid( containerAppBackend.id, azureAiDeveloperRoleId)
+//   scope: resourceGroup() // Replace with the appropriate resource or tenant scope
+//   properties: {
+//     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', azureAiDeveloper.id) // OpenAI Service Contributor
+//     principalId: containerAppBackend.identity.principalId
+//   }
+// }
 
 var containerNames = [
   containerName

@@ -9,6 +9,7 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
+
 var storageName = '${solutionName}hubstorage'
 var storageSkuName = 'Standard_LRS'
 var aiServicesName = '${solutionName}-aiservices'
@@ -298,3 +299,4 @@ output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = logAnalytics.id
 output storageAccountId string = storage.id
+output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
