@@ -1,228 +1,225 @@
-# blob_azure_test.py
+import json
+import os
+import sys
+import pytest
+from unittest.mock import AsyncMock, patch, MagicMock
+from io import BytesIO
 
-from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-
-# Import the class under test
-from azure.core.exceptions import ResourceExistsError
+# Add backend directory to sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'backend')))
 
 from common.storage.blob_azure import AzureBlobStorage
 
 
-import pytest
+@pytest.fixture
+def mock_blob_service():
+    """Fixture to mock Azure Blob Storage service client"""
+    with patch("common.storage.blob_azure.BlobServiceClient") as mock_service:
+        mock_service_instance = MagicMock()
+        mock_container_client = MagicMock()
+        mock_blob_client = MagicMock()
 
+        # Set up mock methods
+        mock_service.return_value = mock_service_instance
+        mock_service_instance.get_container_client.return_value = mock_container_client
+        mock_container_client.get_blob_client.return_value = mock_blob_client
 
-class DummyBlob:
-    """A dummy blob item returned by list_blobs."""
-
-    def __init__(self, name, size, creation_time, content_type, metadata):
-        self.name = name
-        self.size = size
-        self.creation_time = creation_time
-        self.content_settings = MagicMock(content_type=content_type)
-        self.metadata = metadata
-
-
-class DummyAsyncIterator:
-    """A dummy async iterator that yields the given items."""
-
-    def __init__(self, items):
-        self.items = items
-        self.index = 0
-
-    def __aiter__(self):
-        return self
-
-    async def __anext__(self):
-        if self.index >= len(self.items):
-            raise StopAsyncIteration
-        item = self.items[self.index]
-        self.index += 1
-        return item
-
-
-class DummyDownloadStream:
-    """A dummy download stream whose content_as_bytes method returns a fixed byte string."""
-
-    async def content_as_bytes(self):
-        return b"file content"
-
-# --- Fixtures ---
+        yield mock_service_instance, mock_container_client, mock_blob_client
 
 
 @pytest.fixture
-def dummy_storage():
-    # Create an instance with dummy connection string and container name.
-    return AzureBlobStorage("dummy_connection_string", "dummy_container")
-
-
-@pytest.fixture
-def dummy_container_client():
-    container = MagicMock()
-    container.create_container = AsyncMock()
-    container.list_blobs = MagicMock()  # Will be overridden per test.
-    container.get_blob_client = MagicMock()
-    return container
-
-
-@pytest.fixture
-def dummy_service_client(dummy_container_client):
-    service = MagicMock()
-    service.get_container_client.return_value = dummy_container_client
-    return service
-
-
-@pytest.fixture
-def dummy_blob_client():
-    blob_client = MagicMock()
-    blob_client.upload_blob = AsyncMock()
-    blob_client.get_blob_properties = AsyncMock()
-    blob_client.download_blob = AsyncMock()
-    blob_client.delete_blob = AsyncMock()
-    blob_client.url = "https://dummy.blob.core.windows.net/dummy_container/dummy_blob"
-    return blob_client
-
-# --- Tests for AzureBlobStorage methods ---
+def blob_storage(mock_blob_service):
+    """Fixture to initialize AzureBlobStorage with mocked dependencies"""
+    service_client, container_client, blob_client = mock_blob_service
+    return AzureBlobStorage(account_name="test_account", container_name="test_container")
 
 
 @pytest.mark.asyncio
-async def test_initialize_creates_container(dummy_storage, dummy_service_client, dummy_container_client):
-    with patch("common.storage.blob_azure.BlobServiceClient.from_connection_string", return_value=dummy_service_client) as mock_from_conn:
-        # Simulate normal container creation.
-        dummy_container_client.create_container = AsyncMock()
-        await dummy_storage.initialize()
-        mock_from_conn.assert_called_once_with("dummy_connection_string")
-        dummy_service_client.get_container_client.assert_called_once_with("dummy_container")
-        dummy_container_client.create_container.assert_awaited_once()
+async def test_upload_file(blob_storage, mock_blob_service):
+    """Test uploading a file"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.upload_blob.return_value = MagicMock()
+    mock_blob_client.get_blob_properties.return_value = MagicMock(
+        size=1024,
+        content_settings=MagicMock(content_type="text/plain"),
+        creation_time="2024-03-15T12:00:00Z",
+        etag="dummy_etag",
+    )
 
+    file_content = BytesIO(b"dummy data")
 
-@pytest.mark.asyncio
-async def test_initialize_container_already_exists(dummy_storage, dummy_service_client, dummy_container_client):
-    with patch("common.storage.blob_azure.BlobServiceClient.from_connection_string", return_value=dummy_service_client):
-        # Simulate container already existing.
-        dummy_container_client.create_container = AsyncMock(side_effect=ResourceExistsError("Container exists"))
-        with patch.object(dummy_storage.logger, "debug") as mock_debug:
-            await dummy_storage.initialize()
-            dummy_container_client.create_container.assert_awaited_once()
-            mock_debug.assert_called_with("Container dummy_container already exists")
+    result = await blob_storage.upload_file(file_content, "test_blob.txt", "text/plain")
 
-
-@pytest.mark.asyncio
-async def test_initialize_failure(dummy_storage):
-    # Simulate failure during initialization.
-    with patch("common.storage.blob_azure.BlobServiceClient.from_connection_string", side_effect=Exception("Init error")):
-        with patch.object(dummy_storage.logger, "error") as mock_error:
-            with pytest.raises(Exception, match="Init error"):
-                await dummy_storage.initialize()
-            mock_error.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_upload_file_success(dummy_storage, dummy_blob_client):
-    # Patch get_blob_client to return our dummy blob client.
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-
-    # Create a dummy properties object.
-    dummy_properties = MagicMock()
-    dummy_properties.size = 1024
-    dummy_properties.content_settings = MagicMock(content_type="text/plain")
-    dummy_properties.creation_time = datetime(2023, 1, 1)
-    dummy_properties.etag = "dummy_etag"
-    dummy_blob_client.get_blob_properties = AsyncMock(return_value=dummy_properties)
-
-    file_content = b"Hello, world!"
-    result = await dummy_storage.upload_file(file_content, "dummy_blob.txt", "text/plain", {"key": "value"})
-    dummy_storage.container_client.get_blob_client.assert_called_once_with("dummy_blob.txt")
-    dummy_blob_client.upload_blob.assert_awaited_with(file_content, content_type="text/plain", metadata={"key": "value"}, overwrite=True)
-    dummy_blob_client.get_blob_properties.assert_awaited()
-    assert result["path"] == "dummy_blob.txt"
+    assert result["path"] == "test_blob.txt"
     assert result["size"] == 1024
     assert result["content_type"] == "text/plain"
-    assert result["url"] == dummy_blob_client.url
+    assert result["created_at"] == "2024-03-15T12:00:00Z"
     assert result["etag"] == "dummy_etag"
+    assert "url" in result
 
 
 @pytest.mark.asyncio
-async def test_upload_file_error(dummy_storage, dummy_blob_client):
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-    dummy_blob_client.upload_blob = AsyncMock(side_effect=Exception("Upload failed"))
+async def test_upload_file_exception(blob_storage, mock_blob_service):
+    """Test upload_file when an exception occurs"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.upload_blob.side_effect = Exception("Upload failed")
+
     with pytest.raises(Exception, match="Upload failed"):
-        await dummy_storage.upload_file(b"data", "blob.txt", "text/plain", {})
+        await blob_storage.upload_file(BytesIO(b"dummy data"), "test_blob.txt")
 
 
 @pytest.mark.asyncio
-async def test_get_file_success(dummy_storage, dummy_blob_client):
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-    # Make download_blob return a DummyDownloadStream (not wrapped in extra coroutine)
-    dummy_blob_client.download_blob = AsyncMock(return_value=DummyDownloadStream())
-    result = await dummy_storage.get_file("blob.txt")
-    dummy_storage.container_client.get_blob_client.assert_called_once_with("blob.txt")
-    dummy_blob_client.download_blob.assert_awaited()
-    assert result == b"file content"
+async def test_get_file(blob_storage, mock_blob_service):
+    """Test downloading a file"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.download_blob.return_value.readall.return_value = b"dummy data"
+
+    result = await blob_storage.get_file("test_blob.txt")
+
+    assert result == "dummy data"
 
 
 @pytest.mark.asyncio
-async def test_get_file_error(dummy_storage, dummy_blob_client):
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-    dummy_blob_client.download_blob = AsyncMock(side_effect=Exception("Download error"))
-    with pytest.raises(Exception, match="Download error"):
-        await dummy_storage.get_file("nonexistent.txt")
+async def test_get_file_exception(blob_storage, mock_blob_service):
+    """Test get_file when an exception occurs"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.download_blob.side_effect = Exception("Download failed")
+
+    with pytest.raises(Exception, match="Download failed"):
+        await blob_storage.get_file("test_blob.txt")
 
 
 @pytest.mark.asyncio
-async def test_delete_file_success(dummy_storage, dummy_blob_client):
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-    dummy_blob_client.delete_blob = AsyncMock()
-    result = await dummy_storage.delete_file("blob.txt")
-    dummy_storage.container_client.get_blob_client.assert_called_once_with("blob.txt")
-    dummy_blob_client.delete_blob.assert_awaited()
+async def test_delete_file(blob_storage, mock_blob_service):
+    """Test deleting a file"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.delete_blob.return_value = None
+
+    result = await blob_storage.delete_file("test_blob.txt")
+
     assert result is True
 
 
 @pytest.mark.asyncio
-async def test_delete_file_error(dummy_storage, dummy_blob_client):
-    dummy_storage.container_client = MagicMock()
-    dummy_storage.container_client.get_blob_client.return_value = dummy_blob_client
-    dummy_blob_client.delete_blob = AsyncMock(side_effect=Exception("Delete error"))
-    result = await dummy_storage.delete_file("blob.txt")
+async def test_delete_file_exception(blob_storage, mock_blob_service):
+    """Test delete_file when an exception occurs"""
+    _, _, mock_blob_client = mock_blob_service
+    mock_blob_client.delete_blob.side_effect = Exception("Delete failed")
+
+    result = await blob_storage.delete_file("test_blob.txt")
+
     assert result is False
 
 
 @pytest.mark.asyncio
-async def test_list_files_success(dummy_storage):
-    dummy_storage.container_client = MagicMock()
-    # Create two dummy blobs.
-    blob1 = DummyBlob("file1.txt", 100, datetime(2023, 1, 1), "text/plain", {"a": "1"})
-    blob2 = DummyBlob("file2.txt", 200, datetime(2023, 1, 2), "text/plain", {"b": "2"})
-    async_iterator = DummyAsyncIterator([blob1, blob2])
-    dummy_storage.container_client.list_blobs.return_value = async_iterator
-    result = await dummy_storage.list_files("file")
+async def test_list_files(blob_storage, mock_blob_service):
+    """Test listing files in a container"""
+    _, mock_container_client, _ = mock_blob_service
+
+    class AsyncIterator:
+        """Helper class to create an async iterator"""
+        def __init__(self, items):
+            self._items = items
+
+        def __aiter__(self):
+            self._iter = iter(self._items)
+            return self
+
+        async def __anext__(self):
+            try:
+                return next(self._iter)
+            except StopIteration:
+                raise StopAsyncIteration
+
+    mock_blobs = [
+        MagicMock(name="file1.txt"),
+        MagicMock(name="file2.txt"),
+    ]
+
+    # Explicitly set attributes to avoid MagicMock issues
+    mock_blobs[0].name = "file1.txt"
+    mock_blobs[0].size = 123
+    mock_blobs[0].creation_time = "2024-03-15T12:00:00Z"
+    mock_blobs[0].content_settings = MagicMock(content_type="text/plain")
+    mock_blobs[0].metadata = {}
+
+    mock_blobs[1].name = "file2.txt"
+    mock_blobs[1].size = 456
+    mock_blobs[1].creation_time = "2024-03-16T12:00:00Z"
+    mock_blobs[1].content_settings = MagicMock(content_type="application/json")
+    mock_blobs[1].metadata = {}
+
+    mock_container_client.list_blobs = MagicMock(return_value=AsyncIterator(mock_blobs))
+
+    result = await blob_storage.list_files()
+
     assert len(result) == 2
-    names = {item["name"] for item in result}
-    assert names == {"file1.txt", "file2.txt"}
+    assert result[0]["name"] == "file1.txt"
+    assert result[0]["size"] == 123
+    assert result[0]["created_at"] == "2024-03-15T12:00:00Z"
+    assert result[0]["content_type"] == "text/plain"
+    assert result[0]["metadata"] == {}
+
+    assert result[1]["name"] == "file2.txt"
+    assert result[1]["size"] == 456
+    assert result[1]["created_at"] == "2024-03-16T12:00:00Z"
+    assert result[1]["content_type"] == "application/json"
+    assert result[1]["metadata"] == {}
 
 
 @pytest.mark.asyncio
-async def test_list_files_failure(dummy_storage):
-    dummy_storage.container_client = MagicMock()
-    # Define list_blobs to return an invalid object (simulate error)
+async def test_list_files_exception(blob_storage, mock_blob_service):
+    """Test list_files when an exception occurs"""
+    _, mock_container_client, _ = mock_blob_service
+    mock_container_client.list_blobs.side_effect = Exception("List failed")
 
-    async def invalid_list_blobs(*args, **kwargs):
-        # Return a plain string (which does not implement __aiter__)
-        return "invalid"
-    dummy_storage.container_client.list_blobs = invalid_list_blobs
-    with pytest.raises(Exception):   # noqa B017
-        await dummy_storage.list_files("")
+    with pytest.raises(Exception, match="List failed"):
+        await blob_storage.list_files()
 
 
 @pytest.mark.asyncio
-async def test_close(dummy_storage):
-    dummy_storage.service_client = MagicMock()
-    dummy_storage.service_client.close = AsyncMock()
-    await dummy_storage.close()
-    dummy_storage.service_client.close.assert_awaited()
+async def test_close(blob_storage, mock_blob_service):
+    """Test closing the storage client"""
+    service_client, _, _ = mock_blob_service
+
+    await blob_storage.close()
+
+    service_client.close.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_blob_storage_init_exception():
+    """Test that an exception during initialization logs the error message"""
+    with patch("common.storage.blob_azure.BlobServiceClient") as mock_service, \
+         patch("logging.getLogger") as mock_logger:  # Patch logging globally
+
+        # Mock logger instance
+        mock_logger_instance = MagicMock()
+        mock_logger.return_value = mock_logger_instance
+
+        # Simulate an exception when creating BlobServiceClient
+        mock_service.side_effect = Exception("Connection failed")
+
+        # Try to initialize AzureBlobStorage
+        try:
+            AzureBlobStorage(account_name="test_account", container_name="test_container")
+        except Exception:
+            pass  # Prevent test failure due to the exception
+
+        # Construct the expected JSON log format
+        expected_error_log = json.dumps({
+            "message": "Failed to initialize Azure Blob Storage",
+            "context": {
+                "error": "Connection failed",
+                "account_name": "test_account"
+            }
+        })
+
+        expected_debug_log = json.dumps({
+            "message": "Container test_container already exists"
+        })
+
+        # Assert that error logging happened with the expected JSON string
+        mock_logger_instance.error.assert_called_once_with(expected_error_log)
+
+        # Assert that debug log is written for container existence
+        mock_logger_instance.debug.assert_called_once_with(expected_debug_log)

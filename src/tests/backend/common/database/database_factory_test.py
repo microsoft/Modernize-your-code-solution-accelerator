@@ -1,63 +1,79 @@
-from common.config.config import Config
-from common.database.database_factory import DatabaseFactory
-
+import os
+import sys
 import pytest
+import asyncio
+from unittest.mock import AsyncMock, patch
 
-
-class DummyConfig:
-    cosmosdb_endpoint = "dummy_endpoint"
-    cosmosdb_database = "dummy_database"
-    cosmosdb_batch_container = "dummy_batch"
-    cosmosdb_file_container = "dummy_file"
-    cosmosdb_log_container = "dummy_log"
-
-
-class DummyCosmosDBClient:
-    def __init__(self, endpoint, credential, database_name, batch_container, file_container, log_container):
-        self.endpoint = endpoint
-        self.credential = credential
-        self.database_name = database_name
-        self.batch_container = batch_container
-        self.file_container = file_container
-        self.log_container = log_container
-
-
-def dummy_config_init(self):
-    self.cosmosdb_endpoint = DummyConfig.cosmosdb_endpoint
-    self.cosmosdb_database = DummyConfig.cosmosdb_database
-    self.cosmosdb_batch_container = DummyConfig.cosmosdb_batch_container
-    self.cosmosdb_file_container = DummyConfig.cosmosdb_file_container
-    self.cosmosdb_log_container = DummyConfig.cosmosdb_log_container
-    # Provide a dummy method for credentials.
-    self.get_azure_credentials = lambda: "dummy_credential"
-
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'backend')))
 
 @pytest.fixture(autouse=True)
 def patch_config(monkeypatch):
-    # Patch the __init__ of Config so that an instance will have the required attributes.
-    monkeypatch.setattr(Config, "__init__", dummy_config_init)
+    """Patch Config class to use dummy values."""
+    from common.config.config import Config
 
+    def dummy_init(self):
+        """Mocked __init__ method for Config to set dummy values."""
+        self.cosmosdb_endpoint = "dummy_endpoint"
+        self.cosmosdb_database = "dummy_database"
+        self.cosmosdb_batch_container = "dummy_batch"
+        self.cosmosdb_file_container = "dummy_file"
+        self.cosmosdb_log_container = "dummy_log"
+        self.get_azure_credentials = lambda: "dummy_credential"
+
+    monkeypatch.setattr(Config, "__init__", dummy_init)  # Replace the init method
 
 @pytest.fixture(autouse=True)
 def patch_cosmosdb_client(monkeypatch):
-    # Patch CosmosDBClient in the module under test to use our dummy client.
+    """Patch CosmosDBClient to use a dummy implementation."""
+    from common.database.database_factory import CosmosDBClient
+
+    class DummyCosmosDBClient:
+        def __init__(self, endpoint, credential, database_name, batch_container, file_container, log_container):
+            self.endpoint = endpoint
+            self.credential = credential
+            self.database_name = database_name
+            self.batch_container = batch_container
+            self.file_container = file_container
+            self.log_container = log_container
+
+        async def initialize_cosmos(self):
+            pass
+
+        async def create_batch(self, *args, **kwargs):
+            pass
+
+        async def add_file(self, *args, **kwargs):
+            pass
+
+        async def get_batch(self, *args, **kwargs):
+            return "mock_batch"
+
+        async def close(self):
+            pass
+
     monkeypatch.setattr("common.database.database_factory.CosmosDBClient", DummyCosmosDBClient)
 
+@pytest.mark.asyncio
+async def test_get_database():
+    """Test database retrieval using the factory."""
+    from common.database.database_factory import DatabaseFactory
 
-def test_get_database():
-    """
-    Test that DatabaseFactory.get_database() correctly returns an instance of the.
+    db_instance = await DatabaseFactory.get_database()
 
-    dummy CosmosDB client with the expected configuration values.
-    """
-    # When get_database() is called, it creates a new Config() instance.
-    db_instance = DatabaseFactory.get_database()
-
-    # Verify that the returned instance is our dummy client with the expected attributes.
-    assert isinstance(db_instance, DummyCosmosDBClient)
-    assert db_instance.endpoint == DummyConfig.cosmosdb_endpoint
+    assert db_instance.endpoint == "dummy_endpoint"
     assert db_instance.credential == "dummy_credential"
-    assert db_instance.database_name == DummyConfig.cosmosdb_database
-    assert db_instance.batch_container == DummyConfig.cosmosdb_batch_container
-    assert db_instance.file_container == DummyConfig.cosmosdb_file_container
-    assert db_instance.log_container == DummyConfig.cosmosdb_log_container
+    assert db_instance.database_name == "dummy_database"
+    assert db_instance.batch_container == "dummy_batch"
+    assert db_instance.file_container == "dummy_file"
+    assert db_instance.log_container == "dummy_log"
+
+@pytest.mark.asyncio
+async def test_main_function():
+    """Test the main function in database factory."""
+    with patch("common.database.database_factory.DatabaseFactory.get_database", new_callable=AsyncMock, return_value=AsyncMock()) as mock_get_database, patch("builtins.print") as mock_print:
+        
+        from common.database.database_factory import main
+        await main()
+
+        mock_get_database.assert_called_once()
+        mock_print.assert_called()  # Ensures print is executed
