@@ -50,7 +50,7 @@
     "globals": "^15.14.0",
     "rollup": "^4.34.4",
     "rollup-plugin-dts": "^6.1.1",
-    "vite": "^6.0.5",
+    "vite": "^6.2.6",
     "vite-plugin-svgr": "^4.3.0"
   }
 }
