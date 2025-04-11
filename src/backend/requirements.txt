@@ -34,7 +34,7 @@ structlog
 typing-extensions
 python-jose[cryptography]
 passlib[bcrypt]
-semantic-kernel[azure]==1.27.1
+semantic-kernel[azure]==1.27.2
 openai
 sqlparse
 sqlglot
