@@ -1,62 +1,70 @@
-import unittest
-from unittest.mock import patch
-
-# from config import Config
-from common.config.config import Config
-
-
-class TestConfigInitialization(unittest.TestCase):
-    @patch.dict(
-        "os.environ",
-        {
-            "AZURE_TENANT_ID": "test-tenant-id",
-            "AZURE_CLIENT_ID": "test-client-id",
-            "AZURE_CLIENT_SECRET": "test-client-secret",
-            "COSMOSDB_DATABASE": "test-database",
-            "COSMOSDB_BATCH_CONTAINER": "test-batch-container",
-            "COSMOSDB_FILE_CONTAINER": "test-file-container",
-            "COSMOSDB_LOG_CONTAINER": "test-log-container",
-            "AZURE_BLOB_CONTAINER_NAME": "test-blob-container-name",
-            "AZURE_BLOB_ACCOUNT_NAME": "test-blob-account-name",
-        },
-        clear=True,
-    )
-    def test_config_initialization(self):
-        """Test if all attributes are correctly assigned from environment variables."""
-        config = Config()
-
-        # Ensure every attribute is accessed
-        self.assertEqual(config.azure_tenant_id, "test-tenant-id")
-        self.assertEqual(config.azure_client_id, "test-client-id")
-        self.assertEqual(config.azure_client_secret, "test-client-secret")
-
-        self.assertEqual(config.cosmosdb_endpoint, "test-cosmosdb-endpoint")
-        self.assertEqual(config.cosmosdb_database, "test-database")
-        self.assertEqual(config.cosmosdb_batch_container, "test-batch-container")
-        self.assertEqual(config.cosmosdb_file_container, "test-file-container")
-        self.assertEqual(config.cosmosdb_log_container, "test-log-container")
-
-        self.assertEqual(config.azure_blob_container_name, "test-blob-container-name")
-        self.assertEqual(config.azure_blob_account_name, "test-blob-account-name")
-
-    @patch.dict(
-        "os.environ",
-        {
-            "COSMOSDB_ENDPOINT": "test-cosmosdb-endpoint",
-            "COSMOSDB_DATABASE": "test-database",
-            "COSMOSDB_BATCH_CONTAINER": "test-batch-container",
-            "COSMOSDB_FILE_CONTAINER": "test-file-container",
-            "COSMOSDB_LOG_CONTAINER": "test-log-container",
-        },
-    )
-    def test_cosmosdb_config_initialization(self):
-        config = Config()
-        self.assertEqual(config.cosmosdb_endpoint, "test-cosmosdb-endpoint")
-        self.assertEqual(config.cosmosdb_database, "test-database")
-        self.assertEqual(config.cosmosdb_batch_container, "test-batch-container")
-        self.assertEqual(config.cosmosdb_file_container, "test-file-container")
-        self.assertEqual(config.cosmosdb_log_container, "test-log-container")
-
-
-if __name__ == "__main__":
-    unittest.main()
+import os
+import sys
+import pytest
+ 
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'backend')))
+ 
+@pytest.fixture(autouse=True)
+def clear_env(monkeypatch):
+    # Clear environment variables that might affect tests.
+    keys = [
+        "AZURE_TENANT_ID",
+        "AZURE_CLIENT_ID",
+        "AZURE_CLIENT_SECRET",
+        "COSMOSDB_ENDPOINT",
+        "COSMOSDB_DATABASE",
+        "COSMOSDB_BATCH_CONTAINER",
+        "COSMOSDB_FILE_CONTAINER",
+        "COSMOSDB_LOG_CONTAINER",
+        "AZURE_BLOB_CONTAINER_NAME",
+        "AZURE_BLOB_ACCOUNT_NAME",
+    ]
+    for key in keys:
+        monkeypatch.delenv(key, raising=False)
+ 
+def test_config_initialization(monkeypatch):
+    # Set the full configuration environment variables.
+    monkeypatch.setenv("AZURE_TENANT_ID", "test-tenant-id")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "test-client-id")
+    monkeypatch.setenv("AZURE_CLIENT_SECRET", "test-client-secret")
+    monkeypatch.setenv("COSMOSDB_ENDPOINT", "test-cosmosdb-endpoint")
+    monkeypatch.setenv("COSMOSDB_DATABASE", "test-database")
+    monkeypatch.setenv("COSMOSDB_BATCH_CONTAINER", "test-batch-container")
+    monkeypatch.setenv("COSMOSDB_FILE_CONTAINER", "test-file-container")
+    monkeypatch.setenv("COSMOSDB_LOG_CONTAINER", "test-log-container")
+    monkeypatch.setenv("AZURE_BLOB_CONTAINER_NAME", "test-blob-container-name")
+    monkeypatch.setenv("AZURE_BLOB_ACCOUNT_NAME", "test-blob-account-name")
+ 
+    # Local import to avoid triggering circular imports during module collection.
+    from common.config.config import Config
+    config = Config()
+ 
+    assert config.azure_tenant_id == "test-tenant-id"
+    assert config.azure_client_id == "test-client-id"
+    assert config.azure_client_secret == "test-client-secret"
+    assert config.cosmosdb_endpoint == "test-cosmosdb-endpoint"
+    assert config.cosmosdb_database == "test-database"
+    assert config.cosmosdb_batch_container == "test-batch-container"
+    assert config.cosmosdb_file_container == "test-file-container"
+    assert config.cosmosdb_log_container == "test-log-container"
+    assert config.azure_blob_container_name == "test-blob-container-name"
+    assert config.azure_blob_account_name == "test-blob-account-name"
+ 
+def test_cosmosdb_config_initialization(monkeypatch):
+    # Set only cosmosdb-related environment variables.
+    monkeypatch.setenv("COSMOSDB_ENDPOINT", "test-cosmosdb-endpoint")
+    monkeypatch.setenv("COSMOSDB_DATABASE", "test-database")
+    monkeypatch.setenv("COSMOSDB_BATCH_CONTAINER", "test-batch-container")
+    monkeypatch.setenv("COSMOSDB_FILE_CONTAINER", "test-file-container")
+    monkeypatch.setenv("COSMOSDB_LOG_CONTAINER", "test-log-container")
+ 
+    from common.config.config import Config
+    config = Config()
+ 
+    assert config.cosmosdb_endpoint == "test-cosmosdb-endpoint"
+    assert config.cosmosdb_database == "test-database"
+    assert config.cosmosdb_batch_container == "test-batch-container"
+    assert config.cosmosdb_file_container == "test-file-container"
+    assert config.cosmosdb_log_container == "test-log-container"
+ 
+ 
