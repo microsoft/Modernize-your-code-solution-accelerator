@@ -1,3 +1,5 @@
+"""DatabaseBase class for managing database operations"""
+
 import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
@@ -5,6 +7,9 @@ from typing import Dict, List, Optional
 from common.models.api import AgentType, BatchRecord, FileRecord, LogType
 
 from semantic_kernel.contents import AuthorRole
+
+from common.models.api import BatchRecord, FileRecord, LogType
+from sql_agents.helpers.models import AgentType
 
 
 class DatabaseBase(ABC):
@@ -82,7 +87,7 @@ class DatabaseBase(ABC):
 
     @abstractmethod
     async def update_batch(self, batch_record: BatchRecord) -> BatchRecord:
-        pass
+        """Update a batch record"""
 
     @abstractmethod
     async def delete_all(self, user_id: str) -> None:
