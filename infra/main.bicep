@@ -233,7 +233,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
         env: [
           {
             name: 'API_URL'
-            value: 'https://${containerAppBackend.properties.configuration.ingress.fqdn}'
+            value: 'https://${containerAppBackend}.azurecontainerapps.io'
           }
         ]
         image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
@@ -256,100 +256,126 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
 }
 
 
-resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-  name: toLower('${ResourcePrefix}Backend')
+// ==========Key Vault Module ========== //
+module containerAppBackend 'deploy_backend_app.bicep' = {
+  name: 'deploy_backend_app'
+  params: {
   location: location
-  identity: {
-    type: 'SystemAssigned'
+  ResourcePrefix: ResourcePrefix
+  userassignedIdentityId: managedIdentityModule.outputs.managedIdentityBackendAppOutput.id
+  imageVersion: imageVersion
+  comsosEndpoint: databaseAccount.outputs.endpoint
+  cosmosdbDatabase: cosmosdbDatabase
+  cosmosdbBatchContainer: cosmosdbBatchContainer
+  cosmosdbFileContainer: cosmosdbFileContainer
+  cosmosdbLogContainer: cosmosdbLogContainer
+  storageContianerAppName: storageContianerApp.name
+  llmModel: llmModel
+  containerName: containerName
+  openServiceName: aifoundry.outputs.aiServicesName
+  managedEnvironmentId: containerAppsEnvironment.outputs.resourceId
   }
-  properties: {
-    managedEnvironmentId: containerAppsEnvironment.outputs.resourceId
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8000
-      }
-    }
-    template: {
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-      containers: [
-        {
-          name: 'cmsabackend'
-          image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
-          env: [
-            {
-              name: 'COSMOSDB_ENDPOINT'
-              value: databaseAccount.outputs.endpoint
-            }
-            {
-              name: 'COSMOSDB_DATABASE'
-              value: cosmosdbDatabase
-            }
-            {
-              name: 'COSMOSDB_BATCH_CONTAINER'
-              value: cosmosdbBatchContainer
-            }
-            {
-              name: 'COSMOSDB_FILE_CONTAINER'
-              value: cosmosdbFileContainer
-            }
-            {
-              name: 'COSMOSDB_LOG_CONTAINER'
-              value: cosmosdbLogContainer
-            }
-            {
-              name: 'AZURE_BLOB_ACCOUNT_NAME'
-              value: storageContianerApp.name
-            }
-            {
-              name: 'AZURE_BLOB_CONTAINER_NAME'
-              value: containerName
-            }
-            {
-              name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://${aifoundry.outputs.aiServicesName}.openai.azure.com/'
-            }
-            {
-              name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'PICKER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'FIXER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SELECTION_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'TERMINATION_MODEL_DEPLOY'
-              value: llmModel
-            }
-          ]
-          resources: {
-            cpu: 1
-            memory: '2.0Gi'
-          }
-        }
-      ]
-    }
-  }
+  scope: resourceGroup(resourceGroup().name)
 }
+// resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
+//   name: toLower('${ResourcePrefix}Backend')
+//   location: location
+//   identity: managedIdentityModule.outputs.managedIdentityBackendAppOutput.id == '' ? {
+//     type: 'SystemAssigned'
+//   } : {
+//     type: 'SystemAssigned, UserAssigned'
+//     userAssignedIdentities: {
+//       '${managedIdentityModule.outputs.managedIdentityBackendAppOutput.id}': {}
+//     }
+//   }  
+//   properties: {
+//     managedEnvironmentId: containerAppsEnvironment.outputs.resourceId
+//     configuration: {
+//       ingress: {
+//         external: true
+//         targetPort: 8000
+//       }
+//     }
+//     template: {
+//       scale: {
+//         minReplicas: 1
+//         maxReplicas: 1
+//       }
+//       containers: [
+//         {
+//           name: 'cmsabackend'
+//           image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
+//           env: [
+//             {
+//               name: 'COSMOSDB_ENDPOINT'
+//               value: databaseAccount.outputs.endpoint
+//             }
+//             {
+//               name: 'COSMOSDB_DATABASE'
+//               value: cosmosdbDatabase
+//             }
+//             {
+//               name: 'COSMOSDB_BATCH_CONTAINER'
+//               value: cosmosdbBatchContainer
+//             }
+//             {
+//               name: 'COSMOSDB_FILE_CONTAINER'
+//               value: cosmosdbFileContainer
+//             }
+//             {
+//               name: 'COSMOSDB_LOG_CONTAINER'
+//               value: cosmosdbLogContainer
+//             }
+//             {
+//               name: 'AZURE_BLOB_ACCOUNT_NAME'
+//               value: storageContianerApp.name
+//             }
+//             {
+//               name: 'AZURE_BLOB_CONTAINER_NAME'
+//               value: containerName
+//             }
+//             {
+//               name: 'AZURE_OPENAI_ENDPOINT'
+//               value: 'https://${aifoundry.outputs.aiServicesName}.openai.azure.com/'
+//             }
+//             {
+//               name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'PICKER_AGENT_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'FIXER_AGENT_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'SELECTION_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//             {
+//               name: 'TERMINATION_MODEL_DEPLOY'
+//               value: llmModel
+//             }
+//           ]
+//           resources: {
+//             cpu: 1
+//             memory: '2.0Gi'
+//           }
+//         }
+//       ]
+//     }
+//   }
+// }
 resource storageContianerApp 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageContainerName
   location: location
@@ -401,22 +427,29 @@ resource storageContianerApp 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     supportsHttpsTrafficOnly: true
   }
 }
+resource blobDataContributor 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: resourceGroup()
+  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+}
 resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.id, 'Storage Blob Data Contributor')
+  name: guid(blobDataContributor.id, 'Storage Blob Data Contributor')
   scope: storageContianerApp
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: containerAppBackend.identity.principalId
+    principalId: containerAppBackend.outputs.identityPrincipalId
   }
 }
-var openAiContributorRoleId = 'a001fd3d-188f-4b5d-821b-7da978bf7442'  // Fixed Role ID for OpenAI Contributor
 
+resource openAiContributorRole 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+  scope: resourceGroup()
+  name: 'a001fd3d-188f-4b5d-821b-7da978bf7442'
+}
 resource openAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.id, openAiContributorRoleId)
+  name: guid(openAiContributorRole.id, 'OpenAI Service Contributor')
   scope: aiServices
   properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiContributorRoleId) // OpenAI Service Contributor
-    principalId: containerAppBackend.identity.principalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442') // OpenAI Service Contributor
+    principalId: containerAppBackend.outputs.identityPrincipalId
   }
 }
 
@@ -433,27 +466,45 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
   dependsOn: [aifoundry]
 }]
 
-
-resource contributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-06-15' existing = {
-  name: '${databaseAccount.name}/00000000-0000-0000-0000-000000000002'
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' existing = {
+  name: toLower('${ResourcePrefix}databaseAccount')
 }
 
-var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${contributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${containerAppBackend.identity.principalId}"'
+resource contributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-05-15' existing = {
+  name: '${toLower('${ResourcePrefix}databaseAccount')}/00000000-0000-0000-0000-000000000002'
+}
 
-module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
-  name: 'deploymentScriptCLI'
-  params: {
-    // Required parameters
-    kind: 'AzureCLI'
-    name: 'rdsmin001'
-    // Non-required parameters
-    azCliVersion: '2.69.0'
-    location: resourceGroup().location
-    managedIdentities: {
-      userAssignedResourceIds: [
-        managedIdentityModule.outputs.managedIdentityId
-      ]
-    }
-    scriptContent: cosmosAssignCli
+resource role 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-05-15' = {
+  parent: cosmos
+  name: guid(contributorRoleDefinition.id, cosmos.id)
+  properties: {
+    principalId: containerAppBackend.outputs.identityPrincipalId
+    roleDefinitionId: contributorRoleDefinition.id
+    scope: cosmos.id
   }
+  dependsOn: [containerAppBackend]
 }
+
+// resource contributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-06-15' existing = {
+//   name: '${databaseAccount.name}/00000000-0000-0000-0000-000000000002'
+// }
+
+// var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${contributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${containerAppBackend.identity.principalId}"'
+
+// module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
+//   name: 'deploymentScriptCLI'
+//   params: {
+//     // Required parameters
+//     kind: 'AzureCLI'
+//     name: 'rdsmin001'
+//     // Non-required parameters
+//     azCliVersion: '2.69.0'
+//     location: resourceGroup().location
+//     managedIdentities: {
+//       userAssignedResourceIds: [
+//         managedIdentityModule.outputs.managedIdentityId
+//       ]
+//     }
+//     scriptContent: cosmosAssignCli
+//   }
+// }
