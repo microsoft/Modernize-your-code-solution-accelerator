@@ -26,9 +26,6 @@ router = APIRouter()
 logger = AppLogger("APIRoutes")
 
 # start processing the batch
-from sql_agents_start import process_batch_async  # noqa: E402
-
-# start processing the batch
 @router.post("/start-processing")
 async def start_processing(request: Request):
     """
