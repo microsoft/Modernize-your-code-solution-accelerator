@@ -17,7 +17,6 @@ import os
 from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
 
 
-
 class Config:
     """Configuration class for the application."""
 
