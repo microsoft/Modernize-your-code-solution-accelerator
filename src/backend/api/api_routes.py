@@ -2,8 +2,9 @@
 
 import asyncio
 import io
-from typing import Optional
 import zipfile
+from typing import Optional
+
 
 from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
@@ -801,7 +802,7 @@ async def delete_all_details(request: Request):
 
 
 @router.get("/batch-history")
-async def list_batch_history(request: Request, offset: int = 0,limit: Optional[int] = None):
+async def list_batch_history(request: Request, offset: int = 0, limit: Optional[int] = None):
     """
     Retrieve batch processing history for the authenticated user.
 
