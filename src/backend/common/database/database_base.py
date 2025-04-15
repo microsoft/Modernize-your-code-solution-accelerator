@@ -4,11 +4,10 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional
 
-from common.models.api import AgentType, BatchRecord, FileRecord, LogType
+from common.models.api import BatchRecord, FileRecord, LogType
 
 from semantic_kernel.contents import AuthorRole
 
-from common.models.api import BatchRecord, FileRecord, LogType
 from sql_agents.helpers.models import AgentType
 
 

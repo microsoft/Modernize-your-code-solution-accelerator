@@ -4,6 +4,12 @@ import asyncio
 import io
 import zipfile
 
+from api.auth.auth_utils import get_authenticated_user
+from api.status_updates import app_connection_manager, close_connection
+
+from common.logger.app_logger import AppLogger
+from common.services.batch_service import BatchService
+
 from fastapi import (
     APIRouter,
     File,
@@ -16,17 +22,11 @@ from fastapi import (
 )
 from fastapi.responses import Response
 
-from api.auth.auth_utils import get_authenticated_user
-from api.status_updates import app_connection_manager, close_connection
-from common.logger.app_logger import AppLogger
-from common.services.batch_service import BatchService
 from sql_agents.process_batch import process_batch_async
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
 
-# start processing the batch
-# from sql_agents_start import process_batch_async  # noqa: E402
 
 # start processing the batch
 @router.post("/start-processing")
