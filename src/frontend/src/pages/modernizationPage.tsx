@@ -425,11 +425,11 @@ enum ProcessingStage {
 }
 
 enum Agents {
-  Verifier = "Semantic Verifier",
-  Checker = "Syntax Checker",
-  Picker = "Picker",
-  Migrator = "Migrator",
-  Agents = "Agents"
+  Verifier = "Semantic Verifier agent",
+  Checker = "Syntax Checker agent",
+  Picker = "Picker agent",
+  Migrator = "Migrator agent",
+  Agents = "Agent"
 }
 
 
