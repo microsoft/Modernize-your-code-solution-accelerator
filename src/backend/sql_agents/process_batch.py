@@ -42,7 +42,7 @@ logger.setLevel(logging.DEBUG)
 async def process_batch_async(
     batch_id: str, convert_from: str = "informix", convert_to: str = "tsql"
 ):
-    """central batch processing function to process each file in the batch"""
+    """Central batch processing function to process each file in the batch"""
     logger.info("Processing batch: %s", batch_id)
     storage = await BlobStorageFactory.get_storage()
     batch_service = BatchService()
@@ -160,7 +160,7 @@ async def process_batch_async(
 async def process_error(
     ex: Exception, file_record: FileRecord, batch_service: BatchService
 ):
-    """insert data base write to file record stating invalid file and send ws notification"""
+    """Insert data base write to file record stating invalid file and send ws notification"""
     await batch_service.create_file_log(
         file_id=str(file_record.file_id),
         description=f"Error processing file {ex}",
