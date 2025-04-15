@@ -8,6 +8,7 @@ from azure.ai.projects.models import (
     ResponseFormatJsonSchema,
     ResponseFormatJsonSchemaType,
 )
+
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from semantic_kernel.functions import KernelArguments
 
