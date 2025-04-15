@@ -2,4 +2,4 @@
 max-line-length = 88
 extend-ignore = E501
 exclude = .venv, frontend
-ignore = E203, W503, G004, G200,B008,ANN,D100,D101,D102,D103,D104,D105,D106,D107
+ignore = E203, W503, G004, G200,B008,ANN,D
