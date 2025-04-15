@@ -20,8 +20,7 @@ class CommsManager:
 
         # Select the next agent that should take the next turn in the chat
         async def select_agent(self, agents, history):
-            """ "Check which agent should take the next turn in the chat."""
-
+            """Check which agent should take the next turn in the chat."""
             match history[-1].name:
                 case AgentType.MIGRATOR.value:
                     # The Migrator should go first
