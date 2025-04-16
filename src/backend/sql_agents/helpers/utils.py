@@ -1,7 +1,10 @@
 """Utility functions for the backend package."""
 
+import logging
 import os
 import re
+
+logger = logging.getLogger(__name__)
 
 
 def get_prompt(agent_type: str) -> str:

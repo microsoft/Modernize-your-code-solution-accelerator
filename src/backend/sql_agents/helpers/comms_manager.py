@@ -1,10 +1,16 @@
 """Manages all agent communication and chat strategies for the SQL agents."""
 
+import asyncio
+import logging
+import re
+from typing import AsyncIterable, ClassVar
+
 from semantic_kernel.agents import AgentGroupChat  # pylint: disable=E0611
 from semantic_kernel.agents.strategies import (
     SequentialSelectionStrategy,
     TerminationStrategy,
 )
+from semantic_kernel.contents import ChatMessageContent
 
 from sql_agents.agents.migrator.response import MigratorResponse
 from sql_agents.helpers.models import AgentType
@@ -13,7 +19,120 @@ from sql_agents.helpers.models import AgentType
 class CommsManager:
     """Manages all agent communication and selection strategies for the SQL agents."""
 
-    group_chat: AgentGroupChat = None
+    # Class level logger
+    logger: ClassVar[logging.Logger] = logging.getLogger(__name__)
+
+    async def invoke_async(self):
+        """Invoke the group chat with the given agents."""
+        return self.group_chat.invoke()
+
+    def __init__(
+        self,
+        agent_dict: dict[AgentType, object],
+        reg_ex: str = None,
+        exception_types: tuple = (Exception,),
+        max_retries: int = 3,
+        initial_delay: float = 1.0,
+        backoff_factor: float = 2.0,
+        simple_truncation: int = None,
+    ):
+        """Initialize the CommsManager and agent_chat with the given agents.
+        reg_ex: Optional regex pattern to match against the function's output
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 1.0)
+        backoff_factor: Factor by which the delay increases with each retry (default: 2.0)
+        exception_types: Tuple of exception types that should trigger a retry"""
+        self.max_retries = max_retries
+        self.initial_delay = initial_delay
+        self.backoff_factor = backoff_factor
+        self.reg_ex = reg_ex
+        self.exception_types = exception_types
+        self.simple_truncation = simple_truncation
+        # Create the group chat with the given agents
+        # and the selection strategy
+        self.group_chat = AgentGroupChat(
+            agents=agent_dict.values(),
+            termination_strategy=self.ApprovalTerminationStrategy(
+                agents=[
+                    agent_dict[AgentType.MIGRATOR],
+                    agent_dict[AgentType.SEMANTIC_VERIFIER],
+                ],
+                maximum_iterations=10,
+                automatic_reset=True,
+            ),
+            selection_strategy=self.SelectionStrategy(agents=agent_dict.values()),
+        )
+
+    async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
+        """Invoke the group chat"""
+        attempt = 0
+        current_delay = self.initial_delay
+
+        while attempt < self.max_retries:
+            try:
+                # Grab a snapshot of the history of the group chat
+                history_snap = self.group_chat.history
+                # Get a fresh iterator from the function
+                async_iter = self.group_chat.invoke()
+
+                # If simple truncation is set, truncate the history
+                if (
+                    self.simple_truncation
+                    and len(self.group_chat.history) > self.simple_truncation
+                ):
+                    # Truncate the history to the last n messages
+                    self.group_chat.history = history_snap[-self.simple_truncation :]
+
+                # Yield each item from the iterator
+                async for item in async_iter:
+                    yield item
+
+                # If we get here without exception, we're done
+                break
+
+            except self.exception_types as e:
+                attempt += 1
+                if attempt >= self.max_retries:
+                    self.logger.error(
+                        "Function invoke failed after %d attempts. Final error: %s",
+                        self.max_retries,
+                        str(e),
+                    )
+                    # Re-raise the last exception if all retries failed
+                    raise
+
+                self.logger.warning(
+                    "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
+                    attempt,
+                    self.max_retries,
+                    str(e),
+                    current_delay,
+                )
+                # Return history state for retry
+                self.group_chat.history = history_snap
+
+                # If a regex pattern is provided, check the output of the function
+                if self.reg_ex:
+                    try:
+                        current_delay = re.search(self.reg_ex, e.args[0])
+                        # Wait before retrying
+                        await asyncio.sleep(current_delay)
+                    except Exception as regex_error:
+                        self.logger.error(
+                            "Regex error: %s. Continuing with the next retry.",
+                            regex_error,
+                        )
+                else:
+                    current_delay = self.initial_delay
+
+                    # Wait before retrying
+                    await asyncio.sleep(current_delay)
+
+                    # Increase delay for next attempt
+                    current_delay *= self.backoff_factor
+
+        # This should never be reached due to the raise above, but adding as a fallback
+        return None
 
     class SelectionStrategy(SequentialSelectionStrategy):
         """A strategy for determining which agent should take the next turn in the chat."""
@@ -100,18 +219,3 @@ class CommsManager:
                     pass
 
             return terminate
-
-    def __init__(self, agent_dict):
-        """Initialize the CommsManager and agent_chat with the given agents."""
-        self.group_chat = AgentGroupChat(
-            agents=agent_dict.values(),
-            termination_strategy=self.ApprovalTerminationStrategy(
-                agents=[
-                    agent_dict[AgentType.MIGRATOR],
-                    agent_dict[AgentType.SEMANTIC_VERIFIER],
-                ],
-                maximum_iterations=10,
-                automatic_reset=True,
-            ),
-            selection_strategy=self.SelectionStrategy(agents=agent_dict.values()),
-        )

@@ -8,6 +8,7 @@ import json
 import logging
 
 from semantic_kernel.contents import AuthorRole, ChatMessageContent
+from semantic_kernel.exceptions import AgentInvokeException
 
 from api.status_updates import send_status_update
 from common.models.api import (
@@ -41,8 +42,16 @@ async def convert_script(
     """Use the team of agents to migrate a sql script."""
     logger.info("Migrating query: %s\n", source_script)
 
+    # regex to extract the recommended wait time in seconds from response
+    extract_wait_time = r"in (\d+) seconds"
+
     # Setup the group chat for the agents
-    chat = CommsManager(sql_agents.idx_agents).group_chat
+    comms_manager = CommsManager(
+        agent_dict=sql_agents.idx_agents,
+        reg_ex=extract_wait_time,
+        exception_types=(AgentInvokeException,),
+        max_retries=3,
+    )
 
     # send websocket notification that file processing has started
     send_status_update(
@@ -60,11 +69,11 @@ async def convert_script(
     current_migration = "No migration"
     is_complete: bool = False
     while not is_complete:
-        await chat.add_chat_message(
+        await comms_manager.group_chat.add_chat_message(
             ChatMessageContent(role=AuthorRole.USER, content=source_script)
         )
         carry_response = None
-        async for response in chat.invoke():
+        async for response in comms_manager.group_chat.invoke():
             carry_response = response
             if response.role == AuthorRole.ASSISTANT.value:
                 # Our process can terminate with either of these as the last response
@@ -99,7 +108,7 @@ async def convert_script(
                         # If there are no syntax errors, we can move to the semantic verifier
                         # We provide both scripts by injecting them into the chat history
                         if result.syntax_errors == []:
-                            chat.history.add_message(
+                            comms_manager.group_chat.history.add_message(
                                 ChatMessageContent(
                                     role=AuthorRole.USER,
                                     name="candidate",
@@ -208,7 +217,7 @@ async def convert_script(
                 AuthorRole(response.role),
             )
 
-        if chat.is_complete:
+        if comms_manager.group_chat.is_complete:
             is_complete = True
 
         break
