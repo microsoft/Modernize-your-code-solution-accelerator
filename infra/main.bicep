@@ -233,7 +233,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
         env: [
           {
             name: 'API_URL'
-            value: 'https://${containerAppBackend}.azurecontainerapps.io'
+            value: containerAppBackend.outputs.apiUrl
           }
         ]
         image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
@@ -467,6 +467,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }]
 
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2022-08-15' existing = {
+  scope: resourceGroup()
   name: toLower('${ResourcePrefix}databaseAccount')
 }
 
@@ -489,22 +490,22 @@ resource role 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2022-05-
 //   name: '${databaseAccount.name}/00000000-0000-0000-0000-000000000002'
 // }
 
-// var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${contributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${containerAppBackend.identity.principalId}"'
+var cosmosAssignCli   = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${contributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${containerAppBackend.outputs.identityPrincipalId}"'
 
-// module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
-//   name: 'deploymentScriptCLI'
-//   params: {
-//     // Required parameters
-//     kind: 'AzureCLI'
-//     name: 'rdsmin001'
-//     // Non-required parameters
-//     azCliVersion: '2.69.0'
-//     location: resourceGroup().location
-//     managedIdentities: {
-//       userAssignedResourceIds: [
-//         managedIdentityModule.outputs.managedIdentityId
-//       ]
-//     }
-//     scriptContent: cosmosAssignCli
-//   }
-// }
+module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
+  name: 'deploymentScriptCLI'
+  params: {
+    // Required parameters
+    kind: 'AzureCLI'
+    name: 'rdsmin001'
+    // Non-required parameters
+    azCliVersion: '2.69.0'
+    location: resourceGroup().location
+    managedIdentities: {
+      userAssignedResourceIds: [
+        managedIdentityModule.outputs.managedIdentityOutput.resourceId
+      ]
+    }
+    scriptContent: cosmosAssignCli
+  }
+}
