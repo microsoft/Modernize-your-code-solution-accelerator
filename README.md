@@ -75,10 +75,6 @@ This diagram double-clicks into the agentic framework for the code conversion pr
 QUICK DEPLOY
 </h2>
 
-
-| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FModernize-your-code-solution-accelerator%2Frefs%2Fheads%2Fmain%2Finfra%2Fmain.json) |
-|---|---|---|
-
 ### **Prerequisites**
 
 To deploy this solution accelerator, ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the necessary permissions to create **resource groups and resources**. Follow the steps in  [Azure Account Set Up](./docs/AzureAccountSetUp.md) 
@@ -92,11 +88,12 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 
 Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
 
-This accelerator can be deployed with or without authentication. 
+### ⚠️ Important: Check Azure OpenAI Quota Availability  
 
-* To install with authentication requires that the installer have the rights to create and register an application identity in their Azure environment.
-After installation is complete, follow the directions in the [App Authentication](./docs/AddAuthentication.md) document to enable authentication.
-* Note: If you install with authentication, all processing history and current processing will be performed for your specific user. If you deploy without authentication, all batch history from the tool will be visible to all users.
+➡️ To ensure sufficient quota is available in your subscription, please follow **[Quota check instructions guide](./docs/quota_check.md)** before you deploy the solution.
+
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
+|---|---|
  
 ### **Configurable Deployment Settings**  
 
@@ -109,13 +106,17 @@ When you start the deployment, most parameters will have **default values**, but
 | **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **gpt-4o**. |  5k |
 
+This accelerator can be configured to  use authentication. 
+
+* To use authentication the installer must have the rights to create and register an application identity in their Azure environment.
+After installation is complete, follow the directions in the [App Authentication](./docs/AddAuthentication.md) document to enable authentication.
+* Note: If you enable authentication, all processing history and current processing will be performed for your specific user. Without authentication, all batch history from the tool will be visible to all users.
+
 ### [Optional] Quota Recommendations  
 By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
 > **We recommend increasing the capacity to 200k tokens for optimal performance.** 
 
-To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)  
-
-**⚠️ Warning:**  **Insufficient quota can cause application errors.** Please ensure you have the recommended capacity or request for additional capacity before deploying this solution. 
+To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)
 
 ### Deployment Options
 Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
@@ -179,16 +180,6 @@ If you're not using one of the above options for opening the project, then you'l
 4. Continue with the [deploying steps](#deploying).
 
 </details>
-<details>
-  <summary><b>Deploy with Bicep/ARM template</b></summary>
-
-### Bicep
-
-   Click the following deployment button to create the required resources for this accelerator directly in your Azure Subscription.
-
-   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarktayl1%2Ftestdeploy%2Frefs%2Fheads%2Fmain%2FCodeGenDeploy.json)
-
-</details>
 
 ### Deploying
 
@@ -246,8 +237,7 @@ Responsible AI Transparency FAQ
 
 Please refer to [Transparency FAQ](./TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
 
-<h2><img src="./docs/images/read_me/supportingDocuments.png" width="64" style="max-width: 100%;">
-</br>
+<h2>
 Supporting Documentation
 </h2>
 
