@@ -9,16 +9,16 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
-var storageName = '${solutionName}hubstr'
+var storageName = '${solutionName}hubst'
 var storageSkuName = 'Standard_LRS'
 var aiServicesName = '${solutionName}-ais'
-var workspaceName = '${solutionName}-wrksp'
+var workspaceName = '${solutionName}-log'
 var keyvaultName = '${solutionName}-kv'
 var location = solutionLocation 
-var azureAiHubName = '${solutionName}-aihub'
+var azureAiHubName = '${solutionName}-hub'
 var aiHubFriendlyName = azureAiHubName
 var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${solutionName}-aiprj'
+var aiProjectName = '${solutionName}-prj'
 var aiProjectFriendlyName = aiProjectName
 var aiSearchName = '${solutionName}-srch'
 
