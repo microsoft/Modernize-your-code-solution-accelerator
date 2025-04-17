@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "13937422806437579370"
+      "templateHash": "372840055428460103"
     }
   },
   "parameters": {
@@ -17,7 +17,7 @@
         "description": "Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group."
       }
     },
-    "AiLocation": {
+    "AzureAiServiceLocation": {
       "type": "string",
       "allowedValues": [
         "australiaeast",
@@ -55,7 +55,8 @@
   },
   "variables": {
     "uniqueId": "[toLower(uniqueString(subscription().id, parameters('Prefix'), resourceGroup().location))]",
-    "ResourcePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
+    "UniquePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
+    "ResourcePrefix": "[take(format('cm{0}{1}', parameters('Prefix'), variables('UniquePrefix')), 15)]",
     "imageVersion": "rc1",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
@@ -67,9 +68,9 @@
     "containerName": "appstorage",
     "llmModel": "gpt-4o",
     "storageSkuName": "Standard_LRS",
-    "storageContainerName": "[format('{0}ctstor', variables('ResourcePrefix'))]",
+    "storageContainerName": "[format('{0}cts', variables('ResourcePrefix'))]",
     "gptModelVersion": "2024-08-06",
-    "aiServicesName": "[format('{0}-aiservices', variables('ResourcePrefix'))]",
+    "azureAiServicesName": "[format('{0}-ais', variables('ResourcePrefix'))]",
     "aiModelDeployments": [
       {
         "name": "[variables('llmModel')]",
@@ -91,14 +92,14 @@
     {
       "type": "Microsoft.CognitiveServices/accounts",
       "apiVersion": "2024-04-01-preview",
-      "name": "[variables('aiServicesName')]",
+      "name": "[variables('azureAiServicesName')]",
       "location": "[variables('location')]",
       "sku": {
         "name": "S0"
       },
       "kind": "AIServices",
       "properties": {
-        "customSubDomainName": "[variables('aiServicesName')]",
+        "customSubDomainName": "[variables('azureAiServicesName')]",
         "apiProperties": {
           "statisticsEnabled": false
         }
@@ -106,14 +107,14 @@
     },
     {
       "copy": {
-        "name": "aiServicesDeployments",
+        "name": "azureAiServicesDeployments",
         "count": "[length(variables('aiModelDeployments'))]",
         "mode": "serial",
         "batchSize": 1
       },
       "type": "Microsoft.CognitiveServices/accounts/deployments",
       "apiVersion": "2023-05-01",
-      "name": "[format('{0}/{1}', variables('aiServicesName'), variables('aiModelDeployments')[copyIndex()].name)]",
+      "name": "[format('{0}/{1}', variables('azureAiServicesName'), variables('aiModelDeployments')[copyIndex()].name)]",
       "properties": {
         "model": {
           "format": "OpenAI",
@@ -127,7 +128,7 @@
         "capacity": "[variables('aiModelDeployments')[copyIndex()].sku.capacity]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName'))]"
       ]
     },
     {
@@ -302,14 +303,14 @@
     {
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
-      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', variables('aiServicesName'))]",
+      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', variables('azureAiServicesName'))]",
       "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), variables('openAiContributorRoleId'))]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('openAiContributorRoleId'))]",
         "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix')))), '2023-05-01', 'full').identity.principalId]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName'))]",
         "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Backend', variables('ResourcePrefix'))))]"
       ]
     },
@@ -353,7 +354,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "17863870312619064541"
+              "templateHash": "15524749849693178338"
             }
           },
           "parameters": {
@@ -373,7 +374,7 @@
             },
             "miName": {
               "type": "string",
-              "defaultValue": "[format('{0}-managed-identity', parameters('solutionName'))]",
+              "defaultValue": "[format('{0}-mng-id', parameters('solutionName'))]",
               "metadata": {
                 "description": "Name"
               }
@@ -558,7 +559,7 @@
             "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
-            "value": "[parameters('AiLocation')]"
+            "value": "[parameters('AzureAiServiceLocation')]"
           },
           "keyVaultName": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_keyvault'), '2022-09-01').outputs.keyvaultName.value]"
@@ -573,13 +574,13 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.managedIdentityOutput.value.objectId]"
           },
           "aiServicesEndpoint": {
-            "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-04-01-preview').endpoint]"
+            "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName')), '2024-04-01-preview').endpoint]"
           },
           "aiServicesKey": {
-            "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName')), '2024-04-01-preview').key1]"
+            "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName')), '2024-04-01-preview').key1]"
           },
           "aiServicesId": {
-            "value": "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]"
+            "value": "[resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName'))]"
           }
         },
         "template": {
@@ -589,7 +590,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "12550713338937452696"
+              "templateHash": "1990190368109519471"
             }
           },
           "parameters": {
@@ -622,18 +623,18 @@
             }
           },
           "variables": {
-            "storageName": "[format('{0}hubstorage', parameters('solutionName'))]",
+            "storageName": "[format('{0}hubstr', parameters('solutionName'))]",
             "storageSkuName": "Standard_LRS",
-            "aiServicesName": "[format('{0}-aiservices', parameters('solutionName'))]",
-            "workspaceName": "[format('{0}-workspace', parameters('solutionName'))]",
+            "aiServicesName": "[format('{0}-ais', parameters('solutionName'))]",
+            "workspaceName": "[format('{0}-wrksp', parameters('solutionName'))]",
             "keyvaultName": "[format('{0}-kv', parameters('solutionName'))]",
             "location": "[parameters('solutionLocation')]",
             "aiHubName": "[format('{0}-aihub', parameters('solutionName'))]",
             "aiHubFriendlyName": "[variables('aiHubName')]",
             "aiHubDescription": "AI Hub for KM template",
-            "aiProjectName": "[format('{0}-aiproject', parameters('solutionName'))]",
+            "aiProjectName": "[format('{0}-aiprj', parameters('solutionName'))]",
             "aiProjectFriendlyName": "[variables('aiProjectName')]",
-            "aiSearchName": "[format('{0}-search', parameters('solutionName'))]",
+            "aiSearchName": "[format('{0}-srch', parameters('solutionName'))]",
             "storageNameCleaned": "[replace(variables('storageName'), '-', '')]"
           },
           "resources": [
@@ -943,7 +944,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
+        "[resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName'))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_keyvault')]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
