@@ -82,8 +82,7 @@ To deploy this solution accelerator, ensure you have access to an [Azure subscri
 Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available:  
 
 - Azure AI Foundry 
-- Azure OpenAI Service 
-- Embedding Deployment Capacity  
+- Azure OpenAI Service  
 - GPT Model Capacity
 
 Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
