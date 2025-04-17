@@ -47,7 +47,7 @@ var deploymentType  = 'GlobalStandard'
 var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
 var storageSkuName = 'Standard_LRS'
-var storageContainerName = '${ResourcePrefix}cts'
+var storageContainerName = '${ResourcePrefix}cast'
 var gptModelVersion = '2024-08-06'
 var azureAiServicesName = '${ResourcePrefix}-ais'
 
@@ -153,10 +153,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
 }
 
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
-  name: toLower('${ResourcePrefix}database')
+  name: toLower('${ResourcePrefix}cosmos')
   params: {
     // Required parameters
-    name: toLower('${ResourcePrefix}databaseAccount')
+    name: toLower('${ResourcePrefix}cosno')
     // Non-required parameters
     enableAnalyticalStorage: true
     location: dblocation
@@ -220,7 +220,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 }
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
-  name: toLower('${ResourcePrefix}Frontend')
+  name: toLower('${ResourcePrefix}-Fnt-ca')
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -250,7 +250,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     scaleMinReplicas: 1
     scaleMaxReplicas: 1
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
-    name: toLower('${ResourcePrefix}Frontend')
+    name: toLower('${ResourcePrefix}Fnt')
     // Non-required parameters
     location: location
   }
@@ -258,7 +258,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
 
 
 resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-  name: toLower('${ResourcePrefix}Backend')
+  name: toLower('${ResourcePrefix}Bck-ca')
   location: location
   identity: {
     type: 'SystemAssigned'
