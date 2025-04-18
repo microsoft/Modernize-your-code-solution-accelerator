@@ -8,7 +8,6 @@ import json
 import logging
 
 from semantic_kernel.contents import AuthorRole, ChatMessageContent
-from semantic_kernel.exceptions import AgentInvokeException
 
 from api.status_updates import send_status_update
 from common.models.api import (
@@ -42,16 +41,8 @@ async def convert_script(
     """Use the team of agents to migrate a sql script."""
     logger.info("Migrating query: %s\n", source_script)
 
-    # regex to extract the recommended wait time in seconds from response
-    extract_wait_time = r"in (\d+) seconds"
-
     # Setup the group chat for the agents
-    comms_manager = CommsManager(
-        agent_dict=sql_agents.idx_agents,
-        reg_ex=extract_wait_time,
-        exception_types=(AgentInvokeException,),
-        max_retries=3,
-    )
+    comms_manager = CommsManager(agent_dict=sql_agents.idx_agents)
 
     # send websocket notification that file processing has started
     send_status_update(
@@ -73,7 +64,7 @@ async def convert_script(
             ChatMessageContent(role=AuthorRole.USER, content=source_script)
         )
         carry_response = None
-        async for response in comms_manager.group_chat.invoke():
+        async for response in comms_manager.async_invoke():
             carry_response = response
             if response.role == AuthorRole.ASSISTANT.value:
                 # Our process can terminate with either of these as the last response

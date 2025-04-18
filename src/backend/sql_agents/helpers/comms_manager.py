@@ -1,6 +1,7 @@
 """Manages all agent communication and chat strategies for the SQL agents."""
 
 import asyncio
+import copy
 import logging
 import re
 from typing import AsyncIterable, ClassVar
@@ -11,6 +12,7 @@ from semantic_kernel.agents.strategies import (
     TerminationStrategy,
 )
 from semantic_kernel.contents import ChatMessageContent
+from semantic_kernel.exceptions import AgentInvokeException
 
 from sql_agents.agents.migrator.response import MigratorResponse
 from sql_agents.helpers.models import AgentType
@@ -22,6 +24,9 @@ class CommsManager:
     # Class level logger
     logger: ClassVar[logging.Logger] = logging.getLogger(__name__)
 
+    # regex to extract the recommended wait time in seconds from response
+    _EXTRACT_WAIT_TIME = r"in (\d+) seconds"
+
     async def invoke_async(self):
         """Invoke the group chat with the given agents."""
         return self.group_chat.invoke()
@@ -29,9 +34,8 @@ class CommsManager:
     def __init__(
         self,
         agent_dict: dict[AgentType, object],
-        reg_ex: str = None,
         exception_types: tuple = (Exception,),
-        max_retries: int = 3,
+        max_retries: int = 10,
         initial_delay: float = 1.0,
         backoff_factor: float = 2.0,
         simple_truncation: int = None,
@@ -45,7 +49,6 @@ class CommsManager:
         self.max_retries = max_retries
         self.initial_delay = initial_delay
         self.backoff_factor = backoff_factor
-        self.reg_ex = reg_ex
         self.exception_types = exception_types
         self.simple_truncation = simple_truncation
         # Create the group chat with the given agents
@@ -71,7 +74,12 @@ class CommsManager:
         while attempt < self.max_retries:
             try:
                 # Grab a snapshot of the history of the group chat
-                history_snap = self.group_chat.history
+                # Using copy to avoid getting a reference to the original list
+                # history_snap = copy.deepcopy(self.group_chat.history)
+                print(
+                    "History before invoke: %s",
+                    [msg.name for msg in self.group_chat.history],
+                )
                 # Get a fresh iterator from the function
                 async_iter = self.group_chat.invoke()
 
@@ -90,49 +98,51 @@ class CommsManager:
                 # If we get here without exception, we're done
                 break
 
-            except self.exception_types as e:
+            except AgentInvokeException as aie:
+                _regex = None
                 attempt += 1
                 if attempt >= self.max_retries:
                     self.logger.error(
-                        "Function invoke failed after %d attempts. Final error: %s",
+                        "Function invoke failed after %d attempts. Final error: %s. Consider increasing the models rate limit.",
                         self.max_retries,
-                        str(e),
+                        str(aie),
                     )
                     # Re-raise the last exception if all retries failed
                     raise
 
-                self.logger.warning(
-                    "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
-                    attempt,
-                    self.max_retries,
-                    str(e),
-                    current_delay,
-                )
                 # Return history state for retry
-                self.group_chat.history = history_snap
+                # self.group_chat.history = history_snap
 
-                # If a regex pattern is provided, check the output of the function
-                if self.reg_ex:
-                    try:
-                        current_delay = re.search(self.reg_ex, e.args[0])
-                        # Wait before retrying
-                        await asyncio.sleep(current_delay)
-                    except Exception as regex_error:
-                        self.logger.error(
-                            "Regex error: %s. Continuing with the next retry.",
-                            regex_error,
-                        )
-                else:
-                    current_delay = self.initial_delay
+                try:
+                    _regex = int(
+                        re.search(self._EXTRACT_WAIT_TIME, aie.args[0]).group(1)
+                    )
+                    if _regex is None:
+                        current_delay = self.initial_delay
+                    else:
+                        # If regex is found, set the delay to the value in seconds
+                        current_delay = _regex
+
+                    self.logger.warning(
+                        "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
+                        attempt,
+                        self.max_retries,
+                        str(aie),
+                        current_delay,
+                    )
 
                     # Wait before retrying
                     await asyncio.sleep(current_delay)
 
-                    # Increase delay for next attempt
-                    current_delay *= self.backoff_factor
+                    if _regex is None:
+                        # Increase delay for next attempt
+                        current_delay *= self.backoff_factor
 
-        # This should never be reached due to the raise above, but adding as a fallback
-        return None
+                except Exception as ex:
+                    self.logger.error(
+                        "Retry error: %s.",
+                        ex,
+                    )
 
     class SelectionStrategy(SequentialSelectionStrategy):
         """A strategy for determining which agent should take the next turn in the chat."""
