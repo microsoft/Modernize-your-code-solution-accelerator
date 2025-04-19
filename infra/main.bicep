@@ -347,7 +347,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aifoundry.outputs.aiProjectName
+              value: azureAifoundry.outputs.aiProjectName
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
@@ -359,7 +359,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING'
-              value: aifoundry.outputs.projectConnectionString
+              value: azureAifoundry.outputs.projectConnectionString
             }
           ]
           resources: {
