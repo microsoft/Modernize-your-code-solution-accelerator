@@ -120,6 +120,9 @@ async def convert_script(
                         )
                         current_migration = result.fixed_query
                     case AgentType.SEMANTIC_VERIFIER.value:
+                        logger.info(
+                            "Semantic verifier agent response: %s", response.content
+                        )
                         result = SemanticVerifierResponse.model_validate_json(
                             response.content or ""
                         )
