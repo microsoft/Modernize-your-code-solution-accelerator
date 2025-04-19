@@ -1,7 +1,8 @@
 @minLength(3)
-@maxLength(10)
+@maxLength(20)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param ResourcePrefix string
+param Prefix string 
+
 
 @allowed([
   'australiaeast'
@@ -29,24 +30,13 @@ param ResourcePrefix string
   'westus3'
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
-param AiLocation string   // The location used for all deployed resources.  This location must be in the same region as the resource group.
+param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
-
-@description('A unique prefix for all resources in this deployment. This should be 3-10 characters long:')
-//param environmentName string 
-var randomString = substring(uniqueString(resourceGroup().id), 0, 4)
-@description('The location used for all deployed resources')
-// Generate a unique string based on the base name and a unique identifier
-//var uniqueSuffix = uniqueString(resourceGroup().id, ResourcePrefix)
-
-// Take the first 4 characters of the unique string to use as a suffix
-//var randomSuffix = substring(ResourcePrefix, 0, min(10, length(ResourcePrefix)))
-
-// Combine the base name with the random suffix
-var finalName = '${ResourcePrefix}-${randomString}'
-
-var imageVersion = 'rc1' //Change to "Fnd01" when new container is available
+var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
+var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
+var ResourcePrefix = take('cm${Prefix}${UniquePrefix}', 15)
+var imageVersion = 'rc1' // Change to 'fnd01' when ready
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -56,11 +46,10 @@ var cosmosdbLogContainer  = 'cmsalog'
 var deploymentType  = 'GlobalStandard'
 var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
-var prefixCleaned = replace(toLower(finalName), '-', '')
 var storageSkuName = 'Standard_LRS'
-var storageContainerName = '${prefixCleaned}ctstor'
+var storageContainerName = '${ResourcePrefix}cast'
 var gptModelVersion = '2024-08-06'
-var aiServicesName = '${prefixCleaned}-aiservices'
+var azureAiServicesName = '${ResourcePrefix}-ais'
 
 
 
@@ -77,15 +66,15 @@ var aiModelDeployments = [
   }
 ]
 
-resource aiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
-  name: aiServicesName
+resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
+  name: azureAiServicesName
   location: location
   sku: {
     name: 'S0'
   }
   kind: 'AIServices'
   properties: {
-    customSubDomainName: aiServicesName
+    customSubDomainName: azureAiServicesName
     apiProperties: {
       statisticsEnabled: false
     }
@@ -93,8 +82,8 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = 
 }
 
 @batchSize(1)
-resource aiServicesDeployments 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for aiModeldeployment in aiModelDeployments: {
-  parent: aiServices //aiServices_m
+resource azureAiServicesDeployments 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for aiModeldeployment in aiModelDeployments: {
+  parent: azureAiServices //aiServices_m
   name: aiModeldeployment.name
   properties: {
     model: {
@@ -116,7 +105,7 @@ resource aiServicesDeployments 'Microsoft.CognitiveServices/accounts/deployments
 module managedIdentityModule 'deploy_managed_identity.bicep' = {
   name: 'deploy_managed_identity'
   params: {
-    solutionName: prefixCleaned
+    solutionName: ResourcePrefix
     solutionLocation: location 
   }
   scope: resourceGroup(resourceGroup().name)
@@ -127,7 +116,7 @@ module managedIdentityModule 'deploy_managed_identity.bicep' = {
 module kvault 'deploy_keyvault.bicep' = {
   name: 'deploy_keyvault'
   params: {
-    solutionName: prefixCleaned
+    solutionName: ResourcePrefix
     solutionLocation: location
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
   }
@@ -136,27 +125,27 @@ module kvault 'deploy_keyvault.bicep' = {
 
 
 // ==========AI Foundry and related resources ========== //
-module aifoundry 'deploy_ai_foundry.bicep' = {
+module azureAifoundry 'deploy_ai_foundry.bicep' = {
   name: 'deploy_ai_foundry'
   params: {
-    solutionName: prefixCleaned
-    solutionLocation: AiLocation
+    solutionName: ResourcePrefix
+    solutionLocation: AzureAiServiceLocation
     keyVaultName: kvault.outputs.keyvaultName
     gptModelName: llmModel
     gptModelVersion: gptModelVersion
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
-    aiServicesEndpoint: aiServices.properties.endpoint
-    aiServicesKey: aiServices.listKeys().key1
-    aiServicesId: aiServices.id
+    aiServicesEndpoint: azureAiServices.properties.endpoint
+    aiServicesKey: azureAiServices.listKeys().key1
+    aiServicesId: azureAiServices.id
   }
   scope: resourceGroup(resourceGroup().name)
 }
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1' = {
-  name: toLower('${prefixCleaned}conAppsEnv')
+  name: toLower('${ResourcePrefix}conAppsEnv')
   params: {
-    logAnalyticsWorkspaceResourceId: aifoundry.outputs.logAnalyticsId
-    name: toLower('${prefixCleaned}manenv')
+    logAnalyticsWorkspaceResourceId: azureAifoundry.outputs.logAnalyticsId
+    name: toLower('${ResourcePrefix}manenv')
     location: location
     zoneRedundant: false
     managedIdentities: managedIdentityModule
@@ -164,10 +153,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
 }
 
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
-  name: toLower('${prefixCleaned}database')
+  name: toLower('${ResourcePrefix}cosmos')
   params: {
     // Required parameters
-    name: toLower('${prefixCleaned}databaseAccount')
+    name: toLower('${ResourcePrefix}cosno')
     // Non-required parameters
     enableAnalyticalStorage: true
     location: dblocation
@@ -231,7 +220,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 }
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
-  name: toLower('${prefixCleaned}containerAppFrontend')
+  name: toLower('${ResourcePrefix}-Fnt-ca')
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -261,7 +250,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     scaleMinReplicas: 1
     scaleMaxReplicas: 1
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
-    name: toLower('${prefixCleaned}containerFrontend')
+    name: toLower('${ResourcePrefix}Fnt')
     // Non-required parameters
     location: location
   }
@@ -269,7 +258,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
 
 
 resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-  name: toLower('${prefixCleaned}containerBackend')
+  name: toLower('${ResourcePrefix}Bck-ca')
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -322,7 +311,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://${aifoundry.outputs.aiServicesName}.openai.azure.com/'
+              value: 'https://${azureAifoundry.outputs.aiServicesName}.openai.azure.com/'
             }
             {
               name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
@@ -445,7 +434,7 @@ var openAiContributorRoleId = 'a001fd3d-188f-4b5d-821b-7da978bf7442'  // Fixed R
 
 resource openAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(containerAppBackend.id, openAiContributorRoleId)
-  scope: aiServices
+  scope: azureAiServices
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiContributorRoleId) // OpenAI Service Contributor
     principalId: containerAppBackend.identity.principalId
@@ -462,7 +451,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
   properties: {
     publicAccess: 'None'
   }
-  dependsOn: [aifoundry]
+  dependsOn: [azureAifoundry]
 }]
 
 

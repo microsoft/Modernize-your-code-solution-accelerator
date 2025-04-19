@@ -61,7 +61,7 @@ The sample data used in this repository is synthetic and generated using Azure O
 
 This diagram double-clicks into the agentic framework for the code conversion process. The conversion uses an agentic approach with each agent playing a specialized role in the process. The system gets a list of SQL files which are targeted for conversion. 
 
-**Step 1:** The system loops through the list of SQL files, converting each file, starting by passing the SQL to the Migrator agent. This agent will create several candidate SQL files that should be equivalent. It does this to ensure that the system acknowledges that most of these queries could be converted in a number of different ways. *Note that the processing time can vary depending on OpenAI and cloud services.*
+**Step 1:** The system loops through the list of SQL files, converting each file, starting by passing the SQL to the Migrator agent. This agent will create several candidate SQL files that should be equivalent. It does this to ensure that the system acknowledges that most of these queries could be converted in a number of different ways. *Note that the processing time can vary depending on Azure OpenAI service and cloud services.*
 
 **Step 2:** The Picker agent then examines these various possibilities and picks the one it believes is best using criteria such as simplicity, clarity of syntax, etc.
 
@@ -75,10 +75,6 @@ This diagram double-clicks into the agentic framework for the code conversion pr
 QUICK DEPLOY
 </h2>
 
-
-| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmicrosoft%2FModernize-your-code-solution-accelerator%2Frefs%2Fheads%2Fmain%2Finfra%2Fmain.json) |
-|---|---|---|
-
 ### **Prerequisites**
 
 To deploy this solution accelerator, ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the necessary permissions to create **resource groups and resources**. Follow the steps in  [Azure Account Set Up](./docs/AzureAccountSetUp.md) 
@@ -86,17 +82,17 @@ To deploy this solution accelerator, ensure you have access to an [Azure subscri
 Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available:  
 
 - Azure AI Foundry 
-- Azure OpenAI Service 
-- Embedding Deployment Capacity  
+- Azure OpenAI Service  
 - GPT Model Capacity
 
 Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
 
-This accelerator can be deployed with or without authentication. 
+### ⚠️ Important: Check Azure OpenAI Quota Availability  
 
-* To install with authentication requires that the installer have the rights to create and register an application identity in their Azure environment.
-After installation is complete, follow the directions in the [App Authentication](./docs/AddAuthentication.md) document to enable authentication.
-* Note: If you install with authentication, all processing history and current processing will be performed for your specific user. If you deploy without authentication, all batch history from the tool will be visible to all users.
+➡️ To ensure sufficient quota is available in your subscription, please follow **[Quota check instructions guide](./docs/quota_check.md)** before you deploy the solution.
+
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
+|---|---|
  
 ### **Configurable Deployment Settings**  
 
@@ -106,16 +102,20 @@ When you start the deployment, most parameters will have **default values**, but
 |------------|----------------|  ------------|
 | **Azure Region** | The region where resources will be created. | East US| 
 | **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **Ai Location** | Location for all Ai services resources. This location can be different from the resource group location | None |
-| **Capacity** | Configure capacity for **GPT models**. |  5k |
+| **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
+| **Capacity** | Configure capacity for **gpt-4o**. |  5k |
+
+This accelerator can be configured to  use authentication. 
+
+* To use authentication the installer must have the rights to create and register an application identity in their Azure environment.
+After installation is complete, follow the directions in the [App Authentication](./docs/AddAuthentication.md) document to enable authentication.
+* Note: If you enable authentication, all processing history and current processing will be performed for your specific user. Without authentication, all batch history from the tool will be visible to all users.
 
 ### [Optional] Quota Recommendations  
 By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
-> **We recommend increasing the capacity to 30k tokens for optimal performance.** 
+> **We recommend increasing the capacity to 200k tokens for optimal performance.** 
 
-To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)  
-
-**⚠️ Warning:**  **Insufficient quota can cause application errors.** Please ensure you have the recommended capacity or request for additional capacity before deploying this solution. 
+To adjust quota settings, follow these [steps](./docs/AzureGPTQuotaSettings.md)
 
 ### Deployment Options
 Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
@@ -179,16 +179,6 @@ If you're not using one of the above options for opening the project, then you'l
 4. Continue with the [deploying steps](#deploying).
 
 </details>
-<details>
-  <summary><b>Deploy with Bicep/ARM template</b></summary>
-
-### Bicep
-
-   Click the following deployment button to create the required resources for this accelerator directly in your Azure Subscription.
-
-   [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarktayl1%2Ftestdeploy%2Frefs%2Fheads%2Fmain%2FCodeGenDeploy.json)
-
-</details>
 
 ### Deploying
 
@@ -246,8 +236,7 @@ Responsible AI Transparency FAQ
 
 Please refer to [Transparency FAQ](./TRANSPARENCY_FAQ.md) for responsible AI transparency details of this solution accelerator.
 
-<h2><img src="./docs/images/read_me/supportingDocuments.png" width="64" style="max-width: 100%;">
-</br>
+<h2>
 Supporting Documentation
 </h2>
 
@@ -262,7 +251,7 @@ You can try the [Azure pricing calculator](https://azure.microsoft.com/en-us/pri
 * Azure AI Foundry: Free tier. [Pricing](https://azure.microsoft.com/pricing/details/ai-studio/)
 * Azure Storage Account: Standard tier, LRS. Pricing is based on storage and operations. [Pricing](https://azure.microsoft.com/pricing/details/storage/blobs/)
 * Azure Key Vault: Standard tier. Pricing is based on the number of operations. [Pricing](https://azure.microsoft.com/pricing/details/key-vault/)
-* Azure AI Services: S0 tier, defaults to gpt-4o-mini and text-embedding-ada-002 models. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
+* Azure AI Services: S0 tier, defaults to gpt-4o-mini. Pricing is based on token count. [Pricing](https://azure.microsoft.com/pricing/details/cognitive-services/)
 * Azure Container App: Consumption tier with 0.5 CPU, 1GiB memory/storage. Pricing is based on resource allocation, and each month allows for a certain amount of free usage. [Pricing](https://azure.microsoft.com/pricing/details/container-apps/)
 * Azure Container Registry: Basic tier. [Pricing](https://azure.microsoft.com/pricing/details/container-registry/)
 * Log analytics: Pay-as-you-go tier. Costs based on data ingested. [Pricing](https://azure.microsoft.com/pricing/details/monitor/)
