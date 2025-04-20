@@ -4,6 +4,7 @@ a query from one SQL dialect to another.
 It is the main entry point for the SQL migration process.
 """
 
+import asyncio
 import logging
 
 from azure.identity.aio import DefaultAzureCredential
@@ -116,6 +117,8 @@ async def process_batch_async(
                     batch_service,
                     sql_agents,
                 )
+                # TEMPORARY: awaiting bug fix for rate limits
+                await asyncio.sleep(5)
                 if converted_query:
                     # Add RAI disclaimer to the converted query
                     converted_query = add_rai_disclaimer(converted_query)

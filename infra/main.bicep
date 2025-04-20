@@ -36,7 +36,7 @@ param capacity int = 5
 var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
 var ResourcePrefix = take('cm${Prefix}${UniquePrefix}', 15)
-var imageVersion = 'rc1' // Change to 'fnd01' when ready
+var imageVersion = 'fnd01'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -454,6 +454,22 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
   dependsOn: [azureAifoundry]
 }]
 
+resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' existing = {
+  name: '${ResourcePrefix}-prj' // aiProjectName must be calculated - available at main start.
+}
+
+resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '64702f94-c441-49e6-a78b-ef80e0188fee'
+}
+
+resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(containerAppBackend.name, aiHubProject.id, aiDeveloper.id)
+  scope: aiHubProject
+  properties: {
+    roleDefinitionId: aiDeveloper.id
+    principalId: containerAppBackend.identity.principalId
+  }
+}
 
 resource contributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-06-15' existing = {
   name: '${databaseAccount.name}/00000000-0000-0000-0000-000000000002'
