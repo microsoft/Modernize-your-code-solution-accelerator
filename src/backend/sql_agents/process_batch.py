@@ -117,8 +117,6 @@ async def process_batch_async(
                     batch_service,
                     sql_agents,
                 )
-                # TEMPORARY: awaiting bug fix for rate limits
-                await asyncio.sleep(5)
                 if converted_query:
                     # Add RAI disclaimer to the converted query
                     converted_query = add_rai_disclaimer(converted_query)
@@ -127,6 +125,8 @@ async def process_batch_async(
                     )
                 else:
                     await batch_service.update_file_counts(file["file_id"])
+                # TEMPORARY: awaiting bug fix for rate limits
+                await asyncio.sleep(5)
             except UnicodeDecodeError as ucde:
                 logger.error("Error decoding file: %s", file)
                 logger.error("Error decoding file. %s", ucde)
