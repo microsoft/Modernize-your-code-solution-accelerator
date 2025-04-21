@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "1388245659062904286"
+      "templateHash": "8953208502938265930"
     }
   },
   "parameters": {
@@ -216,6 +216,26 @@
                 {
                   "name": "TERMINATION_MODEL_DEPLOY",
                   "value": "[variables('llmModel')]"
+                },
+                {
+                  "name": "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME",
+                  "value": "[variables('llmModel')]"
+                },
+                {
+                  "name": "AZURE_AI_AGENT_PROJECT_NAME",
+                  "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.aiProjectName.value]"
+                },
+                {
+                  "name": "AZURE_AI_AGENT_RESOURCE_GROUP_NAME",
+                  "value": "[resourceGroup().name]"
+                },
+                {
+                  "name": "AZURE_AI_AGENT_SUBSCRIPTION_ID",
+                  "value": "[subscription().subscriptionId]"
+                },
+                {
+                  "name": "AZURE_AI_AGENT_PROJECT_CONNECTION_STRING",
+                  "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.projectConnectionString.value]"
                 }
               ],
               "resources": {
@@ -354,7 +374,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "107965290127824528"
+              "templateHash": "17863870312619064541"
             }
           },
           "parameters": {
@@ -451,6 +471,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
+              "version": "0.34.44.8038",
+              "templateHash": "10664495342911727649"
               "version": "0.34.44.8038",
               "templateHash": "10664495342911727649"
             }
@@ -590,7 +612,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "9573081501419024290"
+              "templateHash": "8087543237770345715"
             }
           },
           "parameters": {
@@ -939,6 +961,10 @@
             "storageAccountId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+            },
+            "projectConnectionString": {
+              "type": "string",
+              "value": "[format('{0};{1};{2};{3}', split(reference(resourceId('Microsoft.MachineLearningServices/workspaces', variables('aiProjectName')), '2024-01-01-preview').discoveryUrl, '/')[2], subscription().subscriptionId, resourceGroup().name, variables('aiProjectName'))]"
             }
           }
         }
