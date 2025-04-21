@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "15962798193197746525"
+      "templateHash": "2966583538132786271"
     }
   },
   "parameters": {
@@ -451,7 +451,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "1179876312013038352"
+              "templateHash": "7479964703030361933"
             }
           },
           "parameters": {
@@ -504,7 +504,6 @@
                 "enabledForDeployment": true,
                 "enabledForDiskEncryption": true,
                 "enabledForTemplateDeployment": true,
-                "enableSoftDelete": false,
                 "enableRbacAuthorization": true,
                 "publicNetworkAccess": "enabled",
                 "sku": {
