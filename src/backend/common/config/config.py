@@ -1,13 +1,25 @@
+"""Configuration class for the application.
+This class loads configuration values from environment variables and provides
+methods to access them. It also initializes an Azure AI client using the
+provided credentials.
+It uses the `azure.identity` library to handle authentication and
+authorization with Azure services.
+Access to .env variables requires adding the `python-dotenv` package to, or
+configuration of the env python path through the IDE. For example, in VSCode, the
+settings.json file in the .vscode folder should include the following:
+{
+    "python.envFile": "${workspaceFolder}/.env"
+}
+"""
+
 import os
 
 from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
 
 class Config:
+    """Configuration class for the application."""
+
     def __init__(self):
         self.azure_tenant_id = os.getenv("AZURE_TENANT_ID", "")
         self.azure_client_id = os.getenv("AZURE_CLIENT_ID", "")
