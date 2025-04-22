@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "8953208502938265930"
+      "templateHash": "6290258568261172226"
     }
   },
   "parameters": {
@@ -57,7 +57,7 @@
     "uniqueId": "[toLower(uniqueString(subscription().id, parameters('Prefix'), resourceGroup().location))]",
     "UniquePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
     "ResourcePrefix": "[take(format('cm{0}{1}', parameters('Prefix'), variables('UniquePrefix')), 15)]",
-    "imageVersion": "rc1",
+    "imageVersion": "fnd01",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
     "cosmosdbDatabase": "cmsadb",
@@ -350,6 +350,19 @@
       ]
     },
     {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "scope": "[format('Microsoft.MachineLearningServices/workspaces/{0}', format('{0}-prj', variables('ResourcePrefix')))]",
+      "name": "[guid(toLower(format('{0}Bck-ca', variables('ResourcePrefix'))), resourceId('Microsoft.MachineLearningServices/workspaces', format('{0}-prj', variables('ResourcePrefix'))), resourceId('Microsoft.Authorization/roleDefinitions', '64702f94-c441-49e6-a78b-ef80e0188fee'))]",
+      "properties": {
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', '64702f94-c441-49e6-a78b-ef80e0188fee')]",
+        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}Bck-ca', variables('ResourcePrefix')))), '2023-05-01', 'full').identity.principalId]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}Bck-ca', variables('ResourcePrefix'))))]"
+      ]
+    },
+    {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
       "name": "deploy_managed_identity",
@@ -374,7 +387,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "17863870312619064541"
+              "templateHash": "107965290127824528"
             }
           },
           "parameters": {
@@ -472,9 +485,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "10664495342911727649"
-              "version": "0.34.44.8038",
-              "templateHash": "10664495342911727649"
+              "templateHash": "7479964703030361933"
             }
           },
           "parameters": {
@@ -610,7 +621,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.34.44.8038",
-              "templateHash": "8087543237770345715"
+              "templateHash": "13939205582736222851"
             }
           },
           "parameters": {
