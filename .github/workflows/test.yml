@@ -6,6 +6,7 @@ on:
       - main
       - dev
       - demo
+      - psl-backend-unit-test
   pull_request:
     types:
       - opened
