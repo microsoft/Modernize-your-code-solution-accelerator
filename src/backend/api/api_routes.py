@@ -3,6 +3,8 @@
 import asyncio
 import io
 import zipfile
+from typing import Optional
+
 
 from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
@@ -22,13 +24,13 @@ from fastapi import (
 )
 from fastapi.responses import Response
 
+from sql_agents.process_batch import process_batch_async
+
 router = APIRouter()
 logger = AppLogger("APIRoutes")
 
+
 # start processing the batch
-from sql_agents_start import process_batch_async  # noqa: E402
-
-
 @router.post("/start-processing")
 async def start_processing(request: Request):
     """
@@ -72,8 +74,12 @@ async def start_processing(request: Request):
     try:
         payload = await request.json()
         batch_id = payload.get("batch_id")
+        translate_from = payload.get("translate_from")
+        translate_to = payload.get("translate_to")
 
-        await process_batch_async(batch_id)
+        await process_batch_async(
+            batch_id=batch_id, convert_from=translate_from, convert_to=translate_to
+        )
 
         await close_connection(batch_id)
 
@@ -796,7 +802,7 @@ async def delete_all_details(request: Request):
 
 
 @router.get("/batch-history")
-async def list_batch_history(request: Request, offset: int = 0, limit: int = 25):
+async def list_batch_history(request: Request, offset: int = 0, limit: Optional[int] = None):
     """
     Retrieve batch processing history for the authenticated user.
 
