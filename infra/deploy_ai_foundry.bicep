@@ -9,18 +9,18 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
-var storageName = '${solutionName}hubstorage'
+var storageName = '${solutionName}hubst'
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${solutionName}-aiservices'
-var workspaceName = '${solutionName}-workspace'
+var aiServicesName = '${solutionName}-ais'
+var workspaceName = '${solutionName}-log'
 var keyvaultName = '${solutionName}-kv'
 var location = solutionLocation 
-var aiHubName = '${solutionName}-aihub'
-var aiHubFriendlyName = aiHubName
+var azureAiHubName = '${solutionName}-hub'
+var aiHubFriendlyName = azureAiHubName
 var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${solutionName}-aiproject'
+var aiProjectName = '${solutionName}-prj'
 var aiProjectFriendlyName = aiProjectName
-var aiSearchName = '${solutionName}-search'
+var aiSearchName = '${solutionName}-srch'
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
@@ -112,7 +112,7 @@ resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 }
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
-  name: aiHubName
+  name: azureAiHubName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -129,7 +129,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   kind: 'hub'
 
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-AzureOpenAI'
+    name: '${azureAiHubName}-connection-AzureOpenAI'
     properties: {
       category: 'AIServices'
       target: aiServicesEndpoint
@@ -298,3 +298,5 @@ output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = logAnalytics.id
 output storageAccountId string = storage.id
+
+output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
