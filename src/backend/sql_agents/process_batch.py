@@ -27,7 +27,6 @@ from semantic_kernel.agents.azure_ai import AzureAIAgent  # pylint: disable=E061
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
 
-
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.convert_script import convert_script
 from sql_agents.helpers.agents_manager import SqlAgents
