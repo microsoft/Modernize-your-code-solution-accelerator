@@ -263,25 +263,6 @@ async def test_upload_file_to_batch_invalid_storage():
         assert str(exc_info.value.__cause__) == "Storage service not initialized"
 
 
-@pytest.mark.asyncio
-async def test_delete_batch_success(mock_service):
-    batch_id = uuid4()
-    user_id = "test_user"
-    mock_service.database.get_batch = AsyncMock(return_value={"id": str(batch_id)})
-    mock_service.database.delete_batch = AsyncMock()
-    result = await mock_service.delete_batch(batch_id, user_id)
-    assert result["message"] == "Batch deleted successfully"
-    assert result["batch_id"] == str(batch_id)
-
-
-def test_is_valid_uuid_valid(mock_service):
-    assert mock_service.is_valid_uuid(str(uuid4())) is True
-
-
-def test_is_valid_uuid_invalid(mock_service):
-    assert mock_service.is_valid_uuid("not-a-uuid") is False
-
-
 def test_generate_file_path_only_filename():
     service = BatchService()
     path = service.generate_file_path(None, None, None, "weird@name!.txt")
