@@ -1,11 +1,9 @@
-# test_app_logger.py
-
-import logging
 import json
+import logging
 import pytest
 from unittest.mock import patch, MagicMock
 
-from src.backend.common.logger.app_logger import AppLogger, LogLevel  # replace 'your_module_name' with the correct one
+from src.backend.common.logger.app_logger import AppLogger, LogLevel
 
 
 @pytest.fixture
