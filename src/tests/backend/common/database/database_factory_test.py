@@ -1,10 +1,8 @@
-import os
-import sys
-import pytest
-import asyncio
 from unittest.mock import AsyncMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'backend')))
+
+import pytest
+
 
 @pytest.fixture(autouse=True)
 def patch_config(monkeypatch):
@@ -22,10 +20,10 @@ def patch_config(monkeypatch):
 
     monkeypatch.setattr(Config, "__init__", dummy_init)  # Replace the init method
 
+
 @pytest.fixture(autouse=True)
 def patch_cosmosdb_client(monkeypatch):
     """Patch CosmosDBClient to use a dummy implementation."""
-    from common.database.database_factory import CosmosDBClient
 
     class DummyCosmosDBClient:
         def __init__(self, endpoint, credential, database_name, batch_container, file_container, log_container):
@@ -53,6 +51,7 @@ def patch_cosmosdb_client(monkeypatch):
 
     monkeypatch.setattr("common.database.database_factory.CosmosDBClient", DummyCosmosDBClient)
 
+
 @pytest.mark.asyncio
 async def test_get_database():
     """Test database retrieval using the factory."""
@@ -67,11 +66,12 @@ async def test_get_database():
     assert db_instance.file_container == "dummy_file"
     assert db_instance.log_container == "dummy_log"
 
+
 @pytest.mark.asyncio
 async def test_main_function():
     """Test the main function in database factory."""
     with patch("common.database.database_factory.DatabaseFactory.get_database", new_callable=AsyncMock, return_value=AsyncMock()) as mock_get_database, patch("builtins.print") as mock_print:
-        
+      
         from common.database.database_factory import main
         await main()
 
