@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from common.config.config import Config  # Load config
@@ -31,15 +32,14 @@ class BlobStorageFactory:
 
 
 # Local testing of config and code
+async def main():
+    storage = await BlobStorageFactory.get_storage()
+
+    # Use the storage instance
+    blob = await storage.get_file("q1_informix.sql")
+    print("Blob content:", blob)
+
+    await BlobStorageFactory.close_storage()
+
 if __name__ == "__main__":
-    # Example usage
-    import asyncio
-
-    async def main():
-        storage = await BlobStorageFactory.get_storage()
-        # Use the storage instance...
-        blob = await storage.get_file("q1_informix.sql")
-        print(blob)
-        await BlobStorageFactory.close_storage()
-
     asyncio.run(main())

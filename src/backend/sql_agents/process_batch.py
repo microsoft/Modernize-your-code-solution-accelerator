@@ -24,10 +24,9 @@ from common.storage.blob_factory import BlobStorageFactory
 from fastapi import HTTPException
 
 
-from semantic_kernel.agents import AzureAIAgent  # pylint: disable=E0611
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
-
 
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.convert_script import convert_script
