@@ -212,8 +212,8 @@ async def test_create_batch_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to create batch"
     assert "error" in called_kwargs
     assert "Unexpected Error" in called_kwargs["error"]
-    
-    
+
+
 @pytest.mark.asyncio
 async def test_add_file(cosmos_db_client, mocker):
     batch_id = uuid4()
@@ -266,7 +266,7 @@ async def test_add_file_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to add file"
     assert "error" in called_kwargs
     assert "Insert failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_update_file(cosmos_db_client, mocker):
@@ -387,7 +387,7 @@ async def test_update_batch_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to update batch"
     assert "error" in called_kwargs
     assert "Update batch failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_get_batch(cosmos_db_client, mocker):
@@ -511,7 +511,7 @@ async def test_get_file_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to get file"
     assert "error" in called_kwargs
     assert "Get file failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_get_batch_files(cosmos_db_client, mocker):
@@ -581,7 +581,6 @@ async def test_get_batch_files_exception(cosmos_db_client, mocker):
     assert "Get batch file failed" in called_kwargs["error"]
 
 
-
 @pytest.mark.asyncio
 async def test_get_batch_from_id(cosmos_db_client, mocker):
     batch_id = str(uuid4())
@@ -637,7 +636,7 @@ async def test_get_batch_from_id_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to get batch from ID"
     assert "error" in called_kwargs
     assert "Get batch from id failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_get_user_batches(cosmos_db_client, mocker):
@@ -836,7 +835,7 @@ async def test_delete_all_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to delete all user data"
     assert "error" in called_kwargs
     assert "Delete failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_delete_logs(cosmos_db_client, mocker):
@@ -894,7 +893,7 @@ async def test_delete_logs_exception(cosmos_db_client, mocker):
     assert called_args[0] == "Failed to delete all user data"
     assert "error" in called_kwargs
     assert "Query failed" in called_kwargs["error"]
-    
+
 
 @pytest.mark.asyncio
 async def test_delete_batch(cosmos_db_client, mocker):
