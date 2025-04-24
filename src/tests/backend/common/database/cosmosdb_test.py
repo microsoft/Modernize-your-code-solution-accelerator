@@ -1,34 +1,31 @@
-import pytest
-import asyncio
 import os
 import sys
-from unittest import mock
-
-from unittest.mock import AsyncMock, patch
-from uuid import uuid4
-from datetime import datetime, timezone
-from azure.cosmos.exceptions import CosmosResourceExistsError
-
 # Add backend directory to sys.path
 sys.path.insert(
     0,
     os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..", "backend")),
 )
+from datetime import datetime, timezone  # noqa: E402
+from unittest import mock  # noqa: E402
+from unittest.mock import AsyncMock  # noqa: E402
+from uuid import uuid4  # noqa: E402
 
-from common.models.api import (
-    AgentType,
-    BatchRecord,
-    FileLog,
-    LogType,
-    ProcessStatus,
-    FileRecord,
-    AuthorRole,
-)
-from common.logger.app_logger import AppLogger
-from common.database.cosmosdb import (
+from azure.cosmos.aio import CosmosClient  # noqa: E402
+from azure.cosmos.exceptions import CosmosResourceExistsError  # noqa: E402
+
+from common.database.cosmosdb import (  # noqa: E402
     CosmosDBClient,
 )
-from azure.cosmos.aio import CosmosClient
+from common.models.api import (  # noqa: E402
+    AgentType,
+    AuthorRole,
+    BatchRecord,
+    FileRecord,
+    LogType,
+    ProcessStatus,
+)  # noqa: E402
+
+import pytest  # noqa: E402
 
 # Mocked data for the test
 endpoint = "https://fake.cosmosdb.azure.com"
@@ -49,8 +46,6 @@ def cosmos_db_client():
         file_container=file_container,
         log_container=log_container,
     )
-
-
 
 
 @pytest.mark.asyncio
@@ -160,6 +155,7 @@ async def test_create_batch_new(cosmos_db_client, mocker):
 
     mock_batch_container.create_item.assert_called_once_with(body=batch.dict())
 
+
 @pytest.mark.asyncio
 async def test_create_batch_exists(cosmos_db_client, mocker):
     user_id = "user_1"
@@ -193,6 +189,32 @@ async def test_create_batch_exists(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_create_batch_exception(cosmos_db_client, mocker):
+    user_id = "user_1"
+    batch_id = uuid4()
+
+    # Mock the batch_container and make create_item raise a general Exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.create_item = AsyncMock(side_effect=Exception("Unexpected Error"))
+
+    # Mock the logger to verify logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and assert it raises the exception
+    with pytest.raises(Exception, match="Unexpected Error"):
+        await cosmos_db_client.create_batch(user_id, batch_id)
+
+    # Ensure logger.error was called with expected message and error
+    mock_logger.error.assert_called_once()
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to create batch"
+    assert "error" in called_kwargs
+    assert "Unexpected Error" in called_kwargs["error"]
+    
+    
+@pytest.mark.asyncio
 async def test_add_file(cosmos_db_client, mocker):
     batch_id = uuid4()
     file_id = uuid4()
@@ -218,6 +240,33 @@ async def test_add_file(cosmos_db_client, mocker):
 
     mock_file_container.create_item.assert_called_once_with(body=file_record.dict())
 
+
+@pytest.mark.asyncio
+async def test_add_file_exception(cosmos_db_client, mocker):
+    batch_id = uuid4()
+    file_id = uuid4()
+    file_name = "document.pdf"
+    storage_path = "/files/document.pdf"
+
+    # Mock file_container.create_item to raise a general exception
+    mock_file_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+    mock_file_container.create_item = AsyncMock(side_effect=Exception("Insert failed"))
+
+    # Mock logger to capture error logs
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect an exception when calling add_file
+    with pytest.raises(Exception, match="Insert failed"):
+        await cosmos_db_client.add_file(batch_id, file_id, file_name, storage_path)
+
+    # Check that logger.error was called properly
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to add file"
+    assert "error" in called_kwargs
+    assert "Insert failed" in called_kwargs["error"]
+    
 
 @pytest.mark.asyncio
 async def test_update_file(cosmos_db_client, mocker):
@@ -250,6 +299,41 @@ async def test_update_file(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_update_file_exception(cosmos_db_client, mocker):
+    # Create a sample FileRecord
+    file_record = FileRecord(
+        file_id=uuid4(),
+        batch_id=uuid4(),
+        original_name="file.txt",
+        blob_path="/storage/file.txt",
+        translated_path="",
+        status=ProcessStatus.READY_TO_PROCESS,
+        error_count=0,
+        syntax_count=0,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+    )
+
+    # Mock file_container.replace_item to raise an exception
+    mock_file_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+    mock_file_container.replace_item = AsyncMock(side_effect=Exception("Update failed"))
+
+    # Mock logger
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect an exception when update_file is called
+    with pytest.raises(Exception, match="Update failed"):
+        await cosmos_db_client.update_file(file_record)
+
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to update file"
+    assert "error" in called_kwargs
+    assert "Update failed" in called_kwargs["error"]
+
+
+@pytest.mark.asyncio
 async def test_update_batch(cosmos_db_client, mocker):
     batch_record = BatchRecord(
         batch_id=uuid4(),
@@ -273,6 +357,37 @@ async def test_update_batch(cosmos_db_client, mocker):
 
     mock_batch_container.replace_item.assert_called_once_with(item=str(batch_record.batch_id), body=batch_record.dict())
 
+
+@pytest.mark.asyncio
+async def test_update_batch_exception(cosmos_db_client, mocker):
+    # Create a sample BatchRecord
+    batch_record = BatchRecord(
+        batch_id=uuid4(),
+        user_id="user_1",
+        file_count=3,
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc),
+        status=ProcessStatus.READY_TO_PROCESS,
+    )
+
+    # Mock batch_container.replace_item to raise an exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.replace_item = AsyncMock(side_effect=Exception("Update batch failed"))
+
+    # Mock logger to verify logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect an exception when update_batch is called
+    with pytest.raises(Exception, match="Update batch failed"):
+        await cosmos_db_client.update_batch(batch_record)
+
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to update batch"
+    assert "error" in called_kwargs
+    assert "Update batch failed" in called_kwargs["error"]
+    
 
 @pytest.mark.asyncio
 async def test_get_batch(cosmos_db_client, mocker):
@@ -314,6 +429,33 @@ async def test_get_batch(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_get_batch_exception(cosmos_db_client, mocker):
+    user_id = "user_1"
+    batch_id = str(uuid4())
+
+    # Mock batch_container.query_items to raise an exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get batch failed")
+    )
+
+    # Patch logger
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call get_batch and expect it to raise an exception
+    with pytest.raises(Exception, match="Get batch failed"):
+        await cosmos_db_client.get_batch(user_id, batch_id)
+
+    # Ensure logger.error was called with the expected error message
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get batch"
+    assert "error" in called_kwargs
+    assert "Get batch failed" in called_kwargs["error"]
+
+
+@pytest.mark.asyncio
 async def test_get_file(cosmos_db_client, mocker):
     file_id = str(uuid4())
 
@@ -345,6 +487,31 @@ async def test_get_file(cosmos_db_client, mocker):
 
     mock_file_container.query_items.assert_called_once()
 
+
+@pytest.mark.asyncio
+async def test_get_file_exception(cosmos_db_client, mocker):
+    file_id = str(uuid4())
+
+    # Mock file_container.query_items to raise an exception
+    mock_file_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+    mock_file_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get file failed")
+    )
+
+    # Mock logger to verify logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call get_file and expect an exception
+    with pytest.raises(Exception, match="Get file failed"):
+        await cosmos_db_client.get_file(file_id)
+
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get file"
+    assert "error" in called_kwargs
+    assert "Get file failed" in called_kwargs["error"]
+    
 
 @pytest.mark.asyncio
 async def test_get_batch_files(cosmos_db_client, mocker):
@@ -390,6 +557,32 @@ async def test_get_batch_files(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_get_batch_files_exception(cosmos_db_client, mocker):
+    batch_id = str(uuid4())
+
+    # Mock file_container.query_items to raise an exception
+    mock_file_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+    mock_file_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get batch file failed")
+    )
+
+    # Mock logger to verify logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect the exception to be raised
+    with pytest.raises(Exception, match="Get batch file failed"):
+        await cosmos_db_client.get_batch_files(batch_id)
+
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get files"
+    assert "error" in called_kwargs
+    assert "Get batch file failed" in called_kwargs["error"]
+
+
+
+@pytest.mark.asyncio
 async def test_get_batch_from_id(cosmos_db_client, mocker):
     batch_id = str(uuid4())
 
@@ -422,6 +615,31 @@ async def test_get_batch_from_id(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_get_batch_from_id_exception(cosmos_db_client, mocker):
+    batch_id = str(uuid4())
+
+    # Mock batch_container.query_items to raise an exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get batch from id failed")
+    )
+
+    # Mock logger to verify logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and expect it to raise an exception
+    with pytest.raises(Exception, match="Get batch from id failed"):
+        await cosmos_db_client.get_batch_from_id(batch_id)
+
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get batch from ID"
+    assert "error" in called_kwargs
+    assert "Get batch from id failed" in called_kwargs["error"]
+    
+
+@pytest.mark.asyncio
 async def test_get_user_batches(cosmos_db_client, mocker):
     user_id = "user_123"
 
@@ -452,6 +670,32 @@ async def test_get_user_batches(cosmos_db_client, mocker):
     assert batches[1]["status"] == ProcessStatus.IN_PROGRESS
 
     mock_batch_container.query_items.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_get_user_batches_exception(cosmos_db_client, mocker):
+    user_id = "user_" + str(uuid4())
+
+    # Mock batch_container.query_items to raise an exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get user batch failed")
+    )
+
+    # Mock logger to capture the error
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and expect it to raise the exception
+    with pytest.raises(Exception, match="Get user batch failed"):
+        await cosmos_db_client.get_user_batches(user_id)
+
+    # Ensure logger.error was called with the expected message and error
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get user batches"
+    assert "error" in called_kwargs
+    assert "Get user batch failed" in called_kwargs["error"]
 
 
 @pytest.mark.asyncio
@@ -510,6 +754,32 @@ async def test_get_file_logs(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_get_file_logs_exception(cosmos_db_client, mocker):
+    file_id = str(uuid4())
+
+    # Mock log_container.query_items to raise an exception
+    mock_log_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'log_container', mock_log_container)
+    mock_log_container.query_items = mock.MagicMock(
+        side_effect=Exception("Get file log failed")
+    )
+
+    # Mock logger to verify error logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and expect it to raise the exception
+    with pytest.raises(Exception, match="Get file log failed"):
+        await cosmos_db_client.get_file_logs(file_id)
+
+    # Assert logger.error was called with correct arguments
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to get file logs"
+    assert "error" in called_kwargs
+    assert "Get file log failed" in called_kwargs["error"]
+
+
+@pytest.mark.asyncio
 async def test_delete_all(cosmos_db_client, mocker):
     user_id = str(uuid4())
 
@@ -535,6 +805,38 @@ async def test_delete_all(cosmos_db_client, mocker):
     mock_file_container.delete_item.assert_called_once()
     mock_log_container.delete_item.assert_called_once()
 
+
+@pytest.mark.asyncio
+async def test_delete_all_exception(cosmos_db_client, mocker):
+    user_id = f"user_{uuid4()}"
+
+    # Mock batch_container to raise an exception on delete
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.delete_item = mock.AsyncMock(
+        side_effect=Exception("Delete failed")
+    )
+
+    # Also mock file_container and log_container to avoid accidental execution
+    mock_file_container = mock.MagicMock()
+    mock_log_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+    mocker.patch.object(cosmos_db_client, 'log_container', mock_log_container)
+
+    # Mock logger to verify error handling
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and expect it to raise the exception
+    with pytest.raises(Exception, match="Delete failed"):
+        await cosmos_db_client.delete_all(user_id)
+
+    # Check that logger.error was called with expected error message
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to delete all user data"
+    assert "error" in called_kwargs
+    assert "Delete failed" in called_kwargs["error"]
+    
 
 @pytest.mark.asyncio
 async def test_delete_logs(cosmos_db_client, mocker):
@@ -569,6 +871,32 @@ async def test_delete_logs(cosmos_db_client, mocker):
 
 
 @pytest.mark.asyncio
+async def test_delete_logs_exception(cosmos_db_client, mocker):
+    file_id = str(uuid4())
+
+    # Mock log_container.query_items to raise an exception
+    mock_log_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'log_container', mock_log_container)
+    mock_log_container.query_items = mock.MagicMock(
+        side_effect=Exception("Query failed")
+    )
+
+    # Mock logger to verify error handling
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Call the method and expect it to raise the exception
+    with pytest.raises(Exception, match="Query failed"):
+        await cosmos_db_client.delete_logs(file_id)
+
+    # Check that logger.error was called with expected error message
+    called_args, called_kwargs = mock_logger.error.call_args
+    assert called_args[0] == "Failed to delete all user data"
+    assert "error" in called_kwargs
+    assert "Query failed" in called_kwargs["error"]
+    
+
+@pytest.mark.asyncio
 async def test_delete_batch(cosmos_db_client, mocker):
     user_id = str(uuid4())
     batch_id = str(uuid4())
@@ -581,6 +909,42 @@ async def test_delete_batch(cosmos_db_client, mocker):
     await cosmos_db_client.delete_batch(user_id, batch_id)
 
     mock_batch_container.delete_item.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_delete_batch_exception(cosmos_db_client, mocker):
+    user_id = f"user_{uuid4()}"
+    batch_id = str(uuid4())
+
+    # Mock batch_container.delete_item to raise an exception
+    mock_batch_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'batch_container', mock_batch_container)
+    mock_batch_container.delete_item = mock.AsyncMock(
+        side_effect=Exception("Delete failed")
+    )
+
+    # Mock logger to verify error logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect the exception to be raised from the inner try block
+    with pytest.raises(Exception, match="Delete failed"):
+        await cosmos_db_client.delete_batch(user_id, batch_id)
+
+    # Check that both error logs were triggered
+    assert mock_logger.error.call_count == 2
+
+    # First log: failed to delete the specific batch
+    first_call_args, first_call_kwargs = mock_logger.error.call_args_list[0]
+    assert f"Failed to delete batch with ID: {batch_id}" in first_call_args[0]
+    assert "error" in first_call_kwargs
+    assert "Delete failed" in first_call_kwargs["error"]
+
+    # Second log: higher-level operation failed
+    second_call_args, second_call_kwargs = mock_logger.error.call_args_list[1]
+    assert second_call_args[0] == "Failed to perform delete batch operation"
+    assert "error" in second_call_kwargs
+    assert "Delete failed" in second_call_kwargs["error"]
 
 
 @pytest.mark.asyncio
@@ -605,6 +969,35 @@ async def test_delete_file(cosmos_db_client, mocker):
     cosmos_db_client.delete_logs.assert_called_once_with(file_id)
 
     mock_file_container.delete_item.assert_called_once_with(file_id, partition_key=file_id)
+
+
+@pytest.mark.asyncio
+async def test_delete_file_exception(cosmos_db_client, mocker):
+    user_id = f"user_{uuid4()}"
+    file_id = str(uuid4())
+
+    # Mock delete_logs to raise an exception
+    mocker.patch.object(
+        cosmos_db_client,
+        'delete_logs',
+        mock.AsyncMock(side_effect=Exception("Delete file failed"))
+    )
+
+    # Mock file_container to ensure delete_item is not accidentally called
+    mock_file_container = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'file_container', mock_file_container)
+
+    # Mock logger to verify error logging
+    mock_logger = mock.MagicMock()
+    mocker.patch.object(cosmos_db_client, 'logger', mock_logger)
+
+    # Expect an exception to be raised from delete_logs
+    with pytest.raises(Exception, match="Delete file failed"):
+        await cosmos_db_client.delete_file(user_id, file_id)
+
+    mock_logger.error.assert_called_once()
+    called_args, _ = mock_logger.error.call_args
+    assert f"Failed to delete file and logs for file_id {file_id}" in called_args[0]
 
 
 @pytest.mark.asyncio
