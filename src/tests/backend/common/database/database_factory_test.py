@@ -71,7 +71,7 @@ async def test_get_database():
 async def test_main_function():
     """Test the main function in database factory."""
     with patch("common.database.database_factory.DatabaseFactory.get_database", new_callable=AsyncMock, return_value=AsyncMock()) as mock_get_database, patch("builtins.print") as mock_print:
-      
+
         from common.database.database_factory import main
         await main()
 
