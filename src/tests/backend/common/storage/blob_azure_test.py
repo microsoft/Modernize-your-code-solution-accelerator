@@ -1,14 +1,12 @@
 import json
-import os
-import sys
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 from io import BytesIO
+from unittest.mock import MagicMock, patch
 
-# Add backend directory to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..', 'backend')))
 
 from common.storage.blob_azure import AzureBlobStorage
+
+
+import pytest
 
 
 @pytest.fixture
@@ -118,6 +116,7 @@ async def test_list_files(blob_storage, mock_blob_service):
 
     class AsyncIterator:
         """Helper class to create an async iterator"""
+
         def __init__(self, items):
             self._items = items
 
@@ -185,6 +184,7 @@ async def test_close(blob_storage, mock_blob_service):
     await blob_storage.close()
 
     service_client.close.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_blob_storage_init_exception():
