@@ -1,3 +1,4 @@
+import asyncio
 from typing import Optional
 
 from common.config.config import Config
@@ -33,25 +34,20 @@ class DatabaseFactory:
 # Note that you have to assign yourself data plane access to Cosmos in script for this to work locally.  See
 # https://learn.microsoft.com/en-us/azure/cosmos-db/table/security/how-to-grant-data-plane-role-based-access?tabs=built-in-definition%2Ccsharp&pivots=azure-interface-cli
 # Note that your principal id is your entra object id for your user account.
+async def main():
+    database = await DatabaseFactory.get_database()
+    await database.initialize_cosmos()
+    await database.create_batch("mark1", "123e4567-e89b-12d3-a456-426614174000")
+    await database.add_file(
+        "123e4567-e89b-12d3-a456-426614174000",
+        "123e4567-e89b-12d3-a456-426614174001",
+        "q1_informix.sql",
+        "https://cmsamarktaylstor.blob.core.windows.net/cmsablob",
+    )
+    tstbatch = await database.get_batch("mark1", "123e4567-e89b-12d3-a456-426614174000")
+    print(tstbatch)
+    await database.close()
+
+
 if __name__ == "__main__":
-    # Example usage
-    import asyncio
-
-    async def main():
-        database = await DatabaseFactory.get_database()
-        # Use the database instance...
-        await database.initialize_cosmos()
-        await database.create_batch("mark1", "123e4567-e89b-12d3-a456-426614174000")
-        await database.add_file(
-            "123e4567-e89b-12d3-a456-426614174000",
-            "123e4567-e89b-12d3-a456-426614174001",
-            "q1_informix.sql",
-            "https://cmsamarktaylstor.blob.core.windows.net/cmsablob",
-        )
-        tstbatch = await database.get_batch(
-            "mark1", "123e4567-e89b-12d3-a456-426614174000"
-        )
-        print(tstbatch)
-        await database.close()
-
     asyncio.run(main())
