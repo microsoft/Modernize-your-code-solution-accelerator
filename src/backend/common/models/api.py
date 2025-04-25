@@ -125,7 +125,7 @@ class FileLog:
 
     @staticmethod
     def fromdb(data: Dict) -> FileLog:
-        """Convert str to UUID after fetching from the database"""
+        """Convert str to UUID after fetching from the database."""
         return FileLog(
             log_id=UUID(data["log_id"]),  # Convert str → UUID
             file_id=UUID(data["file_id"]),  # Convert str → UUID
@@ -142,7 +142,7 @@ class FileLog:
         )
 
     def dict(self) -> Dict:
-        """Convert UUID to str before inserting into the database"""
+        """Convert UUID to str before inserting into the database."""
         return {
             "id": str(self.log_id),  # Convert UUID → str
             "log_id": str(self.log_id),  # Convert UUID → str
@@ -185,7 +185,7 @@ class FileRecord:
 
     @staticmethod
     def fromdb(data: Dict) -> FileRecord:
-        """Convert str to UUID after fetching from the database"""
+        """Convert str to UUID after fetching from the database."""
         return FileRecord(
             file_id=UUID(data["file_id"]),  # Convert str → UUID
             batch_id=UUID(data["batch_id"]),  # Convert str → UUID
@@ -203,7 +203,7 @@ class FileRecord:
         )
 
     def dict(self) -> Dict:
-        """Convert UUID to str before inserting into the database"""
+        """Convert UUID to str before inserting into the database."""
         return {
             "id": str(self.file_id),
             "file_id": str(self.file_id),  # Convert UUID → str
@@ -221,7 +221,7 @@ class FileRecord:
 
 
 class FileProcessUpdate:
-    "websocket payload for file process updates"
+    """websocket payload for file process updates."""
 
     def __init__(
         self,
@@ -259,9 +259,7 @@ class FileProcessUpdate:
 
 
 class FileProcessUpdateJSONEncoder(json.JSONEncoder):
-    """
-    Custom JSON encoder for serializing FileProcessUpdate, ProcessStatus, and FileResult objects.
-    """
+    """Custom JSON encoder for serializing FileProcessUpdate, ProcessStatus, and FileResult objects."""
 
     def default(self, obj):
         # Check if the object is an instance of FileProcessUpdate, ProcessStatus, or FileResult
@@ -294,7 +292,7 @@ class QueueBatch:
         self.status = status
 
     def dict(self) -> Dict:
-        """Convert UUID to str before inserting into the database"""
+        """Convert UUID to str before inserting into the database."""
         return {
             "batch_id": str(self.batch_id),  # Convert UUID → str for DB
             "user_id": self.user_id,
@@ -355,7 +353,7 @@ class BatchRecord:
         )
 
     def dict(self) -> Dict:
-        """Convert UUID to str before inserting into the database"""
+        """Convert UUID to str before inserting into the database."""
         return {
             "id": str(self.batch_id),
             "batch_id": str(self.batch_id),  # Convert UUID → str for DB

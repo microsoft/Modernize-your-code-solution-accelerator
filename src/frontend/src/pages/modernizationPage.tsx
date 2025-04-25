@@ -425,11 +425,11 @@ enum ProcessingStage {
 }
 
 enum Agents {
-  Verifier = "Semantic Verifier",
-  Checker = "Syntax Checker",
-  Picker = "Picker",
-  Migrator = "Migrator",
-  Agents = "Agents"
+  Verifier = "Semantic Verifier agent",
+  Checker = "Syntax Checker agent",
+  Picker = "Picker agent",
+  Migrator = "Migrator agent",
+  Agents = "Agent"
 }
 
 
@@ -489,7 +489,7 @@ const ModernizationPage = () => {
   // State for the loading component
   const [showLoading, setShowLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-
+  const [selectedFilebg, setSelectedFile] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = React.useState<string>("")
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([])
@@ -1266,6 +1266,10 @@ useEffect(() => {
     navigate("/");
   };
 
+  const handleClick = (file: string) => {
+    setSelectedFile(file === selectedFilebg ? null : file);
+  };
+
   return (
     <div className={styles.root}>
       <div onClick={handleHeaderClick} style={{ cursor: "pointer" }}>
@@ -1323,6 +1327,10 @@ useEffect(() => {
                           // Don't allow selecting queued files
                           if (file.status === "ready_to_process") return;
                           setSelectedFileId(file.id);
+                          handleClick(file.id);
+                        }}
+                        style={{
+                          backgroundColor: selectedFilebg === file.id ? "#EBEBEB" : "var(--NeutralBackground1-Rest)",
                         }}
                       >
                         {isSummary ? (

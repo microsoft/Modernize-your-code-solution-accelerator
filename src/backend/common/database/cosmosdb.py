@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -7,9 +6,9 @@ from azure.cosmos import PartitionKey, exceptions
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos.aio._database import DatabaseProxy
 from azure.cosmos.exceptions import (
-    CosmosResourceExistsError,
-    CosmosResourceNotFoundError,
+    CosmosResourceExistsError
 )
+
 from common.database.database_base import DatabaseBase
 from common.logger.app_logger import AppLogger
 from common.models.api import (
@@ -20,6 +19,7 @@ from common.models.api import (
     LogType,
     ProcessStatus,
 )
+
 from semantic_kernel.contents import AuthorRole
 
 
@@ -208,7 +208,7 @@ class CosmosDBClient(DatabaseBase):
             raise
 
     async def get_batch_from_id(self, batch_id: str) -> Dict:
-        """Retrieve a batch from the database using the batch ID"""
+        """Retrieve a batch from the database using the batch ID."""
         try:
             query = "SELECT * FROM c WHERE c.batch_id = @batch_id"
             params = [{"name": "@batch_id", "value": batch_id}]
@@ -225,7 +225,7 @@ class CosmosDBClient(DatabaseBase):
             raise
 
     async def get_user_batches(self, user_id: str) -> Dict:
-        """Retrieve all batches for a given user"""
+        """Retrieve all batches for a given user."""
         try:
             query = "SELECT * FROM c WHERE c.user_id = @user_id"
             params = [{"name": "@user_id", "value": user_id}]
@@ -242,7 +242,7 @@ class CosmosDBClient(DatabaseBase):
             raise
 
     async def get_file_logs(self, file_id: str) -> List[Dict]:
-        """Retrieve all logs for a given file"""
+        """Retrieve all logs for a given file."""
         try:
             query = (
                 "SELECT * FROM c WHERE c.file_id = @file_id ORDER BY c.timestamp DESC"
@@ -322,7 +322,7 @@ class CosmosDBClient(DatabaseBase):
         agent_type: AgentType,
         author_role: AuthorRole,
     ) -> None:
-        """Log a file status update"""
+        """Log a file status update."""
         try:
             log_id = uuid4()
             log_entry = FileLog(
@@ -343,7 +343,7 @@ class CosmosDBClient(DatabaseBase):
     async def update_batch_entry(
         self, batch_id: str, user_id: str, status: ProcessStatus, file_count: int
     ):
-        """Update batch status"""
+        """Update batch status."""
         try:
             batch = await self.get_batch(user_id, batch_id)
             if not batch:

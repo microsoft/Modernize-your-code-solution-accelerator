@@ -1,4 +1,4 @@
-﻿# # """This module initializes the agents and helpers for the"""
+# # """This module initializes the agents and helpers for the"""
 
 # # from common.models.api import AgentType
 # from sql_agents.fixer.agent import FixerAgent
