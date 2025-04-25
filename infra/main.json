@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.34.44.8038",
-      "templateHash": "6290258568261172226"
+      "templateHash": "143804218232551421"
     }
   },
   "parameters": {
@@ -57,7 +57,7 @@
     "uniqueId": "[toLower(uniqueString(subscription().id, parameters('Prefix'), resourceGroup().location))]",
     "UniquePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
     "ResourcePrefix": "[take(format('cm{0}{1}', parameters('Prefix'), variables('UniquePrefix')), 15)]",
-    "imageVersion": "fnd01",
+    "imageVersion": "latest",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
     "cosmosdbDatabase": "cmsadb",
