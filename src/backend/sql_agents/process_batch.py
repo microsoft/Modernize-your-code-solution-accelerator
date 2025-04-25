@@ -7,13 +7,10 @@ It is the main entry point for the SQL migration process.
 import asyncio
 import logging
 
-from azure.identity.aio import DefaultAzureCredential
-from fastapi import HTTPException
-from semantic_kernel.agents import AzureAIAgent  # pylint: disable=E0611
-from semantic_kernel.contents import AuthorRole
-from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
-
 from api.status_updates import send_status_update
+
+from azure.identity.aio import DefaultAzureCredential
+
 from common.models.api import (
     FileProcessUpdate,
     FileRecord,
@@ -23,6 +20,14 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
+
+from fastapi import HTTPException
+
+
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
+from semantic_kernel.contents import AuthorRole
+from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
+
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.convert_script import convert_script
 from sql_agents.helpers.agents_manager import SqlAgents
@@ -37,7 +42,7 @@ logger.setLevel(logging.DEBUG)
 async def process_batch_async(
     batch_id: str, convert_from: str = "informix", convert_to: str = "tsql"
 ):
-    """central batch processing function to process each file in the batch"""
+    """Central batch processing function to process each file in the batch"""
     logger.info("Processing batch: %s", batch_id)
     storage = await BlobStorageFactory.get_storage()
     batch_service = BatchService()
@@ -157,7 +162,7 @@ async def process_batch_async(
 async def process_error(
     ex: Exception, file_record: FileRecord, batch_service: BatchService
 ):
-    """insert data base write to file record stating invalid file and send ws notification"""
+    """Insert data base write to file record stating invalid file and send ws notification"""
     await batch_service.create_file_log(
         file_id=str(file_record.file_id),
         description=f"Error processing file {ex}",

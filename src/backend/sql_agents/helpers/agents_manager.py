@@ -2,7 +2,7 @@
 
 import logging
 
-from semantic_kernel.agents import AzureAIAgent  # pylint: disable=E0611
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.agents.fixer.setup import setup_fixer_agent
@@ -33,7 +33,8 @@ class SqlAgents:
     @classmethod
     async def create(cls, config: AgentBaseConfig):
         """Create the SQL agents for migration.
-        Required as init cannot be async"""
+        Required as init cannot be async
+        """
         self = cls()  # Create an instance
         try:
             self.agent_config = config
@@ -71,7 +72,7 @@ class SqlAgents:
         }
 
     async def delete_agents(self):
-        """cleans up the agents from Azure Foundry"""
+        """Cleans up the agents from Azure Foundry"""
         try:
             for agent in self.agents:
                 await self.agent_config.ai_project_client.agents.delete_agent(agent.id)

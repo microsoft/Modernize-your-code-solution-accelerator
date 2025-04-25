@@ -8,9 +8,8 @@ import asyncio
 import json
 import logging
 
-from semantic_kernel.contents import AuthorRole, ChatMessageContent
-
 from api.status_updates import send_status_update
+
 from common.models.api import (
     FileProcessUpdate,
     FileRecord,
@@ -19,6 +18,9 @@ from common.models.api import (
     ProcessStatus,
 )
 from common.services.batch_service import BatchService
+
+from semantic_kernel.contents import AuthorRole, ChatMessageContent
+
 from sql_agents.agents.fixer.response import FixerResponse
 from sql_agents.agents.migrator.response import MigratorResponse
 from sql_agents.agents.picker.response import PickerResponse

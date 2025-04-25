@@ -1,129 +1,86 @@
+from io import BytesIO
+from typing import Any, BinaryIO, Dict, Optional
+
+
+from common.storage.blob_base import BlobStorageBase  # Adjust import path as needed
+
+
 import pytest
-import asyncio
-import uuid
-from datetime import datetime
-from typing import BinaryIO, Dict, Any
-
-# Import the abstract base class from the production code.
-from common.storage.blob_base import BlobStorageBase
 
 
-# Create a dummy concrete subclass of BlobStorageBase that calls the parent's abstract methods.
-class DummyBlobStorage(BlobStorageBase):
-    async def initialize(self) -> None:
-        # Call the parent (which is just a pass)
-        await super().initialize()
-        # Return a dummy value so we can verify our override is called.
-        return "initialized"
+class MockBlobStorage(BlobStorageBase):
+    """Mock implementation of BlobStorageBase for testing"""
 
     async def upload_file(
         self,
         file_content: BinaryIO,
         blob_path: str,
-        content_type: str = None,
-        metadata: Dict[str, str] = None,
+        content_type: Optional[str] = None,
+        metadata: Optional[Dict[str, str]] = None,
     ) -> Dict[str, Any]:
-        await super().upload_file(file_content, blob_path, content_type, metadata)
-        # Return a dummy dictionary that simulates upload details.
         return {
-            "url": "https://dummy.blob.core.windows.net/dummy_container/" + blob_path,
-            "size": len(file_content),
-            "etag": "dummy_etag",
+            "path": blob_path,
+            "size": len(file_content.read()),
+            "content_type": content_type or "application/octet-stream",
+            "metadata": metadata or {},
+            "url": f"https://mockstorage.com/{blob_path}",
         }
 
     async def get_file(self, blob_path: str) -> BinaryIO:
-        await super().get_file(blob_path)
-        # Return dummy binary content.
-        return b"dummy content"
+        return BytesIO(b"mock data")
 
     async def delete_file(self, blob_path: str) -> bool:
-        await super().delete_file(blob_path)
-        # Simulate a successful deletion.
         return True
 
-    async def list_files(self, prefix: str = None) -> list[Dict[str, Any]]:
-        await super().list_files(prefix)
+    async def list_files(self, prefix: Optional[str] = None) -> list[Dict[str, Any]]:
         return [
-            {
-                "name": "dummy.txt",
-                "size": 123,
-                "created_at": datetime.now(),
-                "content_type": "text/plain",
-                "metadata": {"dummy": "value"},
-            }
+            {"name": "file1.txt", "size": 100, "content_type": "text/plain"},
+            {"name": "file2.jpg", "size": 200, "content_type": "image/jpeg"},
         ]
 
 
-# tests cases with each method.
+@pytest.fixture
+def mock_blob_storage():
+    """Fixture to provide a MockBlobStorage instance"""
+    return MockBlobStorage()
 
 
 @pytest.mark.asyncio
-async def test_initialize():
-    storage = DummyBlobStorage()
-    result = await storage.initialize()
-    # Since the dummy override returns "initialized" after calling super(),
-    # we assert that the result equals that string.
-    assert result == "initialized"
+async def test_upload_file(mock_blob_storage):
+    """Test upload_file method"""
+    file_content = BytesIO(b"dummy data")
+    result = await mock_blob_storage.upload_file(file_content, "test_blob.txt", "text/plain")
+
+    assert result["path"] == "test_blob.txt"
+    assert result["size"] == len(b"dummy data")
+    assert result["content_type"] == "text/plain"
+    assert "url" in result
 
 
 @pytest.mark.asyncio
-async def test_upload_file():
-    storage = DummyBlobStorage()
-    content = b"hello world"
-    blob_path = "folder/hello.txt"
-    content_type = "text/plain"
-    metadata = {"key": "value"}
-    result = await storage.upload_file(content, blob_path, content_type, metadata)
-    # Verify that our dummy return value is as expected.
-    assert (
-        result["url"]
-        == "https://dummy.blob.core.windows.net/dummy_container/" + blob_path
-    )
-    assert result["size"] == len(content)
-    assert result["etag"] == "dummy_etag"
+async def test_get_file(mock_blob_storage):
+    """Test get_file method"""
+    result = await mock_blob_storage.get_file("test_blob.txt")
+
+    assert isinstance(result, BytesIO)
+    assert result.read() == b"mock data"
 
 
 @pytest.mark.asyncio
-async def test_get_file():
-    storage = DummyBlobStorage()
-    result = await storage.get_file("folder/hello.txt")
-    # Verify that we get the dummy binary content.
-    assert result == b"dummy content"
+async def test_delete_file(mock_blob_storage):
+    """Test delete_file method"""
+    result = await mock_blob_storage.delete_file("test_blob.txt")
 
-
-@pytest.mark.asyncio
-async def test_delete_file():
-    storage = DummyBlobStorage()
-    result = await storage.delete_file("folder/hello.txt")
-    # Verify that deletion returns True.
     assert result is True
 
 
 @pytest.mark.asyncio
-async def test_list_files():
-    storage = DummyBlobStorage()
-    result = await storage.list_files("dummy")
-    # Verify that we receive a list with one item having a 'name' key.
-    assert isinstance(result, list)
-    assert len(result) == 1
-    assert "dummy.txt" in result[0]["name"]
-    assert result[0]["size"] == 123
-    assert result[0]["content_type"] == "text/plain"
-    assert result[0]["metadata"] == {"dummy": "value"}
+async def test_list_files(mock_blob_storage):
+    """Test list_files method"""
+    result = await mock_blob_storage.list_files()
 
-
-@pytest.mark.asyncio
-async def test_smoke_all_methods():
-    storage = DummyBlobStorage()
-    init_val = await storage.initialize()
-    assert init_val == "initialized"
-    upload_val = await storage.upload_file(
-        b"data", "file.txt", "text/plain", {"a": "b"}
-    )
-    assert upload_val["size"] == 4
-    file_val = await storage.get_file("file.txt")
-    assert file_val == b"dummy content"
-    delete_val = await storage.delete_file("file.txt")
-    assert delete_val is True
-    list_val = await storage.list_files("file")
-    assert isinstance(list_val, list)
+    assert len(result) == 2
+    assert result[0]["name"] == "file1.txt"
+    assert result[1]["name"] == "file2.jpg"
+    assert result[0]["size"] == 100
+    assert result[1]["size"] == 200
