@@ -109,7 +109,7 @@ If you're not using one of the above options for opening the project, then you'l
 
 Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure following the following steps. 
 
-To change the azd parameters from the default values, follow the steps [here](./docs/CustomizingAzdParameters.md). 
+To change the azd parameters from the default values, follow the steps [here](../docs/CustomizingAzdParameters.md). 
 
 
 1. Login to Azure:
