@@ -49,20 +49,18 @@
 }
 
 
-.landing-page p {
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.landing-page main {
-  padding-top: 16rem; /* Adjust the value as needed */
-}
-
-.landing-page p {
-  margin-bottom: 8rem; /* Space between text and upload button */
-}
-
 .sidebar {
   height: 100vh; /* Make it full viewport height */
   background-color: white;
+}
+
+.panelRight{
+  position: "fixed";
+  top:'60px'; 
+  right: 0;
+  height: "calc(100vh - 60px)"; 
+  width: "300px"; 
+  z-index: 1050;
+  background: "white";
+  overflow-y: "auto";
 }

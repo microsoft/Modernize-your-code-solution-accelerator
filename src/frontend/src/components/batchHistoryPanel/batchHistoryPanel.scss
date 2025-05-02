@@ -1,0 +1,89 @@
+.batch-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.batch-item {
+    display: flex;
+    align-items: left;
+    justify-content: space-between;
+    cursor: pointer;
+    background-color: #f9f7f7;
+    box-shadow: none !important;
+    border: none;
+    transition: background-color 0.3s ease;
+}
+
+.batch-item span {
+    margin-right: -8px;
+}
+
+.batch-item:hover {
+    background: #c7c6c6;
+}
+
+.batch-details-time{
+    margin-right: 15px;
+}
+
+.loader{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.errorContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.infoContainer{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+}
+
+.batch-details{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px;
+    height: 5px;
+    gap: 8px;
+}
+
+.delete-button{
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 2px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    font-size: 16px
+}

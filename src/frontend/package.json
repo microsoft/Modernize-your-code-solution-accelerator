@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^4.2.0",
+    "@azure/msal-react": "^3.0.4",
     "@fluentui/react": "^8.122.9",
     "@fluentui/react-components": "^9.56.7",
     "@fluentui/react-file-type-icons": "^8.12.7",
@@ -34,12 +36,11 @@
     "sql-formatter": "^15.4.11",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^3.4.17",
-    "uuid": "^11.0.5",
-    "@azure/msal-browser": "^4.2.0",
-    "@azure/msal-react": "^3.0.4"
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",
+    "@types/node": "^22.14.0",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
@@ -50,6 +51,7 @@
     "globals": "^15.14.0",
     "rollup": "^4.34.4",
     "rollup-plugin-dts": "^6.1.1",
+    "sass-embedded": "^1.86.3",
     "vite": "^6.0.5",
     "vite-plugin-svgr": "^4.3.0"
   }

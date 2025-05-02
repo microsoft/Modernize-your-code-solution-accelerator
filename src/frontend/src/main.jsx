@@ -6,8 +6,9 @@ import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import AuthProvider from './msal-auth/AuthProvider';
-import { setEnvData, setApiUrl, config as defaultConfig } from './api/config';
+import { setEnvData, setApiUrl, config as defaultConfig } from './utils/config.js';
 import { initializeMsalInstance } from './msal-auth/msalInstance';
+import {updateUrl} from './utils/httpUtil.js';
 
 const Main = () => {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
@@ -37,6 +38,7 @@ const Main = () => {
         const instance = config.ENABLE_AUTH ? await initializeMsalInstance(config) : {};
         setMsalInstance(instance);
         setIsConfigLoaded(true);
+        updateUrl();
       } catch (error) {
         console.error("Error fetching config:", error);
       }

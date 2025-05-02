@@ -1,0 +1,54 @@
+.content{
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    min-width: 320px;
+    top: 60px;
+}
+
+.fs_0{
+    flex-shrink: 0;
+}
+
+.panelContent{
+    flex: 1;
+    overflow-y: auto;
+}
+
+.panelToolbar{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    box-sizing: border-box;
+    height: 56px;
+}
+
+.penelTitle{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
+    overflow: hidden; 
+}
+
+.penlIcon{
+    flex-shrink: 0; // Prevent the icon from shrinking
+    display: flex;
+    align-items: center;
+}
+
+.panelLabel{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.panelTools{
+    display: flex;
+    align-items: center;
+    gap: 0;
+}

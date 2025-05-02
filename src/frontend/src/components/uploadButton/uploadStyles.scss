@@ -1,0 +1,216 @@
+.dismissal-120 .ms-Button-icon {
+    /* display: inline-block; */
+    width: 16px;
+    height: 16px;
+  }
+
+  .uploadFile-message-bar .ms-MessageBar-icon {
+    color: #37a04c !important; 
+    font-size: 14px !important; 
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: bolder !important;
+  }
+  
+  .uploadFile-message-bar .ms-MessageBar-icon svg {
+    stroke-width: 8.5px; 
+    width: 14px !important; 
+    height: 14px !important;
+  }
+
+  .containerClass{
+    width: 100%;
+    min-width: 620px;
+    max-width: 700px;
+    margin: 0 auto;
+    margin-top: 0px; 
+    padding: 16px;
+    padding-bottom: 60px
+  }
+
+  .uploadContainer{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 90px;
+    text-align: center
+  }
+
+  .title{
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0px
+  }
+
+  .label{
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0px
+  }
+
+  .informationContainer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px
+  }
+
+  .infoMessage{
+    font-size: 16px; 
+    margin: 0px
+  }
+
+  .uploadingFilesInfo{
+    width: 100%;
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    background-color: #FAFAFA;
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .fileUploadContainer{
+    display: flex;
+    align-items: center;
+    gap: 12px
+  }
+
+  .uploadImage{
+    width: 32px;
+    height: 32px
+  }
+
+  .uploadInfoMsg{
+    margin: 0px;
+    font-size: 16px;
+    color: #333
+  }
+
+  .uploadLimitInfoMsg{
+    margin: 4px 0px 0px 0px;
+    font-size: 12px;
+    color: #666
+  }
+
+  .uploadLimitInfoMsg2{
+    margin: 8px 0px 0px 0px;
+    font-size: 12px;
+    color: #666
+  }
+
+  .browseBtn{
+    min-width: 120px !important;
+    background-color: white !important;
+    border: 1px solid grey !important;
+    border-radius: 4px !important;
+    height: 32px !important
+  }
+  
+  .browseBtn2{
+    min-width: 120px !important;
+    background-color: white !important;
+    border: 1px solid grey !important;
+    border-radius: 4px !important;
+  }
+
+  .uploadIcon{
+    width: 64px; 
+    height: 64px 
+  }
+
+  .dragdropMsg{
+    margin: 16px 0px 0px 0px;
+    font-size: 18px;
+    color: #333;
+    font-weight: 600
+  }
+
+  .dragdropMsg2{
+    margin: 8px 0px;
+    font-size: 14px;
+    color: #666
+  }
+
+  .messagebarContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+    width: 737px;
+    padding-bottom: 10px;
+    border-radius: 4px
+  }
+
+  .iconContainer2{
+    display: flex;
+    align-items: left
+  }
+
+  .mr_8{
+    margin-right: 8px
+  }
+
+  .xBtn{
+    margin-right: 12px;
+    padding-top: 3px
+  }
+
+  .uploadedFilesContainer{
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 737px;
+    max-height: 300px;
+    overflow-y: auto;
+    scrollbar-width: thin
+  }
+
+  .fileMainContainer{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    background-color: white;
+    border-radius: 4px;
+    border: 1px solid #eee;
+  }
+
+  .fileImageContainer{
+    display: flex;
+    align-items: center;
+    width: 24px
+  }
+
+  .tooltipClass{
+    width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+    align-items: left;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .statusContainer{
+    flex: 1;
+    height: 4px;
+    background-color: #eee;
+    border-radius: 2px;
+    overflow: hidden
+  }
+
+  .removeBtn{
+    border: none;
+    background: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px
+  }
