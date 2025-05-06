@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.34.44.8038",
-      "templateHash": "143804218232551421"
+      "version": "0.35.1.17967",
+      "templateHash": "12546479610758564230"
     }
   },
   "parameters": {
@@ -99,10 +99,7 @@
       },
       "kind": "AIServices",
       "properties": {
-        "customSubDomainName": "[variables('azureAiServicesName')]",
-        "apiProperties": {
-          "statisticsEnabled": false
-        }
+        "customSubDomainName": "[variables('azureAiServicesName')]"
       }
     },
     {
@@ -386,8 +383,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "107965290127824528"
+              "version": "0.35.1.17967",
+              "templateHash": "15947855719117669243"
             }
           },
           "parameters": {
@@ -484,8 +481,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "7479964703030361933"
+              "version": "0.35.1.17967",
+              "templateHash": "4039532432768976599"
             }
           },
           "parameters": {
@@ -620,8 +617,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.34.44.8038",
-              "templateHash": "13939205582736222851"
+              "version": "0.35.1.17967",
+              "templateHash": "4382273497899479323"
             }
           },
           "parameters": {
