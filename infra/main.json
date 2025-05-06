@@ -100,9 +100,6 @@
       "kind": "AIServices",
       "properties": {
         "customSubDomainName": "[variables('azureAiServicesName')]",
-        "apiProperties": {
-          "statisticsEnabled": false
-        }
       }
     },
     {

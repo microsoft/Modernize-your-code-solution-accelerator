@@ -75,9 +75,6 @@ resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-previe
   kind: 'AIServices'
   properties: {
     customSubDomainName: azureAiServicesName
-    apiProperties: {
-      statisticsEnabled: false
-    }
   }
 }
 
