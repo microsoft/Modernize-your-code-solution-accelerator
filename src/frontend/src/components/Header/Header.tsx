@@ -1,5 +1,7 @@
 import React from "react";
 import { Subtitle2 } from "@fluentui/react-components";
+import "./Header.scss"; // Import for styling
+import { useNavigate } from "react-router-dom";
 /**
  * @component
  * @name Header
@@ -17,41 +19,28 @@ type HeaderProps = {
 };
 
 const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }) => {
+  const navigate = useNavigate();
   return (
     <header
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        width: "100%",
-        backgroundColor: "#fafafa",
-        borderBottom: "1px solid var(--colorNeutralStroke2)",
-        padding: "16px",
-        height: "64px",
-        boxSizing: "border-box",
-        gap: "12px",
-        position: 'fixed',
-        zIndex: 1000,
-      }}
+      className="header"
       data-figma-component="Header"
     >
       <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "8px",
-        }}
+        className="headerContainer"
+        onClick={() => {
+          navigate("/"); // Redirect to home page on logo click
+        }
+      }
       >
         {/* Render custom logo or default MsftColor logo */}
         {/* <Avatar shape="square" color={null} icon={logo || <MsftColor />} /> */}
-        <img src="/images/Contoso.png" alt="Contoso" style={{ width: "25px", height: "25px" }} />
+        <img src="/images/Contoso.png" alt="Contoso" className="headerImage"/>
 
         {/* Render title and optional subtitle */}
-        <Subtitle2 style={{ whiteSpace: "nowrap", marginTop: "-2px" }}>
+        <Subtitle2 className="subTitle">
           {title}
           {subtitle && (
-            <span style={{ fontWeight: "400" }}> | {subtitle}</span>
+            <span className="fw_400"> | {subtitle}</span>
           )}
         </Subtitle2>
       </div>
