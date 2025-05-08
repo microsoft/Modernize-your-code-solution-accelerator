@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.33.93.31351",
-      "templateHash": "11802129812634129151"
+      "templateHash": "9645396053164913156"
     }
   },
   "parameters": {
@@ -54,6 +54,234 @@
     }
   },
   "variables": {
+    "$fxv#0": {
+      "ai": {
+        "aiSearch": "srch-",
+        "aiServices": "aisa-",
+        "aiVideoIndexer": "avi-",
+        "machineLearningWorkspace": "mlw-",
+        "openAIService": "oai-",
+        "botService": "bot-",
+        "computerVision": "cv-",
+        "contentModerator": "cm-",
+        "contentSafety": "cs-",
+        "customVisionPrediction": "cstv-",
+        "customVisionTraining": "cstvt-",
+        "documentIntelligence": "di-",
+        "faceApi": "face-",
+        "healthInsights": "hi-",
+        "immersiveReader": "ir-",
+        "languageService": "lang-",
+        "speechService": "spch-",
+        "translator": "trsl-",
+        "aiHub": "aih-",
+        "aiHubProject": "aihp-"
+      },
+      "analytics": {
+        "analysisServicesServer": "as",
+        "databricksWorkspace": "dbw-",
+        "dataExplorerCluster": "dec",
+        "dataExplorerClusterDatabase": "dedb",
+        "dataFactory": "adf-",
+        "digitalTwin": "dt-",
+        "streamAnalytics": "asa-",
+        "synapseAnalyticsPrivateLinkHub": "synplh-",
+        "synapseAnalyticsSQLDedicatedPool": "syndp",
+        "synapseAnalyticsSparkPool": "synsp",
+        "synapseAnalyticsWorkspaces": "synw",
+        "dataLakeStoreAccount": "dls",
+        "dataLakeAnalyticsAccount": "dla",
+        "eventHubsNamespace": "evhns-",
+        "eventHub": "evh-",
+        "eventGridDomain": "evgd-",
+        "eventGridSubscriptions": "evgs-",
+        "eventGridTopic": "evgt-",
+        "eventGridSystemTopic": "egst-",
+        "hdInsightHadoopCluster": "hadoop-",
+        "hdInsightHBaseCluster": "hbase-",
+        "hdInsightKafkaCluster": "kafka-",
+        "hdInsightSparkCluster": "spark-",
+        "hdInsightStormCluster": "storm-",
+        "hdInsightMLServicesCluster": "mls-",
+        "iotHub": "iot-",
+        "provisioningServices": "provs-",
+        "provisioningServicesCertificate": "pcert-",
+        "powerBIEmbedded": "pbi-",
+        "timeSeriesInsightsEnvironment": "tsi-"
+      },
+      "compute": {
+        "appServiceEnvironment": "ase-",
+        "appServicePlan": "asp-",
+        "loadTesting": "lt-",
+        "availabilitySet": "avail-",
+        "arcEnabledServer": "arcs-",
+        "arcEnabledKubernetesCluster": "arck",
+        "batchAccounts": "ba-",
+        "cloudService": "cld-",
+        "communicationServices": "acs-",
+        "diskEncryptionSet": "des",
+        "functionApp": "func-",
+        "gallery": "gal",
+        "hostingEnvironment": "host-",
+        "imageTemplate": "it-",
+        "managedDiskOS": "osdisk",
+        "managedDiskData": "disk",
+        "notificationHubs": "ntf-",
+        "notificationHubsNamespace": "ntfns-",
+        "proximityPlacementGroup": "ppg-",
+        "restorePointCollection": "rpc-",
+        "snapshot": "snap-",
+        "staticWebApp": "stapp-",
+        "virtualMachine": "vm",
+        "virtualMachineScaleSet": "vmss-",
+        "virtualMachineMaintenanceConfiguration": "mc-",
+        "virtualMachineStorageAccount": "stvm",
+        "webApp": "app-"
+      },
+      "containers": {
+        "aksCluster": "aks-",
+        "aksSystemNodePool": "npsystem-",
+        "aksUserNodePool": "np-",
+        "containerApp": "ca-",
+        "containerAppsEnvironment": "cae-",
+        "containerRegistry": "cr",
+        "containerInstance": "ci",
+        "serviceFabricCluster": "sf-",
+        "serviceFabricManagedCluster": "sfmc-"
+      },
+      "databases": {
+        "cosmosDBDatabase": "cosmos-",
+        "cosmosDBApacheCassandra": "coscas-",
+        "cosmosDBMongoDB": "cosmon-",
+        "cosmosDBNoSQL": "cosno-",
+        "cosmosDBTable": "costab-",
+        "cosmosDBGremlin": "cosgrm-",
+        "cosmosDBPostgreSQL": "cospos-",
+        "cacheForRedis": "redis-",
+        "sqlDatabaseServer": "sql-",
+        "sqlDatabase": "sqldb-",
+        "sqlElasticJobAgent": "sqlja-",
+        "sqlElasticPool": "sqlep-",
+        "mariaDBServer": "maria-",
+        "mariaDBDatabase": "mariadb-",
+        "mySQLDatabase": "mysql-",
+        "postgreSQLDatabase": "psql-",
+        "sqlServerStretchDatabase": "sqlstrdb-",
+        "sqlManagedInstance": "sqlmi-"
+      },
+      "developerTools": {
+        "appConfigurationStore": "appcs-",
+        "mapsAccount": "map-",
+        "signalR": "sigr",
+        "webPubSub": "wps-"
+      },
+      "devOps": {
+        "managedGrafana": "amg-"
+      },
+      "integration": {
+        "apiManagementService": "apim-",
+        "integrationAccount": "ia-",
+        "logicApp": "logic-",
+        "serviceBusNamespace": "sbns-",
+        "serviceBusQueue": "sbq-",
+        "serviceBusTopic": "sbt-",
+        "serviceBusTopicSubscription": "sbts-"
+      },
+      "managementGovernance": {
+        "automationAccount": "aa-",
+        "applicationInsights": "appi-",
+        "monitorActionGroup": "ag-",
+        "monitorDataCollectionRules": "dcr-",
+        "monitorAlertProcessingRule": "apr-",
+        "blueprint": "bp-",
+        "blueprintAssignment": "bpa-",
+        "dataCollectionEndpoint": "dce-",
+        "logAnalyticsWorkspace": "log-",
+        "logAnalyticsQueryPacks": "pack-",
+        "managementGroup": "mg-",
+        "purviewInstance": "pview-",
+        "resourceGroup": "rg-",
+        "templateSpecsName": "ts-"
+      },
+      "migration": {
+        "migrateProject": "migr-",
+        "databaseMigrationService": "dms-",
+        "recoveryServicesVault": "rsv-"
+      },
+      "networking": {
+        "applicationGateway": "agw-",
+        "applicationSecurityGroup": "asg-",
+        "cdnProfile": "cdnp-",
+        "cdnEndpoint": "cdne-",
+        "connections": "con-",
+        "dnsForwardingRuleset": "dnsfrs-",
+        "dnsPrivateResolver": "dnspr-",
+        "dnsPrivateResolverInboundEndpoint": "in-",
+        "dnsPrivateResolverOutboundEndpoint": "out-",
+        "firewall": "afw-",
+        "firewallPolicy": "afwp-",
+        "expressRouteCircuit": "erc-",
+        "expressRouteGateway": "ergw-",
+        "frontDoorProfile": "afd-",
+        "frontDoorEndpoint": "fde-",
+        "frontDoorFirewallPolicy": "fdfp-",
+        "ipGroups": "ipg-",
+        "loadBalancerInternal": "lbi-",
+        "loadBalancerExternal": "lbe-",
+        "loadBalancerRule": "rule-",
+        "localNetworkGateway": "lgw-",
+        "natGateway": "ng-",
+        "networkInterface": "nic-",
+        "networkSecurityGroup": "nsg-",
+        "networkSecurityGroupSecurityRules": "nsgsr-",
+        "networkWatcher": "nw-",
+        "privateLink": "pl-",
+        "privateEndpoint": "pep-",
+        "publicIPAddress": "pip-",
+        "publicIPAddressPrefix": "ippre-",
+        "routeFilter": "rf-",
+        "routeServer": "rtserv-",
+        "routeTable": "rt-",
+        "serviceEndpointPolicy": "se-",
+        "trafficManagerProfile": "traf-",
+        "userDefinedRoute": "udr-",
+        "virtualNetwork": "vnet-",
+        "virtualNetworkGateway": "vgw-",
+        "virtualNetworkManager": "vnm-",
+        "virtualNetworkPeering": "peer-",
+        "virtualNetworkSubnet": "snet-",
+        "virtualWAN": "vwan-",
+        "virtualWANHub": "vhub-"
+      },
+      "security": {
+        "bastion": "bas-",
+        "keyVault": "kv-",
+        "keyVaultManagedHSM": "kvmhsm-",
+        "managedIdentity": "id-",
+        "sshKey": "sshkey-",
+        "vpnGateway": "vpng-",
+        "vpnConnection": "vcn-",
+        "vpnSite": "vst-",
+        "webApplicationFirewallPolicy": "waf",
+        "webApplicationFirewallPolicyRuleGroup": "wafrg"
+      },
+      "storage": {
+        "storSimple": "ssimp",
+        "backupVault": "bvault-",
+        "backupVaultPolicy": "bkpol-",
+        "fileShare": "share-",
+        "storageAccount": "st",
+        "storageSyncService": "sss-"
+      },
+      "virtualDesktop": {
+        "labServicesPlan": "lp-",
+        "virtualDesktopHostPool": "vdpool-",
+        "virtualDesktopApplicationGroup": "vdag-",
+        "virtualDesktopWorkspace": "vdws-",
+        "virtualDesktopScalingPlan": "vdscaling-"
+      }
+    },
+    "abbrs": "[variables('$fxv#0')]",
     "randomString": "[substring(uniqueString(resourceGroup().id), 0, 4)]",
     "finalName": "[format('{0}-{1}', parameters('ResourcePrefix'), variables('randomString'))]",
     "imageVersion": "rc1",
@@ -68,9 +296,9 @@
     "llmModel": "gpt-4o",
     "prefixCleaned": "[replace(toLower(variables('finalName')), '-', '')]",
     "storageSkuName": "Standard_LRS",
-    "storageContainerName": "[format('{0}ctstor', variables('prefixCleaned'))]",
+    "storageContainerName": "[format('{0}{1}', variables('abbrs').storage.storageAccount, variables('prefixCleaned'))]",
     "gptModelVersion": "2024-08-06",
-    "aiServicesName": "[format('{0}-aiservices', variables('prefixCleaned'))]",
+    "aiServicesName": "[format('{0}{1}', variables('abbrs').ai.aiServices, variables('prefixCleaned'))]",
     "aiModelDeployments": [
       {
         "name": "[variables('llmModel')]",
@@ -100,9 +328,7 @@
       "kind": "AIServices",
       "properties": {
         "customSubDomainName": "[variables('aiServicesName')]",
-        "apiProperties": {
-          "statisticsEnabled": false
-        }
+        "apiProperties": {}
       }
     },
     {
@@ -134,7 +360,7 @@
     {
       "type": "Microsoft.App/containerApps",
       "apiVersion": "2023-05-01",
-      "name": "[toLower(format('{0}containerBackend', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))]",
       "location": "[variables('location')]",
       "identity": {
         "type": "SystemAssigned"
@@ -290,13 +516,13 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.Storage/storageAccounts/{0}', variables('storageContainerName'))]",
-      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), 'Storage Blob Data Contributor')]",
+      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), 'Storage Blob Data Contributor')]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
-        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
+        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned'))))]",
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageContainerName'))]"
       ]
     },
@@ -304,14 +530,14 @@
       "type": "Microsoft.Authorization/roleAssignments",
       "apiVersion": "2022-04-01",
       "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', variables('aiServicesName'))]",
-      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), variables('openAiContributorRoleId'))]",
+      "name": "[guid(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), variables('openAiContributorRoleId'))]",
       "properties": {
         "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('openAiContributorRoleId'))]",
-        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
+        "principalId": "[reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId]"
       },
       "dependsOn": [
         "[resourceId('Microsoft.CognitiveServices/accounts', variables('aiServicesName'))]",
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]"
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned'))))]"
       ]
     },
     {
@@ -340,6 +566,9 @@
         },
         "mode": "Incremental",
         "parameters": {
+          "miName": {
+            "value": "[format('{0}{1}', variables('abbrs').security.managedIdentity, variables('prefixCleaned'))]"
+          },
           "solutionName": {
             "value": "[variables('prefixCleaned')]"
           },
@@ -354,7 +583,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.33.93.31351",
-              "templateHash": "11665286146084422127"
+              "templateHash": "4801202077166882355"
             }
           },
           "parameters": {
@@ -374,7 +603,6 @@
             },
             "miName": {
               "type": "string",
-              "defaultValue": "[format('{0}-managed-identity', parameters('solutionName'))]",
               "metadata": {
                 "description": "Name"
               }
@@ -435,6 +663,9 @@
         },
         "mode": "Incremental",
         "parameters": {
+          "keyvaultName": {
+            "value": "[format('{0}{1}', variables('abbrs').security.keyVault, variables('prefixCleaned'))]"
+          },
           "solutionName": {
             "value": "[variables('prefixCleaned')]"
           },
@@ -452,7 +683,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.33.93.31351",
-              "templateHash": "4388214478635448075"
+              "templateHash": "15626032116057754317"
             }
           },
           "parameters": {
@@ -469,16 +700,16 @@
             },
             "managedIdentityObjectId": {
               "type": "string"
+            },
+            "keyvaultName": {
+              "type": "string"
             }
-          },
-          "variables": {
-            "keyvaultName": "[format('{0}-kv', parameters('solutionName'))]"
           },
           "resources": [
             {
               "type": "Microsoft.KeyVault/vaults",
               "apiVersion": "2022-07-01",
-              "name": "[variables('keyvaultName')]",
+              "name": "[parameters('keyvaultName')]",
               "location": "[parameters('solutionLocation')]",
               "properties": {
                 "createMode": "default",
@@ -531,11 +762,11 @@
           "outputs": {
             "keyvaultName": {
               "type": "string",
-              "value": "[variables('keyvaultName')]"
+              "value": "[parameters('keyvaultName')]"
             },
             "keyvaultId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaultName'))]"
+              "value": "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"
             }
           }
         }
@@ -590,7 +821,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.33.93.31351",
-              "templateHash": "10270252950808398257"
+              "templateHash": "17234510752657929213"
             }
           },
           "parameters": {
@@ -623,18 +854,246 @@
             }
           },
           "variables": {
-            "storageName": "[format('{0}hubstorage', parameters('solutionName'))]",
+            "$fxv#0": {
+              "ai": {
+                "aiSearch": "srch-",
+                "aiServices": "aisa-",
+                "aiVideoIndexer": "avi-",
+                "machineLearningWorkspace": "mlw-",
+                "openAIService": "oai-",
+                "botService": "bot-",
+                "computerVision": "cv-",
+                "contentModerator": "cm-",
+                "contentSafety": "cs-",
+                "customVisionPrediction": "cstv-",
+                "customVisionTraining": "cstvt-",
+                "documentIntelligence": "di-",
+                "faceApi": "face-",
+                "healthInsights": "hi-",
+                "immersiveReader": "ir-",
+                "languageService": "lang-",
+                "speechService": "spch-",
+                "translator": "trsl-",
+                "aiHub": "aih-",
+                "aiHubProject": "aihp-"
+              },
+              "analytics": {
+                "analysisServicesServer": "as",
+                "databricksWorkspace": "dbw-",
+                "dataExplorerCluster": "dec",
+                "dataExplorerClusterDatabase": "dedb",
+                "dataFactory": "adf-",
+                "digitalTwin": "dt-",
+                "streamAnalytics": "asa-",
+                "synapseAnalyticsPrivateLinkHub": "synplh-",
+                "synapseAnalyticsSQLDedicatedPool": "syndp",
+                "synapseAnalyticsSparkPool": "synsp",
+                "synapseAnalyticsWorkspaces": "synw",
+                "dataLakeStoreAccount": "dls",
+                "dataLakeAnalyticsAccount": "dla",
+                "eventHubsNamespace": "evhns-",
+                "eventHub": "evh-",
+                "eventGridDomain": "evgd-",
+                "eventGridSubscriptions": "evgs-",
+                "eventGridTopic": "evgt-",
+                "eventGridSystemTopic": "egst-",
+                "hdInsightHadoopCluster": "hadoop-",
+                "hdInsightHBaseCluster": "hbase-",
+                "hdInsightKafkaCluster": "kafka-",
+                "hdInsightSparkCluster": "spark-",
+                "hdInsightStormCluster": "storm-",
+                "hdInsightMLServicesCluster": "mls-",
+                "iotHub": "iot-",
+                "provisioningServices": "provs-",
+                "provisioningServicesCertificate": "pcert-",
+                "powerBIEmbedded": "pbi-",
+                "timeSeriesInsightsEnvironment": "tsi-"
+              },
+              "compute": {
+                "appServiceEnvironment": "ase-",
+                "appServicePlan": "asp-",
+                "loadTesting": "lt-",
+                "availabilitySet": "avail-",
+                "arcEnabledServer": "arcs-",
+                "arcEnabledKubernetesCluster": "arck",
+                "batchAccounts": "ba-",
+                "cloudService": "cld-",
+                "communicationServices": "acs-",
+                "diskEncryptionSet": "des",
+                "functionApp": "func-",
+                "gallery": "gal",
+                "hostingEnvironment": "host-",
+                "imageTemplate": "it-",
+                "managedDiskOS": "osdisk",
+                "managedDiskData": "disk",
+                "notificationHubs": "ntf-",
+                "notificationHubsNamespace": "ntfns-",
+                "proximityPlacementGroup": "ppg-",
+                "restorePointCollection": "rpc-",
+                "snapshot": "snap-",
+                "staticWebApp": "stapp-",
+                "virtualMachine": "vm",
+                "virtualMachineScaleSet": "vmss-",
+                "virtualMachineMaintenanceConfiguration": "mc-",
+                "virtualMachineStorageAccount": "stvm",
+                "webApp": "app-"
+              },
+              "containers": {
+                "aksCluster": "aks-",
+                "aksSystemNodePool": "npsystem-",
+                "aksUserNodePool": "np-",
+                "containerApp": "ca-",
+                "containerAppsEnvironment": "cae-",
+                "containerRegistry": "cr",
+                "containerInstance": "ci",
+                "serviceFabricCluster": "sf-",
+                "serviceFabricManagedCluster": "sfmc-"
+              },
+              "databases": {
+                "cosmosDBDatabase": "cosmos-",
+                "cosmosDBApacheCassandra": "coscas-",
+                "cosmosDBMongoDB": "cosmon-",
+                "cosmosDBNoSQL": "cosno-",
+                "cosmosDBTable": "costab-",
+                "cosmosDBGremlin": "cosgrm-",
+                "cosmosDBPostgreSQL": "cospos-",
+                "cacheForRedis": "redis-",
+                "sqlDatabaseServer": "sql-",
+                "sqlDatabase": "sqldb-",
+                "sqlElasticJobAgent": "sqlja-",
+                "sqlElasticPool": "sqlep-",
+                "mariaDBServer": "maria-",
+                "mariaDBDatabase": "mariadb-",
+                "mySQLDatabase": "mysql-",
+                "postgreSQLDatabase": "psql-",
+                "sqlServerStretchDatabase": "sqlstrdb-",
+                "sqlManagedInstance": "sqlmi-"
+              },
+              "developerTools": {
+                "appConfigurationStore": "appcs-",
+                "mapsAccount": "map-",
+                "signalR": "sigr",
+                "webPubSub": "wps-"
+              },
+              "devOps": {
+                "managedGrafana": "amg-"
+              },
+              "integration": {
+                "apiManagementService": "apim-",
+                "integrationAccount": "ia-",
+                "logicApp": "logic-",
+                "serviceBusNamespace": "sbns-",
+                "serviceBusQueue": "sbq-",
+                "serviceBusTopic": "sbt-",
+                "serviceBusTopicSubscription": "sbts-"
+              },
+              "managementGovernance": {
+                "automationAccount": "aa-",
+                "applicationInsights": "appi-",
+                "monitorActionGroup": "ag-",
+                "monitorDataCollectionRules": "dcr-",
+                "monitorAlertProcessingRule": "apr-",
+                "blueprint": "bp-",
+                "blueprintAssignment": "bpa-",
+                "dataCollectionEndpoint": "dce-",
+                "logAnalyticsWorkspace": "log-",
+                "logAnalyticsQueryPacks": "pack-",
+                "managementGroup": "mg-",
+                "purviewInstance": "pview-",
+                "resourceGroup": "rg-",
+                "templateSpecsName": "ts-"
+              },
+              "migration": {
+                "migrateProject": "migr-",
+                "databaseMigrationService": "dms-",
+                "recoveryServicesVault": "rsv-"
+              },
+              "networking": {
+                "applicationGateway": "agw-",
+                "applicationSecurityGroup": "asg-",
+                "cdnProfile": "cdnp-",
+                "cdnEndpoint": "cdne-",
+                "connections": "con-",
+                "dnsForwardingRuleset": "dnsfrs-",
+                "dnsPrivateResolver": "dnspr-",
+                "dnsPrivateResolverInboundEndpoint": "in-",
+                "dnsPrivateResolverOutboundEndpoint": "out-",
+                "firewall": "afw-",
+                "firewallPolicy": "afwp-",
+                "expressRouteCircuit": "erc-",
+                "expressRouteGateway": "ergw-",
+                "frontDoorProfile": "afd-",
+                "frontDoorEndpoint": "fde-",
+                "frontDoorFirewallPolicy": "fdfp-",
+                "ipGroups": "ipg-",
+                "loadBalancerInternal": "lbi-",
+                "loadBalancerExternal": "lbe-",
+                "loadBalancerRule": "rule-",
+                "localNetworkGateway": "lgw-",
+                "natGateway": "ng-",
+                "networkInterface": "nic-",
+                "networkSecurityGroup": "nsg-",
+                "networkSecurityGroupSecurityRules": "nsgsr-",
+                "networkWatcher": "nw-",
+                "privateLink": "pl-",
+                "privateEndpoint": "pep-",
+                "publicIPAddress": "pip-",
+                "publicIPAddressPrefix": "ippre-",
+                "routeFilter": "rf-",
+                "routeServer": "rtserv-",
+                "routeTable": "rt-",
+                "serviceEndpointPolicy": "se-",
+                "trafficManagerProfile": "traf-",
+                "userDefinedRoute": "udr-",
+                "virtualNetwork": "vnet-",
+                "virtualNetworkGateway": "vgw-",
+                "virtualNetworkManager": "vnm-",
+                "virtualNetworkPeering": "peer-",
+                "virtualNetworkSubnet": "snet-",
+                "virtualWAN": "vwan-",
+                "virtualWANHub": "vhub-"
+              },
+              "security": {
+                "bastion": "bas-",
+                "keyVault": "kv-",
+                "keyVaultManagedHSM": "kvmhsm-",
+                "managedIdentity": "id-",
+                "sshKey": "sshkey-",
+                "vpnGateway": "vpng-",
+                "vpnConnection": "vcn-",
+                "vpnSite": "vst-",
+                "webApplicationFirewallPolicy": "waf",
+                "webApplicationFirewallPolicyRuleGroup": "wafrg"
+              },
+              "storage": {
+                "storSimple": "ssimp",
+                "backupVault": "bvault-",
+                "backupVaultPolicy": "bkpol-",
+                "fileShare": "share-",
+                "storageAccount": "st",
+                "storageSyncService": "sss-"
+              },
+              "virtualDesktop": {
+                "labServicesPlan": "lp-",
+                "virtualDesktopHostPool": "vdpool-",
+                "virtualDesktopApplicationGroup": "vdag-",
+                "virtualDesktopWorkspace": "vdws-",
+                "virtualDesktopScalingPlan": "vdscaling-"
+              }
+            },
+            "abbrs": "[variables('$fxv#0')]",
+            "storageName": "[format('{0}{1}hubst', variables('abbrs').storage.storageAccount, parameters('solutionName'))]",
             "storageSkuName": "Standard_LRS",
-            "aiServicesName": "[format('{0}-aiservices', parameters('solutionName'))]",
-            "workspaceName": "[format('{0}-workspace', parameters('solutionName'))]",
-            "keyvaultName": "[format('{0}-kv', parameters('solutionName'))]",
+            "aiServicesName": "[format('{0}{1}', variables('abbrs').ai.aiServices, parameters('solutionName'))]",
+            "workspaceName": "[format('{0}{1}', variables('abbrs').managementGovernance.logAnalyticsWorkspace, parameters('solutionName'))]",
+            "keyvaultName": "[format('{0}{1}', variables('abbrs').security.keyVault, parameters('solutionName'))]",
             "location": "[parameters('solutionLocation')]",
-            "aiHubName": "[format('{0}-aihub', parameters('solutionName'))]",
+            "aiHubName": "[format('{0}{1}', variables('abbrs').ai.aiHub, parameters('solutionName'))]",
             "aiHubFriendlyName": "[variables('aiHubName')]",
             "aiHubDescription": "AI Hub for KM template",
-            "aiProjectName": "[format('{0}-aiproject', parameters('solutionName'))]",
+            "aiProjectName": "[format('{0}{1}', variables('abbrs').ai.aiHubProject, parameters('solutionName'))]",
             "aiProjectFriendlyName": "[variables('aiProjectName')]",
-            "aiSearchName": "[format('{0}-search', parameters('solutionName'))]",
+            "aiSearchName": "[format('{0}{1}', variables('abbrs').ai.aiSearch, parameters('solutionName'))]",
             "storageNameCleaned": "[replace(variables('storageName'), '-', '')]"
           },
           "resources": [
@@ -1579,7 +2038,7 @@
         "mode": "Incremental",
         "parameters": {
           "name": {
-            "value": "[toLower(format('{0}databaseAccount', variables('prefixCleaned')))]"
+            "value": "[toLower(format('{0}{1}databaseAccount', variables('abbrs').databases.cosmosDBDatabase, variables('prefixCleaned')))]"
           },
           "enableAnalyticalStorage": {
             "value": true
@@ -5387,7 +5846,7 @@
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2022-09-01",
-      "name": "[toLower(format('{0}containerAppFrontend', variables('prefixCleaned')))]",
+      "name": "[toLower(format('{0}{1}containerAppFrontend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))]",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
@@ -5408,7 +5867,7 @@
                 "env": [
                   {
                     "name": "API_URL",
-                    "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01').configuration.ingress.fqdn)]"
+                    "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), '2023-05-01').configuration.ingress.fqdn)]"
                   }
                 ],
                 "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('imageVersion'))]",
@@ -5436,7 +5895,7 @@
             "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value]"
           },
           "name": {
-            "value": "[toLower(format('{0}containerFrontend', variables('prefixCleaned')))]"
+            "value": "[toLower(format('{0}{1}containerFrontend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))]"
           },
           "location": {
             "value": "[variables('location')]"
@@ -6608,7 +7067,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned'))))]",
         "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}conAppsEnv', variables('prefixCleaned'))))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
@@ -6643,7 +7102,7 @@
             }
           },
           "scriptContent": {
-            "value": "[format('az cosmosdb sql role assignment create --resource-group \"{0}\" --account-name \"{1}\" --role-definition-id \"{2}\" --scope \"{3}\" --principal-id \"{4}\"', resourceGroup().name, reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.name.value, resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[0], split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[1]), reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value, reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId)]"
+            "value": "[format('az cosmosdb sql role assignment create --resource-group \"{0}\" --account-name \"{1}\" --role-definition-id \"{2}\" --scope \"{3}\" --principal-id \"{4}\"', resourceGroup().name, reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.name.value, resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[0], split(format('{0}/00000000-0000-0000-0000-000000000002', toLower(format('{0}database', variables('prefixCleaned')))), '/')[1]), reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.resourceId.value, reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned')))), '2023-05-01', 'full').identity.principalId)]"
           }
         },
         "template": {
@@ -7172,7 +7631,7 @@
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}containerBackend', variables('prefixCleaned'))))]",
+        "[resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}containerBackend', variables('abbrs').containers.containerApp, variables('prefixCleaned'))))]",
         "[resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned'))))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
