@@ -2,6 +2,7 @@
 @maxLength(10)
 @description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
 param ResourcePrefix string 
+var abbrs = loadJsonContent('./abbreviations.json')
 
 @allowed([
   'australiaeast'
@@ -58,9 +59,9 @@ var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
 var prefixCleaned = replace(toLower(finalName), '-', '')
 var storageSkuName = 'Standard_LRS'
-var storageContainerName = '${prefixCleaned}ctstor'
+var storageContainerName = '${abbrs.storage.storageAccount}${prefixCleaned}'
 var gptModelVersion = '2024-08-06'
-var aiServicesName = '${prefixCleaned}-aiservices'
+var aiServicesName = '${abbrs.ai.aiServices}${prefixCleaned}'
 
 
 
@@ -87,7 +88,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = 
   properties: {
     customSubDomainName: aiServicesName
     apiProperties: {
-      statisticsEnabled: false
+     // statisticsEnabled: false
     }
   }
 }
@@ -116,6 +117,7 @@ resource aiServicesDeployments 'Microsoft.CognitiveServices/accounts/deployments
 module managedIdentityModule 'deploy_managed_identity.bicep' = {
   name: 'deploy_managed_identity'
   params: {
+    miName:'${abbrs.security.managedIdentity}${prefixCleaned}'
     solutionName: prefixCleaned
     solutionLocation: location 
   }
@@ -127,6 +129,7 @@ module managedIdentityModule 'deploy_managed_identity.bicep' = {
 module kvault 'deploy_keyvault.bicep' = {
   name: 'deploy_keyvault'
   params: {
+    keyvaultName: '${abbrs.security.keyVault}${prefixCleaned}'
     solutionName: prefixCleaned
     solutionLocation: location
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
@@ -167,7 +170,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
   name: toLower('${prefixCleaned}database')
   params: {
     // Required parameters
-    name: toLower('${prefixCleaned}databaseAccount')
+    name: toLower('${abbrs.databases.cosmosDBDatabase}${prefixCleaned}databaseAccount')
     // Non-required parameters
     enableAnalyticalStorage: true
     location: dblocation
@@ -231,7 +234,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 }
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
-  name: toLower('${prefixCleaned}containerAppFrontend')
+  name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerAppFrontend')
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -261,7 +264,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     scaleMinReplicas: 1
     scaleMaxReplicas: 1
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
-    name: toLower('${prefixCleaned}containerFrontend')
+    name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerFrontend')
     // Non-required parameters
     location: location
   }
@@ -269,7 +272,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
 
 
 resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-  name: toLower('${prefixCleaned}containerBackend')
+  name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerBackend')
   location: location
   identity: {
     type: 'SystemAssigned'
