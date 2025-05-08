@@ -8,19 +8,34 @@ param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
+var abbrs = loadJsonContent('./abbreviations.json')
 
-var storageName = '${solutionName}hubst'
+
+var storageName = '${abbrs.storage.storageAccount}${solutionName}hubst'
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${solutionName}-ais'
-var workspaceName = '${solutionName}-log'
-var keyvaultName = '${solutionName}-kv'
+var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
+var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
+var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-var azureAiHubName = '${solutionName}-hub'
+var azureAiHubName = '${abbrs.ai.aiHub}${solutionName}'
 var aiHubFriendlyName = azureAiHubName
 var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${solutionName}-prj'
+var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiProjectFriendlyName = aiProjectName
-var aiSearchName = '${solutionName}-srch'
+var aiSearchName = '${abbrs.ai.aiSearch}${solutionName}'
+
+// var storageName = '${solutionName}hubst'
+// var storageSkuName = 'Standard_LRS'
+// var aiServicesName = '${solutionName}-ais'
+// var workspaceName = '${solutionName}-log'
+// var keyvaultName = '${solutionName}-kv'
+// var location = solutionLocation 
+// var azureAiHubName = '${solutionName}-hub'
+// var aiHubFriendlyName = azureAiHubName
+// var aiHubDescription = 'AI Hub for KM template'
+// var aiProjectName = '${solutionName}-prj'
+// var aiProjectFriendlyName = aiProjectName
+// var aiSearchName = '${solutionName}-srch'
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
