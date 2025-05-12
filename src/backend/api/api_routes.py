@@ -122,7 +122,10 @@ async def start_processing(request: Request):
             "message": "Files processed",
         }
     except Exception as e:
-        track_event_if_configured("ProcessingError", {"error": str(e), "batch_id": payload.get("batch_id")})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -209,7 +212,10 @@ async def download_files(batch_id: str):
         track_event_if_configured("DownloadZipSuccess", {"batch_id": batch_id, "file_count": len(file_data)})
         return Response(zip_data, media_type="application/zip", headers=headers)
     except Exception as e:
-        track_event_if_configured("DownloadZipError", {"batch_id": batch_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(
             status_code=404, detail=f"Error creating ZIP file: {str(e)}"
         ) from e
@@ -292,7 +298,10 @@ async def batch_status_updates(
         logger.info(f"Client disconnected from batch {batch_id}")
         await close_connection(batch_id)
     except Exception as e:
-        logger.error("Error in WebSocket connection", error=str(e))
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         track_event_if_configured("WebSocketError", {"batch_id": batch_id, "error": str(e)})
         await close_connection(batch_id)
 
@@ -415,10 +424,17 @@ async def get_batch_status(request: Request, batch_id: str):
         track_event_if_configured("BatchStoryRetrieved", {"batch_id": batch_id, "user_id": user_id})
         return batch_data
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
         logger.error("Error retrieving batch history", error=str(e))
-        track_event_if_configured("BatchStoryError", {"batch_id": batch_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         error_message = str(e)
         if "403" in error_message:
             raise HTTPException(status_code=403, detail="Incorrect user_id") from e
@@ -453,10 +469,17 @@ async def get_batch_summary(request: Request, batch_id: str):
 
     except HTTPException as e:
         logger.error("Error fetching batch summary", error=str(e))
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
         logger.error("Error fetching batch summary", error=str(e))
-        track_event_if_configured("BatchSummaryError", {"batch_id": batch_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(status_code=404, detail="Batch not found") from e
 
 
@@ -585,7 +608,6 @@ async def upload_file(
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
 
-        track_event_if_configured("UploadFileError", {"batch_id": batch_id, "error": str(e)})
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
@@ -704,10 +726,17 @@ async def get_file_details(request: Request, file_id: str):
         return file_data
 
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
         logger.error("Error retrieving file details", error=str(e))
-        track_event_if_configured("GetFileDetailsError", {"file_id": file_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
@@ -762,10 +791,17 @@ async def delete_batch_details(request: Request, batch_id: str):
         return {"message": "Batch deleted successfully"}
 
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
         logger.error("Failed to delete batch from database", error=str(e))
-        track_event_if_configured("DeleteBatchError", {"batch_id": batch_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(status_code=500, detail="Database connection error") from e
 
 
@@ -825,8 +861,16 @@ async def delete_file_details(request: Request, file_id: str):
         return {"message": "File deleted successfully"}
 
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         logger.error("Failed to delete file from database", error=str(e))
         raise HTTPException(status_code=500, detail="Database connection error") from e
 
@@ -878,10 +922,17 @@ async def delete_all_details(request: Request):
         return {"message": "All user data deleted successfully"}
 
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         logger.error("Failed to delete user data from database", error=str(e))
-        track_event_if_configured("DeleteAllError", {"user_id": user_id, "error": str(e)})
         raise HTTPException(status_code=500, detail="Database connection error") from e
 
 
@@ -964,10 +1015,17 @@ async def list_batch_history(request: Request, offset: int = 0, limit: int = 25)
         return batch_history
 
     except HTTPException as e:
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise e
     except Exception as e:
         logger.error("Error fetching batch history", error=str(e))
-        track_event_if_configured("BatchHistoryError", {"user_id": user_id, "error": str(e)})
+        span = trace.get_current_span()
+        if span is not None:
+            span.record_exception(e)
+            span.set_status(Status(StatusCode.ERROR, str(e)))
         raise HTTPException(
             status_code=500, detail="Error retrieving batch history"
         ) from e
