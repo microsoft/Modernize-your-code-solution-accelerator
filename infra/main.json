@@ -5,16 +5,15 @@
     "_generator": {
       "name": "bicep",
       "version": "0.35.1.17967",
-      "templateHash": "12546479610758564230"
+      "templateHash": "18182441225742462111"
     }
   },
   "parameters": {
     "Prefix": {
       "type": "string",
       "minLength": 3,
-      "maxLength": 20,
       "metadata": {
-        "description": "Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group."
+        "description": "Prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters."
       }
     },
     "AzureAiServiceLocation": {
@@ -54,9 +53,10 @@
     }
   },
   "variables": {
-    "uniqueId": "[toLower(uniqueString(subscription().id, parameters('Prefix'), resourceGroup().location))]",
+    "safePrefix": "[if(greater(length(parameters('Prefix')), 20), substring(parameters('Prefix'), 0, 20), parameters('Prefix'))]",
+    "uniqueId": "[toLower(uniqueString(subscription().id, variables('safePrefix'), resourceGroup().location))]",
     "UniquePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
-    "ResourcePrefix": "[take(format('cm{0}{1}', parameters('Prefix'), variables('UniquePrefix')), 15)]",
+    "ResourcePrefix": "[take(format('cm{0}{1}', variables('safePrefix'), variables('UniquePrefix')), 15)]",
     "imageVersion": "latest",
     "location": "[resourceGroup().location]",
     "dblocation": "[resourceGroup().location]",
@@ -68,7 +68,7 @@
     "containerName": "appstorage",
     "llmModel": "gpt-4o",
     "storageSkuName": "Standard_LRS",
-    "storageContainerName": "[format('{0}cast', variables('ResourcePrefix'))]",
+    "storageContainerName": "[replace(replace(replace(replace(format('{0}cast', variables('ResourcePrefix')), '-', ''), '_', ''), '.', ''), '/', '')]",
     "gptModelVersion": "2024-08-06",
     "azureAiServicesName": "[format('{0}-ais', variables('ResourcePrefix'))]",
     "aiModelDeployments": [
@@ -618,12 +618,17 @@
             "_generator": {
               "name": "bicep",
               "version": "0.35.1.17967",
-              "templateHash": "4382273497899479323"
+              "templateHash": "8013960718059965025"
             }
           },
           "parameters": {
             "solutionName": {
-              "type": "string"
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 15,
+              "metadata": {
+                "description": "Solution Name"
+              }
             },
             "solutionLocation": {
               "type": "string"
@@ -648,10 +653,13 @@
             },
             "aiServicesId": {
               "type": "string"
+            },
+            "storageName": {
+              "type": "string",
+              "defaultValue": "[format('{0}hubst', parameters('solutionName'))]"
             }
           },
           "variables": {
-            "storageName": "[format('{0}hubst', parameters('solutionName'))]",
             "storageSkuName": "Standard_LRS",
             "aiServicesName": "[format('{0}-ais', parameters('solutionName'))]",
             "workspaceName": "[format('{0}-log', parameters('solutionName'))]",
@@ -663,7 +671,7 @@
             "aiProjectName": "[format('{0}-prj', parameters('solutionName'))]",
             "aiProjectFriendlyName": "[variables('aiProjectName')]",
             "aiSearchName": "[format('{0}-srch', parameters('solutionName'))]",
-            "storageNameCleaned": "[replace(variables('storageName'), '-', '')]"
+            "storageNameCleaned": "[replace(replace(replace(replace(format('{0}cast', parameters('storageName')), '-', ''), '_', ''), '.', ''), '/', '')]"
           },
           "resources": [
             {
