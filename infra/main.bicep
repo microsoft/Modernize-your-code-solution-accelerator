@@ -1,8 +1,8 @@
 @minLength(3)
-@maxLength(20)
-@description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param Prefix string 
+@description('Prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters.')
+param Prefix string
 
+var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
 
 @allowed([
   'australiaeast'
@@ -33,9 +33,9 @@ param Prefix string
 param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
-var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
+var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
-var ResourcePrefix = take('cm${Prefix}${UniquePrefix}', 15)
+var ResourcePrefix = take('cm${safePrefix}${UniquePrefix}', 15)
 var imageVersion = 'latest'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
@@ -47,7 +47,7 @@ var deploymentType  = 'GlobalStandard'
 var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
 var storageSkuName = 'Standard_LRS'
-var storageContainerName = '${ResourcePrefix}cast'
+var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
 var gptModelVersion = '2024-08-06'
 var azureAiServicesName = '${ResourcePrefix}-ais'
 
