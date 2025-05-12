@@ -86,9 +86,7 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = 
   kind: 'AIServices'
   properties: {
     customSubDomainName: aiServicesName
-    apiProperties: {
-      statisticsEnabled: false
-    }
+    apiProperties: {}
   }
 }
 
@@ -295,6 +293,10 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'COSMOSDB_ENDPOINT'
               value: databaseAccount.outputs.endpoint
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: aifoundry.outputs.applicationInsightsConnectionString
             }
             {
               name: 'COSMOSDB_DATABASE'

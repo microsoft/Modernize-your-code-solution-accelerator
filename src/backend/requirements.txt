@@ -42,3 +42,12 @@ unittest2
 json_utils
 starlette
 aiortc
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp-proto-grpc
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-openai
+opentelemetry-exporter-otlp-proto-http
+opentelemetry-exporter-otlp-proto-grpc
+azure-monitor-opentelemetry
+azure-monitor-events-extension
