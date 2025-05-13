@@ -24,9 +24,6 @@ from fastapi.responses import Response
 
 from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
-from common.logger.app_logger import AppLogger
-from common.services.batch_service import BatchService
-# from sql_agents.process_batch import process_batch_async
 from api.event_utils import track_event_if_configured
 from azure.monitor.opentelemetry import configure_azure_monitor
 from opentelemetry import trace
@@ -592,11 +589,16 @@ async def upload_file(
             batch_id, user_id, file
         )
 
-        track_event_if_configured("FileUploaded", {
+        event_data = {
             "batch_id": batch_id,
             "user_id": user_id,
-            "filename": file.filename
-        })
+        }
+
+        # Avoid using 'filename' as it's reserved by the logging module
+        if hasattr(file, "filename") and file.filename:
+            event_data["uploaded_filename"] = file.filename
+
+        track_event_if_configured("FileUploaded", event_data)
 
         return upload_result
 

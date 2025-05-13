@@ -7,8 +7,6 @@ load_dotenv()
 
 def track_event_if_configured(event_name: str, event_data: dict):
     instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
-    print(f"Instrumentation Key: {instrumentation_key}")  # Debugging line
-    print(f"Event Name: {event_name}")  # Debugging line
     if instrumentation_key:
         track_event(event_name, event_data)
     else:
