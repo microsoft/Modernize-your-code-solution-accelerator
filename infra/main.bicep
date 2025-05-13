@@ -36,7 +36,7 @@ param capacity int = 5
 var uniqueId = toLower(uniqueString(subscription().id, Prefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
 var ResourcePrefix = take('cm${Prefix}${UniquePrefix}', 15)
-var imageVersion = 'fnd01'
+var imageVersion = 'latest'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
@@ -75,9 +75,6 @@ resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-previe
   kind: 'AIServices'
   properties: {
     customSubDomainName: azureAiServicesName
-    apiProperties: {
-      statisticsEnabled: false
-    }
   }
 }
 
