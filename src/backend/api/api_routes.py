@@ -26,7 +26,7 @@ from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
-from sql_agents.process_batch import process_batch_async
+# from sql_agents.process_batch import process_batch_async
 from api.event_utils import track_event_if_configured
 from azure.monitor.opentelemetry import configure_azure_monitor
 from opentelemetry import trace
