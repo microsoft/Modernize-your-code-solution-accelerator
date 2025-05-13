@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.33.93.31351",
-      "templateHash": "11802129812634129151"
+      "version": "0.34.44.8038",
+      "templateHash": "16240088863089171091"
     }
   },
   "parameters": {
@@ -100,9 +100,7 @@
       "kind": "AIServices",
       "properties": {
         "customSubDomainName": "[variables('aiServicesName')]",
-        "apiProperties": {
-          "statisticsEnabled": false
-        }
+        "apiProperties": {}
       }
     },
     {
@@ -160,6 +158,10 @@
                 {
                   "name": "COSMOSDB_ENDPOINT",
                   "value": "[reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}database', variables('prefixCleaned')))), '2022-09-01').outputs.endpoint.value]"
+                },
+                {
+                  "name": "APPLICATIONINSIGHTS_CONNECTION_STRING",
+                  "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_ai_foundry'), '2022-09-01').outputs.applicationInsightsConnectionString.value]"
                 },
                 {
                   "name": "COSMOSDB_DATABASE",
@@ -353,8 +355,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "11665286146084422127"
+              "version": "0.34.44.8038",
+              "templateHash": "17863870312619064541"
             }
           },
           "parameters": {
@@ -451,8 +453,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "4388214478635448075"
+              "version": "0.34.44.8038",
+              "templateHash": "10664495342911727649"
             }
           },
           "parameters": {
@@ -589,8 +591,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.33.93.31351",
-              "templateHash": "10270252950808398257"
+              "version": "0.34.44.8038",
+              "templateHash": "5463370029018472413"
             }
           },
           "parameters": {
@@ -635,6 +637,7 @@
             "aiProjectName": "[format('{0}-aiproject', parameters('solutionName'))]",
             "aiProjectFriendlyName": "[variables('aiProjectName')]",
             "aiSearchName": "[format('{0}-search', parameters('solutionName'))]",
+            "applicationInsightsName": "[format('{0}-appi', parameters('solutionName'))]",
             "storageNameCleaned": "[replace(variables('storageName'), '-', '')]"
           },
           "resources": [
@@ -671,6 +674,22 @@
                   "name": "PerGB2018"
                 }
               }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('applicationInsightsName')]",
+              "location": "[variables('location')]",
+              "kind": "web",
+              "properties": {
+                "Application_Type": "web",
+                "publicNetworkAccessForIngestion": "Enabled",
+                "publicNetworkAccessForQuery": "Enabled",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+              ]
             },
             {
               "type": "Microsoft.Storage/storageAccounts",
@@ -939,6 +958,10 @@
             "storageAccountId": {
               "type": "string",
               "value": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]"
+            },
+            "applicationInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('applicationInsightsName')), '2020-02-02').ConnectionString]"
             }
           }
         }
