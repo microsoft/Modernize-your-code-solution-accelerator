@@ -1,0 +1,49 @@
+.header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background-color: #fafafa;
+    border-bottom: 1px solid var(--colorNeutralStroke2);
+    padding: 16px;
+    height: 64px;
+    box-sizing: border-box;
+    gap: 12px;
+    position: fixed;
+    z-index: 1000;
+}
+
+.headerContainer{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.headerImage{
+     width: 25px; 
+     height: 25px
+}
+
+.subTitle{
+    white-space: nowrap; 
+    margin-top: -2px
+}
+
+.fw_400{
+    font-weight: 400
+}
+
+.toolbar{
+    display: flex;
+    flex: 0;
+    align-items: center;
+    flex-direction: row-reverse;
+    padding: 4px 0px;
+}
+
+.toolbar2{
+    padding: 4px 0px;
+    display: flex;
+    flex-direction: row-reverse
+}

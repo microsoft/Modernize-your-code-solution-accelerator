@@ -1,0 +1,23 @@
+.errorSection{
+    background-color: #F8DADB !important;
+    margin-bottom: 8px;
+    height: 40px;
+    box-shadow: none
+}
+.sectionHeader{
+    display: flex;
+    height: 40px;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    box-sizing: border-box;
+    padding: 0px;
+    text-align: left
+}
+
+.errorContentScrollable{
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: 8px;
+    border-bottom: 1px solid #eaeaea
+}
