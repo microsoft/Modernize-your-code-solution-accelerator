@@ -50,6 +50,18 @@ jobs:
             echo "Resource group already exists."
           fi
 
+      
+      - name: Generate Unique Solution Prefix
+        id: generate_solution_prefix
+        run: |
+          set -e
+          COMMON_PART="pslcod"
+          TIMESTAMP=$(date +%s)  
+          UPDATED_TIMESTAMP=$(echo $TIMESTAMP | tail -c 3) 
+          UNIQUE_SOLUTION_PREFIX="${COMMON_PART}${UPDATED_TIMESTAMP}"
+          echo "SOLUTION_PREFIX=${UNIQUE_SOLUTION_PREFIX}" >> $GITHUB_ENV
+          echo "Generated SOLUTION_PREFIX: ${UNIQUE_SOLUTION_PREFIX}"
+
 
       - name: Deploy Bicep Template
         id: deploy
@@ -58,7 +70,7 @@ jobs:
           az deployment group create \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
-            --parameters AzureAiServiceLocation=northcentralus Prefix=codegen
+            --parameters AzureAiServiceLocation=northcentralus Prefix=${{ env.SOLUTION_PREFIX }}
 
 
       - name: Send Notification on Failure
@@ -80,8 +92,8 @@ jobs:
             -d "$EMAIL_BODY" || echo "Failed to send notification"
 
 
-      - name: Get Log Analytics Workspace from Resource Group
-        id: get_log_analytics_workspace
+      - name: Get Log Analytics Workspace and OpenAI from Resource Group
+        id: get_azure_resources
         run: |
 
           set -e
@@ -98,6 +110,19 @@ jobs:
             echo "Log Analytics workspace name: ${log_analytics_workspace_name}" 
           fi
           
+          echo "Fetching OpenAI resource from resource group ${{ env.RESOURCE_GROUP_NAME }}..."
+          
+          # Run the az resource list command to get the OpenAI resource name
+          openai_resource_name=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --resource-type "Microsoft.CognitiveServices/accounts" --query "[0].name" -o tsv)
+
+          if [ -z "$openai_resource_name" ]; then
+            echo "No OpenAI resource found in resource group ${{ env.RESOURCE_GROUP_NAME }}."
+            exit 1
+          else
+            echo "OPENAI_RESOURCE_NAME=${openai_resource_name}" >> $GITHUB_ENV
+            echo "OpenAI resource name: ${openai_resource_name}" 
+          fi
+
 
       - name: List KeyVaults and Store in Array
         id: list_keyvaults
@@ -179,7 +204,7 @@ jobs:
           IFS=',' read -r -a resources_to_check <<< "$stripped_keyvaults"
 
           # Append new resources to the array
-          resources_to_check+=("${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}")
+          resources_to_check+=("${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}" "${{ env.OPENAI_RESOURCE_NAME }}")
 
           echo "List of resources to check: ${resources_to_check[@]}"
 
@@ -230,7 +255,18 @@ jobs:
         if: success()
         run: |
 
-          set -e 
+          set -e
+
+          echo "Azure OpenAI: ${{ env.OPENAI_RESOURCE_NAME }}"
+
+          # Purge OpenAI Resource
+          echo "Purging the OpenAI Resource..."
+          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/northcentralus/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
+            echo "Failed to purge openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
+          else
+            echo "Purged the openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
+          fi
+
           # List of keyvaults
           KEYVAULTS="${{ env.KEYVAULTS }}"
 
@@ -259,3 +295,4 @@ jobs:
               echo "KeyVault '$keyvault_name' is not soft-deleted. No action taken."
             fi
           done
+          echo "Resource purging completed successfully"
