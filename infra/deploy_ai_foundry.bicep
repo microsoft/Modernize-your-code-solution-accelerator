@@ -12,19 +12,20 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
-param storageName string = '${solutionName}hubst'
-
+var abbrs = loadJsonContent('./abbreviations.json')
+var storageName = '${abbrs.storage.storageAccount}${solutionName}hubst'
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${solutionName}-ais'
-var workspaceName = '${solutionName}-log'
-var keyvaultName = '${solutionName}-kv'
+var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
+var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
+var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-var azureAiHubName = '${solutionName}-hub'
-var aiHubFriendlyName = azureAiHubName
+var aiHubName = '${abbrs.ai.aiHub}${solutionName}'
+var aiHubFriendlyName = aiHubName
 var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${solutionName}-prj'
+var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiProjectFriendlyName = aiProjectName
-var aiSearchName = '${solutionName}-srch'
+var aiSearchName = '${abbrs.ai.aiSearch}${solutionName}'
+
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
