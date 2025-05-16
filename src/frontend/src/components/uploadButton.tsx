@@ -366,7 +366,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         onConfirm={cancelAllUploads}
         onCancel={() => setShowLogoCancelDialog(false)}
         confirmText="Leave and lose progress"
-        cancelText="Stay here"
+        cancelText="Continue"
       />
       <ConfirmationDialog
         open={showFileLimitDialog}

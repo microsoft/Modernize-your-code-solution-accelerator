@@ -1,3 +1,7 @@
+main {
+  padding-top: 8rem !important;
+}
+
 .main-content {
   transition: margin-right 0.3s ease-in-out; /* Smooth transition */
   margin-right: 0px; /* Default margin */

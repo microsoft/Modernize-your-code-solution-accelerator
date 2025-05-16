@@ -35,9 +35,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' = {
     enabledForDeployment: true
     enabledForDiskEncryption: true
     enabledForTemplateDeployment: true
-    enableSoftDelete: false
     enableRbacAuthorization: true
-    enablePurgeProtection: true
     publicNetworkAccess: 'enabled'
     sku: {
       family: 'A'
