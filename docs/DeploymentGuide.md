@@ -10,7 +10,7 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 - Azure OpenAI Service  
 - GPT Model Capacity
 
-Here are the allowed regions where the AI services are available: australiaeast, brazilsouth, canadacentral, canadaeast, eastus, eastus2, francecentral, germanywestcentral, japaneast, koreacentral, northcentralus, norwayeast, polandcentral, southafricanorth, southcentralus, southindia, swedencentral, switzerlandnorth, uaenorth, uksouth, westeurope, westus, westus3.
+Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
 
 ### ⚠️ Important: Check Azure OpenAI Quota Availability  
 
