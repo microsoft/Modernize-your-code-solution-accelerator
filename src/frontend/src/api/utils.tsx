@@ -75,7 +75,7 @@ export const useStyles = makeStyles({
   },
   selectedCard: {
     border: "var(--NeutralStroke2.Rest)",
-    backgroundColor: "rgb(221, 217, 217)",
+    backgroundColor: "#EBEBEB",
   },
   mainContent: {
     flex: 1,
@@ -294,15 +294,35 @@ export const determineFileStatus = (file) => {
   return "error";
 };
 // Function to format agent type strings
-export const formatAgent = (str = "Agents") => {
-  if (!str) return "Agents";
-  return str
+export const formatAgent = (str = "Agent") => {
+  if (!str) return "agent";
+
+  const cleaned = str
     .replace(/[^a-zA-Z\s]/g, " ") // Remove non-alphabetic characters
-    .replace(/\s+/g, " ") // Replace multiple spaces with a single space
-    .trim() // Remove leading/trailing spaces
-    .split(" ") // Split words
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()) // Capitalize first letter
-    .join(" ") || "Agents"; // Ensure default "Agent" if empty
+    .replace(/\s+/g, " ")         // Collapse multiple spaces
+    .trim()
+    .replace(/\bAgents\b/i, "Agent"); // Singularize "Agents" if it's the only word
+
+  const words = cleaned
+    .split(" ")
+    .filter(Boolean)
+    .map(w => w.toLowerCase());
+
+  const hasAgent = words.includes("agent");
+
+  // Capitalize all except "agent" (unless it's the only word)
+  const result = words.map((word, index) => {
+    if (word === "agent") {
+      return words.length === 1 ? "Agent" : "agent"; // Capitalize if it's the only word
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  });
+
+  if (!hasAgent) {
+    result.push("agent");
+  }
+
+  return result.join(" ");
 };
 
 // Function to handle rate limit errors and ensure descriptions end with a dot

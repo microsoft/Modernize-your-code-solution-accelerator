@@ -1,13 +1,17 @@
-"""FastAPI API routes for file processing and conversion"""
+"""FastAPI API routes for file processing and conversion."""
 
 import asyncio
 import io
 import zipfile
+from typing import Optional
+
 
 from api.auth.auth_utils import get_authenticated_user
 from api.status_updates import app_connection_manager, close_connection
+
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
+
 from fastapi import (
     APIRouter,
     File,
@@ -20,17 +24,18 @@ from fastapi import (
 )
 from fastapi.responses import Response
 
+from sql_agents.process_batch import process_batch_async
+
 router = APIRouter()
 logger = AppLogger("APIRoutes")
 
+
 # start processing the batch
-from sql_agents_start import process_batch_async
-
-
 @router.post("/start-processing")
 async def start_processing(request: Request):
     """
-    Start processing files for a given batch
+    Start processing files for a given batch.
+
     ---
     tags:
     - File Processing
@@ -50,6 +55,7 @@ async def start_processing(request: Request):
     responses:
       200:
         description: Processing initiated successfully
+
         content:
           application/json:
             schema:
@@ -61,14 +67,19 @@ async def start_processing(request: Request):
                   type: string
       400:
         description: Invalid processing request
+
       500:
         description: Internal server error
     """
     try:
         payload = await request.json()
         batch_id = payload.get("batch_id")
+        translate_from = payload.get("translate_from")
+        translate_to = payload.get("translate_to")
 
-        await process_batch_async(batch_id)
+        await process_batch_async(
+            batch_id=batch_id, convert_from=translate_from, convert_to=translate_to
+        )
 
         await close_connection(batch_id)
 
@@ -89,7 +100,7 @@ async def start_processing(request: Request):
 )
 async def download_files(batch_id: str):
     """
-    Download files as ZIP
+    Download files as ZIP.
 
     ---
     tags:
@@ -118,7 +129,6 @@ async def download_files(batch_id: str):
               type: string
               example: Batch not found
     """
-
     # call batch_service get_batch_for_zip to get all files for batch_id
     batch_service = BatchService()
     await batch_service.initialize_database()
@@ -172,7 +182,7 @@ async def batch_status_updates(
     websocket: WebSocket, batch_id: str
 ):  # , request: Request):
     """
-    WebSocket endpoint for real-time batch status updates
+    Web-Socket endpoint for real-time batch status updates.
 
     ---
     tags:
@@ -248,7 +258,7 @@ async def batch_status_updates(
 @router.get("/batch-story/{batch_id}")
 async def get_batch_status(request: Request, batch_id: str):
     """
-    Retrieve batch history and file statuses
+    Retrieve batch history and file statuses.
 
     ---
     tags:
@@ -371,9 +381,7 @@ async def get_batch_status(request: Request, batch_id: str):
 
 @router.get("/batch-summary/{batch_id}")
 async def get_batch_summary(request: Request, batch_id: str):
-    """
-    Retrieve batch summary for a given batch ID.
-    """
+    """Retrieve batch summary for a given batch ID."""
     try:
         batch_service = BatchService()
         await batch_service.initialize_database()
@@ -404,7 +412,7 @@ async def upload_file(
     request: Request, file: UploadFile = File(...), batch_id: str = Form(...)
 ):
     """
-    Upload file for conversion
+    Upload file for conversion.
 
     ---
     tags:
@@ -634,7 +642,7 @@ async def get_file_details(request: Request, file_id: str):
 @router.delete("/delete-batch/{batch_id}")
 async def delete_batch_details(request: Request, batch_id: str):
     """
-    delete batch history using batch_id
+    Delete batch history using batch_id.
 
     ---
     tags:
@@ -689,7 +697,7 @@ async def delete_batch_details(request: Request, batch_id: str):
 @router.delete("/delete-file/{file_id}")
 async def delete_file_details(request: Request, file_id: str):
     """
-    delete file history using batch_id
+    Delete file history using batch_id.
 
     ---
     tags:
@@ -747,7 +755,7 @@ async def delete_file_details(request: Request, file_id: str):
 @router.delete("/delete_all")
 async def delete_all_details(request: Request):
     """
-    delete all the history of batches, files and logs
+    Delete all the history of batches, files and logs.
 
     ---
     tags:
@@ -794,7 +802,7 @@ async def delete_all_details(request: Request):
 
 
 @router.get("/batch-history")
-async def list_batch_history(request: Request, offset: int = 0, limit: int = 25):
+async def list_batch_history(request: Request, offset: int = 0, limit: Optional[int] = None):
     """
     Retrieve batch processing history for the authenticated user.
 

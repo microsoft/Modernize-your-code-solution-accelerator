@@ -10,7 +10,9 @@ param solutionName string
 param solutionLocation string
 
 @description('Name')
+
 param miName string 
+
 
 resource managedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
   name: miName

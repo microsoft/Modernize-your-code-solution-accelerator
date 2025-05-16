@@ -38,10 +38,18 @@ async def serve_index():
 async def get_config():
     config = {
         "API_URL": os.getenv("API_URL", "API_URL not set"),
-        "REACT_APP_MSAL_AUTH_CLIENTID": os.getenv("REACT_APP_MSAL_AUTH_CLIENTID", "Client ID not set"),
-        "REACT_APP_MSAL_AUTH_AUTHORITY": os.getenv("REACT_APP_MSAL_AUTH_AUTHORITY", "Authority not set"),
-        "REACT_APP_MSAL_REDIRECT_URL": os.getenv("REACT_APP_MSAL_REDIRECT_URL", "Redirect URL not set"),
-        "REACT_APP_MSAL_POST_REDIRECT_URL": os.getenv("REACT_APP_MSAL_POST_REDIRECT_URL", "Post Redirect URL not set"),
+        "REACT_APP_MSAL_AUTH_CLIENTID": os.getenv(
+            "REACT_APP_MSAL_AUTH_CLIENTID", "Client ID not set"
+        ),
+        "REACT_APP_MSAL_AUTH_AUTHORITY": os.getenv(
+            "REACT_APP_MSAL_AUTH_AUTHORITY", "Authority not set"
+        ),
+        "REACT_APP_MSAL_REDIRECT_URL": os.getenv(
+            "REACT_APP_MSAL_REDIRECT_URL", "Redirect URL not set"
+        ),
+        "REACT_APP_MSAL_POST_REDIRECT_URL": os.getenv(
+            "REACT_APP_MSAL_POST_REDIRECT_URL", "Post Redirect URL not set"
+        ),
         "ENABLE_AUTH": os.getenv("ENABLE_AUTH", "false"),
     }
     return config
@@ -58,4 +66,4 @@ async def serve_app(full_path: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=3000)
+    uvicorn.run(app, host="127.0.0.1", port=3000)

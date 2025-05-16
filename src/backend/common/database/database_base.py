@@ -1,68 +1,70 @@
+"""DatabaseBase class for managing database operations"""
+
 import uuid
 from abc import ABC, abstractmethod
-from datetime import datetime
-from enum import Enum
 from typing import Dict, List, Optional
 
-from common.logger.app_logger import AppLogger
-from common.models.api import AgentType, BatchRecord, FileRecord, LogType, ProcessStatus
+from common.models.api import BatchRecord, FileRecord, LogType
+
 from semantic_kernel.contents import AuthorRole
+
+from sql_agents.helpers.models import AgentType
 
 
 class DatabaseBase(ABC):
-    """Abstract base class for database operations"""
+    """Abstract base class for database operations."""
 
     @abstractmethod
     async def initialize_cosmos(self) -> None:
         """Initialize the cosmosdb client and create container if needed"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def create_batch(self, user_id: str, batch_id: uuid.UUID) -> BatchRecord:
         """Create a new conversion batch"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_file_logs(self, file_id: str) -> Dict:
         """Retrieve all logs for a file"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_batch_from_id(self, batch_id: str) -> Dict:
         """Retrieve all logs for a file"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_batch_files(self, batch_id: str) -> List[Dict]:
         """Retrieve all files for a batch"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def delete_file_logs(self, file_id: str) -> None:
         """Delete all logs for a file"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_user_batches(self, user_id: str) -> Dict:
         """Retrieve all batches for a user"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def add_file(
         self, batch_id: uuid.UUID, file_id: uuid.UUID, file_name: str, storage_path: str
     ) -> FileRecord:
         """Add a file entry to the database"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_batch(self, user_id: str, batch_id: str) -> Optional[Dict]:
         """Retrieve a batch and its associated files"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_file(self, file_id: str) -> Optional[Dict]:
         """Retrieve a file entry along with its logs"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def add_file_log(
@@ -75,38 +77,39 @@ class DatabaseBase(ABC):
         author_role: AuthorRole,
     ) -> None:
         """Log a file status update"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def update_file(self, file_record: FileRecord) -> None:
-        """update file record"""
-        pass
+        """Update file record"""
+        pass  # pragma: no cover
 
     @abstractmethod
     async def update_batch(self, batch_record: BatchRecord) -> BatchRecord:
-        pass
+        """Update a batch record"""
+        pass  # pragma: no cover
 
     @abstractmethod
     async def delete_all(self, user_id: str) -> None:
         """Delete all batches, files, and logs for a user"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def delete_batch(self, user_id: str, batch_id: str) -> None:
         """Delete a batch along with its files and logs"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def delete_file(self, user_id: str, batch_id: str, file_id: str) -> None:
         """Delete a file and its logs, and update batch file count"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_batch_history(self, user_id: str, batch_id: str) -> List[Dict]:
         """Retrieve all logs for a batch"""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def close(self) -> None:
         """Close database connection"""
-        pass
+        pass  # pragma: no cover

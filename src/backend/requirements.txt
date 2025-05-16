@@ -20,6 +20,7 @@ azure-functions
 
 # Development tools
 pytest
+pytest-mock
 black
 pylint
 flake8
@@ -34,7 +35,7 @@ structlog
 typing-extensions
 python-jose[cryptography]
 passlib[bcrypt]
-semantic-kernel==1.23.1
+semantic-kernel[azure]==1.27.2
 openai
 sqlparse
 sqlglot

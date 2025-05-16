@@ -1,4 +1,7 @@
 // Creates Azure dependent resources for Azure AI studio
+@minLength(3)
+@maxLength(15)
+@description('Solution Name')
 param solutionName string
 param solutionLocation string
 param keyVaultName string
@@ -8,6 +11,7 @@ param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
+
 var abbrs = loadJsonContent('./abbreviations.json')
 var storageName = '${abbrs.storage.storageAccount}${solutionName}hubst'
 var storageSkuName = 'Standard_LRS'
@@ -21,6 +25,7 @@ var aiHubDescription = 'AI Hub for KM template'
 var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiProjectFriendlyName = aiProjectName
 var aiSearchName = '${abbrs.ai.aiSearch}${solutionName}'
+
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
@@ -40,7 +45,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 }
 
 
-var storageNameCleaned = replace(storageName, '-', '')
+var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
+
+
 
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
@@ -112,7 +119,7 @@ resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 }
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
-  name: aiHubName
+  name: azureAiHubName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -129,7 +136,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   kind: 'hub'
 
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-AzureOpenAI'
+    name: '${azureAiHubName}-connection-AzureOpenAI'
     properties: {
       category: 'AIServices'
       target: aiServicesEndpoint
@@ -298,3 +305,5 @@ output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = logAnalytics.id
 output storageAccountId string = storage.id
+
+output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
