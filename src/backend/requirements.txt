@@ -17,7 +17,7 @@ azure-cosmos
 azure-servicebus
 azure-mgmt-storage
 azure-functions
-
+azure-ai-projects
 # Development tools
 pytest
 pytest-mock
