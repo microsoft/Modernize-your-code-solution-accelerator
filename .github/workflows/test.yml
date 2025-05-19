@@ -78,6 +78,8 @@ jobs:
           pip install -r src/frontend/requirements.txt
           pip install pytest-cov
           pip install pytest-asyncio
+          pip install azure-ai-projects
+
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=$PWD/src/backend" >> $GITHUB_ENV
 
