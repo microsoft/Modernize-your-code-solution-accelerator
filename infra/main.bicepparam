@@ -1,4 +1,4 @@
 using './main.bicep'
 
-param AzureAiServiceLocation = readEnvironmentVariable('AZURE_LOCATION','japaneast')
-param Prefix = readEnvironmentVariable('AZURE_ENV_NAME','azdtemp')
+param AiLocation = readEnvironmentVariable('AZURE_LOCATION','japaneast')
+param ResourcePrefix = readEnvironmentVariable('AZURE_ENV_NAME','azdtemp')

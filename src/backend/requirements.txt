@@ -17,7 +17,7 @@ azure-cosmos
 azure-servicebus
 azure-mgmt-storage
 azure-functions
-
+azure-ai-projects==1.0.0b9
 # Development tools
 pytest
 pytest-mock
