@@ -43,3 +43,4 @@ unittest2
 json_utils
 starlette
 aiortc
+azure-ai-projects==1.0.0b9
