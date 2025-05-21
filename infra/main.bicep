@@ -1,10 +1,8 @@
 @minLength(3)
-
-@maxLength(10)
-@description('Prefix for all resources created by this template.  This prefix will be used to create unique names for all resources.  The prefix must be unique within the resource group.')
-param ResourcePrefix string 
+@description('Prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters.')
+param Prefix string
 var abbrs = loadJsonContent('./abbreviations.json')
-
+var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
 
 @allowed([
   'australiaeast'
@@ -49,11 +47,9 @@ var deploymentType  = 'GlobalStandard'
 var containerName  = 'appstorage'
 var llmModel  = 'gpt-4o'
 var storageSkuName = 'Standard_LRS'
-
-var storageContainerName = '${abbrs.storage.storageAccount}${prefixCleaned}'
+var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
 var gptModelVersion = '2024-08-06'
-var aiServicesName = '${abbrs.ai.aiServices}${prefixCleaned}'
-
+var azureAiServicesName = '${abbrs.ai.aiServices}${ResourcePrefix}'
 
 
 
@@ -78,12 +74,7 @@ resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-previe
   }
   kind: 'AIServices'
   properties: {
-
-    customSubDomainName: aiServicesName
-    apiProperties: {
-     // statisticsEnabled: false
-    }
-
+    customSubDomainName: azureAiServicesName
   }
 }
 
@@ -111,10 +102,8 @@ resource azureAiServicesDeployments 'Microsoft.CognitiveServices/accounts/deploy
 module managedIdentityModule 'deploy_managed_identity.bicep' = {
   name: 'deploy_managed_identity'
   params: {
-
-    miName:'${abbrs.security.managedIdentity}${prefixCleaned}'
-    solutionName: prefixCleaned
-
+    miName:'${abbrs.security.managedIdentity}${ResourcePrefix}'
+    solutionName: ResourcePrefix
     solutionLocation: location 
   }
   scope: resourceGroup(resourceGroup().name)
@@ -125,10 +114,8 @@ module managedIdentityModule 'deploy_managed_identity.bicep' = {
 module kvault 'deploy_keyvault.bicep' = {
   name: 'deploy_keyvault'
   params: {
-
-    keyvaultName: '${abbrs.security.keyVault}${prefixCleaned}'
-    solutionName: prefixCleaned
-
+    keyvaultName: '${abbrs.security.keyVault}${ResourcePrefix}'
+    solutionName: ResourcePrefix
     solutionLocation: location
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
   }
@@ -165,12 +152,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
 }
 
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
-  name: toLower('${ResourcePrefix}cosmos')
+  name: toLower('${abbrs.databases.cosmosDBDatabase}${ResourcePrefix}databaseAccount')
   params: {
     // Required parameters
-
-    name: toLower('${abbrs.databases.cosmosDBDatabase}${prefixCleaned}databaseAccount')
-
+    name: toLower('${abbrs.databases.cosmosDBDatabase}${ResourcePrefix}databaseAccount')
     // Non-required parameters
     enableAnalyticalStorage: true
     location: dblocation
@@ -234,9 +219,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
 }
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
-
-  name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerAppFrontend')
-
+  name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}containerAppFrontend')
   params: {
     managedIdentities: {
       systemAssigned: true
@@ -266,9 +249,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     scaleMinReplicas: 1
     scaleMaxReplicas: 1
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
-
-    name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerFrontend')
-
+    name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Frontend')
     // Non-required parameters
     location: location
   }
@@ -276,9 +257,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
 
 
 resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-
-  name: toLower('${abbrs.containers.containerApp}${prefixCleaned}containerBackend')
-
+  name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Backend')
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -475,7 +454,7 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }]
 
 resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' existing = {
-  name: '${ResourcePrefix}-prj' // aiProjectName must be calculated - available at main start.
+  name: '${abbrs.ai.aiHubProject}${ResourcePrefix}' // aiProjectName must be calculated - available at main start.
 }
 
 resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
