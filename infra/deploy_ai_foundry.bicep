@@ -1,4 +1,7 @@
 // Creates Azure dependent resources for Azure AI studio
+@minLength(3)
+@maxLength(15)
+@description('Solution Name')
 param solutionName string
 param solutionLocation string
 param keyVaultName string
@@ -9,7 +12,8 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
-var storageName = '${solutionName}hubst'
+param storageName string = '${solutionName}hubst'
+
 var storageSkuName = 'Standard_LRS'
 var aiServicesName = '${solutionName}-ais'
 var workspaceName = '${solutionName}-log'
@@ -40,7 +44,9 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
 }
 
 
-var storageNameCleaned = replace(storageName, '-', '')
+var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
+
+
 
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
