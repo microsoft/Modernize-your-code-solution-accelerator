@@ -1,31 +1,24 @@
-import os
-import sys
-# Add backend directory to sys.path
-sys.path.insert(
-    0,
-    os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../..", "backend")),
-)
-from datetime import datetime, timezone  # noqa: E402
-from unittest import mock  # noqa: E402
-from unittest.mock import AsyncMock  # noqa: E402
-from uuid import uuid4  # noqa: E402
+from datetime import datetime, timezone
+from unittest import mock
+from unittest.mock import AsyncMock
+from uuid import uuid4
 
-from azure.cosmos.aio import CosmosClient  # noqa: E402
-from azure.cosmos.exceptions import CosmosResourceExistsError  # noqa: E402
+from azure.cosmos.aio import CosmosClient
+from azure.cosmos.exceptions import CosmosResourceExistsError
 
-from common.database.cosmosdb import (  # noqa: E402
+from common.database.cosmosdb import (
     CosmosDBClient,
 )
-from common.models.api import (  # noqa: E402
+from common.models.api import (
     AgentType,
     AuthorRole,
     BatchRecord,
     FileRecord,
     LogType,
-    ProcessStatus,
-)  # noqa: E402
+    ProcessStatus
+)
 
-import pytest  # noqa: E402
+import pytest
 
 # Mocked data for the test
 endpoint = "https://fake.cosmosdb.azure.com"
