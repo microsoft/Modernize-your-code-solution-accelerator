@@ -25,7 +25,7 @@ class BlobStorageBase(ABC):
         Returns:
             Dict containing upload details (url, size, etc.)
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_file(self, blob_path: str) -> BinaryIO:
@@ -38,7 +38,7 @@ class BlobStorageBase(ABC):
         Returns:
             File content as a binary stream
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def delete_file(self, blob_path: str) -> bool:
@@ -51,7 +51,7 @@ class BlobStorageBase(ABC):
         Returns:
             True if deletion was successful
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def list_files(self, prefix: Optional[str] = None) -> list[Dict[str, Any]]:
@@ -64,4 +64,4 @@ class BlobStorageBase(ABC):
         Returns:
             List of blob details
         """
-        pass
+        pass  # pragma: no cover
