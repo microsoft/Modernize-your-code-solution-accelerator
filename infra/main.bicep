@@ -285,6 +285,10 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
               value: databaseAccount.outputs.endpoint
             }
             {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: azureAifoundry.outputs.applicationInsightsConnectionString
+            }
+            {
               name: 'COSMOSDB_DATABASE'
               value: cosmosdbDatabase
             }
