@@ -15,8 +15,10 @@ from api.status_updates import app_connection_manager, close_connection
 
 # Third-party
 from azure.monitor.opentelemetry import configure_azure_monitor
+
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
+
 from fastapi import (
     APIRouter,
     File,
@@ -28,7 +30,9 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import Response
+
 from opentelemetry import trace
+
 from opentelemetry.trace import Status, StatusCode
 from sql_agents.process_batch import process_batch_async
 
