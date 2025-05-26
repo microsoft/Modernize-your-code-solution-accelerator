@@ -1,0 +1,10 @@
+[run]
+omit =
+    src/tests/backend/*
+    */test_*.py
+    */*_test.py
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == "__main__":

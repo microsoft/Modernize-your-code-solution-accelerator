@@ -94,11 +94,11 @@ jobs:
             echo "skip_backend_tests=false" >> $GITHUB_ENV
           fi
 
-      - name: Run Backend Tests with Coverage
+      - name: Run Backend Tests with Coverage (Using .coveragerc)
         if: env.skip_backend_tests == 'false'
         run: |
           cd src
-          pytest --cov=. --cov-report=term-missing --cov-report=xml
+          pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-config=.coveragerc
 
 
 
