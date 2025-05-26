@@ -20,6 +20,7 @@ azure-functions
 
 # Development tools
 pytest
+pytest-mock
 black
 pylint
 flake8
@@ -34,7 +35,7 @@ structlog
 typing-extensions
 python-jose[cryptography]
 passlib[bcrypt]
-semantic-kernel==1.27.2
+semantic-kernel[azure]==1.27.2
 openai
 sqlparse
 sqlglot
@@ -51,3 +52,4 @@ opentelemetry-api==1.31.1
 opentelemetry-semantic-conventions==0.52b1
 opentelemetry-instrumentation==0.52b1
 azure-monitor-opentelemetry==1.6.8
+azure-ai-projects==1.0.0b9

@@ -667,7 +667,7 @@ const BatchStoryPage = () => {
         onConfirm={handleLeave}
         onCancel={() => setShowLeaveDialog(false)}
         confirmText="Return to home and lose progress"
-        cancelText="Stay here"
+        cancelText="Continue"
       />
     </div>
   );

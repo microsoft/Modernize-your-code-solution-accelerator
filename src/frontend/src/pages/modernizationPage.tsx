@@ -425,11 +425,11 @@ enum ProcessingStage {
 }
 
 enum Agents {
-  Verifier = "Semantic Verifier",
-  Checker = "Syntax Checker",
-  Picker = "Picker",
-  Migrator = "Migrator",
-  Agents = "Agents"
+  Verifier = "Semantic Verifier agent",
+  Checker = "Syntax Checker agent",
+  Picker = "Picker agent",
+  Migrator = "Migrator agent",
+  Agents = "Agent"
 }
 
 
@@ -489,7 +489,7 @@ const ModernizationPage = () => {
   // State for the loading component
   const [showLoading, setShowLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
-
+  const [selectedFilebg, setSelectedFile] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = React.useState<string>("")
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([])
@@ -719,6 +719,7 @@ const ModernizationPage = () => {
   // Update files state when Redux fileList changes
   useEffect(() => {
     if (reduxFileList && reduxFileList.length > 0) {
+      setAllFilesCompleted(false);
       // Map the Redux fileList to our FileItem format
       const fileItems: FileItem[] = reduxFileList.filter(file => file.type !== 'summary').map((file: any, index: number) => ({
 
@@ -784,111 +785,137 @@ const ModernizationPage = () => {
 
 
   //new PT FR ends
+  const updateSummaryStatus = async () => {
+    try {
+      const latestBatch = await fetchBatchSummary(batchId!);
+      setBatchSummary(latestBatch);
+      const allFilesDone = latestBatch.files.every(file =>
+        ["completed", "failed", "error"].includes(file.status?.toLowerCase() || "")
+      );
+  
+      if (allFilesDone) {
+        setAllFilesCompleted(true);
+        const hasUsableFile = latestBatch.files.some(file =>
+          file.status?.toLowerCase() === "completed" &&
+          file.file_result !== "error" &&
+          !!file.translated_content?.trim()
+        );
+  
+        setIsZipButtonDisabled(!hasUsableFile);
+  
+        setFiles(prevFiles => {
+          const updated = [...prevFiles];
+          const summaryIndex = updated.findIndex(f => f.id === "summary");
+  
+          if (summaryIndex !== -1) {
+            updated[summaryIndex] = {
+              ...updated[summaryIndex],
+              status: "completed", 
+              errorCount: latestBatch.error_count,
+              warningCount: latestBatch.warning_count,
+            };
+          }
+  
+          return updated;
+        });
+      }
+    } catch (err) {
+      console.error("Failed to update summary status:", err);
+    }
+  };
+
   // Handle WebSocket messages
   const handleWebSocketMessage = useCallback(async (data: WebSocketMessage) => {
     console.log('Received WebSocket message:', data);
-
+  
     if (!data || !data.file_id) {
       console.warn('Received invalid WebSocket message:', data);
       return;
     }
-
-    if (data.file_id) {
-      currentProcessingFileRef.current = data.file_id;
-    }
-    // Update process steps dynamically from agent_type
+  
+    setFileId(data.file_id);
+  
     const agent = formatAgent(data.agent_type);
     const message = formatDescription(data.agent_message);
-    setFileId(data.file_id);
-
-    // Update file status based on the message
+    data.agent_type = agent;
+    data.agent_message = message;
+  
     setFiles(prevFiles => {
       const fileIndex = prevFiles.findIndex(file => file.fileId === data.file_id);
-
-      if (fileIndex === -1) {
-        console.warn(`File with ID ${data.file_id} not found in the file list`);
-        return prevFiles;
-      }
-      data.agent_message = message;
-      data.agent_type = agent;
-      const updatedFiles = [...prevFiles];
-      const newTrackLog = updatedFiles[fileIndex].file_track_log?.some(entry =>
+      if (fileIndex === -1) return prevFiles;
+  
+      const newTrackLog = prevFiles[fileIndex].file_track_log?.some(entry =>
         entry.agent_type === data.agent_type && entry.agent_message === data.agent_message
       )
-        ? updatedFiles[fileIndex].file_track_log
-        : [data, ...(updatedFiles[fileIndex].file_track_log || [])];
+        ? prevFiles[fileIndex].file_track_log
+        : [data, ...(prevFiles[fileIndex].file_track_log || [])];
+  
+      const updatedFiles = [...prevFiles];
       updatedFiles[fileIndex] = {
         ...updatedFiles[fileIndex],
         status: data.process_status,
         file_track_log: newTrackLog,
         file_track_percentage: getTrackPercentage(data.process_status, newTrackLog),
       };
-
-      // Update summary status
-      const summaryIndex = updatedFiles.findIndex(file => file.id === 'summary');
-      if (summaryIndex !== -1) {
-        const totalFiles = updatedFiles.filter(file => file.id !== 'summary').length;
-        const completedFiles = updatedFiles.filter(file => file.status === 'completed' && file.id !== 'summary').length;
-        const newAllFilesCompleted = completedFiles === totalFiles && totalFiles > 0;
-        setAllFilesCompleted(newAllFilesCompleted);
-
-        updatedFiles[summaryIndex] = {
-          ...updatedFiles[summaryIndex],
-          status: newAllFilesCompleted ? 'completed' : 'Processing'
-        };
-      }
-
+  
       return updatedFiles;
     });
-
-    // Fetch file content if processing is completed
+  
     if (data.process_status === 'completed') {
       try {
         const newFileUpdate = await fetchFileFromAPI(data.file_id);
-        const batchSumamry = await fetchBatchSummary(data.batch_id);
-        setBatchSummary(batchSumamry);
-        setFiles(currentFiles => {
-          const c = currentFiles.map(f =>
-            f.fileId === data.file_id ? {
-              ...f,
-              code: newFileUpdate.content,
-              status: data.process_status,
-              translatedCode: newFileUpdate.translated_content,
-              errorCount: fileErrorCounter(newFileUpdate),
-              warningCount: fileWarningCounter(newFileUpdate),
-              file_result: newFileUpdate.file_result,
-              file_logs: filesLogsBuilder(newFileUpdate),
-            } : f
-
-          );
-          // Update summary status
-          const summaryIndex = c.findIndex(file => file.id === 'summary');
-          if (summaryIndex !== -1) {
-
-            setAllFilesCompleted(batchSumamry.status === "completed");
-            if (batchSumamry.status === "completed" && batchSumamry.hasFiles > 0) {
-              setIsZipButtonDisabled(false);
-            }
-
-            c[summaryIndex] = {
-              ...c[summaryIndex],
-              errorCount: batchSumamry.error_count,
-              warningCount: batchSumamry.warning_count,
-              status: batchSumamry.status === "completed" ? batchSumamry.status : 'Processing'
-            };
-          }
-          return c;
-        }
+  
+        setFiles(prevFiles =>
+          prevFiles.map(file =>
+            file.fileId === data.file_id
+              ? {
+                  ...file,
+                  code: newFileUpdate.content,
+                  translatedCode: newFileUpdate.translated_content,
+                  status: data.process_status,
+                  errorCount: fileErrorCounter(newFileUpdate),
+                  warningCount: fileWarningCounter(newFileUpdate),
+                  file_result: newFileUpdate.file_result,
+                  file_logs: filesLogsBuilder(newFileUpdate),
+                }
+              : file
+          )
         );
-        // updateProgressPercentage();
-      } catch (error) {
-        console.error('Error fetching completed file:', error);
+  
+        //Check and update summary + download status
+        await updateSummaryStatus();
+  
+      } catch (err) {
+        console.error("Error updating after file completion:", err);
       }
-    } else {
-      // updateProgressPercentage();
     }
-  }, [files, fileId]);
+  }, [updateSummaryStatus]);
 
+useEffect(() => {
+    const areAllFilesTerminal = files.every(file =>
+      file.id === "summary" || // skip summary
+      ["completed", "failed", "error"].includes(file.status?.toLowerCase() || "")
+    );
+  
+    if (files.length > 1 && areAllFilesTerminal && !allFilesCompleted) {
+      updateSummaryStatus(); 
+    }
+  }, [files, allFilesCompleted]);
+
+  
+useEffect(() => {
+  const nonSummaryFiles = files.filter(f => f.id !== "summary");
+  const completedCount = nonSummaryFiles.filter(f => f.status === "completed").length;
+
+  if (
+    nonSummaryFiles.length > 0 &&
+    completedCount === nonSummaryFiles.length &&
+    !allFilesCompleted
+  ) {
+    updateSummaryStatus(); //single source of truth
+  }
+}, [files, allFilesCompleted, batchId]);
+  //new end
   // Listen for WebSocket messages using the WebSocketService
   useEffect(() => {
     webSocketService.on('message', handleWebSocketMessage);
@@ -1239,6 +1266,10 @@ const ModernizationPage = () => {
     navigate("/");
   };
 
+  const handleClick = (file: string) => {
+    setSelectedFile(file === selectedFilebg ? null : file);
+  };
+
   return (
     <div className={styles.root}>
       <div onClick={handleHeaderClick} style={{ cursor: "pointer" }}>
@@ -1296,6 +1327,10 @@ const ModernizationPage = () => {
                           // Don't allow selecting queued files
                           if (file.status === "ready_to_process") return;
                           setSelectedFileId(file.id);
+                          handleClick(file.id);
+                        }}
+                        style={{
+                          backgroundColor: selectedFilebg === file.id ? "#EBEBEB" : "var(--NeutralBackground1-Rest)",
                         }}
                       >
                         {isSummary ? (
