@@ -1,8 +1,8 @@
 """FastAPI API routes for file processing and conversion."""
 
+# Standard library
 import asyncio
 import io
-# Standard library
 import logging
 import os
 import zipfile
@@ -10,19 +10,6 @@ from typing import Optional
 
 # Third-party
 from azure.monitor.opentelemetry import configure_azure_monitor
-from fastapi.responses import Response
-from opentelemetry import trace
-from opentelemetry.trace import Status, StatusCode
-
-# Local imports
-from api.auth.auth_utils import get_authenticated_user
-from api.event_utils import track_event_if_configured
-from api.status_updates import app_connection_manager, close_connection
-from sql_agents.process_batch import process_batch_async
-
-from common.logger.app_logger import AppLogger
-from common.services.batch_service import BatchService
-
 from fastapi import (
     APIRouter,
     File,
@@ -34,6 +21,17 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import Response
+from opentelemetry import trace
+from opentelemetry.trace import Status, StatusCode
+
+# Local application
+from api.auth.auth_utils import get_authenticated_user
+from api.event_utils import track_event_if_configured
+from api.status_updates import app_connection_manager, close_connection
+from common.logger.app_logger import AppLogger
+from common.services.batch_service import BatchService
+from sql_agents.process_batch import process_batch_async
+
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
