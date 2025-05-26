@@ -20,7 +20,6 @@ from api.event_utils import track_event_if_configured
 from api.status_updates import app_connection_manager, close_connection
 from sql_agents.process_batch import process_batch_async
 
-
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
 
@@ -35,9 +34,6 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import Response
-
-from api.auth.auth_utils import get_authenticated_user
-from api.event_utils import track_event_if_configured
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
