@@ -3,6 +3,7 @@ omit =
     src/tests/backend/*
     */test_*.py
     */*_test.py
+    */__init__.py
 
 [report]
 exclude_lines =
