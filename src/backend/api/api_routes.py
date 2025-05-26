@@ -10,6 +10,7 @@ from typing import Optional
 
 # Third-party
 from azure.monitor.opentelemetry import configure_azure_monitor
+
 from fastapi import (
     APIRouter,
     File,
@@ -21,6 +22,7 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import Response
+
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
 
@@ -31,7 +33,6 @@ from api.status_updates import app_connection_manager, close_connection
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
 from sql_agents.process_batch import process_batch_async
-
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
