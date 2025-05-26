@@ -66,6 +66,7 @@ logging.getLogger("azure.monitor.opentelemetry.exporter.export._base").setLevel(
     logging.WARNING
 )
 
+
 # start processing the batch
 @router.post("/start-processing")
 async def start_processing(request: Request):
@@ -463,7 +464,6 @@ async def get_batch_summary(request: Request, batch_id: str):
         if not user_id:
             track_event_if_configured("UserIdNotFound", {"status_code": 400, "detail": "no user"})
             raise HTTPException(status_code=401, detail="User not authenticated")
-
         # Retrieve batch summary
         batch_summary = await batch_service.get_batch_summary(batch_id, user_id)
         if not batch_summary:
