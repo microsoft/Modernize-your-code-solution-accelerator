@@ -1,6 +1,7 @@
 name: Test Workflow with Coverage - Code-Gen
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
