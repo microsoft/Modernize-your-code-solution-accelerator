@@ -1,6 +1,7 @@
 # Standard library
-import os
 import logging
+import os
+
 # Third-party
 from azure.monitor.events.extension import track_event
 from dotenv import load_dotenv
@@ -13,4 +14,6 @@ def track_event_if_configured(event_name: str, event_data: dict):
     if instrumentation_key:
         track_event(event_name, event_data)
     else:
-        logging.warning(f"Skipping track_event for {event_name} as Application Insights is not configured")
+        logging.warning(
+            f"Skipping track_event for {event_name} as Application Insights is not configured"
+        )

@@ -8,9 +8,15 @@ import os
 import zipfile
 from typing import Optional
 
+# Local application
+from api.auth.auth_utils import get_authenticated_user
+from api.event_utils import track_event_if_configured
+from api.status_updates import app_connection_manager, close_connection
+
 # Third-party
 from azure.monitor.opentelemetry import configure_azure_monitor
-
+from common.logger.app_logger import AppLogger
+from common.services.batch_service import BatchService
 from fastapi import (
     APIRouter,
     File,
@@ -22,16 +28,8 @@ from fastapi import (
     WebSocketDisconnect,
 )
 from fastapi.responses import Response
-
 from opentelemetry import trace
 from opentelemetry.trace import Status, StatusCode
-
-# Local application
-from api.auth.auth_utils import get_authenticated_user
-from api.event_utils import track_event_if_configured
-from api.status_updates import app_connection_manager, close_connection
-from common.logger.app_logger import AppLogger
-from common.services.batch_service import BatchService
 from sql_agents.process_batch import process_batch_async
 
 router = APIRouter()
@@ -42,10 +40,14 @@ instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 if instrumentation_key:
     # Configure Application Insights if the Instrumentation Key is found
     configure_azure_monitor(connection_string=instrumentation_key)
-    logging.info("Application Insights configured with the provided Instrumentation Key")
+    logging.info(
+        "Application Insights configured with the provided Instrumentation Key"
+    )
 else:
     # Log a warning if the Instrumentation Key is not found
-    logging.warning("No Application Insights Instrumentation Key found. Skipping configuration")
+    logging.warning(
+        "No Application Insights Instrumentation Key found. Skipping configuration"
+    )
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -109,11 +111,10 @@ async def start_processing(request: Request):
         translate_from = payload.get("translate_from")
         translate_to = payload.get("translate_to")
 
-        track_event_if_configured("ProcessingStart", {
-            "batch_id": batch_id,
-            "from": translate_from,
-            "to": translate_to
-        })
+        track_event_if_configured(
+            "ProcessingStart",
+            {"batch_id": batch_id, "from": translate_from, "to": translate_to},
+        )
 
         await process_batch_async(
             batch_id=batch_id, convert_from=translate_from, convert_to=translate_to
@@ -213,7 +214,9 @@ async def download_files(batch_id: str):
         }
 
         # Return the zip file as a streaming response
-        track_event_if_configured("DownloadZipSuccess", {"batch_id": batch_id, "file_count": len(file_data)})
+        track_event_if_configured(
+            "DownloadZipSuccess", {"batch_id": batch_id, "file_count": len(file_data)}
+        )
         return Response(zip_data, media_type="application/zip", headers=headers)
     except Exception as e:
         span = trace.get_current_span()
@@ -306,7 +309,9 @@ async def batch_status_updates(
         if span is not None:
             span.record_exception(e)
             span.set_status(Status(StatusCode.ERROR, str(e)))
-        track_event_if_configured("WebSocketError", {"batch_id": batch_id, "error": str(e)})
+        track_event_if_configured(
+            "WebSocketError", {"batch_id": batch_id, "error": str(e)}
+        )
         await close_connection(batch_id)
 
 
@@ -411,7 +416,9 @@ async def get_batch_status(request: Request, batch_id: str):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"status_code": 400, "detail": "no user"})
+            track_event_if_configured(
+                "UserIdNotFound", {"status_code": 400, "detail": "no user"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate batch_id format
@@ -422,10 +429,14 @@ async def get_batch_status(request: Request, batch_id: str):
         # Fetch batch details
         batch_data = await batch_service.get_batch(batch_id, user_id)
         if not batch_data:
-            track_event_if_configured("BatchNotFound", {"batch_id": batch_id, "user_id": user_id})
+            track_event_if_configured(
+                "BatchNotFound", {"batch_id": batch_id, "user_id": user_id}
+            )
             raise HTTPException(status_code=404, detail="Batch not found")
 
-        track_event_if_configured("BatchStoryRetrieved", {"batch_id": batch_id, "user_id": user_id})
+        track_event_if_configured(
+            "BatchStoryRetrieved", {"batch_id": batch_id, "user_id": user_id}
+        )
         return batch_data
     except HTTPException as e:
         span = trace.get_current_span()
@@ -457,14 +468,20 @@ async def get_batch_summary(request: Request, batch_id: str):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"status_code": 400, "detail": "no user"})
+            track_event_if_configured(
+                "UserIdNotFound", {"status_code": 400, "detail": "no user"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
         # Retrieve batch summary
         batch_summary = await batch_service.get_batch_summary(batch_id, user_id)
         if not batch_summary:
-            track_event_if_configured("BatchSummaryNotFound", {"batch_id": batch_id, "user_id": user_id})
+            track_event_if_configured(
+                "BatchSummaryNotFound", {"batch_id": batch_id, "user_id": user_id}
+            )
             raise HTTPException(status_code=404, detail="No batch summary found.")
-        track_event_if_configured("BatchSummaryRetrieved", {"batch_id": batch_id, "user_id": user_id})
+        track_event_if_configured(
+            "BatchSummaryRetrieved", {"batch_id": batch_id, "user_id": user_id}
+        )
         return batch_summary
 
     except HTTPException as e:
@@ -578,7 +595,9 @@ async def upload_file(
         user_id = authenticated_user.user_principal_id
 
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"status_code": 400, "detail": "no user"})
+            track_event_if_configured(
+                "UserIdNotFound", {"status_code": 400, "detail": "no user"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate batch_id format
@@ -713,7 +732,9 @@ async def get_file_details(request: Request, file_id: str):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"endpoint": "get_file_details"})
+            track_event_if_configured(
+                "UserIdNotFound", {"endpoint": "get_file_details"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate file_id format
@@ -780,7 +801,9 @@ async def delete_batch_details(request: Request, batch_id: str):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"endpoint": "delete_batch_details"})
+            track_event_if_configured(
+                "UserIdNotFound", {"endpoint": "delete_batch_details"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate file_id format
@@ -791,7 +814,9 @@ async def delete_batch_details(request: Request, batch_id: str):
             )
 
         await batch_service.delete_batch_and_files(batch_id, user_id)
-        track_event_if_configured("BatchDeleted", {"batch_id": batch_id, "user_id": user_id})
+        track_event_if_configured(
+            "BatchDeleted", {"batch_id": batch_id, "user_id": user_id}
+        )
         logger.info(f"Batch deleted successfully: {batch_id}")
         return {"message": "Batch deleted successfully"}
 
@@ -845,7 +870,9 @@ async def delete_file_details(request: Request, file_id: str):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"endpoint": "delete_file_details"})
+            track_event_if_configured(
+                "UserIdNotFound", {"endpoint": "delete_file_details"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate file_id format
@@ -905,7 +932,9 @@ async def delete_all_details(request: Request):
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"endpoint": "delete_all_details"})
+            track_event_if_configured(
+                "UserIdNotFound", {"endpoint": "delete_all_details"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Validate file_id format
@@ -942,7 +971,9 @@ async def delete_all_details(request: Request):
 
 
 @router.get("/batch-history")
-async def list_batch_history(request: Request, offset: int = 0, limit: Optional[int] = None):
+async def list_batch_history(
+    request: Request, offset: int = 0, limit: Optional[int] = None
+):
     """
     Retrieve batch processing history for the authenticated user.
 
@@ -1005,7 +1036,9 @@ async def list_batch_history(request: Request, offset: int = 0, limit: Optional[
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
         if not user_id:
-            track_event_if_configured("UserIdNotFound", {"endpoint": "list_batch_history"})
+            track_event_if_configured(
+                "UserIdNotFound", {"endpoint": "list_batch_history"}
+            )
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         # Retrieve batch history
@@ -1016,7 +1049,9 @@ async def list_batch_history(request: Request, offset: int = 0, limit: Optional[
             track_event_if_configured("BatchHistoryEmpty", {"user_id": user_id})
             return HTTPException(status_code=404, detail="No batch history found.")
 
-        track_event_if_configured("BatchHistoryRetrieved", {"user_id": user_id, "count": len(batch_history)})
+        track_event_if_configured(
+            "BatchHistoryRetrieved", {"user_id": user_id, "count": len(batch_history)}
+        )
         return batch_history
 
     except HTTPException as e:
