@@ -1,12 +1,14 @@
-import uvicorn
-
-# Import our route modules
+"""Create and configure the FastAPI application."""
 from api.api_routes import router as backend_router
+
 from common.logger.app_logger import AppLogger
+
 from dotenv import load_dotenv
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+import uvicorn
 # from agent_services.agents_routes import router as agents_router
 
 # Load environment variables
@@ -17,9 +19,7 @@ logger = AppLogger("app")
 
 
 def create_app() -> FastAPI:
-    """
-    Factory function to create and configure the FastAPI application
-    """
+    """Create and return the FastAPI application instance."""
     app = FastAPI(title="Code Gen Accelerator", version="1.0.0")
 
     # Configure CORS
@@ -37,7 +37,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health_check():
-        """Health check endpoint"""
+        """Health check endpoint."""
         return {"status": "healthy"}
 
     return app

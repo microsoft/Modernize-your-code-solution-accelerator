@@ -14,7 +14,9 @@ from common.models.api import (
     ProcessStatus,
 )
 from common.storage.blob_factory import BlobStorageFactory
+
 from fastapi import HTTPException, UploadFile
+
 from semantic_kernel.contents import AuthorRole
 
 
@@ -29,7 +31,7 @@ class BatchService:
         self.database = await DatabaseFactory.get_database()
 
     async def get_batch(self, batch_id: UUID, user_id: str) -> Optional[Dict]:
-        """Retrieve batch details including files"""
+        """Retrieve batch details including files."""
         batch = await self.database.get_batch(user_id, batch_id)
         if not batch:
             return None
@@ -38,7 +40,7 @@ class BatchService:
         return {"batch": batch, "files": files}
 
     async def get_file(self, file_id: str) -> Optional[Dict]:
-        """Retrieve file details"""
+        """Retrieve file details."""
         file = await self.database.get_file(file_id)
         if not file:
             return None
@@ -46,7 +48,7 @@ class BatchService:
         return {"file": file}
 
     async def get_file_report(self, file_id: str) -> Optional[Dict]:
-        """Retrieve file logs"""
+        """Retrieve file logs."""
         file = await self.database.get_file(file_id)
         file_record = FileRecord.fromdb(file)
         batch = await self.database.get_batch_from_id(str(file_record.batch_id))
@@ -59,7 +61,7 @@ class BatchService:
             storage = await BlobStorageFactory.get_storage()
             if file_record.translated_path not in ["", None]:
                 translated_content = await storage.get_file(file_record.translated_path)
-        except (FileNotFoundError, IOError) as e:
+        except IOError as e:
             self.logger.error(f"Error downloading file content: {str(e)}")
 
         return {
@@ -71,20 +73,19 @@ class BatchService:
         }
 
     async def get_file_translated(self, file: dict):
-        """Retrieve file logs"""
-
+        """Retrieve file logs."""
         translated_content = ""
         try:
             storage = await BlobStorageFactory.get_storage()
             if file["translated_path"] not in ["", None]:
                 translated_content = await storage.get_file(file["translated_path"])
-        except (FileNotFoundError, IOError) as e:
+        except IOError as e:
             self.logger.error(f"Error downloading file content: {str(e)}")
 
         return translated_content
 
     async def get_batch_for_zip(self, batch_id: str) -> List[Tuple[str, str]]:
-        """Retrieve batch details including files in a single zip archive"""
+        """Retrieve batch details including files in a single zip archive."""
         files = []
         try:
             files_meta = await self.database.get_batch_files(batch_id)
@@ -108,7 +109,7 @@ class BatchService:
             raise  # Re-raise for caller handling
 
     async def get_batch_summary(self, batch_id: str, user_id: str) -> Optional[Dict]:
-        """Retrieve file logs"""
+        """Retrieve file logs."""
         try:
             try:
                 batch = await self.database.get_batch(user_id, batch_id)
@@ -148,7 +149,7 @@ class BatchService:
             raise  # Re-raise for caller handling
 
     async def delete_batch(self, batch_id: UUID, user_id: str):
-        """Delete a batch along with its files and logs"""
+        """Delete a batch along with its files and logs."""
         batch = await self.database.get_batch(user_id, batch_id)
         if batch:
             await self.database.delete_batch(user_id, batch_id)
@@ -157,7 +158,7 @@ class BatchService:
             return {"message": "Batch deleted successfully", "batch_id": str(batch_id)}
 
     async def delete_file(self, file_id: UUID, user_id: str):
-        """Delete a file and its logs, and update batch file count"""
+        """Delete a file and its logs, and update batch file count."""
         try:
             # Ensure storage is available
             storage = await BlobStorageFactory.get_storage()
@@ -208,11 +209,11 @@ class BatchService:
             raise RuntimeError("File deletion failed") from e
 
     async def delete_all(self, user_id: str):
-        """Delete all batches, files, and logs for a user"""
+        """Delete all batches, files, and logs for a user."""
         return await self.database.delete_all(user_id)
 
     async def get_all_batches(self, user_id: str):
-        """Retrieve all batches for a user"""
+        """Retrieve all batches for a user."""
         return await self.database.get_user_batches(user_id)
 
     def is_valid_uuid(self, value: str) -> bool:
@@ -235,7 +236,7 @@ class BatchService:
         return file_path
 
     async def upload_file_to_batch(self, batch_id: str, user_id: str, file: UploadFile):
-        """Upload a file, create entries in the database, and log the process"""
+        """Upload a file, create entries in the database, and log the process."""
         try:
             # Ensure storage is available
             storage = await BlobStorageFactory.get_storage()
@@ -362,7 +363,7 @@ class BatchService:
         error_count: int,
         syntax_count: int,
     ):
-        """Update file entry in the database"""
+        """Update file entry in the database."""
         file = await self.database.get_file(file_id)
         if not file:
             raise HTTPException(status_code=404, detail="File not found")
@@ -376,7 +377,7 @@ class BatchService:
         return file_record
 
     async def update_file_record(self, file_record: FileRecord):
-        """Update file entry in the database"""
+        """Update file entry in the database."""
         await self.database.update_file(file_record)
 
     async def create_file_log(
@@ -388,7 +389,7 @@ class BatchService:
         agent_type: AgentType,
         author_role: AuthorRole,
     ):
-        """Create a new file log entry in the database"""
+        """Create a new file log entry in the database."""
         await self.database.add_file_log(
             UUID(file_id),
             description,
@@ -399,7 +400,7 @@ class BatchService:
         )
 
     async def update_batch(self, batch_id: str, status: ProcessStatus):
-        """Update batch status to completed"""
+        """Update batch status to completed."""
         batch = await self.database.get_batch_from_id(batch_id)
         if not batch:
             raise HTTPException(status_code=404, detail="Batch not found")
@@ -409,7 +410,7 @@ class BatchService:
         await self.database.update_batch(batch_record)
 
     async def create_candidate(self, file_id: str, candidate: str):
-        """Create a new candidate entry in the database and upload the candita file to storage"""
+        """Create a new candidate entry in the database and upload the candita file to storage."""
         # Ensure storage is available
         storage = await BlobStorageFactory.get_storage()
         if not storage:
@@ -462,7 +463,7 @@ class BatchService:
             # file didn't completed successfully
             file_record.status = ProcessStatus.COMPLETED
 
-            if(file_record.translated_path == None or file_record.translated_path == ""):
+            if (file_record.translated_path is None or file_record.translated_path == ""):
                 file_record.file_result = FileResult.ERROR
 
                 error_count, syntax_count = await self.get_file_counts(
@@ -519,11 +520,11 @@ class BatchService:
         return error_count, syntax_count
 
     async def get_batch_from_id(self, batch_id: str):
-        """Retrieve a batch record from the database"""
+        """Retrieve a batch record from the database."""
         return await self.database.get_batch_from_id(batch_id)
 
     async def delete_all_from_storage_cosmos(self, user_id: str):
-        """Delete a all files from storage, remove its database entry, logs"""
+        """Delete a all files from storage, remove its database entry, logs."""
         try:
             # Ensure storage is available
             storage = await BlobStorageFactory.get_storage()

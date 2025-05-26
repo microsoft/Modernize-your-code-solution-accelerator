@@ -1,4 +1,7 @@
 // Creates Azure dependent resources for Azure AI studio
+@minLength(3)
+@maxLength(15)
+@description('Solution Name')
 param solutionName string
 param solutionLocation string
 param keyVaultName string
@@ -8,17 +11,19 @@ param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
+var abbrs = loadJsonContent('./abbreviations.json')
 
-var storageName = '${solutionName}hubstorage'
+var storageName = '${abbrs.storage.storageAccount}${solutionName}'
+
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${solutionName}-aiservices'
-var workspaceName = '${solutionName}-workspace'
-var keyvaultName = '${solutionName}-kv'
+var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
+var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
+var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-var aiHubName = '${solutionName}-aihub'
-var aiHubFriendlyName = aiHubName
+var azureAiHubName = '${abbrs.ai.aiHub}${solutionName}'
+var aiHubFriendlyName = azureAiHubName
 var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${solutionName}-aiproject'
+var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiProjectFriendlyName = aiProjectName
 var aiSearchName = '${solutionName}-search'
 var applicationInsightsName = '${solutionName}-appi'
@@ -53,7 +58,9 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-var storageNameCleaned = replace(storageName, '-', '')
+var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
+
+
 
 
 resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
@@ -125,7 +132,7 @@ resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
 }
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
-  name: aiHubName
+  name: azureAiHubName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -142,7 +149,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview'
   kind: 'hub'
 
   resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${aiHubName}-connection-AzureOpenAI'
+    name: '${azureAiHubName}-connection-AzureOpenAI'
     properties: {
       category: 'AIServices'
       target: aiServicesEndpoint
@@ -312,3 +319,5 @@ output storageAccountName string = storageNameCleaned
 output logAnalyticsId string = logAnalytics.id
 output storageAccountId string = storage.id
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
+
+output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'

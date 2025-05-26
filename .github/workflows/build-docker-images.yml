@@ -1,0 +1,43 @@
+name: Build Docker and Optional Push
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - demo
+      - hotfix
+  pull_request:
+    branches:
+      - main
+      - dev
+      - demo
+      - hotfix
+    types:
+      - opened
+      - ready_for_review
+      - reopened
+      - synchronize
+  merge_group:
+  workflow_dispatch:
+
+jobs:
+  docker-build:
+    strategy:
+      matrix:
+        include:
+          - app_name: cmsabackend
+            dockerfile: docker/Backend.Dockerfile
+            password_secret: DOCKER_PASSWORD
+          - app_name: cmsafrontend
+            dockerfile: docker/Frontend.Dockerfile
+            password_secret: DOCKER_PASSWORD
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      registry: cmsacontainerreg.azurecr.io
+      username: cmsacontainerreg
+      password_secret: ${{ matrix.password_secret }}
+      app_name: ${{ matrix.app_name }}
+      dockerfile: ${{ matrix.dockerfile }}
+      push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'hotfix' }}
+    secrets: inherit
