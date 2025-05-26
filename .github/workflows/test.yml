@@ -6,6 +6,7 @@ on:
       - main
       - dev
       - demo
+      - hotfix
   pull_request:
     types:
       - opened
@@ -16,6 +17,7 @@ on:
       - main
       - dev
       - demo
+      - hotfix
 
 jobs:
 #   frontend_tests:
