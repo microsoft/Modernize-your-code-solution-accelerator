@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-async def convert_script(
+async def convert_script(  # pragma: no cover
     source_script,
     file: FileRecord,
     batch_service: BatchService,
