@@ -2,11 +2,11 @@
 
 import asyncio
 import io
-from typing import Optional
 # Standard library
 import logging
 import os
 import zipfile
+from typing import Optional
 
 # Third-party
 from azure.monitor.opentelemetry import configure_azure_monitor
@@ -469,7 +469,6 @@ async def get_batch_summary(request: Request, batch_id: str):
         if not batch_summary:
             track_event_if_configured("BatchSummaryNotFound", {"batch_id": batch_id, "user_id": user_id})
             raise HTTPException(status_code=404, detail="No batch summary found.")
-        
         track_event_if_configured("BatchSummaryRetrieved", {"batch_id": batch_id, "user_id": user_id})
         return batch_summary
 
