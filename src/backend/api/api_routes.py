@@ -5,7 +5,6 @@ import asyncio
 import io
 import logging
 import os
-
 import zipfile
 from typing import Optional
 
@@ -33,7 +32,6 @@ from fastapi import (
 from fastapi.responses import Response
 
 from opentelemetry import trace
-
 from opentelemetry.trace import Status, StatusCode
 
 from sql_agents.process_batch import process_batch_async
