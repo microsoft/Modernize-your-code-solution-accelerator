@@ -4,6 +4,7 @@ import os
 
 # Third-party
 from azure.monitor.events.extension import track_event
+
 from dotenv import load_dotenv
 
 load_dotenv()
