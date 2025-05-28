@@ -100,22 +100,6 @@ module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identit
   }
 }
 
-// TODO - verifty if Owner is needed
-@description('This is the built-in owner role. See https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner')
-resource ownerRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  scope: resourceGroup()
-  name: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635'
-}
-
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, managedIdentity.name, ownerRoleDefinition.id)
-  properties: {
-    principalId: managedIdentity.outputs.principalId
-    roleDefinitionId: ownerRoleDefinition.id
-    principalType: 'ServicePrincipal' 
-  }
-}
-
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: take('${abbrs.security.keyVault}${resourcePrefix}-keyvault-deployment', 64)
   params: {
@@ -183,6 +167,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
 
 var cosmosAccountName = toLower('${abbrs.databases.cosmosDBDatabase}${resourcePrefix}databaseAccount')
 
+resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
+  name: '${cosmosAccountName}/00000000-0000-0000-0000-000000000002'
+}
+
 module databaseAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
   name: 'cosmosdb-${cosmosAccountName}-deployment'
   params: {
@@ -229,6 +217,12 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.15.0' =
         }
         ]
         name: cosmosdbDatabase
+      }
+    ]
+    dataPlaneRoleAssignments: [
+      {
+        principalId: managedIdentity.outputs.principalId
+        roleDefinitionId: sqlContributorRoleDefinition.id
       }
     ]
   }
@@ -430,27 +424,5 @@ module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
-  }
-}
-
-resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
-  name: '${cosmosAccountName}/00000000-0000-0000-0000-000000000002'
-}
-
-var script = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${sqlContributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${managedIdentity.outputs.principalId}"'
-
-module cosmosRoleAssignmentScript 'br/public:avm/res/resources/deployment-script:0.5.1' = {
-  name: 'deploymentScriptCLI-${resourcePrefix}'
-  params: {
-    kind: 'AzureCLI'
-    name: 'rdsmin001'
-    azCliVersion: '2.69.0'
-    location: resourceGroup().location
-    managedIdentities: {
-      userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
-      ]
-    }
-    scriptContent: script
   }
 }
