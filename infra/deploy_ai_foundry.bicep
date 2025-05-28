@@ -30,6 +30,9 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
   params: {
     name: storageAccountName
     location: location
+    managedIdentities: {
+      systemAssigned: true
+    }
     kind: 'StorageV2'
     skuName: 'Standard_LRS'
     publicNetworkAccess: 'Enabled'
@@ -69,6 +72,9 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     associatedKeyVaultResourceId: keyVault.id
     associatedStorageAccountResourceId: storageAccount.outputs.resourceId
     publicNetworkAccess: 'Enabled'
+    managedIdentities: {
+      systemAssigned: true
+    }
     connections: [
       {
         name: aiServicesName
@@ -100,12 +106,14 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     location: location
     hubResourceId: hub.outputs.resourceId
     publicNetworkAccess: 'Enabled'
-    hbiWorkspace: false
+    managedIdentities: {
+      systemAssigned: true
+    }
     roleAssignments: [
       {
         principalId: managedIdentityObjectId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Azure AI Developer'
+        roleDefinitionIdOrName: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
       }
     ]
   }
@@ -113,13 +121,14 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
 
 // get reference to the AI Hub project to get access to the discovery URL property (not presently available on AVM)
 // adjust this logic if support on the AVM module is added 
-// resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = {
-//   name: projectName
-//   dependsOn: [project]
-// }
+resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-01' existing = {
+  name: projectName
+  dependsOn: [project]
+}
 
-//var aiProjectConnString = '${split(projectReference.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${projectReference.name}'
-var aiProjectConnString = '${location}.api.azureml.ms;${subscription().subscriptionId};${resourceGroup().name};${projectName}'
+// TODO - assess if this works
+var aiProjectConnString = '${split(projectReference.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${projectReference.name}'
+//var aiProjectConnString = '${location}.api.azureml.ms;${subscription().subscriptionId};${resourceGroup().name};${projectName}'
 
 resource projectConnStringSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
   parent: keyVault
