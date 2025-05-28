@@ -62,6 +62,7 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
     kind: 'AIServices'
     customSubDomainName: azureAiServicesName
     disableLocalAuth: false
+    publicNetworkAccess: 'Enabled'
     deployments: [
       {
         name: llmModel
@@ -171,6 +172,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
     name: toLower('${resourcePrefix}manenv')
     location: location
     zoneRedundant: false
+    publicNetworkAccess: 'Enabled'
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
@@ -187,11 +189,6 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.15.0' =
     name: cosmosAccountName
     enableAnalyticalStorage: true
     location: dblocation
-    // managedIdentities: {
-    //   userAssignedResourceIds: [
-    //     managedIdentity.outputs.resourceId
-    //   ]
-    // }
     networkRestrictions: {
       networkAclBypass: 'AzureServices'
       publicNetworkAccess: 'Enabled'
@@ -378,6 +375,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: 1
           memory: '2.0Gi'
         }
+        
       }
     ]
     ingressTargetPort: 8000
