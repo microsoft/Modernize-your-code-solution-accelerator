@@ -1,7 +1,7 @@
 {
     "ai": {
       "aiSearch": "srch-",
-      "aiServices": "aisa-",
+      "aiServices": "ais-",
       "aiVideoIndexer": "avi-",
       "machineLearningWorkspace": "mlw-",
       "openAIService": "oai-",
@@ -18,8 +18,8 @@
       "languageService": "lang-",
       "speechService": "spch-",
       "translator": "trsl-",
-      "aiHub": "aih-",
-      "aiHubProject": "aihp-"
+      "hub": "hub-",
+      "project": "proj-"
     },
     "analytics": {
       "analysisServicesServer": "as",
