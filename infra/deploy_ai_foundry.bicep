@@ -23,12 +23,11 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing =
 
 var aiServicesKey = aiServices.listKeys().key1
 var aiServicesEndpoint = aiServices.properties.endpoint
-var storageAccountName = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
 
 module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
-  name: 'foundry-storage-${storageAccountName}-deployment'
+  name: take('aifoundry-${storageName}-deployment', 64)
   params: {
-    name: storageAccountName
+    name: storageName
     location: location
     managedIdentities: {
       systemAssigned: true
@@ -62,7 +61,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
 }
 
 module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
-  name: 'ai-hub-${hubName}-deployment'
+  name: take('ai-foundry-${hubName}-deployment', 64)
   params: {
     name: hubName
     location: location
@@ -98,7 +97,7 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
 }
 
 module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
-  name: 'ai-project-${projectName}-deployment'
+  name: take('ai-foundry-${projectName}-deployment', 64)
   params: {
     name: projectName
     kind: 'Project'
@@ -126,9 +125,7 @@ resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-
   dependsOn: [project]
 }
 
-// TODO - assess if this works
 var aiProjectConnString = '${split(projectReference.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${projectReference.name}'
-//var aiProjectConnString = '${location}.api.azureml.ms;${subscription().subscriptionId};${resourceGroup().name};${projectName}'
 
 resource projectConnStringSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
   parent: keyVault
