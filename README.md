@@ -184,7 +184,7 @@ Check out similar solution accelerators
 | Solution Accelerator | Description |
 |---|---|
 | [Documen Knowledge Mining](https://github.com/microsoft/Document-Knowledge-Mining-Solution-Accelerator) | Extract structured information from unstructured documents using AI |
-| [Multi Agent Custom Automation Engine Solution Acceleratorr](https://github.com/microsoft/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/tree/main) | An AI-driven orchestration system that manages a group of AI agents to accomplish tasks based on user input |
+| [Multi Agent Custom Automation Engine Solution Accelerator](https://github.com/microsoft/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/tree/main) | An AI-driven orchestration system that manages a group of AI agents to accomplish tasks based on user input |
 | [Conversation Knowledge Mining](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) | Enable organizations to derive insights from volumes of conversational data using generative AI |
 
 <br/>   
