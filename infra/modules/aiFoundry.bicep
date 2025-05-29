@@ -1,28 +1,35 @@
+@description('The Azure region where resources will be deployed.')
 param location string
 
+@description('The name of the AI Foundry Project workspace.')
 param projectName string
-param hubName string 
 
-param storageName string 
-param keyVaultName string
-param gptModelName string
-param gptModelVersion string
-param managedIdentityObjectId string
+@description('The name of the AI Foundry Hub workspace.')
+param hubName string
 
+@description('The description of the AI Hub workspace.')
+param hubDescription string = hubName
+
+@description('The name of the storage account to be created for AI Foundry.')
+param storageName string
+
+@description('The resource ID of the Azure Key Vault to associate with AI Foundry.')
+param keyVaultResourceId string
+
+@description('The Princpal ID of the managed identity to assign access roles.')
+param managedIdentityPrincpalId string
+
+@description('The name of an existing Azure Cognitive Services account.')
 param aiServicesName string
 
-var aiHubDescription = 'AI Hub for Modernize Your Code'
-
-resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
-  name: keyVaultName
-}
+@description('Optional. Tags to be applied to the resources.')
+param tags object = {}
 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: aiServicesName
 }
 
 var aiServicesKey = aiServices.listKeys().key1
-var aiServicesEndpoint = aiServices.properties.endpoint
 
 module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
   name: take('aifoundry-${storageName}-deployment', 64)
@@ -52,11 +59,12 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
     supportsHttpsTrafficOnly: true
     roleAssignments: [
       {
-        principalId: managedIdentityObjectId
+        principalId: managedIdentityPrincpalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
+    tags: tags
   }
 }
 
@@ -67,8 +75,8 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     location: location
     sku: 'Standard'
     kind: 'Hub'
-    description: aiHubDescription
-    associatedKeyVaultResourceId: keyVault.id
+    description: hubDescription
+    associatedKeyVaultResourceId: keyVaultResourceId
     associatedStorageAccountResourceId: storageAccount.outputs.resourceId
     publicNetworkAccess: 'Enabled'
     managedIdentities: {
@@ -93,6 +101,7 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
         }
       }
     ]
+    tags: tags
   }
 }
 
@@ -110,11 +119,12 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     }
     roleAssignments: [
       {
-        principalId: managedIdentityObjectId
+        principalId: managedIdentityPrincpalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
       }
     ]
+    tags: tags
   }
 }
 
@@ -126,134 +136,6 @@ resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-
 }
 
 var aiProjectConnString = '${split(projectReference.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${projectReference.name}'
-
-resource projectConnStringSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-AI-PROJECT-CONN-STRING'
-  properties: {
-    value: aiProjectConnString
-  }
-}
-
-resource openAiKeySecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-KEY'
-  properties: {
-    value: aiServicesKey
-  }
-}
-
-resource cogServicesKeySecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'COG-SERVICES-KEY'
-  properties: {
-    value: aiServicesKey
-  }
-}
-
-resource tenantIdSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'TENANT-ID'
-  properties: {
-    value: subscription().tenantId
-  }
-}
-
-resource openAiInferenceEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-INFERENCE-ENDPOINT'
-  properties: {
-    value: ''
-  }
-}
-
-resource openAiInferenceKeySecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-INFERENCE-KEY'
-  properties: {
-    value: ''
-  }
-}
-
-resource openAiDeploymentModelSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPEN-AI-DEPLOYMENT-MODEL'
-  properties: {
-    value: gptModelName
-  }
-}
-
-resource openAiPreviewApiVersionSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-PREVIEW-API-VERSION'
-  properties: {
-    value: gptModelVersion
-  }
-}
-
-resource openAiEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-ENDPOINT'
-  properties: {
-    value: aiServicesEndpoint
-  }
-}
-
-resource openAiCuVersionSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-OPENAI-CU-VERSION'
-  properties: {
-    value: '?api-version=2024-12-01-preview'
-  }
-}
-
-resource azureSearchIndexSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-SEARCH-INDEX'
-  properties: {
-    value: 'transcripts_index'
-  }
-}
-
-resource cogServicesEndpointSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'COG-SERVICES-ENDPOINT'
-  properties: {
-    value: aiServicesEndpoint
-  }
-}
-
-resource cogServicesNameSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'COG-SERVICES-NAME'
-  properties: {
-    value: aiServices.name
-  }
-}
-
-resource azureSubscriptionIdSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-SUBSCRIPTION-ID'
-  properties: {
-    value: subscription().subscriptionId
-  }
-}
-
-resource azureResourceGroupSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-RESOURCE-GROUP'
-  properties: {
-    value: resourceGroup().name
-  }
-}
-
-resource azureLocationSecret 'Microsoft.KeyVault/vaults/secrets@2024-11-01' = {
-  parent: keyVault
-  name: 'AZURE-LOCATION'
-  properties: {
-    value: location
-  }
-}
 
 output projectName string = project.outputs.name
 output hubName string = hub.outputs.name

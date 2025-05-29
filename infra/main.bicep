@@ -89,7 +89,6 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   }
 }
 
-
 module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
   name: take('identity-${resourcesName}-deployment', 64)
   params: {
@@ -140,13 +139,13 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
   params: {
     location: azureAiServiceLocation
     hubName: '${abbrs.ai.hub}${resourcesName}'
+    hubDescription: 'AI Hub for Modernize Your Code'
     projectName: '${abbrs.ai.project}${resourcesName}'
     storageName: take('${abbrs.storage.storageAccount}ai${uniqueResourcesName}', 24)
-    keyVaultName: keyvault.outputs.name
-    gptModelName: modelDeployment.model.name
-    gptModelVersion: modelDeployment.model.version
-    managedIdentityObjectId: managedIdentity.outputs.principalId
+    keyVaultResourceId: keyvault.outputs.resourceId
+    managedIdentityPrincpalId: managedIdentity.outputs.principalId
     aiServicesName: azureAiServices.outputs.name
+    tags: allTags
   }
 }
 
@@ -162,6 +161,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
         managedIdentity.outputs.resourceId
       ]
     }
+    tags: allTags
   }
 }
 
@@ -210,6 +210,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
       minReplicas: 1
       maxReplicas: 1
     }
+    tags: allTags
   }
 }
 
@@ -326,6 +327,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
       minReplicas: 1
       maxReplicas: 1
     }
+    tags: allTags
   }
 }
 
@@ -372,5 +374,6 @@ module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
+    tags: allTags
   }
 }
