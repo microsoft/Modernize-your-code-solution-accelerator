@@ -10,6 +10,9 @@ param tags object = {}
 @description('Managed Identity princpial to assign data plane roles for the Cosmos DB Account.')
 param managedIdentityPrincipalId string
 
+@description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
+param logAnalyticsWorkspaceResourceId string?
+
 resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
   name: '${name}/00000000-0000-0000-0000-000000000002'
 }
@@ -33,6 +36,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     }
     zoneRedundant: false
     disableKeyBasedMetadataWriteAccess: false
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     sqlDatabases: [
       {
         containers: [

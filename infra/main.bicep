@@ -38,6 +38,9 @@ param azureAiServiceLocation string = location
 @description('AI model deployment token capacity. Defaults to 5K tokens per minute.')
 param capacity int = 5
 
+@description('Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
+param enableMonitoring bool = false
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -50,7 +53,6 @@ var uniqueResourcesName = '${resourcesName}${resourcesToken}'
 var defaultTags = {
   'azd-env-name': resourcesName
 }
-
 var allTags = union(defaultTags, tags)
 
 var modelDeployment =  {
@@ -67,6 +69,38 @@ var modelDeployment =  {
   raiPolicyName: 'Microsoft.Default'
 }
 
+module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
+  name: take('identity-${resourcesName}-deployment', 64)
+  params: {
+    name: '${abbrs.security.managedIdentity}${resourcesName}'
+    location: location
+    tags: allTags
+  }
+}
+
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring) {
+  name: take('log-analytics-${resourcesName}-deployment', 64)
+  params: {
+    name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcesName}'
+    location: location
+    skuName: 'PerGB2018'
+    dataRetention: 30
+    diagnosticSettings: [{ useThisWorkspace: true }]
+    tags: allTags
+  }
+}
+
+module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
+  name: take('app-insights-${resourcesName}-deployment', 64)
+  params: {
+    name: '${abbrs.managementGovernance.applicationInsights}${resourcesName}'
+    location: location
+    workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId }]
+    tags: allTags
+  }
+}
+
 module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
   params: {
@@ -78,6 +112,7 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
     disableLocalAuth: false
     publicNetworkAccess: 'Enabled'
     deployments: [modelDeployment]
+    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -85,15 +120,6 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
         roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
       }
     ]
-    tags: allTags
-  }
-}
-
-module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
-  name: take('identity-${resourcesName}-deployment', 64)
-  params: {
-    name: '${abbrs.security.managedIdentity}${resourcesName}'
-    location: location
     tags: allTags
   }
 }
@@ -111,6 +137,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     enableRbacAuthorization: true
     publicNetworkAccess: 'Enabled'
     softDeleteRetentionInDays: 7
+    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -122,18 +149,6 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   }
 }
 
-// TODO - verify if this is needed
-
-// module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.0' = {
-//   name: 'log-analytics-deployment'
-//   params: {
-//     name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcePrefix}'
-//     location: location
-//     skuName: 'PerGB2018'
-//     dataRetention: 30
-//   }
-// }
-
 module azureAifoundry 'modules/aiFoundry.bicep' = {
   name: take('aifoundry-${resourcesName}-deployment', 64)
   params: {
@@ -144,23 +159,8 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     storageName: take('${abbrs.storage.storageAccount}ai${uniqueResourcesName}', 24)
     keyVaultResourceId: keyvault.outputs.resourceId
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
-    tags: allTags
-  }
-}
-
-module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.1' = {
-  name: take('container-env-${resourcesName}-deployment', 64)
-  params: {
-    name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
-    location: location
-    zoneRedundant: false
-    publicNetworkAccess: 'Enabled'
-    managedIdentities: {
-      userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
-      ]
-    }
     tags: allTags
   }
 }
@@ -171,6 +171,33 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     name: '${abbrs.databases.cosmosDBDatabase}${uniqueResourcesName}'
     location: location
     managedIdentityPrincipalId: managedIdentity.outputs.principalId
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    tags: allTags
+  }
+}
+
+module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
+  name: take('container-env-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
+  params: {
+    name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
+    location: location
+    zoneRedundant: false
+    publicNetworkAccess: 'Enabled'
+    managedIdentities: {
+      userAssignedResourceIds: [
+        managedIdentity.outputs.resourceId
+      ]
+    }
+    appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
+    appLogsConfiguration: enableMonitoring ? {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
+        sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
+      }
+    } : {}
     tags: allTags
   }
 }
@@ -216,6 +243,8 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
 
 module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
     name: take('${abbrs.containers.containerApp}${uniqueResourcesName}backend', 32)
     location: location
@@ -229,7 +258,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
       {
         name: 'cmsabackend'
         image: 'cmsacontainerreg.azurecr.io/cmsabackend:latest'
-        env: [
+        env: concat([
           {
             name: 'COSMOSDB_ENDPOINT'
             value: cosmosDb.outputs.endpoint
@@ -314,7 +343,16 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
             name: 'AZURE_CLIENT_ID'
             value: managedIdentity.outputs.clientId // TODO - VERIFY -> NOTE: This is the client ID of the managed identity, not the Entra application, and is needed for the App Service to access the Cosmos DB account.
           }
-        ]
+        ], enableMonitoring ? [
+          {
+            name: 'APPLICATIONINSIGHTS_INSTRUMENTATION_KEY'
+            value: applicationInsights.outputs.instrumentationKey
+          }
+          {
+            name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+            value: applicationInsights.outputs.connectionString
+          }
+        ] : [])
         resources: {
           cpu: 1
           memory: '2.0Gi'
@@ -357,6 +395,7 @@ module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.
       defaultAction: 'Allow'
     }
     supportsHttpsTrafficOnly: true
+    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
     blobServices: {
       containers: [
         {
