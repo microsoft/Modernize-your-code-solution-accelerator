@@ -11,7 +11,7 @@ param managedIdentityObjectId string
 
 param aiServicesName string
 
-var aiHubDescription = 'AI Hub for KM template'
+var aiHubDescription = 'AI Hub for Modernize Your Code'
 
 resource keyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = {
   name: keyVaultName

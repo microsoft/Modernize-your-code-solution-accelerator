@@ -135,7 +135,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
 //   }
 // }
 
-module azureAifoundry 'deploy_ai_foundry.bicep' = {
+module azureAifoundry 'modules/aiFoundry.bicep' = {
   name: take('aifoundry-${resourcesName}-deployment', 64)
   params: {
     location: azureAiServiceLocation
