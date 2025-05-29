@@ -1,6 +1,11 @@
 @minLength(3)
-@description('prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters.')
-param prefix string
+@maxLength(20)
+@description('A unique application/env name for all resources in this deployment. This should be 3-20 characters long')
+param environmentName string
+
+@minLength(3)
+@description('Azure region for all services.')
+param location string = resourceGroup().location
 
 @allowed([
   'australiaeast'
@@ -27,57 +32,52 @@ param prefix string
   'westus'
   'westus3'
 ])
-@description('Location for all Ai services resources. This location can be different from the resource group location.')
-param azureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+@description('Location for all AI service resources. This location can be different from the resource group location.')
+param azureAiServiceLocation string = location
 
+@description('AI model deployment token capacity. Defaults to 5K tokens per minute.')
 param capacity int = 5
 
+@description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
+param tags object = {}
+
 var abbrs = loadJsonContent('./abbreviations.json')
-var safePrefix = length(prefix) > 20 ? substring(prefix, 0, 20) : prefix
-var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
-var uniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
-var resourcePrefix = take('cm${safePrefix}${uniquePrefix}', 15)
-var imageVersion = 'latest'
-var location  = resourceGroup().location
-var dblocation  = resourceGroup().location
-var cosmosdbDatabase  = 'cmsadb'
-var cosmosdbBatchContainer  = 'cmsabatch'
-var cosmosdbFileContainer  = 'cmsafile'
-var cosmosdbLogContainer  = 'cmsalog'
-var deploymentType  = 'GlobalStandard'
-var containerName  = 'appstorage'
-var llmModel  = 'gpt-4o'
-var storageSkuName = 'Standard_LRS'
-var storageAccountForContainersName = replace(replace(replace(replace('${resourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
-var gptModelVersion = '2024-08-06'
-var azureAiServicesName = '${abbrs.ai.aiServices}${resourcePrefix}'
-var aiFoundryProjectName = '${abbrs.ai.aiHubProject}${resourcePrefix}'
+
+var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
+var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
+var uniqueResourcesName = '${resourcesName}${resourcesToken}'
+
+var defaultTags = {
+  'azd-env-name': resourcesName
+}
+
+var allTags = union(defaultTags, tags)
+
+var modelDeployment =  {
+  name: 'gpt-4o'
+  model: {
+    name: 'gpt-4o'
+    format: 'OpenAI'
+    version: '2024-08-06'
+  }
+  sku: {
+    name: 'GlobalStandard'
+    capacity: capacity
+  }
+  raiPolicyName: 'Microsoft.Default'
+}
 
 module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
-  name: take('cog-${azureAiServicesName}-deployment', 64)
+  name: take('aiservices-${resourcesName}-deployment', 64)
   params: {
-    name: azureAiServicesName
+    name: '${abbrs.ai.aiServices}${uniqueResourcesName}'
     location: location
     sku: 'S0'
     kind: 'AIServices'
-    customSubDomainName: azureAiServicesName
+    customSubDomainName: '${abbrs.ai.aiServices}${uniqueResourcesName}'
     disableLocalAuth: false
     publicNetworkAccess: 'Enabled'
-    deployments: [
-      {
-        name: llmModel
-        model: {
-          name: llmModel
-          format: 'OpenAI'
-          version: gptModelVersion
-        }
-        sku: {
-          name: deploymentType
-          capacity: capacity
-        }
-        raiPolicyName: 'Microsoft.Default'
-      }
-    ]
+    deployments: [modelDeployment]
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -85,25 +85,24 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
         roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
       }
     ]
+    tags: allTags
   }
 }
 
+
 module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
-  name: take('${abbrs.security.managedIdentity}${resourcePrefix}-identity-deployment', 64)
+  name: take('identity-${resourcesName}-deployment', 64)
   params: {
-    name: '${abbrs.security.managedIdentity}${resourcePrefix}'
+    name: '${abbrs.security.managedIdentity}${resourcesName}'
     location: location
-    tags: {
-      app: resourcePrefix
-      location: location
-    }
+    tags: allTags
   }
 }
 
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
-  name: take('${abbrs.security.keyVault}${resourcePrefix}-keyvault-deployment', 64)
+  name: take('keyvault-${resourcesName}-deployment', 64)
   params: {
-    name: '${abbrs.security.keyVault}${resourcePrefix}'
+    name: take('${abbrs.security.keyVault}${uniqueResourcesName}', 24)
     location: location
     createMode: 'default'
     sku: 'standard'
@@ -120,6 +119,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
         roleDefinitionIdOrName: 'Key Vault Administrator'
       }
     ]
+    tags: allTags
   }
 }
 
@@ -136,24 +136,24 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
 // }
 
 module azureAifoundry 'deploy_ai_foundry.bicep' = {
-  name: 'deploy_ai_foundry-${azureAiServicesName}'
+  name: take('aifoundry-${resourcesName}-deployment', 64)
   params: {
     location: azureAiServiceLocation
-    hubName: '${abbrs.ai.aiHub}${resourcePrefix}'
-    projectName: aiFoundryProjectName
-    storageName: '${abbrs.storage.storageAccount}${resourcePrefix}'
+    hubName: '${abbrs.ai.hub}${resourcesName}'
+    projectName: '${abbrs.ai.project}${resourcesName}'
+    storageName: take('${abbrs.storage.storageAccount}ai${uniqueResourcesName}', 24)
     keyVaultName: keyvault.outputs.name
-    gptModelName: llmModel
-    gptModelVersion: gptModelVersion
+    gptModelName: modelDeployment.model.name
+    gptModelVersion: modelDeployment.model.version
     managedIdentityObjectId: managedIdentity.outputs.principalId
     aiServicesName: azureAiServices.outputs.name
   }
 }
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.1' = {
-  name: toLower('${resourcePrefix}conAppsEnv')
+  name: take('container-env-${resourcesName}-deployment', 64)
   params: {
-    name: toLower('${resourcePrefix}manenv')
+    name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
     location: location
     zoneRedundant: false
     publicNetworkAccess: 'Enabled'
@@ -165,73 +165,22 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   }
 }
 
-var cosmosAccountName = toLower('${abbrs.databases.cosmosDBDatabase}${resourcePrefix}databaseAccount')
-
-resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
-  name: '${cosmosAccountName}/00000000-0000-0000-0000-000000000002'
-}
-
-module databaseAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
-  name: 'cosmosdb-${cosmosAccountName}-deployment'
+module cosmosDb 'modules/cosmosDb.bicep' = {
+  name: take('cosmos-${resourcesName}-deployment', 64)
   params: {
-    name: cosmosAccountName
-    enableAnalyticalStorage: true
-    location: dblocation
-    networkRestrictions: {
-      networkAclBypass: 'AzureServices'
-      publicNetworkAccess: 'Enabled'
-      ipRules: [] 
-      virtualNetworkRules: []
-    }
-    zoneRedundant: false
-    disableKeyBasedMetadataWriteAccess: false
-    sqlDatabases: [
-      {
-        containers: [
-          {
-          indexingPolicy: {
-            automatic: true
-          }
-          name: cosmosdbBatchContainer
-          paths:[
-            '/batch_id'
-          ]
-        }
-        {
-          indexingPolicy: {
-            automatic: true
-          }
-          name: cosmosdbFileContainer
-          paths:[
-            '/file_id'
-          ]
-        }
-        {
-          indexingPolicy: {
-            automatic: true
-          }
-          name: cosmosdbLogContainer
-          paths:[
-            '/log_id'
-          ]
-        }
-        ]
-        name: cosmosdbDatabase
-      }
-    ]
-    dataPlaneRoleAssignments: [
-      {
-        principalId: managedIdentity.outputs.principalId
-        roleDefinitionId: sqlContributorRoleDefinition.id
-      }
-    ]
+    name: '${abbrs.databases.cosmosDBDatabase}${uniqueResourcesName}'
+    location: location
+    managedIdentityPrincipalId: managedIdentity.outputs.principalId
+    tags: allTags
   }
 }
 
+var appStorageContainerName = 'appstorage'
+
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
-  name: toLower('${abbrs.containers.containerApp}${resourcePrefix}containerAppFrontend')
+  name: take('container-app-frontend-${resourcesName}-deployment', 64)
   params: {
-    name: toLower('${abbrs.containers.containerApp}${resourcePrefix}Frontend')
+    name: take('${abbrs.containers.containerApp}${uniqueResourcesName}frontend', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -247,7 +196,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
             value: 'https://${containerAppBackend.outputs.fqdn}'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
+        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:latest'
         name: 'cmsafrontend'
         resources: {
           cpu: '1'
@@ -265,9 +214,9 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
 }
 
 module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
-  name: toLower('${abbrs.containers.containerApp}${resourcePrefix}containerAppBackend')
+  name: take('container-app-backend-${resourcesName}-deployment', 64)
   params: {
-    name: toLower('${abbrs.containers.containerApp}${resourcePrefix}Backend')
+    name: take('${abbrs.containers.containerApp}${uniqueResourcesName}backend', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -278,35 +227,35 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
     containers: [
       {
         name: 'cmsabackend'
-        image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
+        image: 'cmsacontainerreg.azurecr.io/cmsabackend:latest'
         env: [
           {
             name: 'COSMOSDB_ENDPOINT'
-            value: databaseAccount.outputs.endpoint
+            value: cosmosDb.outputs.endpoint
           }
           {
             name: 'COSMOSDB_DATABASE'
-            value: cosmosdbDatabase
+            value: cosmosDb.outputs.databaseName
           }
           {
             name: 'COSMOSDB_BATCH_CONTAINER'
-            value: cosmosdbBatchContainer
+            value: cosmosDb.outputs.containers.batch.name
           }
           {
             name: 'COSMOSDB_FILE_CONTAINER'
-            value: cosmosdbFileContainer
+            value: cosmosDb.outputs.containers.file.name
           }
           {
             name: 'COSMOSDB_LOG_CONTAINER'
-            value: cosmosdbLogContainer
+            value: cosmosDb.outputs.containers.log.name
           }
           {
             name: 'AZURE_BLOB_ACCOUNT_NAME'
-            value: storageAccountForContainersName
+            value: storageAccountForContainers.outputs.name
           }
           {
             name: 'AZURE_BLOB_CONTAINER_NAME'
-            value: containerName
+            value: appStorageContainerName
           }
           {
             name: 'AZURE_OPENAI_ENDPOINT'
@@ -314,35 +263,35 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'PICKER_AGENT_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'FIXER_AGENT_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'SELECTION_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'TERMINATION_MODEL_DEPLOY'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
-            value: llmModel
+            value: modelDeployment.name
           }
           {
             name: 'AZURE_AI_AGENT_PROJECT_NAME'
@@ -369,7 +318,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: 1
           memory: '2.0Gi'
         }
-        
       }
     ]
     ingressTargetPort: 8000
@@ -382,15 +330,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
 }
 
 module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.17.0' = {
-  name: 'storage-account-${storageAccountForContainersName}-deployment'
+  name: take('storage-apps-${resourcesName}-deployment', 64)
   params: {
-    name: storageAccountForContainersName
+    name: take('${abbrs.storage.storageAccount}app${uniqueResourcesName}', 24)
     location: location
     managedIdentities: {
       systemAssigned: true
     }
     kind: 'StorageV2'
-    skuName: storageSkuName
+    skuName: 'Standard_LRS'
     publicNetworkAccess: 'Enabled'
     accessTier: 'Hot'
     allowBlobPublicAccess: false
@@ -410,7 +358,7 @@ module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.
     blobServices: {
       containers: [
         {
-          name: containerName
+          name: appStorageContainerName
           properties: {
             publicAccess: 'None'
           }
