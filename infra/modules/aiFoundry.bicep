@@ -19,6 +19,9 @@ param keyVaultResourceId string
 @description('The Princpal ID of the managed identity to assign access roles.')
 param managedIdentityPrincpalId string
 
+@description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
+param logAnalyticsWorkspaceResourceId string?
+
 @description('The name of an existing Azure Cognitive Services account.')
 param aiServicesName string
 
@@ -57,6 +60,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
       defaultAction: 'Allow'
     }
     supportsHttpsTrafficOnly: true
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     roleAssignments: [
       {
         principalId: managedIdentityPrincpalId
@@ -82,6 +86,7 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     managedIdentities: {
       systemAssigned: true
     }
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     connections: [
       {
         name: aiServicesName
@@ -117,6 +122,7 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     managedIdentities: {
       systemAssigned: true
     }
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     roleAssignments: [
       {
         principalId: managedIdentityPrincpalId
