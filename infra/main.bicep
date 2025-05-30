@@ -194,13 +194,6 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     publicNetworkAccess: 'Enabled'
     softDeleteRetentionInDays: 7
     diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
-    roleAssignments: [
-      {
-        principalId: managedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Secrets User'
-      }
-    ]
     tags: allTags
   }
 }
@@ -229,7 +222,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     managedIdentityPrincipalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
-    failoverLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+    secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
     tags: allTags
   }
 }
@@ -241,7 +234,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   params: {
     name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
     location: location
-    zoneRedundant: enableRedundancy
+    zoneRedundant: false // TODO - use enableRedundancy and privatenetworking flag to enable/disable
     publicNetworkAccess: 'Enabled'
     managedIdentities: {
       userAssignedResourceIds: [
