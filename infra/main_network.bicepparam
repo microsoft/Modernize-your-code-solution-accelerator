@@ -3,9 +3,23 @@
 
 using './main_network.bicep'
 
-param networkIsolation = true
+param resourceGroupName = 'gaiye-avm-08-rg'
+param location = 'eastus'
 
-param vnetName = 'my-vnet'
+param networkIsolation = true
+param privateEndPoint = true
+
+param jumboxAdminUser = 'JumpboxAdmin' // Admin user for the jumpbox VM
+param jumboxVmSize = 'Standard_D2s_v3' // 'Standard_B2s' not good enough for WAF 
+
+param vnetReuse = false // set it to true if you want to reuse an existing VNet already creatd
+param bastionHostReuse = false
+param jumpboxReuse = false
+
+//*******************************************************************
+// Network Security Groups (NSGs) and their rules
+//*******************************************************************
+
 param addressPrefixes = [
   '10.0.0.0/20' //  4,096 IP addresses. Other options: (1) /16: 65,536 (2) /24: 256 Addresses 
 ]
@@ -40,3 +54,134 @@ param subnets = [
   }
 ]
 
+param defaultSecurityRules = [
+  {
+    name: 'DenyAllInbound'
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+]
+
+param webSecurityRules = [
+  {
+    name: 'AllowHttpsInbound'
+    priority: 100
+    direction: 'Inbound'
+    access: 'Allow'
+    protocol: 'Tcp'
+    sourcePortRange: '*'
+    destinationPortRange: '443'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+  // uncomment the following rule to allow HTTP traffic
+  //  {
+  //   name: 'AllowHttpInbound'
+  //   priority: 110
+  //   direction: 'Inbound'
+  //   access: 'Allow'
+  //   protocol: 'Tcp'
+  //   sourcePortRange: '*'
+  //   destinationPortRange: '80'
+  //   sourceAddressPrefix: '*'
+  //   destinationAddressPrefix: '*'
+  // }
+  {
+    name: 'DenyAllOtherInbound'
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+]
+
+param appSecurityRules = [
+  {
+    name: 'AllowWebToApp'
+    priority: 100
+    direction: 'Inbound'
+    access: 'Allow'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '10.0.1.0/24' // Web subnet
+    destinationAddressPrefix: '*'
+  }
+  {
+    name: 'DenyAllOtherInbound'
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+]
+
+param aiSecurityRules = [
+  {
+    name: 'AllowAppToAI'
+    priority: 100
+    direction: 'Inbound'
+    access: 'Allow'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefixes: [
+      '10.0.1.0/24' // Web subnet
+      '10.0.2.0/24' // App subnet
+    ]
+    destinationAddressPrefix: '*'
+  }
+  {
+    name: 'DenyAllOtherInbound'
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+]
+
+param dataSecurityRules = [
+  {
+    name: 'AllowAppToData'
+    priority: 100
+    direction: 'Inbound'
+    access: 'Allow'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefixes: [
+      '10.0.1.0/24' // Web subnet
+      '10.0.2.0/24' // App subnet
+    ]
+    destinationAddressPrefix: '*'
+  }
+  {
+    name: 'DenyAllOtherInbound'
+    priority: 4096
+    direction: 'Inbound'
+    access: 'Deny'
+    protocol: '*'
+    sourcePortRange: '*'
+    destinationPortRange: '*'
+    sourceAddressPrefix: '*'
+    destinationAddressPrefix: '*'
+  }
+]

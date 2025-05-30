@@ -8,7 +8,7 @@ param location string
 @description('Optional: Tags for the VNet')
 param tags object = {}
 
-@description('Optional: Address prefixes for the VNet')
+@description('Address prefixes for the VNet')
 param addressPrefixes array 
 
 @description('Optional: DNS servers for the VNet')
@@ -21,7 +21,7 @@ param subnets array
 @description('Optional: Diagnostic settings for the VNet')
 param diagnosticSettings array = []
 
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
   name: vnetName
   params: {
     addressPrefixes: addressPrefixes
@@ -32,7 +32,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' = {
       for subnet in subnets: {
         name: subnet.name
         addressPrefix: subnet.addressPrefix
-  
+
       }
     ]
     diagnosticSettings: diagnosticSettings
