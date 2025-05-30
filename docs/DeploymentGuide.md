@@ -29,6 +29,7 @@ When you start the deployment, most parameters will have **default values**, but
 | **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
 | **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **gpt-4o**. |  5k |
+| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id. |  |
 
 This accelerator can be configured to  use authentication. 
 
