@@ -10,14 +10,17 @@ param hubName string
 @description('The description of the AI Hub workspace.')
 param hubDescription string = hubName
 
-@description('The name of the storage account to be created for AI Foundry.')
-param storageName string
+@description('The Resource Id of an existing storage account to attach to AI Foundry.')
+param storageAccountResourceId string
 
 @description('The resource ID of the Azure Key Vault to associate with AI Foundry.')
 param keyVaultResourceId string
 
 @description('The Princpal ID of the managed identity to assign access roles.')
 param managedIdentityPrincpalId string
+
+@description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
+param logAnalyticsWorkspaceResourceId string?
 
 @description('The name of an existing Azure Cognitive Services account.')
 param aiServicesName string
@@ -31,43 +34,6 @@ resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing =
 
 var aiServicesKey = aiServices.listKeys().key1
 
-module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
-  name: take('aifoundry-${storageName}-deployment', 64)
-  params: {
-    name: storageName
-    location: location
-    managedIdentities: {
-      systemAssigned: true
-    }
-    kind: 'StorageV2'
-    skuName: 'Standard_LRS'
-    publicNetworkAccess: 'Enabled'
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowSharedKeyAccess: false
-    allowCrossTenantReplication: false
-    requireInfrastructureEncryption: false
-    keyType: 'Service'
-    enableHierarchicalNamespace: false
-    enableNfsV3: false
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    roleAssignments: [
-      {
-        principalId: managedIdentityPrincpalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
-      }
-    ]
-    tags: tags
-  }
-}
-
 module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
   name: take('ai-foundry-${hubName}-deployment', 64)
   params: {
@@ -77,11 +43,12 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     kind: 'Hub'
     description: hubDescription
     associatedKeyVaultResourceId: keyVaultResourceId
-    associatedStorageAccountResourceId: storageAccount.outputs.resourceId
+    associatedStorageAccountResourceId: storageAccountResourceId
     publicNetworkAccess: 'Enabled'
     managedIdentities: {
       systemAssigned: true
     }
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     connections: [
       {
         name: aiServicesName
@@ -117,6 +84,7 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     managedIdentities: {
       systemAssigned: true
     }
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     roleAssignments: [
       {
         principalId: managedIdentityPrincpalId
@@ -139,8 +107,5 @@ var aiProjectConnString = '${split(projectReference.properties.discoveryUrl, '/'
 
 output projectName string = project.outputs.name
 output hubName string = hub.outputs.name
-
-output storageAccountName string = storageAccount.outputs.name
-output storageAccountId string = storageAccount.outputs.resourceId
 
 output projectConnectionString string = aiProjectConnString
