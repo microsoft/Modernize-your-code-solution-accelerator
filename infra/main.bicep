@@ -33,6 +33,8 @@ var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
 param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
 param capacity int = 5
 
+param existingLogAnalyticsWorkspaceId string = ''
+
 var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
 var ResourcePrefix = take('cm${safePrefix}${UniquePrefix}', 15)
@@ -136,6 +138,7 @@ module azureAifoundry 'deploy_ai_foundry.bicep' = {
     aiServicesEndpoint: azureAiServices.properties.endpoint
     aiServicesKey: azureAiServices.listKeys().key1
     aiServicesId: azureAiServices.id
+    existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
   }
   scope: resourceGroup(resourceGroup().name)
 }
