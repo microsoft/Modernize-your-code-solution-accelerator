@@ -16,8 +16,8 @@ param logAnalyticsWorkspaceResourceId string?
 @description('Indicates whether the single-region account is zone redundant. This property is ignored for multi-region accounts.')
 param zoneRedundant bool
 
-@description('Optional. The failover location for the Cosmos DB Account.')
-param failoverLocation string?
+@description('Optional. The secondary location for the Cosmos DB Account for failover and multiple writes.')
+param secondaryLocation string?
 
 resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
   name: '${name}/00000000-0000-0000-0000-000000000002'
@@ -41,6 +41,21 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
       virtualNetworkRules: []
     }
     zoneRedundant: zoneRedundant
+    failoverLocations: !empty(secondaryLocation) ? [
+      {
+        failoverPriority: 0
+        isZoneRedundant: zoneRedundant
+        locationName: location
+      }
+      {
+        failoverPriority: 0
+        isZoneRedundant: zoneRedundant
+        locationName: secondaryLocation!
+      }
+    ] : []
+    enableMultipleWriteLocations: !empty(secondaryLocation)
+    backupPolicyType: !empty(secondaryLocation) ? 'Periodic' : 'Continuous'
+    backupStorageRedundancy: zoneRedundant ? 'Zone' : 'Local'
     disableKeyBasedMetadataWriteAccess: false
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     sqlDatabases: [
@@ -77,13 +92,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
         name: databaseName
       }
     ]
-    failoverLocations: !empty(failoverLocation) ? [
-      {
-        failoverPriority: 0
-        isZoneRedundant: zoneRedundant
-        locationName: failoverLocation!
-      }
-    ] : []
+   
     dataPlaneRoleAssignments: [
       {
         principalId: managedIdentityPrincipalId
