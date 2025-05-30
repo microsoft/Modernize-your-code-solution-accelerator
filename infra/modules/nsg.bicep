@@ -11,19 +11,7 @@ param location string = resourceGroup().location
 param tags object = {}
 
 @description('Optional: Security rules for the NSG')
-param securityRules array = [
-  {
-    name: 'AllowHttpsInbound'
-    priority: 100
-    direction: 'Inbound'
-    access: 'Allow'
-    protocol: 'Tcp'
-    sourcePortRange: '*'
-    destinationPortRange: '443'
-    sourceAddressPrefix: '*'
-    destinationAddressPrefix: '*'
-  }
-]
+param securityRules array = []
 
 module networkSecurityGroup 'br/public:avm/res/network/network-security-group:0.5.1' = {
   name: nsgName

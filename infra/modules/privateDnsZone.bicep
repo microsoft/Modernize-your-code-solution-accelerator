@@ -4,9 +4,6 @@
 @description('Name of the Private DNS Zone (e.g., "privatelink.vaultcore.azure.net")')
 param dnsZoneName string
 
-@description('Azure region for the DNS Zone')
-param location string = resourceGroup().location
-
 @description('Optional: Tags for the DNS Zone')
 param tags object = {}
 
@@ -14,7 +11,6 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.2.2' = {
   name: dnsZoneName
   params: {
     name: dnsZoneName
-    location: location
     tags: tags
   }
 }
