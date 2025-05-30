@@ -41,6 +41,15 @@ param capacity int = 5
 @description('Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false
 
+@description('Enable scaling for the container apps. Defaults to false.')
+param enableScaling bool = false
+
+@description('Enable redundancy for applicable resources. Defaults to false.')
+param enableRedundancy bool = false
+
+@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
+param secondaryLocation string?
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -49,6 +58,8 @@ var abbrs = loadJsonContent('./abbreviations.json')
 var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
 var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
 var uniqueResourcesName = '${resourcesName}${resourcesToken}'
+
+var appStorageContainerName = 'appstorage'
 
 var defaultTags = {
   'azd-env-name': resourcesName
@@ -101,6 +112,51 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
+module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
+  name: take('storage-account-${resourcesName}-deployment', 64)
+  params: {
+    name: take('${abbrs.storage.storageAccount}${uniqueResourcesName}', 24)
+    location: location
+    kind: 'StorageV2'
+    skuName: enableRedundancy ? 'Standard_LRS' : 'Standard_GZRS'
+    publicNetworkAccess: 'Enabled'
+    accessTier: 'Hot'
+    allowBlobPublicAccess: false
+    allowSharedKeyAccess: false
+    allowCrossTenantReplication: false
+    requireInfrastructureEncryption: false
+    keyType: 'Service'
+    enableHierarchicalNamespace: false
+    enableNfsV3: false
+    largeFileSharesState: 'Disabled'
+    minimumTlsVersion: 'TLS1_2'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+    supportsHttpsTrafficOnly: true
+    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
+    blobServices: {
+      containers: [
+        {
+          name: appStorageContainerName
+          properties: {
+            publicAccess: 'None'
+          }
+        }
+      ]
+    }
+    roleAssignments: [
+      {
+        principalId: managedIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
+      }
+    ]
+    tags: allTags
+  }
+}
+
 module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
   params: {
@@ -142,7 +198,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
       {
         principalId: managedIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Administrator'
+        roleDefinitionIdOrName: 'Key Vault Secrets User'
       }
     ]
     tags: allTags
@@ -156,7 +212,7 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     hubName: '${abbrs.ai.hub}${resourcesName}'
     hubDescription: 'AI Hub for Modernize Your Code'
     projectName: '${abbrs.ai.project}${resourcesName}'
-    storageName: take('${abbrs.storage.storageAccount}ai${uniqueResourcesName}', 24)
+    storageAccountResourceId: storageAccount.outputs.resourceId
     keyVaultResourceId: keyvault.outputs.resourceId
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
@@ -172,6 +228,8 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     location: location
     managedIdentityPrincipalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    zoneRedundant: enableRedundancy
+    failoverLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
     tags: allTags
   }
 }
@@ -183,7 +241,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   params: {
     name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
     location: location
-    zoneRedundant: false
+    zoneRedundant: enableRedundancy
     publicNetworkAccess: 'Enabled'
     managedIdentities: {
       userAssignedResourceIds: [
@@ -201,8 +259,6 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
     tags: allTags
   }
 }
-
-var appStorageContainerName = 'appstorage'
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-frontend-${resourcesName}-deployment', 64)
@@ -234,8 +290,18 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
     ingressTargetPort: 3000
     ingressExternal: true
     scaleSettings: {
+      maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
-      maxReplicas: 1
+      rules: enableScaling ? [
+        {
+          name: 'http-scaler'
+          http: {
+            metadata: {
+              concurrentRequests: 100
+            }
+          }
+        }
+      ] : []
     }
     tags: allTags
   }
@@ -281,7 +347,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'AZURE_BLOB_ACCOUNT_NAME'
-            value: storageAccountForContainers.outputs.name
+            value: storageAccount.outputs.name
           }
           {
             name: 'AZURE_BLOB_CONTAINER_NAME'
@@ -357,62 +423,35 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: 1
           memory: '2.0Gi'
         }
+        probes: enableMonitoring ? [
+          {
+            httpGet: {
+              path: '/health'
+              port: 8000
+            }
+            initialDelaySeconds: 3
+            periodSeconds: 3
+            type: 'Liveness'
+          }
+        ] : []
       }
     ]
     ingressTargetPort: 8000
     ingressExternal: true
     scaleSettings: {
+      maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
-      maxReplicas: 1
-    }
-    tags: allTags
-  }
-}
-
-module storageAccountForContainers 'br/public:avm/res/storage/storage-account:0.17.0' = {
-  name: take('storage-apps-${resourcesName}-deployment', 64)
-  params: {
-    name: take('${abbrs.storage.storageAccount}app${uniqueResourcesName}', 24)
-    location: location
-    managedIdentities: {
-      systemAssigned: true
-    }
-    kind: 'StorageV2'
-    skuName: 'Standard_LRS'
-    publicNetworkAccess: 'Enabled'
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowSharedKeyAccess: false
-    allowCrossTenantReplication: false
-    requireInfrastructureEncryption: false
-    keyType: 'Service'
-    enableHierarchicalNamespace: false
-    enableNfsV3: false
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
-    blobServices: {
-      containers: [
+      rules: enableScaling ? [
         {
-          name: appStorageContainerName
-          properties: {
-            publicAccess: 'None'
+          name: 'http-scaler'
+          http: {
+            metadata: {
+              concurrentRequests: 100
+            }
           }
         }
-      ]
+      ] : []
     }
-    roleAssignments: [
-      {
-        principalId: managedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
-      }
-    ]
     tags: allTags
   }
 }
