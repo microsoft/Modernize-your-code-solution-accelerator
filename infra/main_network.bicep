@@ -138,6 +138,3 @@ module appRouteTable 'modules/routeTable.bicep' = {
 //     tags: tags
 //   }
 // }
-
-// Note: To associate NSGs and route tables to subnets, update the subnets array in your parameter file to include nsgId and routeTableId referencing the outputs above.
-
