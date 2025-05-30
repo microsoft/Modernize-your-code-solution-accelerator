@@ -11,6 +11,13 @@ param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
+
+param existingLogAnalyticsWorkspaceId string = ''
+
+var useExisting = !empty(existingLogAnalyticsWorkspaceId)
+var existingLawResourceGroup = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[4] : ''
+var existingLawName = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[8] : ''
+
 var abbrs = loadJsonContent('./abbreviations.json')
 
 var storageName = '${abbrs.storage.storageAccount}${solutionName}'
@@ -32,7 +39,12 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
 }
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
+resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' existing = if (useExisting) {
+  name: existingLawName
+  scope: resourceGroup(existingLawResourceGroup)
+}
+
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (!useExisting) {
   name: workspaceName
   location: location
   tags: {}
@@ -303,7 +315,7 @@ output aiProjectName string = aiHubProject.name
 
 output storageAccountName string = storageNameCleaned
 
-output logAnalyticsId string = logAnalytics.id
+output logAnalyticsId string = useExisting ? existingLogAnalyticsWorkspace.id : logAnalytics.id
 output storageAccountId string = storage.id
 
 output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
