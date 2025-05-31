@@ -129,9 +129,14 @@ module nsgs 'modules/nsg.bicep' = [for (subnet, i) in subnets: if (!empty(subnet
   }
 }]
 
-// 2. Build subnets array with NSG resource IDs for AVM VNet module is now inlined below
 
-// 3. Pass avmSubnets to the AVM VNet module
+// 2. Create VNet using the AVM VNet module
+
+resource existingVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if (vnetReuse) {
+  name: vnetName
+}
+
+
 module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
   name: '${prefix}-vnet'
   params: {
@@ -151,6 +156,11 @@ module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
     diagnosticSettings: diagnosticSettings
   }
 }
+// need this value for later resorurces
+var vnetId = vnetReuse ? existingVnet.id : network.outputs.vnetId
+var subnetIds = network.outputs.subnetIds
+var subnetNames = network.outputs.subnetNames
+
 
 // /**************************************************************************/
 // // TODO: Bastion Host
@@ -159,11 +169,11 @@ module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
 // module bastionHost 'modules/bastionHost.bicep' = if (networkIsolation && !bastionHostReuse) {
 //   name: '${prefix}-bastionHost'
 //   params: {
+//     bastionHostName: '${prefix}-bastionHost'
 //     location: location
+//     vnetId: vnetId
 //     tags: tags
-//     virtualNetworkId: network.outputs.vnetId
-//     publicIpAddressName: '${prefix}-bastionIp'
-//     sku: 'Standard'
+   
 //   }
 // }
 
@@ -171,59 +181,19 @@ module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
 // //TODO: Jumpbox VM
 // /**************************************************************************/
 // // Create or reuse Jumpbox VM
+
+
 // module jumpbox 'modules/jumpbox.bicep' = if (networkIsolation && !jumpboxReuse) {
 //   name: '${prefix}-jumpbox'
 //   params: {
+//     prefix:prefix
+//     vmName:vnetName
 //     location: location
 //     tags: tags
-//     virtualNetworkId: network.outputs.vnetId
-//     subnetName: '${prefix}-default'
-//     publicIpAddressName: '${prefix}-jumpboxIp'
+//     logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
 //     adminUsername: jumboxAdminUser
+//     adminPasswordOrKey: 'your-admin-password-or-ssh-key' // Replace with your secure value
 //     vmSize: jumboxVmSize
-//     osDiskSizeGb: 30
-//     imagePublisher: 'Canonical'
-//     imageOffer: 'UbuntuServer'
-//     imageSku: '18.04-LTS'
-//     sshKeyData: '' // Provide your SSH public key here
+//     subnetId: !empty(subnetIds) ? subnetIds[5].id : null // subnets 0 = web, 1-app, 2-ai, 3-data, 4-bastion, 5-jumpbox
 //   }
 // }
-
-// /**************************************************************************/
-// // TODO: AI and Data Services
-// /**************************************************************************/
-// // Example: Deploy an AI service (e.g., Azure Cognitive Services)
-// module aiService 'modules/aiService.bicep' = if (networkIsolation) {
-//   name: '${prefix}-aiService'
-//   params: {
-//     location: location
-//     tags: tags
-//     virtualNetworkId: network.outputs.vnetId
-//     subnetName: '${prefix}-default'
-//     // Add other parameters as needed
-//   }
-// }
-
-// // Example: Deploy a Data service (e.g., Azure SQL Database)
-// module dataService 'modules/dataService.bicep' = if (networkIsolation) {
-//   name: '${prefix}-dataService'
-//   params: {
-//     location: location
-//     tags: tags
-//     virtualNetworkId: network.outputs.vnetId
-//     subnetName: '${prefix}-default'
-//     // Add other parameters as needed
-//   }
-// }
-
-// /**************************************************************************/
-// // Outputs
-// /**************************************************************************/
-// output workspaceId string = logAnalyticsWorkSpace.outputs.workspaceId
-// output workspacePrimaryKey string = logAnalyticsWorkSpace.outputs.primaryKey
-// output workspaceSecondaryKey string = logAnalyticsWorkSpace.outputs.secondaryKey
-// output workspaceName string = logAnalyticsWorkSpace.outputs.workspaceName
-
-// // Example outputs for AI and Data services
-// output aiServiceEndpoint string = aiService.outputs.endpoint
-// output dataServiceConnectionString string = dataService.outputs.connectionString
