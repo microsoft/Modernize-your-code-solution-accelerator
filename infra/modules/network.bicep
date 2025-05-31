@@ -45,3 +45,4 @@ output vnetName string = virtualNetwork.outputs.name
 output vnetLocation string = virtualNetwork.outputs.location
 output vnetId string = virtualNetwork.outputs.resourceId
 output subnetIds array = virtualNetwork.outputs.subnetResourceIds
+output subnetNames array = virtualNetwork.outputs.subnetNames
