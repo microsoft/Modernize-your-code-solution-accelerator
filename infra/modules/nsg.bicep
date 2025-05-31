@@ -25,11 +25,11 @@ module networkSecurityGroup 'br/public:avm/res/network/network-security-group:0.
           priority: rule.priority
           direction: rule.direction
           access: rule.access
-          protocol: rule.protocol
+          protocol: rule.protocol ?? '*'
           sourcePortRange: rule.sourcePortRange
           destinationPortRange: rule.destinationPortRange
-          sourceAddressPrefix: rule.sourceAddressPrefix
-          destinationAddressPrefix: rule.destinationAddressPrefix
+          sourceAddressPrefixes: rule.sourceAddressPrefixes ?? (rule.sourceAddressPrefix != null ? [rule.sourceAddressPrefix] : null)
+          destinationAddressPrefixes: rule.destinationAddressPrefixes ?? (rule.destinationAddressPrefix != null ? [rule.destinationAddressPrefix] : null)
         }
       }
     ]
@@ -38,3 +38,4 @@ module networkSecurityGroup 'br/public:avm/res/network/network-security-group:0.
 }
 
 output nsgName string = networkSecurityGroup.outputs.name
+output nsgResourceId string = networkSecurityGroup.outputs.resourceId

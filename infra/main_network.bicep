@@ -1,4 +1,5 @@
-targetScope = 'subscription'
+//targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 @minLength(6)
 @maxLength(25)
@@ -11,12 +12,13 @@ param solutionType string = 'Solution Accelerator'
 param resourceGroupName string 
 param location string 
 
+
 param tags object = {
   'Solution Name': solutionName
   'Solution Type': solutionType
 }
 
-
+param logAnalyticsWorkspaceReuse bool = false // If true, will reuse existing Log Analytics Workspace if available
 param vnetReuse bool = false // If true, will reuse existing VNet if available
 param bastionHostReuse bool = false // If true, will reuse existing Bastion Host if available
 param jumpboxReuse bool = false // If true, will reuse existing Jumpbox VM if available
@@ -32,11 +34,12 @@ var prefix = toLower(replace(resourceTokenTrimmed, '_', ''))
 // Network parameters (these will be set via main_network.bicepparam)
 param networkIsolation bool 
 
-param defaultSecurityRules array
 param webSecurityRules array 
 param appSecurityRules array 
 param aiSecurityRules array 
 param dataSecurityRules array 
+param bastionSecurityRules array // Security rules for Bastion Host
+param jumpboxSecurityRules array // Security rules for Jumpbox VM
 
 //param vnetName string
 param addressPrefixes array
@@ -51,28 +54,24 @@ param privateEndPoint bool = true
 
 
 
-resource rg 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: resourceGroupName
-  location: location
-}
-
-
 /**************************************************************************/
 // Log Analytics Workspace that will be used across the solution
 /**************************************************************************/
 // crate a Log Analytics Workspace using AVM
-module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
+resource existingLogAnalyticsWorkSpace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = if (logAnalyticsWorkspaceReuse) {
   name: '${prefix}logAnalyticsWorkspace'
-  scope: rg
+}
+
+module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = if (!logAnalyticsWorkspaceReuse) {
+  name: '${prefix}logAnalyticsWorkspace'
   params: {
     logAnalyticsWorkSpaceName: '${prefix}law'
     location: location
     tags: tags
   }
 }
-output logAnalyticsWorkspaceId string = logAnalyticsWorkSpace.outputs.workspaceId
 
-
+var logAnalyticsWorkspaceId  = logAnalyticsWorkspaceReuse ? existingLogAnalyticsWorkSpace.id : logAnalyticsWorkSpace.outputs.workspaceId
 
 /**************************************************************************/
 // Network Structures 
@@ -82,7 +81,7 @@ output logAnalyticsWorkspaceId string = logAnalyticsWorkSpace.outputs.workspaceI
 var diagnosticSettings = [
   {
     name: '${prefix}vnetDiagnostics'
-    workspaceResourceId: logAnalyticsWorkSpace.outputs.workspaceId
+    workspaceResourceId: logAnalyticsWorkspaceId
     logs: [
       // Prioritized: Only most important categories for VNet/network security
       {
@@ -107,7 +106,7 @@ var diagnosticSettings = [
         category: 'AllMetrics'
         enabled: true
         retentionPolicy: {
-          enabled: false  // for development, set to fals=
+          enabled: false // for development, set to false
           days: 0
           // Replace with the following lines to enable retention policy
           // enabled: true
@@ -118,158 +117,113 @@ var diagnosticSettings = [
   }
 ]
 
-// 1. Deploy the Virtual Network and Subnets
-// Reference an existing Virtual Network if vnetReuse is true
-resource existingVnet 'Microsoft.Network/virtualNetworks@2023-09-01' existing = if (networkIsolation && vnetReuse) {
-  name: vnetName
-  scope: rg
-}
 
+// 1. Create NSGs for subnets using the AVM NSG module
+module nsgs 'modules/nsg.bicep' = [for (subnet, i) in subnets: if (!empty(subnet.networkSecurityGroup)) {
+  name: '${prefix}-${subnet.networkSecurityGroup.name}'
+  params: {
+    nsgName: '${prefix}-${subnet.networkSecurityGroup.name}'
+    location: location
+    tags: tags
+    securityRules: subnet.networkSecurityGroup.securityRules
+  }
+}]
+
+// 2. Build subnets array with NSG resource IDs for AVM VNet module is now inlined below
+
+// 3. Pass avmSubnets to the AVM VNet module
 module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
-  scope: rg
-  name: '${prefix}network'
+  name: '${prefix}-vnet'
   params: {
     vnetName: vnetName
     location: location
     addressPrefixes: addressPrefixes
     dnsServers: dnsServers
-    subnets: subnets
+    subnets: [
+      for (subnet, i) in subnets: {
+        name: subnet.name
+        addressPrefix: subnet.addressPrefix
+        networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.nsgResourceId : null
+        // Add other properties as needed (e.g., routeTableResourceId)
+      }
+    ]
     tags: tags
     diagnosticSettings: diagnosticSettings
   }
 }
 
-// Use vnetId for dependencies
-var vnetId = vnetReuse ? existingVnet.id : network.outputs.vnetId
+// /**************************************************************************/
+// // TODO: Bastion Host
+// /**************************************************************************/
+// // Create or reuse Bastion Host
+// module bastionHost 'modules/bastionHost.bicep' = if (networkIsolation && !bastionHostReuse) {
+//   name: '${prefix}-bastionHost'
+//   params: {
+//     location: location
+//     tags: tags
+//     virtualNetworkId: network.outputs.vnetId
+//     publicIpAddressName: '${prefix}-bastionIp'
+//     sku: 'Standard'
+//   }
+// }
 
+// /**************************************************************************/
+// //TODO: Jumpbox VM
+// /**************************************************************************/
+// // Create or reuse Jumpbox VM
+// module jumpbox 'modules/jumpbox.bicep' = if (networkIsolation && !jumpboxReuse) {
+//   name: '${prefix}-jumpbox'
+//   params: {
+//     location: location
+//     tags: tags
+//     virtualNetworkId: network.outputs.vnetId
+//     subnetName: '${prefix}-default'
+//     publicIpAddressName: '${prefix}-jumpboxIp'
+//     adminUsername: jumboxAdminUser
+//     vmSize: jumboxVmSize
+//     osDiskSizeGb: 30
+//     imagePublisher: 'Canonical'
+//     imageOffer: 'UbuntuServer'
+//     imageSku: '18.04-LTS'
+//     sshKeyData: '' // Provide your SSH public key here
+//   }
+// }
 
-// 2. Deploy NSGs for each subnet (example for web, app, ai, data, bastion, jumpbox)
+// /**************************************************************************/
+// // TODO: AI and Data Services
+// /**************************************************************************/
+// // Example: Deploy an AI service (e.g., Azure Cognitive Services)
+// module aiService 'modules/aiService.bicep' = if (networkIsolation) {
+//   name: '${prefix}-aiService'
+//   params: {
+//     location: location
+//     tags: tags
+//     virtualNetworkId: network.outputs.vnetId
+//     subnetName: '${prefix}-default'
+//     // Add other parameters as needed
+//   }
+// }
 
-module webNsg 'modules/nsg.bicep' = if (networkIsolation && !vnetReuse) {
-  scope:rg
-  name: '${prefix}WebNsg'
-  params: {
-    nsgName: '${prefix}WebNsg'
-    location: location
-    securityRules: webSecurityRules
-    tags: tags
-  }
-}
-module appNsg 'modules/nsg.bicep' = if (networkIsolation && !vnetReuse) {
-  scope:rg
-  name: '${prefix}AppNsg'
-  params: {
-    nsgName: '${prefix}AppNsg'
-    location: location
-    securityRules: appSecurityRules
-    tags: tags
-  }
-}
-module aiNsg 'modules/nsg.bicep' = if (networkIsolation && !vnetReuse) {
-  scope:rg
-  name: '${prefix}AiNsg'
-  params: {
-    nsgName: '${prefix}AiNsg'
-    location: location
-    securityRules: aiSecurityRules
-    tags: tags
-  }
-}
-module dataNsg 'modules/nsg.bicep' = if (networkIsolation && !vnetReuse) {
-  scope:rg
-  name: '${prefix}DataNsg'
-  params: {
-    nsgName: '${prefix}DataNsg'
-    location: location
-    securityRules: dataSecurityRules
-    tags: tags
-  }
-}
-module bastionNsg 'modules/nsg.bicep' = if (networkIsolation && !vnetReuse) {
-  scope:rg
-  name: '${prefix}BastionNsg'
-  params: {
-    nsgName: '${prefix}BastionNsg'
-    location: location
-    securityRules: defaultSecurityRules
-    tags: tags
-  }
-}
-module jumpboxNsg 'modules/nsg.bicep' = if (networkIsolation && !jumpboxReuse) {
-  scope:rg
-  name: '${prefix}JumpboxNsg'
-  params: {
-    nsgName: '${prefix}JumpboxNsg'
-    location: location
-    securityRules: defaultSecurityRules
-    tags: tags
-  }
-}
+// // Example: Deploy a Data service (e.g., Azure SQL Database)
+// module dataService 'modules/dataService.bicep' = if (networkIsolation) {
+//   name: '${prefix}-dataService'
+//   params: {
+//     location: location
+//     tags: tags
+//     virtualNetworkId: network.outputs.vnetId
+//     subnetName: '${prefix}-default'
+//     // Add other parameters as needed
+//   }
+// }
 
-// 3. Deploy Route Tables (example for web and app subnets)
-module webRouteTable 'modules/routeTable.bicep' = if (networkIsolation) {
-  scope:rg
-  name: '${prefix}WebRouteTable'
-  params: {
-    routeTableName: '${prefix}webRouteTable'
-    location: location
-    tags: tags
-  }
-}
-module appRouteTable 'modules/routeTable.bicep' = {
-  scope:rg
-  name: '${prefix}AppRouteTable'
-  params: {
-    routeTableName: '${prefix}appRouteTable'
-    location: location
-    tags: tags
-  }
-}
+// /**************************************************************************/
+// // Outputs
+// /**************************************************************************/
+// output workspaceId string = logAnalyticsWorkSpace.outputs.workspaceId
+// output workspacePrimaryKey string = logAnalyticsWorkSpace.outputs.primaryKey
+// output workspaceSecondaryKey string = logAnalyticsWorkSpace.outputs.secondaryKey
+// output workspaceName string = logAnalyticsWorkSpace.outputs.workspaceName
 
-// *********************************************************************************************
-// Bastion Host and JumpBox VM
-// This section is optional and can be enabled based on the network isolation requirements.
-// *********************************************************************************************
-
-// 4. (Optional) Deploy Bastion Host and JumpBox VM using outputs from network module
-resource existingBastionHost 'Microsoft.Network/bastionHosts@2023-09-01' existing = if (networkIsolation && bastionHostReuse) {
-  name: '${prefix}bastionHost'
-  scope: rg
-}
-
-module bastionHost 'modules/bastionHost.bicep' = if (networkIsolation && !bastionHostReuse) {
-  scope: rg
-  name: '${prefix}BastionHost'
-  params: {
-    bastionHostName: '${prefix}bastionHost'
-    location: location
-    vnetId: vnetId
-    tags: tags
-  }
-}
-
-var bastionHostId = bastionHostReuse ? existingBastionHost.id : bastionHost.outputs.bastionHostId
-
-// Reference an existing JumpBox VM if jumpboxReuse is true
-resource existingJumpbox 'Microsoft.Compute/virtualMachines@2023-09-01' existing = if (networkIsolation && jumpboxReuse) {
-  name: '${prefix}jumpbox-vm'
-  scope: rg
-}
-
-module jumpbox 'modules/jumpbox.bicep' = if (networkIsolation && !jumpboxReuse) {
-  scope: rg
-  name: '${prefix}jumpbox-vm'
-  params: {
-    prefix: prefix
-    vmName: '${prefix}jumpbox-vm'
-    location: location
-    subnetId: network.outputs.subnetIds[5] // index for 'jumpbox' subnet
-    adminUsername: jumboxAdminUser
-    adminPasswordOrKey: 'P@ssword123456789$$$' // TODO - take this from Key Vault later on
-    vmSize: jumboxVmSize
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkSpace.outputs.workspaceId
-  }
-}
-
-var jumpboxId = jumpboxReuse ? existingJumpbox.id : jumpbox.outputs.vmId
+// // Example outputs for AI and Data services
+// output aiServiceEndpoint string = aiService.outputs.endpoint
+// output dataServiceConnectionString string = dataService.outputs.connectionString

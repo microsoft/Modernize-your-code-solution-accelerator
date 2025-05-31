@@ -32,8 +32,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
       for subnet in subnets: {
         name: subnet.name
         addressPrefix: subnet.addressPrefix
-        networkSecurityGroupResourceId: subnet.?networkSecurityGroupResourceId
-        routeTableResourceId: subnet.?routeTableResourceId
+
       }
     ]
     diagnosticSettings: diagnosticSettings
