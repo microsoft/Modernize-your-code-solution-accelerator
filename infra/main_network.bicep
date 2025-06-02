@@ -58,9 +58,10 @@ module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
 
 var logAnalyticsWorkspaceId = logAnalyticsWorkSpace.outputs.workspaceId
 
-/**************************************************************************/
+/****************************************************************************************************************************/
 // Netowrking - NSGs, VNET and Subnets. Each subnet has its own NSG
-/**************************************************************************/
+/****************************************************************************************************************************/
+
 
 // Diagnostic settings for VNet using Log Analytics Workspace
 var diagnosticSettings = [
@@ -118,9 +119,9 @@ output vnetLocation string = virtualNetwork.outputs.location
 output vnetId string = virtualNetwork.outputs.resourceId
 output subnetIds array = virtualNetwork.outputs.subnetResourceIds
 
-// /**************************************************************************/
+/****************************************************************************************************************************/
 // // TODO: Bastion Host
-// /**************************************************************************/
+/****************************************************************************************************************************/
 // // Create or reuse Bastion Host
 // module bastionHost 'modules/bastionHost.bicep' = if (networkIsolation && !bastionHostReuse) {
 //   name: '${prefix}-bastionHost'
@@ -133,9 +134,9 @@ output subnetIds array = virtualNetwork.outputs.subnetResourceIds
 //   }
 // }
 
-// /**************************************************************************/
+/****************************************************************************************************************************/
 // //TODO: Jumpbox VM
-// /**************************************************************************/
+/****************************************************************************************************************************/
 // // Create or reuse Jumpbox VM
 
 
