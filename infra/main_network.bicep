@@ -34,7 +34,7 @@ param vnetAddressPrefixes array
 param mySubnets array 
 var vnetName = '${prefix}-vnet'
 
-
+param azureBastionSubnet object = {}
 
 param jumboxAdminUser string 
 param jumboxVmSize string = 'Standard_D2s_v3' // Default VM size for Jumpbox, can be overridden
@@ -97,6 +97,10 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [for (sub
 }]
 
 // 2. Create VNet and subnets using AVM Virtual Network module
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network
+
+
+
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  if (networkIsolation) {
   name: vnetName
   params: {
@@ -122,17 +126,19 @@ output subnetIds array = virtualNetwork.outputs.subnetResourceIds
 /****************************************************************************************************************************/
 // // TODO: Bastion Host
 /****************************************************************************************************************************/
-// // Create or reuse Bastion Host
-// module bastionHost 'modules/bastionHost.bicep' = if (networkIsolation && !bastionHostReuse) {
-//   name: '${prefix}-bastionHost'
-//   params: {
-//     bastionHostName: '${prefix}-bastionHost'
-//     location: location
-//     vnetId: vnetId
-//     tags: tags
-   
-//   }
-// }
+// // Create or reuse Azure Bastion Host Using AVM Subnet Module With special config for Azure Bastion Subnet
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
+
+//  Create Azure Bastion Subnet if azureBastionSubnet is not empty and networkIsolation is true
+module azureBastionSubnetRes 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (networkIsolation && !empty(azureBastionSubnet)) {
+  name: '${prefix}-AzureBastionSubnet'
+  params: {
+    virtualNetworkName:virtualNetwork.outputs.name
+    name: azureBastionSubnet.name
+    addressPrefixes: azureBastionSubnet.addressPrefixes
+  }
+}
+
 
 /****************************************************************************************************************************/
 // //TODO: Jumpbox VM

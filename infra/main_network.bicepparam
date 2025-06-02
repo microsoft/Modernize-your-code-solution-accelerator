@@ -160,3 +160,10 @@ param mySubnets = [
   }
   // Add more subnets here as needed, e.g. for private endpoints, firewall, etc.
 ]
+
+
+param azureBastionSubnet = {
+  name: 'AzureBastionSubnet' // Required name for Azure Bastion
+  addressPrefixes: ['10.0.6.0/27']
+  networkSecurityGroup: null // Must not have an NSG
+}
