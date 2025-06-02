@@ -34,18 +34,12 @@ var prefix = toLower(replace(resourceTokenTrimmed, '_', ''))
 // Network parameters (these will be set via main_network.bicepparam)
 param networkIsolation bool 
 
-param webSecurityRules array 
-param appSecurityRules array 
-param aiSecurityRules array 
-param dataSecurityRules array 
-param bastionSecurityRules array // Security rules for Bastion Host
-param jumpboxSecurityRules array // Security rules for Jumpbox VM
-
 //param vnetName string
-param addressPrefixes array
-param dnsServers array
-param subnets array
+param vnetAddressPrefixes array
+param mySubnets array 
+param testSubnets array = []
 var vnetName = '${prefix}-vnet'
+
 
 
 param jumboxAdminUser string 
@@ -82,84 +76,111 @@ var diagnosticSettings = [
   {
     name: '${prefix}vnetDiagnostics'
     workspaceResourceId: logAnalyticsWorkspaceId
-    logs: [
-      // Prioritized: Only most important categories for VNet/network security
+    logCategoriesAndGroups: [
       {
-        category: 'NetworkSecurityGroupEvent'
+        categoryGroup: 'allLogs'
         enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
-      }
-      {
-        category: 'NetworkSecurityGroupRuleCounter'
-        enabled: true
-        retentionPolicy: {
-          enabled: false
-          days: 0
-        }
       }
     ]
-    metrics: [
+    metricCategories: [
       {
         category: 'AllMetrics'
         enabled: true
-        retentionPolicy: {
-          enabled: false // for development, set to false
-          days: 0
-          // Replace with the following lines to enable retention policy
-          // enabled: true
-          // days: 30
-        }
       }
     ]
   }
 ]
 
 
-// 1. Create NSGs for subnets using the AVM NSG module
-module nsgs 'modules/nsg.bicep' = [for (subnet, i) in subnets: if (!empty(subnet.networkSecurityGroup)) {
+// module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = {
+//   name: 'my-nsg-deployment'
+//   params: {
+//     name: 'my-nsg'
+//     location: location
+//     securityRules: [
+//       {
+//         name: 'AllowHttpsInbound'
+//         properties: {
+//           access: 'Allow'
+//           direction: 'Inbound'
+//           priority: 100
+//           protocol: 'Tcp'
+//           sourcePortRange: '*'
+//           destinationPortRange: '443'
+//           sourceAddressPrefixes: ['0.0.0.0/0']
+//           destinationAddressPrefixes: ['10.0.0.0/24']
+//         }
+//       }
+//       // Add more rules as needed
+//     ]
+//     tags: {
+//       environment: 'dev'
+//     }
+//   }
+// }
+
+
+// 1. Create NSGs for subnets using the AVM NSG module, only if networkIsolation is true
+@batchSize(1)
+module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [for (subnet, i) in mySubnets: if (networkIsolation && !empty(subnet.networkSecurityGroup)) {
   name: '${prefix}-${subnet.networkSecurityGroup.name}'
   params: {
-    nsgName: '${prefix}-${subnet.networkSecurityGroup.name}'
+    name: '${prefix}-${subnet.networkSecurityGroup.name}'
     location: location
-    tags: tags
     securityRules: subnet.networkSecurityGroup.securityRules
+    tags: tags
   }
 }]
 
-
-// 2. Create VNet using the AVM VNet module
-
-resource existingVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if (vnetReuse) {
+// 2. Create VNet and subnets using AVM Virtual Network module
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
   name: vnetName
-}
-
-
-module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
-  name: '${prefix}-vnet'
   params: {
-    vnetName: vnetName
+    name: vnetName
     location: location
-    addressPrefixes: addressPrefixes
-    dnsServers: dnsServers
+    addressPrefixes: vnetAddressPrefixes
     subnets: [
-      for (subnet, i) in subnets: {
+      for (subnet, i) in mySubnets: {
         name: subnet.name
-        addressPrefix: subnet.addressPrefix
-        networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.nsgResourceId : null
-        // Add other properties as needed (e.g., routeTableResourceId)
+        addressPrefixes: subnet.addressPrefixes
+        networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
       }
     ]
-    tags: tags
     diagnosticSettings: diagnosticSettings
+    tags: tags
   }
 }
-// need this value for later resorurces
-var vnetId = vnetReuse ? existingVnet.id : network.outputs.vnetId
-var subnetIds = network.outputs.subnetIds
-var subnetNames = network.outputs.subnetNames
+
+
+// // 2. Create VNet using the AVM VNet module
+
+// resource existingVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if (vnetReuse) {
+//   name: vnetName
+// }
+
+// module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
+//   name: '${prefix}-vnet'
+//   params: {
+//     vnetName: vnetName
+//     location: location
+//     addressPrefixes: addressPrefixes
+//     dnsServers: dnsServers
+//     subnets: [
+//       for (subnet, i) in subnets: {
+//         name: subnet.name
+//         addressPrefix: subnet.addressPrefix
+//         networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.nsgResourceId : null
+//         // Add other properties as needed (e.g., routeTableResourceId)
+//       }
+//     ]
+//     tags: tags
+//     diagnosticSettings: diagnosticSettings
+//   }
+// }
+// // need this value for later resorurces
+// var vnetId = vnetReuse ? existingVnet.id : network.outputs.vnetId
+// var subnetIds = network.outputs.subnetIds
+// var subnetNames = network.outputs.subnetNames
 
 
 // /**************************************************************************/
