@@ -1,9 +1,12 @@
-from pathlib import Path
-import pytest
-from playwright.sync_api import sync_playwright
-from config.constants import *
-from py.xml import html # type: ignore
+import os
 
+from config.constants import URL
+
+from playwright.sync_api import sync_playwright
+
+from py.xml import html  # type: ignore
+
+import pytest
 
 
 @pytest.fixture(scope="session")
@@ -16,7 +19,7 @@ def login_logout():
         page = context.new_page()
         # Navigate to the login URL
         page.goto(URL, wait_until="domcontentloaded")
-        
+
         yield page
         # perform close the browser
         browser.close()
@@ -31,8 +34,12 @@ def pytest_html_report_title(report):
 def pytest_html_results_table_header(cells):
     cells.insert(1, html.th("Description"))
 
+
 def pytest_html_results_table_row(report, cells):
-    cells.insert(1, html.td(report.description if hasattr(report, "description") else ""))
+    cells.insert(
+        1, html.td(report.description if hasattr(report, "description") else "")
+    )
+
 
 # Add logs and docstring to report
 @pytest.hookimpl(hookwrapper=True)
@@ -41,6 +48,5 @@ def pytest_runtest_makereport(item, call):
     report = outcome.get_result()
     report.description = str(item.function.__doc__)
     os.makedirs("logs", exist_ok=True)
-    extra = getattr(report, 'extra', [])
+    extra = getattr(report, "extra", [])
     report.extra = extra
-
