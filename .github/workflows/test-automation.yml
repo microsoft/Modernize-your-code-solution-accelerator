@@ -6,22 +6,18 @@ on:
       - main
       - dev
       - migrate-test-automation
-    # paths:
-    #   - 'TestAutomation/**'
+    paths:
+      - 'tests/e2e-test/**'
   schedule:
       - cron: '0 13 * * *'  # Runs at 1 PM UTC
   workflow_dispatch:
 
 env:
-    # url: ${{ vars.CODEGEN_WEB_URL }}
-    url: https://cm3ydcorjzov5mfrontend.greencliff-0258c52e.uksouth.azurecontainerapps.io
+    url: ${{ vars.CODEGEN_WEB_URL }}
     accelerator_name: "Code Modernization"
 
 jobs:
   test:
-    permissions:
-      id-token: write
-      contents: read
 
     runs-on: ubuntu-latest
     steps:      
@@ -44,16 +40,13 @@ jobs:
         with:
           azcliversion: 'latest'
           inlineScript: |
-            # az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
-            # az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/codegen-automation/providers/Microsoft.App/containerApps/cm3ydcorjzov5mfrontend/start?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/codegen-automation/providers/Microsoft.App/containerApps/cm3ydcorjzov5mbackend/start?api-version=2025-01-01"
-
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r TestAutomation/requirements.txt
+          pip install -r tests/e2e-test/requirements.txt
 
       - name: Ensure browsers are installed
         run: python -m playwright install --with-deps chromium
@@ -62,7 +55,7 @@ jobs:
         id: test1
         run: |
           xvfb-run pytest --headed --html=report/report.html --self-contained-html
-        working-directory: TestAutomation
+        working-directory: tests/e2e-test
         continue-on-error: true
 
       - name: Sleep for 30 seconds
@@ -75,7 +68,7 @@ jobs:
         if: ${{ steps.test1.outcome == 'failure' }}
         run: |
           xvfb-run pytest --headed --html=report/report.html --self-contained-html
-        working-directory: TestAutomation
+        working-directory: tests/e2e-test
         continue-on-error: true
 
       - name: Sleep for 60 seconds
@@ -88,7 +81,7 @@ jobs:
         if: ${{ steps.test2.outcome == 'failure' }}
         run: |
           xvfb-run pytest --headed --html=report/report.html --self-contained-html
-        working-directory: TestAutomation
+        working-directory: tests/e2e-test
 
       - name: Upload test report
         id: upload_report
@@ -96,7 +89,7 @@ jobs:
         if: ${{ !cancelled() }}
         with:
           name: test-report
-          path: TestAutomation/report/*
+          path: tests/e2e-test/report/*
 
       - name: Send Notification
         if: always()
@@ -108,7 +101,7 @@ jobs:
           if [ "$IS_SUCCESS" = "true" ]; then
             EMAIL_BODY=$(cat <<EOF
             {
-              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process has completed successfully.</p><p><strong>Run URL:</strong> ${RUN_URL}<br> ${OUTPUT}</p><p><strong>Test Report:</strong> ${REPORT_URL}</p><p>Best regards,<br>Your Automation Team</p>",
+              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process has completed successfully.</p><p><strong>Run URL:</strong> <a href="${RUN_URL}">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href="${REPORT_URL}">${REPORT_URL}</a></p><p>Best regards,<br>Your Automation Team</p>",
               "subject": "${{ env.accelerator_name }} Test Automation - Success"
             }
           EOF
@@ -116,7 +109,7 @@ jobs:
           else
             EMAIL_BODY=$(cat <<EOF
             {
-              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process  has encountered an issue and has failed to complete successfully.</p><p><strong>Run URL:</strong> ${RUN_URL}<br> ${OUTPUT}</p><p><strong>Test Report:</strong> ${REPORT_URL}</p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>",
+              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process  has encountered an issue and has failed to complete successfully.</p><p><strong>Run URL:</strong> <a href="${RUN_URL}">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href="${REPORT_URL}">${REPORT_URL}</a></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>",
               "subject": "${{ env.accelerator_name }} Test Automation - Failure"
             }
           EOF
@@ -134,8 +127,6 @@ jobs:
         with:
           azcliversion: 'latest'
           inlineScript: |
-            # az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
-            # az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/codegen-automation/providers/Microsoft.App/containerApps/cm3ydcorjzov5mfrontend/stop?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/codegen-automation/providers/Microsoft.App/containerApps/cm3ydcorjzov5mbackend/stop?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
             az logout
