@@ -1,6 +1,9 @@
-from base.base import BasePage
-from playwright.sync_api import expect
 import os.path
+
+from base.base import BasePage
+
+from playwright.sync_api import expect
+
 
 class HomePage(BasePage):
     TITLE_TEXT = "//h1[normalize-space()='Modernize your code']"
@@ -15,8 +18,6 @@ class HomePage(BasePage):
     SUMMARY = "//span[normalize-space()='Summary']"
     FILE_PROCESSED_MSG = "//span[normalize-space()='3 files processed successfully']"
 
-
-
     def __init__(self, page):
         self.page = page
 
@@ -27,28 +28,28 @@ class HomePage(BasePage):
         with self.page.expect_file_chooser() as fc_info:
             self.page.locator(self.BROWSE_FILES).click()
             self.page.wait_for_timeout(5000)
-            self.page.wait_for_load_state('networkidle')
+            self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        file_path1 = os.path.join(current_working_dir,"testdata/q1_informix.sql")
-        file_path2 = os.path.join(current_working_dir,"testdata/f1.sql")
-        file_path3 = os.path.join(current_working_dir,"testdata/f2.sql")
+        file_path1 = os.path.join(current_working_dir, "testdata/q1_informix.sql")
+        file_path2 = os.path.join(current_working_dir, "testdata/f1.sql")
+        file_path3 = os.path.join(current_working_dir, "testdata/f2.sql")
         file_chooser.set_files([file_path1, file_path2, file_path3])
         self.page.wait_for_timeout(10000)
-        self.page.wait_for_load_state('networkidle')
+        self.page.wait_for_load_state("networkidle")
         expect(self.page.locator(self.SUCCESS_MSG)).to_be_visible()
 
     def upload_unsupported_files(self):
         with self.page.expect_file_chooser() as fc_info:
             self.page.locator(self.BROWSE_FILES).click()
             self.page.wait_for_timeout(5000)
-            self.page.wait_for_load_state('networkidle')
+            self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        file_path = os.path.join(current_working_dir,"testdata/invalid.py")
+        file_path = os.path.join(current_working_dir, "testdata/invalid.py")
         file_chooser.set_files([file_path])
         self.page.wait_for_timeout(4000)
-        self.page.wait_for_load_state('networkidle')
+        self.page.wait_for_load_state("networkidle")
         expect(self.page.locator(self.TRANSLATE_BTN)).to_be_disabled()
 
     def validate_translate(self):
@@ -72,16 +73,3 @@ class HomePage(BasePage):
         self.page.locator(self.RETURN_HOME).click()
         self.page.wait_for_timeout(3000)
         expect(self.page.locator(self.TITLE_TEXT)).to_be_visible()
-
-    
-
-
-
-
-
-        
-
-    
-
-
-  

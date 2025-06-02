@@ -13,7 +13,8 @@ on:
   workflow_dispatch:
 
 env:
-    url: ${{ vars.CODEGEN_WEB_URL }}
+    # url: ${{ vars.CODEGEN_WEB_URL }}
+    url: https://cm3ydcorjzov5mfrontend.greencliff-0258c52e.uksouth.azurecontainerapps.io
     accelerator_name: "Code Modernization"
 
 jobs:

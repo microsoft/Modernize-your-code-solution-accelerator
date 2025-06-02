@@ -1,14 +1,17 @@
-from pages.HomePage import HomePage
-from config.constants import *
 import logging
-import pytest
 import time
+
+from pages.HomePage import HomePage
+
+import pytest
+
 
 logger = logging.getLogger(__name__)
 
+
 @pytest.mark.testcase_id("TC001")
 def test_CodeGen_Golden_path_test(login_logout):
-    """Validate Golden path test case for Modernize your code Accelerator """
+    """Validate Golden path test case for Modernize your code Accelerator"""
     page = login_logout
     home_page = HomePage(page)
     logger.info("Step 1: Validate home page is loaded.")
