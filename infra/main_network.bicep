@@ -18,9 +18,9 @@ param tags object = {
   'Solution Type': solutionType
 }
 
-/**************************************************************************/
+/****************************************************************************************************************************/
 // prefix generation 
-/**************************************************************************/
+/****************************************************************************************************************************/
 var cleanSolutionName = replace(solutionName, ' ', '')  // get rid of spaces
 var resourceToken = toLower('${substring(cleanSolutionName, 0, 1)}${uniqueString(cleanSolutionName, resourceGroupName, subscription().id)}')
 var resourceTokenTrimmed = length(resourceToken) > 9 ? substring(resourceToken, 0, 9) : resourceToken
@@ -41,12 +41,11 @@ param jumboxVmSize string = 'Standard_D2s_v3' // Default VM size for Jumpbox, ca
 param privateEndPoint bool = true
 
 
-
-/**************************************************************************/
+/****************************************************************************************************************************/
 // Log Analytics Workspace that will be used across the solution
-/**************************************************************************/
+/****************************************************************************************************************************/
+// prefix generation 
 // crate a Log Analytics Workspace using AVM
-
 
 module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
   name: '${prefix}logAnalyticsWorkspace'
@@ -97,7 +96,7 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [for (sub
 }]
 
 // 2. Create VNet and subnets using AVM Virtual Network module
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  if (networkIsolation) {
   name: vnetName
   params: {
     name: vnetName
