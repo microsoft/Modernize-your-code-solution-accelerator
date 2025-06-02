@@ -12,10 +12,6 @@ param privateEndPoint = true
 param jumboxAdminUser = 'JumpboxAdmin' // Admin user for the jumpbox VM
 param jumboxVmSize = 'Standard_D2s_v3' // 'Standard_B2s' not good enough for WAF 
 
-param logAnalyticsWorkspaceReuse = false
-param vnetReuse = false // set it to true if you want to reuse an existing VNet already creatd
-param bastionHostReuse = false
-param jumpboxReuse = false
 
 //*******************************************************************
 // Network Security Groups (NSGs) and their rules
@@ -24,56 +20,6 @@ param jumpboxReuse = false
 param vnetAddressPrefixes = [
   '10.0.0.0/21' // /21: 2048 addresses, good for up to 8-16 subnets. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
 ]
-
-
-param testSubnets = [
-  {
-    name: 'web'
-    addressPrefixes: ['10.0.0.0/24']
-    networkSecurityGroup: {
-      name: 'web-nsg'
-      securityRules: [
-        {
-          name: 'AllowHttpsInbound'
-          properties: {
-            access: 'Allow'
-            direction: 'Inbound'
-            priority: 100
-            protocol: 'Tcp'
-            sourcePortRange: '*'
-            destinationPortRange: '443'
-            sourceAddressPrefixes: ['0.0.0.0/0']
-            destinationAddressPrefixes: ['10.0.0.0/24']
-          }
-        }
-      ]
-    }
-  }
-  {
-    name: 'app'
-    addressPrefixes: ['10.0.1.0/24']
-    networkSecurityGroup: {
-      name: 'app-nsg'
-      securityRules: [
-        {
-          name: 'AllowWebToApp'
-          properties: {
-            access: 'Allow'
-            direction: 'Inbound'
-            priority: 100
-            protocol: 'Tcp'
-            sourcePortRange: '*'
-            destinationPortRange: '*'
-            sourceAddressPrefixes: ['10.0.0.0/24']
-            destinationAddressPrefixes: ['10.0.1.0/24']
-          }
-        }
-      ]
-    }
-  }
-]
-
-
 
 param mySubnets = [
   {

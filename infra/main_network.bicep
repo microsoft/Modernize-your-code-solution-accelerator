@@ -18,11 +18,6 @@ param tags object = {
   'Solution Type': solutionType
 }
 
-param logAnalyticsWorkspaceReuse bool = false // If true, will reuse existing Log Analytics Workspace if available
-param vnetReuse bool = false // If true, will reuse existing VNet if available
-param bastionHostReuse bool = false // If true, will reuse existing Bastion Host if available
-param jumpboxReuse bool = false // If true, will reuse existing Jumpbox VM if available
-
 /**************************************************************************/
 // prefix generation 
 /**************************************************************************/
@@ -37,7 +32,6 @@ param networkIsolation bool
 //param vnetName string
 param vnetAddressPrefixes array
 param mySubnets array 
-param testSubnets array = []
 var vnetName = '${prefix}-vnet'
 
 
@@ -52,23 +46,21 @@ param privateEndPoint bool = true
 // Log Analytics Workspace that will be used across the solution
 /**************************************************************************/
 // crate a Log Analytics Workspace using AVM
-resource existingLogAnalyticsWorkSpace 'Microsoft.OperationalInsights/workspaces@2023-09-01' existing = if (logAnalyticsWorkspaceReuse) {
-  name: '${prefix}logAnalyticsWorkspace'
-}
 
-module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = if (!logAnalyticsWorkspaceReuse) {
+
+module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
   name: '${prefix}logAnalyticsWorkspace'
   params: {
-    logAnalyticsWorkSpaceName: '${prefix}law'
+    logAnalyticsWorkSpaceName: '${prefix}-law'
     location: location
     tags: tags
   }
 }
 
-var logAnalyticsWorkspaceId  = logAnalyticsWorkspaceReuse ? existingLogAnalyticsWorkSpace.id : logAnalyticsWorkSpace.outputs.workspaceId
+var logAnalyticsWorkspaceId = logAnalyticsWorkSpace.outputs.workspaceId
 
 /**************************************************************************/
-// Network Structures 
+// Netowrking - NSGs, VNET and Subnets. Each subnet has its own NSG
 /**************************************************************************/
 
 // Diagnostic settings for VNet using Log Analytics Workspace
@@ -90,34 +82,6 @@ var diagnosticSettings = [
     ]
   }
 ]
-
-
-// module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = {
-//   name: 'my-nsg-deployment'
-//   params: {
-//     name: 'my-nsg'
-//     location: location
-//     securityRules: [
-//       {
-//         name: 'AllowHttpsInbound'
-//         properties: {
-//           access: 'Allow'
-//           direction: 'Inbound'
-//           priority: 100
-//           protocol: 'Tcp'
-//           sourcePortRange: '*'
-//           destinationPortRange: '443'
-//           sourceAddressPrefixes: ['0.0.0.0/0']
-//           destinationAddressPrefixes: ['10.0.0.0/24']
-//         }
-//       }
-//       // Add more rules as needed
-//     ]
-//     tags: {
-//       environment: 'dev'
-//     }
-//   }
-// }
 
 
 // 1. Create NSGs for subnets using the AVM NSG module, only if networkIsolation is true
@@ -150,38 +114,10 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
     tags: tags
   }
 }
-
-
-// // 2. Create VNet using the AVM VNet module
-
-// resource existingVnet 'Microsoft.Network/virtualNetworks@2024-05-01' existing = if (vnetReuse) {
-//   name: vnetName
-// }
-
-// module network 'modules/network.bicep' = if (networkIsolation && !vnetReuse) {
-//   name: '${prefix}-vnet'
-//   params: {
-//     vnetName: vnetName
-//     location: location
-//     addressPrefixes: addressPrefixes
-//     dnsServers: dnsServers
-//     subnets: [
-//       for (subnet, i) in subnets: {
-//         name: subnet.name
-//         addressPrefix: subnet.addressPrefix
-//         networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.nsgResourceId : null
-//         // Add other properties as needed (e.g., routeTableResourceId)
-//       }
-//     ]
-//     tags: tags
-//     diagnosticSettings: diagnosticSettings
-//   }
-// }
-// // need this value for later resorurces
-// var vnetId = vnetReuse ? existingVnet.id : network.outputs.vnetId
-// var subnetIds = network.outputs.subnetIds
-// var subnetNames = network.outputs.subnetNames
-
+output vnetName string = virtualNetwork.outputs.name
+output vnetLocation string = virtualNetwork.outputs.location
+output vnetId string = virtualNetwork.outputs.resourceId
+output subnetIds array = virtualNetwork.outputs.subnetResourceIds
 
 // /**************************************************************************/
 // // TODO: Bastion Host
