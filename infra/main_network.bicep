@@ -85,6 +85,9 @@ var diagnosticSettings = [
 
 
 // 1. Create NSGs for subnets using the AVM NSG module, only if networkIsolation is true
+// using AVM Network Security Group module
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
+
 @batchSize(1)
 module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [for (subnet, i) in mySubnets: if (networkIsolation && !empty(subnet.networkSecurityGroup)) {
   name: '${prefix}-${subnet.networkSecurityGroup.name}'
@@ -96,10 +99,9 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [for (sub
   }
 }]
 
-// 2. Create VNet and subnets using AVM Virtual Network module
+// 2. Create VNet and subnets with subnets associated with corresponding NSGs
+// using AVM Virtual Network module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network
-
-
 
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  if (networkIsolation) {
   name: vnetName
@@ -123,10 +125,11 @@ output vnetLocation string = virtualNetwork.outputs.location
 output vnetId string = virtualNetwork.outputs.resourceId
 output subnetIds array = virtualNetwork.outputs.subnetResourceIds
 
+
 /****************************************************************************************************************************/
-// // TODO: Bastion Host
+// // TODO:Azure Bastion Host
 /****************************************************************************************************************************/
-// // Create or reuse Azure Bastion Host Using AVM Subnet Module With special config for Azure Bastion Subnet
+// 1. Create or reuse Azure Bastion Host Using AVM Subnet Module With special config for Azure Bastion Subnet
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 
 //  Create Azure Bastion Subnet if azureBastionSubnet is not empty and networkIsolation is true
@@ -139,24 +142,73 @@ module azureBastionSubnetRes 'br/public:avm/res/network/virtual-network/subnet:0
   }
 }
 
+// 2. Create Azure Bastion Host in AzureBastionSubnet using AVM Bastion Host module
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/bastion-host
 
-/****************************************************************************************************************************/
-// //TODO: Jumpbox VM
-/****************************************************************************************************************************/
-// // Create or reuse Jumpbox VM
+module avmBastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = if (networkIsolation && !empty(azureBastionSubnet)) {
+  name: '${prefix}-bastionhost'
+  params: {
+    name: '${prefix}-bastionhost'
+    skuName: 'Standard'
+    location: location
+    virtualNetworkResourceId: virtualNetwork.outputs.resourceId
+    diagnosticSettings: [
+      {
+        name: 'bastionDiagnostics'
+        workspaceResourceId: logAnalyticsWorkspaceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+      }
+    ]
+    tags: tags
+  }
+}
 
+// /****************************************************************************************************************************/
+// // Jumpbox VM
+// /****************************************************************************************************************************/
+// // // Create or reuse Jumpbox VM
 
-// module jumpbox 'modules/jumpbox.bicep' = if (networkIsolation && !jumpboxReuse) {
-//   name: '${prefix}-jumpbox'
-//   params: {
-//     prefix:prefix
-//     vmName:vnetName
-//     location: location
-//     tags: tags
-//     logAnalyticsWorkspaceId: logAnalyticsWorkspaceId
-//     adminUsername: jumboxAdminUser
-//     adminPasswordOrKey: 'your-admin-password-or-ssh-key' // Replace with your secure value
-//     vmSize: jumboxVmSize
-//     subnetId: !empty(subnetIds) ? subnetIds[5].id : null // subnets 0 = web, 1-app, 2-ai, 3-data, 4-bastion, 5-jumpbox
-//   }
-// }
+// Variables for dynamic Jumpbox subnet reference (must be after subnetIds output)
+var subnetNames = [for subnet in mySubnets: subnet.name]
+var jumpboxSubnetIndex = indexOf(subnetNames, 'jumpbox')
+
+module avmJumpbox 'br/public:avm/res/compute/virtual-machine:0.15.0' = if (networkIsolation) {
+  name: '${prefix}-jumpbox'
+  params: {
+    name: take('${prefix}-jumpbox', 15)
+    vmSize: jumboxVmSize
+    location: location
+    adminUsername: jumboxAdminUser
+    adminPassword:'${prefix}P@ssw0rd!' // This should be replaced with a secure method of handling passwords
+    tags: tags
+    zone:2
+    imageReference: {
+      offer: 'WindowsServer'
+      publisher: 'MicrosoftWindowsServer'
+      sku: '2019-datacenter'
+      version: 'latest'
+    }
+    osType: 'Windows'
+    osDisk:{managedDisk: {
+      storageAccountType: 'Standard_LRS'
+    }}
+    encryptionAtHost: false // Some Azure subscriptions do not support encryption at host
+    nicConfigurations: [
+      {
+        name: 'nicJumpbox'
+        ipConfigurations: [
+          {
+            name: 'ipconfig1'
+            subnetResourceId: virtualNetwork.outputs.subnetResourceIds[jumpboxSubnetIndex]
+          }
+        ]
+        networkSecurityGroupResourceId: !empty(mySubnets[jumpboxSubnetIndex].networkSecurityGroup) ? nsgs[jumpboxSubnetIndex].outputs.resourceId : null
+      }
+    ]
+  }
+}
