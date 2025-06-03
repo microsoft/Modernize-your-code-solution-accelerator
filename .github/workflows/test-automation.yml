@@ -5,8 +5,9 @@ on:
     branches:
       - main
       - dev
-    paths:
-      - 'tests/e2e-test/**'
+      - migrate-test-automation
+    # paths:
+    #   - 'tests/e2e-test/**'
   schedule:
       - cron: '0 13 * * *'  # Runs at 1 PM UTC
   workflow_dispatch:
@@ -100,7 +101,7 @@ jobs:
           if [ "$IS_SUCCESS" = "true" ]; then
             EMAIL_BODY=$(cat <<EOF
             {
-              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process has completed successfully.</p><p><strong>Run URL:</strong> <a href="${RUN_URL}">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href="${REPORT_URL}">${REPORT_URL}</a></p><p>Best regards,<br>Your Automation Team</p>",
+              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process has completed successfully.</p><p><strong>Run URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href=\"${REPORT_URL}\">${REPORT_URL}</a></p><p>Best regards,<br>Your Automation Team</p>",
               "subject": "${{ env.accelerator_name }} Test Automation - Success"
             }
           EOF
@@ -108,7 +109,7 @@ jobs:
           else
             EMAIL_BODY=$(cat <<EOF
             {
-              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process  has encountered an issue and has failed to complete successfully.</p><p><strong>Run URL:</strong> <a href="${RUN_URL}">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href="${REPORT_URL}">${REPORT_URL}</a></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>",
+              "body": "<p>Dear Team,</p><p>We would like to inform you that the ${{ env.accelerator_name }} Test Automation process  has encountered an issue and has failed to complete successfully.</p><p><strong>Run URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p><strong>Test Report:</strong> <a href=\"${REPORT_URL}\">${REPORT_URL}</a></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>",
               "subject": "${{ env.accelerator_name }} Test Automation - Failure"
             }
           EOF
