@@ -62,11 +62,11 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    diagnosticSettings: [
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
       {
         workspaceResourceId: logAnalyticsWorkspaceResourceId
       } 
-    ]
+    ] : []
     privateEndpoints: privateNetworking != null ? [
       {
         privateDnsZoneGroup: {
