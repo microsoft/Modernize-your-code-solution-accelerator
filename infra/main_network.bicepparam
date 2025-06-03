@@ -3,40 +3,171 @@
 
 using './main_network.bicep'
 
-param networkIsolation = true
+param resourceGroupName = 'gaiye-avm-waf-01-rg' // Name of the resource group for the network resources
+param location = 'eastus'
 
-param vnetName = 'my-vnet'
-param addressPrefixes = [
-  '10.0.0.0/20' //  4,096 IP addresses. Other options: (1) /16: 65,536 (2) /24: 256 Addresses 
+param networkIsolation = true
+param privateEndPoint = true
+
+param jumboxAdminUser = 'JumpboxAdmin' // Admin user for the jumpbox VM
+param jumboxVmSize = 'Standard_D2s_v3' // 'Standard_B2s' not good enough for WAF 
+
+
+//*******************************************************************
+// Network Security Groups (NSGs) and their rules
+//*******************************************************************
+
+param vnetAddressPrefixes = [
+  '10.0.0.0/21' // /21: 2048 addresses, good for up to 8-16 subnets. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
 ]
-param dnsServers = [
-  '10.0.1.4'
-  '10.0.1.5'
-]
-param subnets = [
+
+param mySubnets = [
   {
     name: 'web'
-    addressPrefix: '10.0.1.0/24'
+    addressPrefixes: ['10.0.0.0/24']
+    networkSecurityGroup: {
+      name: 'web-nsg'
+      securityRules: [
+        {
+          name: 'AllowHttpsInbound'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '443'
+            sourceAddressPrefixes: ['0.0.0.0/0']
+            destinationAddressPrefixes: ['10.0.0.0/24']
+          }
+        }
+      ]
+    }
   }
   {
     name: 'app'
-    addressPrefix: '10.0.2.0/24'
+    addressPrefixes: ['10.0.1.0/24']
+    networkSecurityGroup: {
+      name: 'app-nsg'
+      securityRules: [
+        {
+          name: 'AllowWebToApp'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefixes: ['10.0.0.0/24'] // web subnet
+            destinationAddressPrefixes: ['10.0.1.0/24']
+          }
+        }
+      ]
+    }
   }
   {
     name: 'ai'
-    addressPrefix: '10.0.3.0/24'
+    addressPrefixes: ['10.0.2.0/24']
+    networkSecurityGroup: {
+      name: 'ai-nsg'
+      securityRules: [
+        {
+          name: 'AllowAppToAI'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefixes: ['10.0.1.0/24'] // app subnet
+            destinationAddressPrefixes: ['10.0.2.0/24']
+          }
+        }
+      ]
+    }
   }
   {
     name: 'data'
-    addressPrefix: '10.0.4.0/24'
+    addressPrefixes: ['10.0.3.0/24']
+    networkSecurityGroup: {
+      name: 'data-nsg'
+      securityRules: [
+        {
+          name: 'AllowWebAppAiToData'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefixes: [
+              '10.0.0.0/24' // web subnet
+              '10.0.1.0/24' // app subnet
+              '10.0.2.0/24' // ai subnet
+            ]
+            destinationAddressPrefixes: ['10.0.3.0/24']
+          }
+        }
+      ]
+    }
   }
   {
-    name: 'bastion'
-    addressPrefix: '10.0.5.0/24'
+    name: 'services'
+    addressPrefixes: ['10.0.4.0/24']
+    networkSecurityGroup: {
+      name: 'services-nsg'
+      securityRules: [
+        {
+          name: 'AllowWebAppAiToServices'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefixes: [
+              '10.0.0.0/24' // web subnet
+              '10.0.1.0/24' // app subnet
+              '10.0.2.0/24' // ai subnet
+            ]
+            destinationAddressPrefixes: ['10.0.4.0/24']
+          }
+        }
+      ]
+    }
   }
   {
     name: 'jumpbox'
-    addressPrefix: '10.0.6.0/24'
+    addressPrefixes: ['10.0.5.0/24']
+    networkSecurityGroup: {
+      name: 'jumpbox-nsg'
+      securityRules: [
+        {
+          name: 'AllowJumpboxInbound'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '22'
+            sourceAddressPrefixes: ['0.0.0.0/0']
+            destinationAddressPrefixes: ['10.0.5.0/24']
+          }
+        }
+      ]
+    }
   }
+  // Add more subnets here as needed, e.g. for private endpoints, firewall, etc.
 ]
 
+
+param azureBastionSubnet = {
+  name: 'AzureBastionSubnet' // Required name for Azure Bastion
+  addressPrefixes: ['10.0.6.0/27']
+  networkSecurityGroup: null // Must not have an NSG
+}

@@ -1,45 +1,80 @@
 # Deployment Plan
 
-The deployment code will be in the **infra** folder. The **modules** subfolder contains reusable, parameterized modules. There are two main deployment files: `main.bicep` (for quick, cost-effective solution exploration and demos) and `main.waf.bicep` (for production-grade, WAF-secured deployments). Both leverage the same modules, but with different parameters and security/networking posture.
+The deployment code will be in the **infra** folder. The **modules** subfolder contains reusable, parameterized modules. 
 
-- **main.bicep**: Lightweight deployment for rapid prototyping, demos, and decision making. Minimal networking/security for speed and cost.
-- **main.waf.bicep**: Production-ready deployment. Creates a Virtual Network with subnets, private endpoints for all solution resources (e.g., Azure AI Foundry, Storage, Cosmos DB, Key Vault), Bastion Host, and all networking/security resources recommended by WAF Security Guidelines. Uses Azure Verified Modules (AVM) where appropriate. See [Microsoft Azure Well-Architected Framework (WAF) Security design principles](https://learn.microsoft.com/en-us/azure/well-architected/security/principles) and [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/).
+- **main.bicep**: main bicep program that uses parameters defined in 
+- **main.biceppram** file 
+
+Creates a Virtual Network with subnets, private endpoints for all solution resources (e.g., Azure AI Foundry, Storage, Cosmos DB, Key Vault), Bastion Host, and all networking/security resources recommended by WAF Security Guidelines. Uses Azure Verified Modules (AVM) where appropriate. See [Microsoft Azure Well-Architected Framework (WAF) Security design principles](https://learn.microsoft.com/en-us/azure/well-architected/security/principles) and [Azure Verified Modules (AVM)](https://azure.github.io/Azure-Verified-Modules/).
 
 If you are new to AVM BICEP implementation, refer to [AVM Bicep Quickstart Guide](https://azure.github.io/Azure-Verified-Modules/usage/quickstart/bicep/).
 
-**All modules are parameterized for maximum reusability and maintainability. Use outputs from modules to wire dependencies (e.g., VNet/subnet IDs, resource IDs).**
+
 
 Below is an example deployment design. The Group (module) Name column shows how to group code in BICEP modules.
 
-**Solution Components** 
+**Solution Components and placements the Vnet/Subnets**
 
-| Component Name                            | Notes                                   | Subnet            |
-| ----------------------------------------- | ------------------------------------------------------------ | ----------------- |
-| Log Analytics Workspace | monitoring **(global, not subnet) |  |
-| Application Insights | app-insights **(global, not subnet)** |  |
-| Container Apps Environment                | Shared by two apps                 | app             |
-| Frontend Container App                    |                      | app            |
-| Backend Container App                     |                      | app               |
-| NSG for App Subnet                        | nsg                                                          | app               |
-| AI Hub                                    | ai-foundry / **private end point**                          | ai                |
-| AI Project                                | ai-foundry / **private end point**                          | ai                |
-| AI Services                               | ai-foundry / **private end point**                          | ai                |
-| NSG for AI Subnet                         | nsg                                                          | ai                |
-| Managed Identity (RG, etc)   | identity                                                     |               |
-| Key Vault                                 | keyvault / **private end point**                            | data         |
-| Cosmos DB                                 | cosmos-db/ **private end point**       | data              |
-| Storage Account Front End                 | storage / **private end point**       | data          |
-| Storage Account Back End                  | storage / **private end point**  | data          |
-| NSG for Data Subnet                       | nsg                                                          | data              |
-| Bastion Host                              | bastion                                                      | bastion           |
-| NSG for Bastion                           | nsg                                                          | bastion           |
-| JumpBox VM                                | (your-jumpbox-module)                                        | jumpbox           |
-| NSG for JumpBox                           | nsg                                                          | jumpbox           |
-| Route Table                               | routeTable                                                   | (associated subnets) |
-| Private Endpoints                         | privateEndpoint                                              | respective subnet |
-| Private DNS Zone                          | privateDnsZone                                               | vnet              |
+| #                           | Component Name                            | Notes                                   | Subnet            |
+| ----------------------------------------- | ------------------------------------------------------------ | ----------------- | ----------------- |
+| 1 | Managed Identities | (User/Sys defined) |  |
+| 2 | Log Analytics Workspace | monitoring **(global, not subnet) |  |
+| 3 | Application Insights | app-insights **(global, not subnet)** |  |
+| S    |                           |  |           |
+| 1    | Web App Environment | | web |
+| 2                  | Frontend Container App                    |                      | web         |
+| 3 | NSG for Web Subnet | nsg | web |
+| S |  |  |  |
+| 1 | App Environment |  | app |
+| 2                  | Backend Container App                     |                      | app               |
+| 3                      | NSG for App Subnet                        | nsg                                                          | app               |
+| S |  |  |  |
+| 1                                  | AI Hub                                    | ai-foundry / **private end point**                          | ai                |
+| 2                             | AI Project                                | ai-foundry / **private end point**                          | ai                |
+| 3                            | AI Services                               | ai-foundry / **private end point**                          | ai                |
+| 4                      | NSG for AI Subnet                         | nsg                                                          | ai                |
+| S |  |  |  |
+| 1                               | Key Vault                                 | keyvault / **private end point**                            | data         |
+| 2                              | Cosmos DB                                 | cosmos-db/ **private end point**       | data              |
+| 3              | Storage Account Front End                 | storage / **private end point**       | data          |
+| 4               | Storage Account Back End                  | storage / **private end point**  | data          |
+| 5                    | NSG for Data Subnet                       | nsg                                                          | data              |
+| S |  |  |  |
+| 1                           | Services               | For future expansion, any services that AI or App will utilize | services  |
+| 2                        | NSG for Services                  | nsg                                                          | services  |
+| S |  |  |  |
+| 11 | JumpBox VMAzure Bastion Host | (your-jumpbox-module) | jumpbox |
+| 22 | NSG for JumpBox | nsg | jumpbox |
+| S | | | |
+| 1                             | Azure Bastion Host               | PaaS, no NSG                                                 | AzureBastionSubnet |
+| S |  |  |  |
+| 1                            | Route Table                               | routeTable                                                   | (associated subnets) |
+| 2                       | Private Endpoints                         | privateEndpoint                                              | respective subnet |
+| 3                       | Private DNS Zone                          | privateDnsZone                                               | vnet              |
 
 
+
+#### Network Design 
+
+addressPrefixes = [
+
+ '10.0.0.0/21' // /21: **2048 addresses, good for up to 8-16 subnets**. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
+
+]
+
+256 x 7 = 1792 allocated 
+
+| Subnet      | Address Prefix | IP Range              | Total IPs | Usable IPs* |
+| ----------- | -------------- | --------------------- | --------- | ----------- |
+| web         | 10.0.0.0/24    | 10.0.0.0 – 10.0.0.255 | 256       | 251         |
+| app         | 10.0.1.0/24    | 10.0.1.0 – 10.0.1.255 | 256       | 251         |
+| ai          | 10.0.2.0/24    | 10.0.2.0 – 10.0.2.255 | 256       | 251         |
+| data        | 10.0.3.0/24    | 10.0.3.0 – 10.0.3.255 | 256       | 251         |
+| services    | 10.0.4.0/24    | 10.0.4.0 – 10.0.4.255 | 256       | 251         |
+| jumpbox     | 10.0.5.0/24    | 10.0.5.0 – 10.0.5.255 | 256       | 251         |
+| bastionHost | 10.0.6.0/27    | 10.0.6.0 – 10.0.6.255 | 256       | 251         |
+
+*Usable IPs = Total IPs minus 5 reserved by Azure per subnet.
 
 ### **Example Subnet/NSG Table**
 

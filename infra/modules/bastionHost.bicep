@@ -10,9 +10,6 @@ param location string = resourceGroup().location
 @description('Resource ID of the VNet')
 param vnetId string
 
-@description('Resource ID of the Bastion subnet')
-param subnetId string
-
 @description('Optional: Tags for the Bastion Host')
 param tags object = {}
 
@@ -22,7 +19,11 @@ module bastion 'br/public:avm/res/network/bastion-host:0.2.2' = {
     name: bastionHostName
     location: location
     virtualNetworkResourceId: vnetId
-    subnetResourceId: subnetId
+    publicIPAddressObject: {
+      name: '${bastionHostName}-pip'
+      skuName: 'Standard'
+      location: location
+    }
     tags: tags
   }
 }
