@@ -50,10 +50,11 @@ param enableRedundancy bool = false
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
 
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking.')
+param enablePrivateNetworking bool = false
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
-
-var abbrs = loadJsonContent('./abbreviations.json')
 
 var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
 var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
@@ -83,7 +84,7 @@ var modelDeployment =  {
 module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
   name: take('identity-${resourcesName}-deployment', 64)
   params: {
-    name: '${abbrs.security.managedIdentity}${resourcesName}'
+    name: 'id-${resourcesName}'
     location: location
     tags: allTags
   }
@@ -92,7 +93,7 @@ module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identit
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
-    name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcesName}'
+    name: 'log-${resourcesName}'
     location: location
     skuName: 'PerGB2018'
     dataRetention: 30
@@ -104,7 +105,7 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
   name: take('app-insights-${resourcesName}-deployment', 64)
   params: {
-    name: '${abbrs.managementGovernance.applicationInsights}${resourcesName}'
+    name: 'appi-${resourcesName}'
     location: location
     workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId
     diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId }]
@@ -112,32 +113,18 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
-module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
+module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.storage.storageAccount}${uniqueResourcesName}', 24)
+    name: take('st${uniqueResourcesName}', 24)
     location: location
-    kind: 'StorageV2'
+    tags: allTags
     skuName: enableRedundancy ? 'Standard_LRS' : 'Standard_GZRS'
-    publicNetworkAccess: 'Enabled'
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowSharedKeyAccess: false
-    allowCrossTenantReplication: false
-    requireInfrastructureEncryption: false
-    keyType: 'Service'
-    enableHierarchicalNamespace: false
-    enableNfsV3: false
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
-    blobServices: {
-      containers: [
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    containers: [
         {
           name: appStorageContainerName
           properties: {
@@ -145,7 +132,6 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
           }
         }
       ]
-    }
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -153,22 +139,21 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
-    tags: allTags
   }
 }
 
-module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
+module azureAiServices 'modules/aiServices.bicep' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: '${abbrs.ai.aiServices}${uniqueResourcesName}'
+    name: 'ais-${uniqueResourcesName}'
     location: location
     sku: 'S0'
     kind: 'AIServices'
-    customSubDomainName: '${abbrs.ai.aiServices}${uniqueResourcesName}'
-    disableLocalAuth: false
-    publicNetworkAccess: 'Enabled'
     deployments: [modelDeployment]
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -180,49 +165,51 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   }
 }
 
-module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
+module keyVault 'modules/keyVault.bicep' = {
   name: take('keyvault-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.security.keyVault}${uniqueResourcesName}', 24)
+    name: take('kv-${uniqueResourcesName}', 24)
     location: location
-    createMode: 'default'
     sku: 'standard'
-    enableVaultForDeployment: true
-    enableVaultForDiskEncryption: true
-    enableVaultForTemplateDeployment: true
-    enableRbacAuthorization: true
-    publicNetworkAccess: 'Enabled'
-    softDeleteRetentionInDays: 7
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
 
 module azureAifoundry 'modules/aiFoundry.bicep' = {
   name: take('aifoundry-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     location: azureAiServiceLocation
-    hubName: '${abbrs.ai.hub}${resourcesName}'
+    hubName: 'hub-${resourcesName}'
     hubDescription: 'AI Hub for Modernize Your Code'
-    projectName: '${abbrs.ai.project}${resourcesName}'
+    projectName: 'proj-${resourcesName}'
     storageAccountResourceId: storageAccount.outputs.resourceId
-    keyVaultResourceId: keyvault.outputs.resourceId
+    keyVaultResourceId: keyVault.outputs.resourceId
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
 
 module cosmosDb 'modules/cosmosDb.bicep' = {
   name: take('cosmos-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: '${abbrs.databases.cosmosDBDatabase}${uniqueResourcesName}'
+    name: 'cosmos-${uniqueResourcesName}'
     location: location
     managedIdentityPrincipalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
@@ -230,12 +217,13 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
+    name: 'cae-${resourcesName}'
     location: location
-    zoneRedundant: false // TODO - use enableRedundancy and privatenetworking flag to enable/disable
+    zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled'
+    infrastructureSubnetResourceId: enablePrivateNetworking ? '' : '' // TODO
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
@@ -256,7 +244,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-frontend-${resourcesName}-deployment', 64)
   params: {
-    name: take('${abbrs.containers.containerApp}${uniqueResourcesName}frontend', 32)
+    name: take('ca-${uniqueResourcesName}frontend', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -300,14 +288,43 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   }
 }
 
+module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environment:0.11.2' = if (enablePrivateNetworking) {
+  name: take('container-env-backend-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  params: {
+    name: 'cae-${resourcesName}-backend'
+    location: location
+    zoneRedundant: enableRedundancy && enablePrivateNetworking
+    publicNetworkAccess: 'Disabled'
+    infrastructureSubnetResourceId: '' // TODO
+    managedIdentities: {
+      userAssignedResourceIds: [
+        managedIdentity.outputs.resourceId
+      ]
+    }
+    appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
+    appLogsConfiguration: enableMonitoring ? {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
+        sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
+      }
+    } : {}
+    tags: allTags
+  }
+}
+
+var containerAppsEnvironmentResourceId = enablePrivateNetworking ? containerAppsEnvironmentBackend.outputs.resourceId : containerAppsEnvironment.outputs.resourceId
+
 module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace, containerAppsEnvironmentBackend] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.containers.containerApp}${uniqueResourcesName}backend', 32)
+    name: take('ca-${uniqueResourcesName}backend', 32)
     location: location
-    environmentResourceId: containerAppsEnvironment.outputs.resourceId
+    environmentResourceId: containerAppsEnvironmentResourceId
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
