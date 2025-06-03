@@ -40,11 +40,13 @@ Below is an example deployment design. The Group (module) Name column shows how 
 | 4               | Storage Account Back End                  | storage / **private end point**  | data          |
 | 5                    | NSG for Data Subnet                       | nsg                                                          | data              |
 | S |  |  |  |
-| 1                           | Bastion Host                              | bastion                                                      | bastion           |
-| 2                        | NSG for Bastion                           | nsg                                                          | bastion           |
+| 1                           | Services               | For future expansion, any services that AI or App will utilize | services  |
+| 2                        | NSG for Services                  | nsg                                                          | services  |
 | S |  |  |  |
-| 1                             | JumpBox VM                                | (your-jumpbox-module)                                        | jumpbox           |
-| 2                         | NSG for JumpBox                           | nsg                                                          | jumpbox           |
+| 11 | JumpBox VMAzure Bastion Host | (your-jumpbox-module) | jumpbox |
+| 22 | NSG for JumpBox | nsg | jumpbox |
+| S | | | |
+| 1                             | Azure Bastion Host               | PaaS, no NSG                                                 | AzureBastionSubnet |
 | S |  |  |  |
 | 1                            | Route Table                               | routeTable                                                   | (associated subnets) |
 | 2                       | Private Endpoints                         | privateEndpoint                                              | respective subnet |
@@ -56,18 +58,21 @@ Below is an example deployment design. The Group (module) Name column shows how 
 
 addressPrefixes = [
 
- '10.0.0.0/21' // /21: 2048 addresses, good for up to 8-16 subnets. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
+ '10.0.0.0/21' // /21: **2048 addresses, good for up to 8-16 subnets**. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
 
 ]
 
-| Subnet  | Address Prefix | IP Range              | Total IPs | Usable IPs* |
-| ------- | -------------- | --------------------- | --------- | ----------- |
-| web     | 10.0.0.0/24    | 10.0.0.0 – 10.0.0.255 | 256       | 251         |
-| app     | 10.0.1.0/24    | 10.0.1.0 – 10.0.1.255 | 256       | 251         |
-| ai      | 10.0.2.0/24    | 10.0.2.0 – 10.0.2.255 | 256       | 251         |
-| data    | 10.0.3.0/24    | 10.0.3.0 – 10.0.3.255 | 256       | 251         |
-| bastion | 10.0.4.0/24    | 10.0.4.0 – 10.0.4.255 | 256       | 251         |
-| jumpbox | 10.0.5.0/24    | 10.0.5.0 – 10.0.5.255 | 256       | 251         |
+256 x 7 = 1792 allocated 
+
+| Subnet      | Address Prefix | IP Range              | Total IPs | Usable IPs* |
+| ----------- | -------------- | --------------------- | --------- | ----------- |
+| web         | 10.0.0.0/24    | 10.0.0.0 – 10.0.0.255 | 256       | 251         |
+| app         | 10.0.1.0/24    | 10.0.1.0 – 10.0.1.255 | 256       | 251         |
+| ai          | 10.0.2.0/24    | 10.0.2.0 – 10.0.2.255 | 256       | 251         |
+| data        | 10.0.3.0/24    | 10.0.3.0 – 10.0.3.255 | 256       | 251         |
+| services    | 10.0.4.0/24    | 10.0.4.0 – 10.0.4.255 | 256       | 251         |
+| jumpbox     | 10.0.5.0/24    | 10.0.5.0 – 10.0.5.255 | 256       | 251         |
+| bastionHost | 10.0.6.0/27    | 10.0.6.0 – 10.0.6.255 | 256       | 251         |
 
 *Usable IPs = Total IPs minus 5 reserved by Azure per subnet.
 

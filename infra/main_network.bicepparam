@@ -3,7 +3,7 @@
 
 using './main_network.bicep'
 
-param resourceGroupName = 'gaiye-avm-10-rg'
+param resourceGroupName = 'gaiye-avm-waf-01-rg' // Name of the resource group for the network resources
 param location = 'eastus'
 
 param networkIsolation = true
@@ -59,7 +59,7 @@ param mySubnets = [
             protocol: 'Tcp'
             sourcePortRange: '*'
             destinationPortRange: '*'
-            sourceAddressPrefixes: ['10.0.0.0/24']
+            sourceAddressPrefixes: ['10.0.0.0/24'] // web subnet
             destinationAddressPrefixes: ['10.0.1.0/24']
           }
         }
@@ -81,7 +81,7 @@ param mySubnets = [
             protocol: 'Tcp'
             sourcePortRange: '*'
             destinationPortRange: '*'
-            sourceAddressPrefixes: ['10.0.1.0/24']
+            sourceAddressPrefixes: ['10.0.1.0/24'] // app subnet
             destinationAddressPrefixes: ['10.0.2.0/24']
           }
         }
@@ -95,7 +95,7 @@ param mySubnets = [
       name: 'data-nsg'
       securityRules: [
         {
-          name: 'AllowWebandAppToData'
+          name: 'AllowWebAppAiToData'
           properties: {
             access: 'Allow'
             direction: 'Inbound'
@@ -104,9 +104,9 @@ param mySubnets = [
             sourcePortRange: '*'
             destinationPortRange: '*'
             sourceAddressPrefixes: [
-              '10.0.0.0/24'
-              '10.0.1.0/24'
-              '10.0.2.0/24'
+              '10.0.0.0/24' // web subnet
+              '10.0.1.0/24' // app subnet
+              '10.0.2.0/24' // ai subnet
             ]
             destinationAddressPrefixes: ['10.0.3.0/24']
           }
@@ -115,21 +115,25 @@ param mySubnets = [
     }
   }
   {
-    name: 'bastion'
+    name: 'services'
     addressPrefixes: ['10.0.4.0/24']
     networkSecurityGroup: {
-      name: 'bastion-nsg'
+      name: 'services-nsg'
       securityRules: [
         {
-          name: 'AllowBastionInbound'
+          name: 'AllowWebAppAiToServices'
           properties: {
             access: 'Allow'
             direction: 'Inbound'
             priority: 100
             protocol: 'Tcp'
             sourcePortRange: '*'
-            destinationPortRange: '22'
-            sourceAddressPrefixes: ['0.0.0.0/0']
+            destinationPortRange: '*'
+            sourceAddressPrefixes: [
+              '10.0.0.0/24' // web subnet
+              '10.0.1.0/24' // app subnet
+              '10.0.2.0/24' // ai subnet
+            ]
             destinationAddressPrefixes: ['10.0.4.0/24']
           }
         }
