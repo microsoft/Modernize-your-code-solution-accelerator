@@ -3,14 +3,11 @@
 
 using './main_network.bicep'
 
-param resourceGroupName = 'gaiye-avm-waf-01-rg' // Name of the resource group for the network resources
+param resourceGroupName = 'gaiye-avm-waf-02-rg' // Name of the resource group for the network resources
 param location = 'eastus'
 
 param networkIsolation = true
 param privateEndPoint = true
-
-param jumboxAdminUser = 'JumpboxAdmin' // Admin user for the jumpbox VM
-param jumboxVmSize = 'Standard_D2s_v3' // 'Standard_B2s' not good enough for WAF 
 
 
 //*******************************************************************
@@ -140,8 +137,19 @@ param mySubnets = [
       ]
     }
   }
-  {
-    name: 'jumpbox'
+]
+
+//***************************************************************************************
+// Jumpbox VM parameters
+//***************************************************************************************
+param jumpboxVM = true // Set to 'true' to deploy a jumpbox VM, 'false' to skip it
+param jumpboxAdminUser = 'JumpboxAdminUser' // Admin user for the jumpbox VM
+@secure()
+param jumpboxAdminPassword = 'JumpboxAdminP@ssw0rd1234!' // Password for the jumpbox VM admin user, must meet Azure password complexity requirements
+param jumpboxVmSize = 'Standard_D2s_v3' // 'Standard_B2s' not good enough for WAF 
+
+param jumpboxSubnet = {
+   name: 'jumpbox'
     addressPrefixes: ['10.0.5.0/24']
     networkSecurityGroup: {
       name: 'jumpbox-nsg'
@@ -162,10 +170,12 @@ param mySubnets = [
       ]
     }
   }
-  // Add more subnets here as needed, e.g. for private endpoints, firewall, etc.
-]
 
-
+  
+//***************************************************************************************
+// Azure Bastion parameters
+//***************************************************************************************
+param azureBationHost = true // Set to 'true' to deploy Azure Bastion, 'false' to skip it
 param azureBastionSubnet = {
   name: 'AzureBastionSubnet' // Required name for Azure Bastion
   addressPrefixes: ['10.0.6.0/27']
