@@ -10,9 +10,10 @@ param networkIsolation = true
 param privateEndPoint = true
 
 
-//*******************************************************************
-// Network Security Groups (NSGs) and their rules
-//*******************************************************************
+//***************************************************************************************
+// Vnet and Solution Subnets with respective NSGs. i.g. web, app, ai, data, services
+// Jumbox and Azure Bastion subnets are defined separately and optional. 
+//***************************************************************************************
 
 param vnetAddressPrefixes = [
   '10.0.0.0/21' // /21: 2048 addresses, good for up to 8-16 subnets. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
@@ -141,6 +142,7 @@ param mySubnets = [
 
 //***************************************************************************************
 // Jumpbox VM parameters
+// jumpboxVM must be set to true to deploy a jumpbox VM.
 //***************************************************************************************
 param jumpboxVM = true // Set to 'true' to deploy a jumpbox VM, 'false' to skip it
 param jumpboxAdminUser = 'JumpboxAdminUser' // Admin user for the jumpbox VM
@@ -174,6 +176,7 @@ param jumpboxSubnet = {
   
 //***************************************************************************************
 // Azure Bastion parameters
+// azureBationHost must be set to true to deploy Azure Bastion.
 //***************************************************************************************
 param azureBationHost = true // Set to 'true' to deploy Azure Bastion, 'false' to skip it
 param azureBastionSubnet = {
