@@ -19,6 +19,24 @@ param zoneRedundant bool
 @description('Optional. The secondary location for the Cosmos DB Account for failover and multiple writes.')
 param secondaryLocation string?
 
+@description('Optional. Values to establish private networking for the Cosmos DB resource.')
+param privateNetworking resourcePrivateNetworkingType?
+
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
+  name: take('${name}-documents-pdns-deployment', 64)
+  params: {
+    name: 'privatelink.documents.azure.com'
+    virtualNetworkLinks: [
+      {
+        virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
+      }
+    ]
+    tags: tags
+  }
+}
+
+var privateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?privateDnsZoneResourceId) ? privateDnsZone.outputs.resourceId ?? '' : privateNetworking.?privateDnsZoneResourceId ?? '') : ''
+
 resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
   name: '${name}/00000000-0000-0000-0000-000000000002'
 }
@@ -30,17 +48,22 @@ var logContainerName  = 'cmsalog'
 
 module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
   name: take('${name}-account-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
   params: {
     name: name
     enableAnalyticalStorage: true
     location: location
+    minimumTlsVersion: 'Tls12'
+    defaultConsistencyLevel: 'Session'
     networkRestrictions: {
       networkAclBypass: 'AzureServices'
-      publicNetworkAccess: 'Enabled'
+      publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
       ipRules: [] 
       virtualNetworkRules: []
     }
     zoneRedundant: zoneRedundant
+    automaticFailover: !empty(secondaryLocation)
     failoverLocations: !empty(secondaryLocation) ? [
       {
         failoverPriority: 0
@@ -57,7 +80,21 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     backupPolicyType: !empty(secondaryLocation) ? 'Periodic' : 'Continuous'
     backupStorageRedundancy: zoneRedundant ? 'Zone' : 'Local'
     disableKeyBasedMetadataWriteAccess: false
+    disableLocalAuthentication: privateNetworking != null
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
+    privateEndpoints: privateNetworking != null ? [
+      {
+        privateDnsZoneGroup: {
+          privateDnsZoneGroupConfigs: [
+            {
+              privateDnsZoneResourceId: privateDnsZoneResourceId
+            }
+          ]
+        }
+        service: 'Sql'
+        subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+      }
+    ] : []
     sqlDatabases: [
       {
         containers: [
@@ -92,7 +129,6 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
         name: databaseName
       }
     ]
-   
     dataPlaneRoleAssignments: [
       {
         principalId: managedIdentityPrincipalId
@@ -102,6 +138,8 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     tags: tags
   }
 }
+
+import { resourcePrivateNetworkingType } from 'customTypes.bicep'
 
 output resourceId string = cosmosAccount.outputs.resourceId
 output name string = cosmosAccount.outputs.name
