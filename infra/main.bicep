@@ -50,6 +50,9 @@ param enableRedundancy bool = false
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
 
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking.')
+param enablePrivateNetworking bool = false
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -112,6 +115,8 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
 
 module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     name: take('st${uniqueResourcesName}', 24)
     location: location
@@ -139,6 +144,8 @@ module storageAccount 'modules/storageAccount.bicep' = {
 
 module azureAiServices 'modules/aiServices.bicep' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     name: 'ais-${uniqueResourcesName}'
     location: location
@@ -160,6 +167,8 @@ module azureAiServices 'modules/aiServices.bicep' = {
 
 module keyVault 'modules/keyVault.bicep' = {
   name: take('keyvault-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     name: take('kv-${uniqueResourcesName}', 24)
     location: location
@@ -172,6 +181,8 @@ module keyVault 'modules/keyVault.bicep' = {
 
 module azureAifoundry 'modules/aiFoundry.bicep' = {
   name: take('aifoundry-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     location: azureAiServiceLocation
     hubName: 'hub-${resourcesName}'
@@ -182,12 +193,15 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
 
 module cosmosDb 'modules/cosmosDb.bicep' = {
   name: take('cosmos-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     name: 'cosmos-${uniqueResourcesName}'
     location: location
@@ -195,6 +209,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
@@ -202,12 +217,13 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
     name: 'cae-${resourcesName}'
     location: location
-    zoneRedundant: false // TODO - use enableRedundancy and privatenetworking flag to enable/disable
+    zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled'
+    infrastructureSubnetResourceId: enablePrivateNetworking ? '' : '' // TODO
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
@@ -250,7 +266,6 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: '1'
           memory: '2.0Gi'
         }
-        
       }
     ]
     ingressTargetPort: 3000
@@ -273,14 +288,43 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   }
 }
 
+module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environment:0.11.2' = if (enablePrivateNetworking) {
+  name: take('container-env-backend-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  params: {
+    name: 'cae-${resourcesName}-backend'
+    location: location
+    zoneRedundant: enableRedundancy && enablePrivateNetworking
+    publicNetworkAccess: 'Disabled'
+    infrastructureSubnetResourceId: '' // TODO
+    managedIdentities: {
+      userAssignedResourceIds: [
+        managedIdentity.outputs.resourceId
+      ]
+    }
+    appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
+    appLogsConfiguration: enableMonitoring ? {
+      destination: 'log-analytics'
+      logAnalyticsConfiguration: {
+        customerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
+        sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
+      }
+    } : {}
+    tags: allTags
+  }
+}
+
+var containerAppsEnvironmentResourceId = enablePrivateNetworking ? containerAppsEnvironmentBackend.outputs.resourceId : containerAppsEnvironment.outputs.resourceId
+
 module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace, containerAppsEnvironmentBackend] // required due to optional flags that could change dependency
   params: {
     name: take('ca-${uniqueResourcesName}backend', 32)
     location: location
-    environmentResourceId: containerAppsEnvironment.outputs.resourceId
+    environmentResourceId: containerAppsEnvironmentResourceId
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
