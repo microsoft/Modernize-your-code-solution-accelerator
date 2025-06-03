@@ -191,6 +191,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     enableVaultForDiskEncryption: true
     enableVaultForTemplateDeployment: true
     enableRbacAuthorization: true
+    enablePurgeProtection: false
     publicNetworkAccess: 'Enabled'
     softDeleteRetentionInDays: 7
     diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
@@ -278,6 +279,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
           cpu: '1'
           memory: '2.0Gi'
         }
+        
       }
     ]
     ingressTargetPort: 3000
