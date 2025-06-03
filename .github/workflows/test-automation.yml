@@ -6,8 +6,8 @@ on:
       - main
       - dev
       - migrate-test-automation
-    paths:
-      - 'tests/e2e-test/**'
+    # paths:
+    #   - 'tests/e2e-test/**'
   schedule:
       - cron: '0 13 * * *'  # Runs at 1 PM UTC
   workflow_dispatch:
