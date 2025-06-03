@@ -110,32 +110,16 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
-module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
+module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
   params: {
     name: take('st${uniqueResourcesName}', 24)
     location: location
-    kind: 'StorageV2'
+    tags: allTags
     skuName: enableRedundancy ? 'Standard_LRS' : 'Standard_GZRS'
-    publicNetworkAccess: 'Enabled'
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowSharedKeyAccess: false
-    allowCrossTenantReplication: false
-    requireInfrastructureEncryption: false
-    keyType: 'Service'
-    enableHierarchicalNamespace: false
-    enableNfsV3: false
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
-    blobServices: {
-      containers: [
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    containers: [
         {
           name: appStorageContainerName
           properties: {
@@ -143,7 +127,6 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
           }
         }
       ]
-    }
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -151,22 +134,19 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.17.0' = {
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
-    tags: allTags
   }
 }
 
-module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
+module azureAiServices 'modules/aiServices.bicep' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
   params: {
     name: 'ais-${uniqueResourcesName}'
     location: location
     sku: 'S0'
     kind: 'AIServices'
-    customSubDomainName: 'ais-${uniqueResourcesName}'
-    disableLocalAuth: false
-    publicNetworkAccess: 'Enabled'
     deployments: [modelDeployment]
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -178,21 +158,14 @@ module azureAiServices 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   }
 }
 
-module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
+module keyVault 'modules/keyVault.bicep' = {
   name: take('keyvault-${resourcesName}-deployment', 64)
   params: {
     name: take('kv-${uniqueResourcesName}', 24)
     location: location
-    createMode: 'default'
     sku: 'standard'
-    enableVaultForDeployment: true
-    enableVaultForDiskEncryption: true
-    enableVaultForTemplateDeployment: true
-    enableRbacAuthorization: true
-    enablePurgeProtection: false
-    publicNetworkAccess: 'Enabled'
-    softDeleteRetentionInDays: 7
-    diagnosticSettings: enableMonitoring ? [{workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId}] : []
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
     tags: allTags
   }
 }
@@ -205,7 +178,7 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     hubDescription: 'AI Hub for Modernize Your Code'
     projectName: 'proj-${resourcesName}'
     storageAccountResourceId: storageAccount.outputs.resourceId
-    keyVaultResourceId: keyvault.outputs.resourceId
+    keyVaultResourceId: keyVault.outputs.resourceId
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
