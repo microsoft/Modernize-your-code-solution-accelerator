@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 env:
-    url: ${{ vars.CODEGEN_WEB_URL }}
+    url: ${{ vars.CODEMOD_WEB_URL }}
     accelerator_name: "Code Modernization"
 
 jobs:
@@ -40,8 +40,8 @@ jobs:
         with:
           azcliversion: 'latest'
           inlineScript: |
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEGEN_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEMOD_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEMOD_FRONTEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEMOD_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEMOD_BACKEND_CONTAINER_NAME }}/start?api-version=2025-01-01"
 
       - name: Install dependencies
         run: |
@@ -127,6 +127,6 @@ jobs:
         with:
           azcliversion: 'latest'
           inlineScript: |
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_FRONTEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
-            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CodeGen_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEGEN_BACKEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEMOD_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEMOD_FRONTEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
+            az rest -m post -u "/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ vars.CODEMOD_RG }}/providers/Microsoft.App/containerApps/${{ vars.CODEMOD_BACKEND_CONTAINER_NAME }}/stop?api-version=2025-01-01"
             az logout
