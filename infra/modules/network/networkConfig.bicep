@@ -1,10 +1,12 @@
-// This module defines the network configuration only. 
-// It does not create any resources. 
-// the output networkConfig object contains the network configuration details. 
+// This module defines the network configuration object only.
+// It does NOT create any Azure resources.
+// The output 'networkConfig' object is used as input for network deployment modules.
 
 var inputNetworkConfig object = {
    addressPrefixes: ['10.0.0.0/21']
     solutionSubnets: [
+      // Only one delegation per subnet is supported by the AVM module as of June 2025.
+      // For subnets that do not require delegation, leave the array empty.
       {
         name: 'web'
         addressPrefixes: ['10.0.0.0/24']
@@ -26,7 +28,7 @@ var inputNetworkConfig object = {
             }
           ]
         }
-        delegations: [ // only one delegation per subnet is supported by AVM
+        delegations: [
           {
             name: 'containerapps-delegation'
             serviceName: 'Microsoft.App/environments'
@@ -54,7 +56,7 @@ var inputNetworkConfig object = {
             }
           ]
         }
-        delegations: [ // only one delegation per subnet is supported by AVM
+        delegations: [
           {
             name: 'containerapps-delegation'
             serviceName: 'Microsoft.App/environments'
@@ -82,7 +84,7 @@ var inputNetworkConfig object = {
             }
           ]
         }
-        delegations: [] // only one delegation per subnet is supported by AVM
+        delegations: [] // No delegation required for this subnet.
       }
       {
         name: 'data'
@@ -109,7 +111,7 @@ var inputNetworkConfig object = {
             }
           ]
         }
-        delegations: [] // only one delegation per subnet is supported by AVM]
+        delegations: [] // No delegation required for this subnet.
       }
       {
         name: 'services'
@@ -136,16 +138,16 @@ var inputNetworkConfig object = {
             }
           ]
         }
-        delegations: [] // only one delegation per subnet is supported by AVM]
+        delegations: [] // No delegation required for this subnet.
       }
     ]
-    azureBationHost: true
+    azureBationHost: true // Set to true to enable Azure Bastion Host creation.
     azureBastionSubnet: {
       name: 'AzureBastionSubnet' // Required name for Azure Bastion
       addressPrefixes: ['10.0.5.0/27']
-      networkSecurityGroup: null // Must not have an NSG
+      networkSecurityGroup: null // Azure Bastion subnet must NOT have an NSG
     }
-    jumpboxVM: true
+    jumpboxVM: true // Set to true to enable Jumpbox VM creation.
     jumpboxVmSize: 'Standard_D2s_v3'
     jumpboxAdminUser: 'JumpboxAdminUser'
     jumpboxAdminPassword: 'JumpboxAdminP@ssw0rd1234!'
