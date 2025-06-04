@@ -12,10 +12,10 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_LOCATION`                       | string  | `japaneast`      | Location of the Azure resources. Controls where the infrastructure will be deployed.                 |
 | `AZURE_ENV_MODEL_DEPLOYMENT_TYPE`      | string  | `GlobalStandard` | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                         |
 | `AZURE_ENV_MODEL_NAME`                 | string  | `gpt-4o`         | Set the Model Name (allowed values: gpt-4o).                                                         |
+| `AZURE_ENV_MODEL_VERSION`              | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
 | `AZURE_ENV_MODEL_CAPACITY`             | integer | `200`            | Set the Model Capacity (choose a number based on available GPT model capacity in your subscription). |
 | `AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID` | string  | `<Existing Workspace Id>`     | Set this if you want to reuse an existing Log Analytics Workspace instead of creating a new one.     |
-| `AZURE_ENV_IMAGETAG` | string  | `latest`     | Set the Image tag Like (allowed values: latest, dev, hotfix)    |
-| `AZURE_ENV_MODEL_VERSION` | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
+| `AZURE_ENV_IMAGETAG`                   | string  | `latest`         | Set the Image tag Like (allowed values: latest, dev, hotfix)    |
 
 ---
 
