@@ -16,7 +16,7 @@ param addressPrefixes array
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-param mySubnets array   
+param solutionSubnets array   
                     
 var vnetName = 'vnet-${resourcesName}'
 
@@ -44,7 +44,7 @@ module vnetWithSubnets 'vnetWithSubnets.bicep' = {
   params: {
     vnetName: vnetName
     vnetAddressPrefixes: addressPrefixes
-    subnetArray: mySubnets
+    subnetArray: solutionSubnets
     location: location
     tags: tags
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId

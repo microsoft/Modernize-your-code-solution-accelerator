@@ -1,139 +1,205 @@
-// /****************************************************************************************************************************/
-// Main program to test network isoltion, jumpbox and Azure Bastion Host creation
-// It used parameters from main_network.bicepparam file
-// /****************************************************************************************************************************/
+@minLength(3)
+@maxLength(20)
+@description('A unique application/env name for all resources in this deployment. This should be 3-20 characters long')
+param environmentName string = 'Code Mod Dev'
+
+@minLength(3)
+@description('Azure region for all services.')
+param location string = resourceGroup().location
 
 
-targetScope = 'resourceGroup'
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking.')
+param enablePrivateNetworking bool = true
 
-@minLength(6)
-@maxLength(25)
-@description('Name of the solution. This is used to generate a short unique hash used in all resources.')
-param solutionName string = 'Code Modernization'
 
-@description('Type of the solution. This is used for tagging and categorization.')
-param solutionType string = 'Solution Accelerator'
+@description('Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
+param enableMonitoring bool = true
 
-param resourceGroupName string
-param location string
+@description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
+param tags object = {}
 
-param tags object = {
-  'Solution Name': solutionName
-  'Solution Type': solutionType
+var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
+var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
+var uniqueResourcesName = '${resourcesName}${resourcesToken}'
+
+var defaultTags = {
+  'azd-env-name': resourcesName
 }
+var allTags = union(defaultTags, tags)
 
-// /****************************************************************************************************************************/
-// Prefix generation 
-// /****************************************************************************************************************************/
-var cleanSolutionName = replace(solutionName, ' ', '') // get rid of spaces
-var resourceToken = toLower('${substring(cleanSolutionName, 0, 1)}${uniqueString(cleanSolutionName, resourceGroupName, subscription().id)}')
-var resourceTokenTrimmed = length(resourceToken) > 9 ? substring(resourceToken, 0, 9) : resourceToken
-var prefix = toLower(replace(resourceTokenTrimmed, '_', ''))
-
-// Network parameters (these will be set via main_network.bicepparam)
-param networkIsolation bool = false                  // set in .bicepparam file 
-param vnetAddressPrefixes array = []                 // set in .bicepparam file
-param mySubnets array = []                           // set in .bicepparam file
-var vnetName = '${prefix}-vnet'
-
-// jumpbox parameters
-param jumpboxVM bool = false                         // set in .bicepparam file  
-param jumpboxSubnet object = {}                      // set in .bicepparam file 
-param jumpboxAdminUser string = 'JumpboxAdminUser'   // set in .bicepparam file 
-@secure()
-param jumpboxAdminPassword string                    // set in .bicepparam file 
-param jumpboxVmSize string = 'Standard_D2s_v3'  
-var jumpboxVmName = '${prefix}-jumpboxVM'            
-
-// Azure Bastion Host parameters
-param azureBationHost bool = false                   // set in .bicepparam file 
-param azureBastionSubnet object = {}                 // set in .bicepparam file 
-var azureBastionHostName = '${prefix}-bastionHost'  
-
-// Private Endpoint parameters
-param privateEndPoint bool = false                    // set in .bicepparam file 
-
-// /****************************************************************************************************************************/
-// Log Analytics Workspace that will be used across the solution
-// /****************************************************************************************************************************/
-
-module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
-  name: '${prefix}-law'
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring || enablePrivateNetworking) {
+  name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
-    logAnalyticsWorkSpaceName: '${prefix}-law'
+    name: 'log-${resourcesName}'
     location: location
-    tags: tags
+    skuName: 'PerGB2018'
+    dataRetention: 30
+    diagnosticSettings: [{ useThisWorkspace: true }]
+    tags: allTags
   }
 }
 
-// /****************************************************************************************************************************/
-// Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
-// /****************************************************************************************************************************/
-
-module vnetWithSubnets 'modules/vnetWithSubnets.bicep' = if (networkIsolation) {
-  name: '${prefix}-vnetWithSubnets'
+module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
+  name: take('network-${resourcesName}-deployment', 64)
   params: {
-    vnetName: vnetName
-    vnetAddressPrefixes: vnetAddressPrefixes
-    subnetArray: mySubnets
+    resourcesName: take('network-${resourcesName}',10)
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    addressPrefixes: ['10.0.0.0/21']
+    solutionSubnets: [
+      {
+        name: 'web'
+        addressPrefixes: ['10.0.0.0/24']
+        networkSecurityGroup: {
+          name: 'web-nsg'
+          securityRules: [
+            {
+              name: 'AllowHttpsInbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefixes: ['0.0.0.0/0']
+                destinationAddressPrefixes: ['10.0.0.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'app'
+        addressPrefixes: ['10.0.1.0/24']
+        networkSecurityGroup: {
+          name: 'app-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebToApp'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: ['10.0.0.0/24'] // web subnet
+                destinationAddressPrefixes: ['10.0.1.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'ai'
+        addressPrefixes: ['10.0.2.0/24']
+        networkSecurityGroup: {
+          name: 'ai-nsg'
+          securityRules: [
+            {
+              name: 'AllowAppToAI'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: ['10.0.1.0/24'] // app subnet
+                destinationAddressPrefixes: ['10.0.2.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'data'
+        addressPrefixes: ['10.0.3.0/24']
+        networkSecurityGroup: {
+          name: 'data-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebAppAiToData'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: [
+                  '10.0.0.0/24' // web subnet
+                  '10.0.1.0/24' // app subnet
+                  '10.0.2.0/24' // ai subnet
+                ]
+                destinationAddressPrefixes: ['10.0.3.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'services'
+        addressPrefixes: ['10.0.4.0/24']
+        networkSecurityGroup: {
+          name: 'services-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebAppAiToServices'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: [
+                  '10.0.0.0/24' // web subnet
+                  '10.0.1.0/24' // app subnet
+                  '10.0.2.0/24' // ai subnet
+                ]
+                destinationAddressPrefixes: ['10.0.4.0/24']
+              }
+            }
+          ]
+        }
+      }
+    ]
+    azureBationHost: true
+    azureBastionSubnet: {
+      name: 'AzureBastionSubnet' // Required name for Azure Bastion
+      addressPrefixes: ['10.0.5.0/27']
+      networkSecurityGroup: null // Must not have an NSG
+    }
+    jumpboxVM: true
+    jumpboxVmSize: 'Standard_D2s_v3'
+    jumpboxAdminUser: 'JumpboxAdminUser'
+    jumpboxAdminPassword: 'JumpboxAdminP@ssw0rd1234!'
+    jumpboxSubnet: {
+      name: 'jumpbox'
+      addressPrefixes: ['10.0.6.0/24']
+      networkSecurityGroup: {
+        name: 'jumpbox-nsg'
+        securityRules: [
+          {
+            name: 'AllowJumpboxInbound'
+            properties: {
+              access: 'Allow'
+              direction: 'Inbound'
+              priority: 100
+              protocol: 'Tcp'
+              sourcePortRange: '*'
+              destinationPortRange: '22'
+              sourceAddressPrefixes: [
+                '10.0.5.0/27' // Azure Bastion subnet
+              ]
+              destinationAddressPrefixes: ['10.0.6.0/24']
+            }
+          }
+        ]
+      }
+    }
     location: location
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkSpace.outputs.workspaceId
+    tags: allTags
   }
 }
-
-
-output vnetName string = vnetWithSubnets.outputs.vnetName
-output vnetResourceId string = vnetWithSubnets.outputs.vnetResourceId
-output subnetsOutput array = vnetWithSubnets.outputs.outputSubnetsArray // This one holds critical info for subnets, including NSGs
-
-
-// /****************************************************************************************************************************/
-// // Create Azure Bastion Subnet and Azure Bastion Host
-// /****************************************************************************************************************************/
-
-module azureBastionHost 'modules/azureBationHost.bicep' = if (networkIsolation && azureBationHost && !empty(azureBastionSubnet)) {
-  name: '${prefix}-azureBastionHost'
-  params: {
-    azureBastionSubnet: azureBastionSubnet
-    location: location
-    vnetName: vnetWithSubnets.outputs.vnetName
-    vnetId: vnetWithSubnets.outputs.vnetResourceId
-    azureBationHostName: azureBastionHostName
-    logAnalyticsWorkspaceId: logAnalyticsWorkSpace.outputs.workspaceId
-    tags: tags
-  }
-}
-
-output azureBastionSubnetId string = azureBastionHost.outputs.bastionSubnetId
-output azureBastionSubnetName string = azureBastionHost.outputs.bastionSubnetName
-output azureBastionHostId string = azureBastionHost.outputs.bastionHostId
-output azureBastionHostName string = azureBastionHost.outputs.bastionHostName
-
-
-
-// /****************************************************************************************************************************/
-// // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
-// /****************************************************************************************************************************/
-
-module jumpboxWithSubnet 'modules/jumpboxWithSubnet.bicep' = if (networkIsolation && jumpboxVM && !empty(jumpboxSubnet)) {
-  name: '${prefix}-jumpboxWithSubnet'
-  params: {
-    vmName: jumpboxVmName
-    location: location
-    vnetName: vnetWithSubnets.outputs.vnetName
-    jumpboxVmSize: jumpboxVmSize
-    jumpboxSubnet: jumpboxSubnet
-    jumpboxAdminUser: jumpboxAdminUser
-    jumpboxAdminPassword: jumpboxAdminPassword
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkSpace.outputs.workspaceId
-  }
-}
-
-output jumpboxSubnetName string = jumpboxWithSubnet.outputs.jumpboxSubnetName
-output jumpboxSubnetId string = jumpboxWithSubnet.outputs.jumpboxSubnetId
-output jumpboxVmName string = jumpboxWithSubnet.outputs.jumpboxVmName
-output jumpboxVmId string = jumpboxWithSubnet.outputs.jumpboxVmId
-
-

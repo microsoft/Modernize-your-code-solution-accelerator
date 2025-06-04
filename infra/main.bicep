@@ -119,7 +119,7 @@ module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
     resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
     addressPrefixes: ['10.0.0.0/21']
-    mySubnets: [
+    solutionSubnets: [
       {
         name: 'web'
         addressPrefixes: ['10.0.0.0/24']
