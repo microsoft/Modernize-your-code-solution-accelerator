@@ -25,5 +25,5 @@ azd env set AZURE_ENV_MODEL_CAPACITY 30
 
 Set the Log Analytics Workspace Id if you need to reuse the existing workspace which is already existing
 ```shell
-azd env set AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID '<Existing Log Analytics Workspace Id>'
+azd env set AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID '/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>'
 ```
