@@ -167,7 +167,7 @@ var inputNetworkConfig object = {
               sourcePortRange: '*'
               destinationPortRange: '22'
               sourceAddressPrefixes: [
-                '10.0.5.0/27' // Azure Bastion subnet
+                '10.0.5.0/27' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
               ]
               destinationAddressPrefixes: ['10.0.6.0/24']
             }
