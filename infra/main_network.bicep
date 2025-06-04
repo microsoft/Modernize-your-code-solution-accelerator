@@ -41,17 +41,19 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
-
-// Attention: Below two modules are intended to be used together. 
-// You need to edit and verity modules/network/networkConfig.bicep before using the modules below.
-// // Otherwise, you will get the default configuration written in this file. 
+// Attention: The two modules below are intended to be used together for network deployment.
+// IMPORTANT: Edit and verify 'modules/network/networkConfig.bicep' before using these modules.
+// If you do not customize 'networkConfig.bicep', the default configuration in that file will be used.
+//
+// 'configNetwork' outputs the network configuration object, which is then consumed by 'network'.
+// This pattern separates configuration definition from resource creation for flexibility and reuse.
 
 module configNetwork 'modules/network/networkConfig.bicep' = if (enablePrivateNetworking) {
   name: take('network-${resourcesName}-config', 64)
   params: {
   }
 }
-module createNetwork 'modules/network/network.bicep' = if (enablePrivateNetworking) {
+module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
   name: take('network-${resourcesName}-create', 64)
   params: {
     resourcesName: take('network-${resourcesName}', 15)
