@@ -2,7 +2,6 @@
 // Netowrking - NSGs, VNET and Subnets. Each subnet has its own NSG
 /****************************************************************************************************************************/
 
-param prefix string = 'myapp'
 param location string = resourceGroup().location
 param vnetName string 
 param vnetAddressPrefixes array
@@ -18,9 +17,9 @@ param logAnalyticsWorkspaceId string
 @batchSize(1)
 module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
   for (subnet, i) in subnetArray: if (!empty(subnet.networkSecurityGroup)) {
-    name: '${prefix}-${subnet.networkSecurityGroup.name}'
+    name: '${vnetName}-${subnet.networkSecurityGroup.name}'
     params: {
-      name: '${prefix}-${subnet.networkSecurityGroup.name}'
+      name: '${vnetName}-${subnet.networkSecurityGroup.name}'
       location: location
       securityRules: subnet.networkSecurityGroup.securityRules
       tags: tags
