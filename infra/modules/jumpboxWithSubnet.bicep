@@ -49,11 +49,11 @@ output jumpboxNsgName string = jbNsg.outputs.name
 // 3. Create Jumpbox VM 
 // using AVM Virtual Machine module 
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/compute/virtual-machine
-var shortenedVmName = take(vmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
+var limitedVmName = take(vmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
 module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
   name: vmName
   params: {
-    name: shortenedVmName
+    name: limitedVmName
     vmSize: jumpboxVmSize
     location: location
     adminUsername: jumpboxAdminUser
@@ -75,7 +75,7 @@ module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     encryptionAtHost: false // Some Azure subscriptions do not support encryption at host
     nicConfigurations: [
       {
-        name: 'nicJumpbox'
+        name: '${limitedVmName}-nic'
         ipConfigurations: [
           {
             name: 'ipconfig1'
