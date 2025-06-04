@@ -15,6 +15,7 @@ param aiServicesId string
 param existingLogAnalyticsWorkspaceId string = ''
 
 var useExisting = !empty(existingLogAnalyticsWorkspaceId)
+var existingLawSubscription = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[2] : ''
 var existingLawResourceGroup = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[4] : ''
 var existingLawName = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[8] : ''
 
@@ -41,7 +42,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
 
 resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' existing = if (useExisting) {
   name: existingLawName
-  scope: resourceGroup(existingLawResourceGroup)
+  scope: resourceGroup(existingLawSubscription, existingLawResourceGroup)
 }
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if (!useExisting) {
