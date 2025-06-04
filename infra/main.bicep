@@ -295,7 +295,7 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
   params: {
     name: 'cae-${resourcesName}-backend'
     location: location
-    zoneRedundant: enableRedundancy && enablePrivateNetworking
+    zoneRedundant: enableRedundancy
     publicNetworkAccess: 'Disabled'
     infrastructureSubnetResourceId: '' // TODO
     managedIdentities: {
@@ -320,7 +320,7 @@ var containerAppsEnvironmentResourceId = enablePrivateNetworking ? containerApps
 module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights, logAnalyticsWorkspace, containerAppsEnvironmentBackend] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, containerAppsEnvironmentBackend] // required due to optional flags that could change dependency
   params: {
     name: take('ca-${uniqueResourcesName}backend', 32)
     location: location
