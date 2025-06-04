@@ -34,13 +34,14 @@ param AzureAiServiceLocation string  // The location used for all deployed resou
 param capacity int = 5
 param deploymentType string = 'GlobalStandard'
 param llmModel string = 'gpt-4o'
+param imageVersion string = 'latest'
+
 
 param existingLogAnalyticsWorkspaceId string = ''
 
 var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
 var ResourcePrefix = take('cm${safePrefix}${UniquePrefix}', 15)
-var imageVersion = 'latest'
 var location  = resourceGroup().location
 var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
