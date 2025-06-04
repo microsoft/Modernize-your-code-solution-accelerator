@@ -42,6 +42,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
         name: subnet.name
         addressPrefixes: subnet.addressPrefixes
         networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
+        delegation: !empty(subnet.delegations) ? subnet.delegations[0].serviceName : null  // AVM module expects a single delegation per subnet
       }
     ]
     diagnosticSettings: [
