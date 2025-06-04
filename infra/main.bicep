@@ -31,10 +31,25 @@ var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
 param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+
+@minValue(5)
+@description('Capacity of the GPT deployment:')
 param capacity int = 5
+
+@minLength(1)
+@description('GPT model deployment type:')
 param deploymentType string = 'GlobalStandard'
+
+@minLength(1)
+@description('Name of the GPT model to deploy:')
 param llmModel string = 'gpt-4o'
+
+@minLength(1)
+@description('Set the Image tag:')
 param imageVersion string = 'latest'
+
+@minLength(1)
+@description('Version of the GPT model to deploy:')
 param gptModelVersion string = '2024-08-06'
 
 
