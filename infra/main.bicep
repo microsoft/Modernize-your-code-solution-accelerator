@@ -35,6 +35,7 @@ param capacity int = 5
 param deploymentType string = 'GlobalStandard'
 param llmModel string = 'gpt-4o'
 param imageVersion string = 'latest'
+param gptModelVersion string = '2024-08-06'
 
 
 
@@ -50,7 +51,6 @@ var cosmosdbLogContainer  = 'cmsalog'
 var containerName  = 'appstorage'
 var storageSkuName = 'Standard_LRS'
 var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
-var gptModelVersion = '2024-08-06'
 var azureAiServicesName = '${abbrs.ai.aiServices}${ResourcePrefix}'
 
 

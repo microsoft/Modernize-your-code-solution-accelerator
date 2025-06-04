@@ -5,4 +5,5 @@ param AzureAiServiceLocation = readEnvironmentVariable('AZURE_LOCATION','japanea
 param capacity = int(readEnvironmentVariable('AZURE_ENV_MODEL_CAPACITY', '200'))
 param deploymentType = readEnvironmentVariable('AZURE_ENV_MODEL_DEPLOYMENT_TYPE', 'GlobalStandard')
 param llmModel = readEnvironmentVariable('AZURE_ENV_MODEL_NAME', 'gpt-4o')
+param gptModelVersion = readEnvironmentVariable('AZURE_ENV_MODEL_VERSION', '2024-08-06')
 param imageVersion = readEnvironmentVariable('AZURE_ENV_IMAGETAG', 'latest')
