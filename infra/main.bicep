@@ -90,7 +90,7 @@ module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identit
   }
 }
 
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring) {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring || enablePrivateNetworking) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
     name: 'log-${resourcesName}'
@@ -113,17 +113,185 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
+module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
+  name: take('network-${resourcesName}-deployment', 64)
+  params: {
+    resourcesName: resourcesName
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    addressPrefixes: ['10.0.0.0/21']
+    mySubnets: [
+      {
+        name: 'web'
+        addressPrefixes: ['10.0.0.0/24']
+        networkSecurityGroup: {
+          name: 'web-nsg'
+          securityRules: [
+            {
+              name: 'AllowHttpsInbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefixes: ['0.0.0.0/0']
+                destinationAddressPrefixes: ['10.0.0.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'app'
+        addressPrefixes: ['10.0.1.0/24']
+        networkSecurityGroup: {
+          name: 'app-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebToApp'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: ['10.0.0.0/24'] // web subnet
+                destinationAddressPrefixes: ['10.0.1.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'ai'
+        addressPrefixes: ['10.0.2.0/24']
+        networkSecurityGroup: {
+          name: 'ai-nsg'
+          securityRules: [
+            {
+              name: 'AllowAppToAI'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: ['10.0.1.0/24'] // app subnet
+                destinationAddressPrefixes: ['10.0.2.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'data'
+        addressPrefixes: ['10.0.3.0/24']
+        networkSecurityGroup: {
+          name: 'data-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebAppAiToData'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: [
+                  '10.0.0.0/24' // web subnet
+                  '10.0.1.0/24' // app subnet
+                  '10.0.2.0/24' // ai subnet
+                ]
+                destinationAddressPrefixes: ['10.0.3.0/24']
+              }
+            }
+          ]
+        }
+      }
+      {
+        name: 'services'
+        addressPrefixes: ['10.0.4.0/24']
+        networkSecurityGroup: {
+          name: 'services-nsg'
+          securityRules: [
+            {
+              name: 'AllowWebAppAiToServices'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: [
+                  '10.0.0.0/24' // web subnet
+                  '10.0.1.0/24' // app subnet
+                  '10.0.2.0/24' // ai subnet
+                ]
+                destinationAddressPrefixes: ['10.0.4.0/24']
+              }
+            }
+          ]
+        }
+      }
+    ]
+    azureBationHost: true
+    azureBastionSubnet: {
+      name: 'AzureBastionSubnet' // Required name for Azure Bastion
+      addressPrefixes: ['10.0.5.0/27']
+      networkSecurityGroup: null // Must not have an NSG
+    }
+    jumpboxVM: true
+    jumpboxVmSize: 'Standard_D2s_v3'
+    jumpboxAdminUser: 'JumpboxAdminUser'
+    jumpboxAdminPassword: 'JumpboxAdminP@ssw0rd1234!'
+    jumpboxSubnet: {
+      name: 'jumpbox'
+      addressPrefixes: ['10.0.6.0/24']
+      networkSecurityGroup: {
+        name: 'jumpbox-nsg'
+        securityRules: [
+          {
+            name: 'AllowJumpboxInbound'
+            properties: {
+              access: 'Allow'
+              direction: 'Inbound'
+              priority: 100
+              protocol: 'Tcp'
+              sourcePortRange: '*'
+              destinationPortRange: '22'
+              sourceAddressPrefixes: [
+                '10.0.5.0/27' // Azure Bastion subnet
+              ]
+              destinationAddressPrefixes: ['10.0.6.0/24']
+            }
+          }
+        ]
+      }
+    }
+    location: location
+    tags: allTags
+  }
+}
+
 module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: take('st${uniqueResourcesName}', 24)
     location: location
     tags: allTags
     skuName: enableRedundancy ? 'Standard_LRS' : 'Standard_GZRS'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+    } : null
     containers: [
         {
           name: appStorageContainerName
@@ -145,7 +313,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
 module azureAiServices 'modules/aiServices.bicep' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: 'ais-${uniqueResourcesName}'
     location: location
@@ -153,7 +321,10 @@ module azureAiServices 'modules/aiServices.bicep' = {
     kind: 'AIServices'
     deployments: [modelDeployment]
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
+    } : null
     roleAssignments: [
       {
         principalId: managedIdentity.outputs.principalId
@@ -168,13 +339,16 @@ module azureAiServices 'modules/aiServices.bicep' = {
 module keyVault 'modules/keyVault.bicep' = {
   name: take('keyvault-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: take('kv-${uniqueResourcesName}', 24)
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+    } : null 
     tags: allTags
   }
 }
@@ -182,7 +356,7 @@ module keyVault 'modules/keyVault.bicep' = {
 module azureAifoundry 'modules/aiFoundry.bicep' = {
   name: take('aifoundry-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     location: azureAiServiceLocation
     hubName: 'hub-${resourcesName}'
@@ -193,7 +367,10 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     managedIdentityPrincpalId: managedIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
-    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
+    } : null 
     tags: allTags
   }
 }
@@ -201,7 +378,7 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
 module cosmosDb 'modules/cosmosDb.bicep' = {
   name: take('cosmos-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: 'cosmos-${uniqueResourcesName}'
     location: location
@@ -209,7 +386,10 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
-    privateNetworking: null // Set to null for public access, or provide networking resource IDs for private access
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+    } : null
     tags: allTags
   }
 }
@@ -217,13 +397,13 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: 'cae-${resourcesName}'
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled'
-    infrastructureSubnetResourceId: enablePrivateNetworking ? '' : '' // TODO
+    infrastructureSubnetResourceId: enablePrivateNetworking ? first(filter(network.outputs.subnets, s => s.name == 'web')).resourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
@@ -297,7 +477,7 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
     location: location
     zoneRedundant: enableRedundancy
     publicNetworkAccess: 'Disabled'
-    infrastructureSubnetResourceId: '' // TODO
+    infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
         managedIdentity.outputs.resourceId
