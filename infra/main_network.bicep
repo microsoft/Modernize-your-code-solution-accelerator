@@ -1,4 +1,9 @@
-//targetScope = 'subscription'
+// /****************************************************************************************************************************/
+// Main program to test network isoltion, jumpbox and Azure Bastion Host creation
+// It used parameters from main_network.bicepparam file
+// /****************************************************************************************************************************/
+
+
 targetScope = 'resourceGroup'
 
 @minLength(6)
@@ -17,22 +22,22 @@ param tags object = {
   'Solution Type': solutionType
 }
 
-/****************************************************************************************************************************/
-// prefix generation 
-/****************************************************************************************************************************/
+// /****************************************************************************************************************************/
+// Prefix generation 
+// /****************************************************************************************************************************/
 var cleanSolutionName = replace(solutionName, ' ', '') // get rid of spaces
 var resourceToken = toLower('${substring(cleanSolutionName, 0, 1)}${uniqueString(cleanSolutionName, resourceGroupName, subscription().id)}')
 var resourceTokenTrimmed = length(resourceToken) > 9 ? substring(resourceToken, 0, 9) : resourceToken
 var prefix = toLower(replace(resourceTokenTrimmed, '_', ''))
 
 // Network parameters (these will be set via main_network.bicepparam)
-param networkIsolation bool = false                  //  set in .bicepparam file 
+param networkIsolation bool = false                  // set in .bicepparam file 
 param vnetAddressPrefixes array = []                 // set in .bicepparam file
 param mySubnets array = []                           // set in .bicepparam file
 var vnetName = '${prefix}-vnet'
 
 // jumpbox parameters
-param jumpboxVM bool = false                         //  set in .bicepparam file  
+param jumpboxVM bool = false                         // set in .bicepparam file  
 param jumpboxSubnet object = {}                      // set in .bicepparam file 
 param jumpboxAdminUser string = 'JumpboxAdminUser'   // set in .bicepparam file 
 @secure()
@@ -48,14 +53,12 @@ var azureBastionHostName = '${prefix}-bastionHost'
 // Private Endpoint parameters
 param privateEndPoint bool = false                    // set in .bicepparam file 
 
-/****************************************************************************************************************************/
+// /****************************************************************************************************************************/
 // Log Analytics Workspace that will be used across the solution
-/****************************************************************************************************************************/
-// prefix generation 
-// crate a Log Analytics Workspace using AVM
+// /****************************************************************************************************************************/
 
 module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
-  name: '${prefix}logAnalyticsWorkspace'
+  name: '${prefix}-law'
   params: {
     logAnalyticsWorkSpaceName: '${prefix}-law'
     location: location
@@ -63,9 +66,9 @@ module logAnalyticsWorkSpace 'modules/logAnalyticsWorkSpace.bicep' = {
   }
 }
 
-/****************************************************************************************************************************/
-// Netowrking - NSGs, VNET and Subnets. Each subnet has its own NSG
-/****************************************************************************************************************************/
+// /****************************************************************************************************************************/
+// Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
+// /****************************************************************************************************************************/
 
 module vnetWithSubnets 'modules/vnetWithSubnets.bicep' = if (networkIsolation) {
   name: '${prefix}-vnetWithSubnets'
@@ -85,9 +88,9 @@ output vnetResourceId string = vnetWithSubnets.outputs.vnetResourceId
 output subnetsOutput array = vnetWithSubnets.outputs.outputSubnetsArray // This one holds critical info for subnets, including NSGs
 
 
-/****************************************************************************************************************************/
+// /****************************************************************************************************************************/
 // // Create Azure Bastion Subnet and Azure Bastion Host
-/****************************************************************************************************************************/
+// /****************************************************************************************************************************/
 
 module azureBastionHost 'modules/azureBationHost.bicep' = if (networkIsolation && azureBationHost && !empty(azureBastionSubnet)) {
   name: '${prefix}-azureBastionHost'

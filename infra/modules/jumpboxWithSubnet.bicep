@@ -1,6 +1,5 @@
-
 // /****************************************************************************************************************************/
-// // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
+// Create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
 // /****************************************************************************************************************************/
 param vmName string = 'jumpboxVM' // Default name for Jumpbox VM
 param location string = resourceGroup().location
@@ -15,7 +14,7 @@ param jumpboxAdminPassword string
 param tags object = {}
 param logAnalyticsWorkspaceId string
 
-// 1. Create jumpbox NSG 
+// 1. Create Jumpbox NSG 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
 module jbNsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(jumpboxSubnet)) {
@@ -28,7 +27,7 @@ module jbNsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!emp
   }
 }
 
-// 2. Create jumbox subnet as part of the existing VNet 
+// 2. Create Jumpbox subnet as part of the existing VNet 
 // using AVM Virtual Network Subnet module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 module jbSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(jumpboxSubnet)) {
