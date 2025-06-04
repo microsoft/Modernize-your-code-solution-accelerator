@@ -1,0 +1,94 @@
+.panels{
+    display: flex !important;
+    flex-direction: column !important;
+    background-color: #fafafa !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    position: fixed !important;
+    top: 60px;
+    right: 0px;
+}
+
+.panelLeft{
+    display: flex;
+    flex-direction: column;
+    background-color: var(--colorNeutralBackground2);
+    height: 100%;
+    box-sizing: border-box;
+    position: relative;
+    padding-top:60px
+}
+
+.fs_0{
+    flex-shrink: 0;
+}
+
+.panelContent{
+    flex: 1;
+    overflow-y: auto;
+    //padding: 16px;
+    // margin-top:60px;
+}
+
+.resizeHandel{
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    width: 2px;
+    height: 100%;
+    cursor: ew-resize;
+    z-index: 1;
+}
+
+.panelToolbar{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    box-sizing: border-box;
+    height: 56px;
+}
+// display: flex;
+//                 alignItems: center;
+//                 justifyContent: space-between;
+//                 padding: 16px;
+//                 boxSizing: border-box;
+//                 height: 56px;
+//                 gap: 8px;
+
+.panelTitle{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+// display: flex;
+// alignItems: center;
+// gap: 8px;
+// flex: 1 1 auto;
+// overflow: hidden;
+
+.panelIcon{
+    flex-shrink: 0; // Prevent the icon from shrinking
+    display: flex;
+    align-items: center;
+}
+
+.panelSecTitle{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.panelTools{
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.content2{
+    flex: 1;
+    overflow-y: auto;
+    scrollbar-width: thin;
+}

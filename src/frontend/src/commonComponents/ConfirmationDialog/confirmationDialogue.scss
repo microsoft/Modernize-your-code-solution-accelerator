@@ -1,0 +1,34 @@
+.dialogBody{
+    display: flex;
+    justify-content: space-between;
+    align-items: right
+}
+
+.dismissButton{
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+}
+
+.dialogActionContainer{
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+}
+
+.actionButton{
+    flex-grow: 1;
+    min-width: 120px;
+    max-width: 175px;
+    white-space: nowrap;
+}
+
+.secondaryButton{
+    flex-grow: 1;
+    min-width: 100px;
+    max-width: auto;
+    white-space: nowrap;
+}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, ReactNode, ReactElement } from "react";
 import PanelToolbar from "./PanelLeftToolbar.js"; // Import to identify toolbar
+import "./Panels.scss"; // Import for styling
 
 interface PanelLeftProps {
   panelWidth?: number;
@@ -61,12 +62,6 @@ const PanelLeft: React.FC<PanelLeftProps> = ({
       className="panelLeft"
       style={{
         width: `${width}px`,
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "var(--colorNeutralBackground2)",
-        height: "100%",
-        boxSizing: "border-box",
-        position: "relative",
         borderRight: panelResize
           ? isHandleHovered
             ? "2px solid var(--colorNeutralStroke2)"
@@ -74,16 +69,10 @@ const PanelLeft: React.FC<PanelLeftProps> = ({
           : "none",
       }}
     >
-      {toolbar && <div style={{ flexShrink: 0 }}>{toolbar}</div>}
+      {toolbar && <div className="fs_0">{toolbar}</div>}
 
       <div
         className="panelContent"
-        style={{
-          flex: 1,
-          overflowY: "auto",
-        //   padding: "16px",
-          marginTop:60,
-        }}
       >
         {content}
       </div>
@@ -95,13 +84,6 @@ const PanelLeft: React.FC<PanelLeftProps> = ({
           onMouseEnter={() => setIsHandleHovered(true)}
           onMouseLeave={() => setIsHandleHovered(false)}
           style={{
-            position: "absolute",
-            top: 0,
-            right: 0,
-            width: "2px",
-            height: "100%",
-            cursor: "ew-resize",
-            zIndex: 1,
             backgroundColor: isHandleHovered
             ? "var(--colorNeutralStroke2)"
             : "transparent",
