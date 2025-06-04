@@ -1,10 +1,7 @@
+// /****************************************************************************************************************************/
+// Create Azure Bastion Subnet and Azure Bastion Host
+// /****************************************************************************************************************************/
 
-
-/****************************************************************************************************************************/
-// // Create Azure Bastion Subnet and Azure Bastion Host
-/****************************************************************************************************************************/
-// 1. Create or reuse Azure Bastion Host Using AVM Subnet Module With special config for Azure Bastion Subnet
-// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 
 param azureBastionSubnet object = {}
 param location string = resourceGroup().location
@@ -15,7 +12,8 @@ param logAnalyticsWorkspaceId string
 param tags object = {}
 
 
-// 1. Create Azure Bastion Subnet with defined name: 
+// 1. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(azureBastionSubnet)) {
   name: azureBastionSubnet.name
   params: {

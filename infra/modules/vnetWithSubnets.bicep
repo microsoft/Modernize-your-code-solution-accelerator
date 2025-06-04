@@ -1,5 +1,5 @@
 /****************************************************************************************************************************/
-// Netowrking - NSGs, VNET and Subnets. Each subnet has its own NSG
+// Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 /****************************************************************************************************************************/
 
 param location string = resourceGroup().location
@@ -10,7 +10,7 @@ param tags object = {}
 param logAnalyticsWorkspaceId string
 
 
-// 1. Create NSGs for subnets using the AVM NSG module, only if networkIsolation is true
+// 1. Create NSGs for subnets 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
 
@@ -27,7 +27,7 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
   }
 ]
 
-// 2. Create VNet and subnets with subnets associated with corresponding NSGs
+// 2. Create VNet and subnets, with subnets associated with corresponding NSGs
 // using AVM Virtual Network module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network
 
@@ -69,7 +69,7 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
 output vnetName string = virtualNetwork.outputs.name
 output vnetResourceId string = virtualNetwork.outputs.resourceId
 
-//combined output array that holds subnet details along with NSG information
+// combined output array that holds subnet details along with NSG information
 output outputSubnetsArray array = [
   for (subnet, i) in subnetArray: {
     subnetName: subnet.name
