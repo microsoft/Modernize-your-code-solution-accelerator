@@ -19,9 +19,9 @@ param logAnalyticsWorkspaceId string
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
 module jbNsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(jumpboxSubnet)) {
-  name: jumpboxSubnet.networkSecurityGroup.name
+  name: '${vnetName}-${jumpboxSubnet.networkSecurityGroup.name}'
   params: {
-    name: jumpboxSubnet.networkSecurityGroup.name
+    name: '${vnetName}-${jumpboxSubnet.networkSecurityGroup.name}'
     location: location
     securityRules: jumpboxSubnet.networkSecurityGroup.securityRules
     tags: tags
