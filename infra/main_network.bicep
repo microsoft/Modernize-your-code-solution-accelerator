@@ -41,32 +41,12 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
-// Attention: The two modules below are intended to be used together for network deployment.
-// IMPORTANT: Edit and verify 'modules/network/networkConfig.bicep' before using these modules.
-// If you do not customize 'networkConfig.bicep', the default configuration in that file will be used.
-//
-// 'configNetwork' outputs the network configuration object, which is then consumed by 'network'.
-// This pattern separates configuration definition from resource creation for flexibility and reuse.
 
-module configNetwork 'modules/network/networkConfig.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-config', 64)
+module network 'modules/network.bicep' = if (enablePrivateNetworking) {
+  name: take('network-${resourcesName}-deployment', 64)
   params: {
-  }
-}
-module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-create', 64)
-  params: {
-    resourcesName: take('network-${resourcesName}', 15)
+    resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
-    addressPrefixes: configNetwork.outputs.networkConfig.addressPrefixes
-    solutionSubnets: configNetwork.outputs.networkConfig.solutionSubnets
-    azureBationHost: configNetwork.outputs.networkConfig.azureBationHost
-    azureBastionSubnet: configNetwork.outputs.networkConfig.azureBastionSubnet
-    jumpboxVM: configNetwork.outputs.networkConfig.jumpboxVM
-    jumpboxVmSize: configNetwork.outputs.networkConfig.jumpboxVmSize
-    jumpboxAdminUser: configNetwork.outputs.networkConfig.jumpboxAdminUser
-    jumpboxAdminPassword: configNetwork.outputs.networkConfig.jumpboxAdminPassword
-    jumpboxSubnet:configNetwork.outputs.networkConfig.jumpboxSubnet
     location: location
     tags: allTags
   }
