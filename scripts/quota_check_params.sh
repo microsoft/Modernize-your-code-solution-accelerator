@@ -91,7 +91,7 @@ az account set --subscription "$AZURE_SUBSCRIPTION_ID"
 echo "🎯 Active Subscription: $(az account show --query '[name, id]' --output tsv)"
 
 # Default Regions to check (Comma-separated, now configurable)
-DEFAULT_REGIONS="eastus,uksouth,eastus2,northcentralus,swedencentral,westus,westus2,southcentralus,canadacentral"
+DEFAULT_REGIONS="australiaeast,eastus,eastus2,francecentral,japaneast,norwayeast,southindia,swedencentral,uksouth,westus,westus3"
 IFS=',' read -r -a DEFAULT_REGION_ARRAY <<< "$DEFAULT_REGIONS"
 
 # Read parameters (if any)
