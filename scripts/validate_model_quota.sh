@@ -89,9 +89,9 @@ if [[ "${#FALLBACK_REGIONS[@]}" -gt 0 ]]; then
     echo "   • $fallback"
   done
   echo -e "\n🔧 To proceed, run:"
-  echo "    azd env set AZURE_OPENAI_LOCATION '<region>'"
+  echo "    azd env set AZURE_AISERVICE_LOCATION '<region>'"
   echo "📌 To confirm it's set correctly, run:"
-  echo "    azd env get-value AZURE_OPENAI_LOCATION"
+  echo "    azd env get-value AZURE_AISERVICE_LOCATION"
   echo "▶️  Once confirmed, re-run azd up to deploy the model in the new region."
   exit 2
 fi
