@@ -10,13 +10,13 @@ module network 'network/main.bicep' =  {
     location: location
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkSpaceResourceId
     tags: tags
-    addressPrefixes: ['10.0.0.0/21']
+    addressPrefixes: ['10.0.0.0/23']
     solutionSubnets: [
       // Only one delegation per subnet is supported by the AVM module as of June 2025.
       // For subnets that do not require delegation, leave the array empty.
       {
         name: 'web'
-        addressPrefixes: ['10.0.0.0/24']
+        addressPrefixes: ['10.0.0.0/23']
         networkSecurityGroup: {
           name: 'web-nsg'
           securityRules: [
@@ -44,7 +44,7 @@ module network 'network/main.bicep' =  {
       }
       {
         name: 'app'
-        addressPrefixes: ['10.0.1.0/24']
+        addressPrefixes: ['10.0.1.0/23']
         networkSecurityGroup: {
           name: 'app-nsg'
           securityRules: [
@@ -148,10 +148,9 @@ module network 'network/main.bicep' =  {
         delegations: [] // No delegation required for this subnet.
       }
     ]
-    azureBationHost: true // Set to true to enable Azure Bastion Host creation.
-    azureBastionSubnet: {
-      name: 'AzureBastionSubnet' // Required name for Azure Bastion
-      addressPrefixes: ['10.0.5.0/27']
+    enableBastionHost: true // Set to true to enable Azure Bastion Host creation.
+    bastionSubnet: {
+      addressPrefixes: ['10.0.5.0/23']
       networkSecurityGroup: null // Azure Bastion subnet must NOT have an NSG
     }
     jumpboxVM: true // Set to true to enable Jumpbox VM creation.
@@ -189,10 +188,10 @@ output vnetName string = network.outputs.vnetName
 output vnetResourceId string = network.outputs.vnetResourceId
 output subnets array = network.outputs.subnets // This one holds critical info for subnets, including NSGs
 
-output azureBastionSubnetId string = network.outputs.azureBastionSubnetId
-output azureBastionSubnetName string = network.outputs.azureBastionSubnetName
-output azureBastionHostId string = network.outputs.azureBastionHostId
-output azureBastionHostName string = network.outputs.azureBastionHostName
+output bastionSubnetId string = network.outputs.bastionSubnetId
+output bastionSubnetName string = network.outputs.bastionSubnetName
+output bastionHostId string = network.outputs.bastionHostId
+output bastionHostName string = network.outputs.bastionHostName
 
 output jumpboxSubnetName string = network.outputs.jumpboxSubnetName
 output jumpboxSubnetId string = network.outputs.jumpboxSubnetId

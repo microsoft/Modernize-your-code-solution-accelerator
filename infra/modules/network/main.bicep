@@ -30,17 +30,17 @@ param jumpboxVmSize string = 'Standard_D2s_v3'
 var jumpboxVmName = 'jumpboxVM-${resourcesName}'            
 
 // Azure Bastion Host parameters
-param azureBationHost bool = false                   // set in .bicepparam file 
-param azureBastionSubnet object = {}                 // set in .bicepparam file 
-var azureBastionHostName = 'bastionHost-${resourcesName}'  
+param enableBastionHost bool = false                   // set in .bicepparam file 
+param bastionSubnet object = {}                 // set in .bicepparam file 
+var bastionHostName = 'bastionHost-${resourcesName}'  
 
 
 // /****************************************************************************************************************************/
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /****************************************************************************************************************************/
 
-module vnetWithSubnets 'vnetWithSubnets.bicep' = {
-  name: '${resourcesName}-vnetWithSubnets'
+module virtualNetwork 'virtualNetwork.bicep' = {
+  name: '${resourcesName}-virtualNetwork'
   params: {
     vnetName: vnetName
     vnetAddressPrefixes: addressPrefixes
@@ -55,14 +55,14 @@ module vnetWithSubnets 'vnetWithSubnets.bicep' = {
 // // Create Azure Bastion Subnet and Azure Bastion Host
 // /****************************************************************************************************************************/
 
-module azureBastionHost 'azureBationHost.bicep' = if (azureBationHost && !empty(azureBastionSubnet)) {
-  name: '${resourcesName}-azureBastionHost'
+module bastionHost 'bastionHost.bicep' = if (enableBastionHost && !empty(bastionSubnet)) {
+  name: '${resourcesName}-bastionHost'
   params: {
-    azureBastionSubnet: azureBastionSubnet
+    subnet: bastionSubnet
     location: location
-    vnetName: vnetWithSubnets.outputs.vnetName
-    vnetId: vnetWithSubnets.outputs.vnetResourceId
-    azureBationHostName: azureBastionHostName
+    vnetName: virtualNetwork.outputs.vnetName
+    vnetId: virtualNetwork.outputs.vnetResourceId
+    name: bastionHostName
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
     tags: tags
   }
@@ -72,12 +72,12 @@ module azureBastionHost 'azureBationHost.bicep' = if (azureBationHost && !empty(
 // // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
 // /****************************************************************************************************************************/
 
-module jumpboxWithSubnet 'jumpboxWithSubnet.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
-  name: '${resourcesName}-jumpboxWithSubnet'
+module jumpbox 'jumpbox.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
+  name: '${resourcesName}-jumpbox'
   params: {
     vmName: jumpboxVmName
     location: location
-    vnetName: vnetWithSubnets.outputs.vnetName
+    vnetName: virtualNetwork.outputs.vnetName
     jumpboxVmSize: jumpboxVmSize
     jumpboxSubnet: jumpboxSubnet
     jumpboxAdminUser: jumpboxAdminUser
@@ -88,18 +88,18 @@ module jumpboxWithSubnet 'jumpboxWithSubnet.bicep' = if (jumpboxVM && !empty(jum
 }
 
 
-output vnetName string = vnetWithSubnets.outputs.vnetName
-output vnetResourceId string = vnetWithSubnets.outputs.vnetResourceId
-output subnets array = vnetWithSubnets.outputs.outputSubnetsArray // This one holds critical info for subnets, including NSGs
+output vnetName string = virtualNetwork.outputs.vnetName
+output vnetResourceId string = virtualNetwork.outputs.vnetResourceId
+output subnets array = virtualNetwork.outputs.subnets // This one holds critical info for subnets, including NSGs
 
-output azureBastionSubnetId string = azureBastionHost.outputs.bastionSubnetId
-output azureBastionSubnetName string = azureBastionHost.outputs.bastionSubnetName
-output azureBastionHostId string = azureBastionHost.outputs.bastionHostId
-output azureBastionHostName string = azureBastionHost.outputs.bastionHostName
+output bastionSubnetId string = bastionHost.outputs.bastionSubnetId
+output bastionSubnetName string = bastionHost.outputs.bastionSubnetName
+output bastionHostId string = bastionHost.outputs.bastionHostId
+output bastionHostName string = bastionHost.outputs.bastionHostName
 
-output jumpboxSubnetName string = jumpboxWithSubnet.outputs.jumpboxSubnetName
-output jumpboxSubnetId string = jumpboxWithSubnet.outputs.jumpboxSubnetId
-output jumpboxVmName string = jumpboxWithSubnet.outputs.jumpboxVmName
-output jumpboxVmId string = jumpboxWithSubnet.outputs.jumpboxVmId
+output jumpboxSubnetName string = jumpbox.outputs.subnetId
+output jumpboxSubnetId string = jumpbox.outputs.subnetId
+output jumpboxVmName string = jumpbox.outputs.vmName
+output jumpboxVmId string = jumpbox.outputs.vmId
 
 

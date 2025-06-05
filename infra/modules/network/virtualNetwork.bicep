@@ -71,7 +71,7 @@ output vnetName string = virtualNetwork.outputs.name
 output vnetResourceId string = virtualNetwork.outputs.resourceId
 
 // combined output array that holds subnet details along with NSG information
-output outputSubnetsArray array = [
+output subnets array = [
   for (subnet, i) in subnetArray: {
     name: subnet.name
     resourceId: virtualNetwork.outputs.subnetResourceIds[i]
