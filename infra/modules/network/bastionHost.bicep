@@ -2,7 +2,6 @@
 // Create Azure Bastion Subnet and Azure Bastion Host
 // /****************************************************************************************************************************/
 
-
 param subnet object = {}
 param location string = resourceGroup().location
 param vnetName string 
@@ -10,7 +9,6 @@ param vnetId string // Resource ID of the Virtual Network
 param name string = 'AzureBastionHost' // Default name for Azure Bastion Host
 param logAnalyticsWorkspaceId string
 param tags object = {}
-
 
 // 1. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
@@ -22,9 +20,6 @@ module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = 
     addressPrefixes: subnet.addressPrefixes
   }
 }
-
-output bastionSubnetId string = bastionSubnet.outputs.resourceId
-output bastionSubnetName string = bastionSubnet.outputs.name
 
 // 2. Create Azure Bastion Host in AzureBastionsubnetSubnet using AVM Bastion Host module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/bastion-host
@@ -52,5 +47,7 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = if (!empty(s
   }
 }
 
-output bastionHostId string = bastionHost.outputs.resourceId
-output bastionHostName string = bastionHost.outputs.name
+output resourceId string = bastionHost.outputs.resourceId
+output name string = bastionHost.outputs.name
+output subnetId string = bastionSubnet.outputs.resourceId
+output subnetName string = bastionSubnet.outputs.name

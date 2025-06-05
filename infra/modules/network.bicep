@@ -10,13 +10,13 @@ module network 'network/main.bicep' =  {
     location: location
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkSpaceResourceId
     tags: tags
-    addressPrefixes: ['10.0.0.0/23']
-    solutionSubnets: [
+    addressPrefixes: ['10.0.0.0/8']
+    subnets: [
       // Only one delegation per subnet is supported by the AVM module as of June 2025.
       // For subnets that do not require delegation, leave the array empty.
       {
         name: 'web'
-        addressPrefixes: ['10.0.0.0/23']
+        addressPrefixes: ['10.0.0.0/24']
         networkSecurityGroup: {
           name: 'web-nsg'
           securityRules: [
@@ -44,7 +44,7 @@ module network 'network/main.bicep' =  {
       }
       {
         name: 'app'
-        addressPrefixes: ['10.0.1.0/23']
+        addressPrefixes: ['10.0.1.0/24']
         networkSecurityGroup: {
           name: 'app-nsg'
           securityRules: [
@@ -150,7 +150,7 @@ module network 'network/main.bicep' =  {
     ]
     enableBastionHost: true // Set to true to enable Azure Bastion Host creation.
     bastionSubnet: {
-      addressPrefixes: ['10.0.5.0/23']
+      addressPrefixes: ['10.0.5.0/24']
       networkSecurityGroup: null // Azure Bastion subnet must NOT have an NSG
     }
     jumpboxVM: true // Set to true to enable Jumpbox VM creation.
@@ -173,7 +173,7 @@ module network 'network/main.bicep' =  {
               sourcePortRange: '*'
               destinationPortRange: '22'
               sourceAddressPrefixes: [
-                '10.0.5.0/27' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
+                '10.0.5.0/24' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
               ]
               destinationAddressPrefixes: ['10.0.6.0/24']
             }
