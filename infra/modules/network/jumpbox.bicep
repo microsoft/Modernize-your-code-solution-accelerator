@@ -40,11 +40,6 @@ module jbSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!
   }
 }
 
-output jumpboxSubnetId string = jbSubnet.outputs.resourceId
-output jumpboxSubnetName string = jbSubnet.outputs.name
-output jumpboxNsgId string = jbNsg.outputs.resourceId
-output jumpboxNsgName string = jbNsg.outputs.name
-
 // 3. Create Jumpbox VM 
 // using AVM Virtual Machine module 
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/compute/virtual-machine
@@ -105,6 +100,11 @@ module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
   }
 }
 
-output jumpboxVmId string = jbVm.outputs.resourceId
-output jumpboxVmName string = jbVm.outputs.name
-output jumpboxVMLocation string = jbVm.outputs.location
+output vmId string = jbVm.outputs.resourceId
+output vmName string = jbVm.outputs.name
+output vMLocation string = jbVm.outputs.location
+
+output subnetId string = jbSubnet.outputs.resourceId
+output subnetName string = jbSubnet.outputs.name
+output nsgId string = jbNsg.outputs.resourceId
+output nsgName string = jbNsg.outputs.name
