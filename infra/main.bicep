@@ -131,7 +131,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
     name: take('st${uniqueResourcesName}', 24)
     location: location
     tags: allTags
-    skuName: enableRedundancy ? 'Standard_LRS' : 'Standard_GZRS'
+    skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -244,7 +244,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: 'cae-${resourcesName}'
+    name: 'cae-${resourcesName}${enablePrivateNetworking ? '-frontend' : ''}'
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled'
@@ -262,6 +262,12 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
         sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
       }
     } : {}
+    workloadProfiles: enablePrivateNetworking ? [ // NOTE: workload profiles are required for private networking
+      {
+        name: 'Consumption'
+        workloadProfileType: 'Consumption'
+      }
+    ] : []
     tags: allTags
   }
 }
@@ -321,7 +327,7 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
     name: 'cae-${resourcesName}-backend'
     location: location
     zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: 'Enabled' // TODO confirm this
     infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
@@ -336,6 +342,12 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
         sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
       }
     } : {}
+    workloadProfiles: [ // NOTE: workload profiles are required for private networking
+      {
+        name: 'Consumption'
+        workloadProfileType: 'Consumption'
+      }
+    ]
     tags: allTags
   }
 }
