@@ -4,53 +4,59 @@ param Prefix string
 var abbrs = loadJsonContent('./abbreviations.json')
 var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
 
+@description('Required. Location for all Resources except AI Foundry.')
+param solutionLocation string = resourceGroup().location
+
 @allowed([
   'australiaeast'
-  'brazilsouth'
-  'canadacentral'
-  'canadaeast'
   'eastus'
   'eastus2'
   'francecentral'
-  'germanywestcentral'
   'japaneast'
-  'koreacentral'
-  'northcentralus'
   'norwayeast'
-  'polandcentral'
-  'southafricanorth'
-  'southcentralus'
   'southindia'
   'swedencentral'
-  'switzerlandnorth'
-  'uaenorth'
   'uksouth'
-  'westeurope'
   'westus'
   'westus3'
 ])
 @description('Location for all Ai services resources. This location can be different from the resource group location.')
 param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+
+@minValue(5)
+@description('Capacity of the GPT deployment:')
 param capacity int = 5
 
 param existingLogAnalyticsWorkspaceId string = ''
 
+@minLength(1)
+@description('GPT model deployment type:')
+param deploymentType string = 'GlobalStandard'
+
+@minLength(1)
+@description('Name of the GPT model to deploy:')
+param llmModel string = 'gpt-4o'
+
+@minLength(1)
+@description('Set the Image tag:')
+param imageVersion string = 'latest'
+
+@minLength(1)
+@description('Version of the GPT model to deploy:')
+param gptModelVersion string = '2024-08-06'
+
+
+
 var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
 var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
 var ResourcePrefix = take('cm${safePrefix}${UniquePrefix}', 15)
-var imageVersion = 'latest'
-var location  = resourceGroup().location
-var dblocation  = resourceGroup().location
 var cosmosdbDatabase  = 'cmsadb'
 var cosmosdbBatchContainer  = 'cmsabatch'
 var cosmosdbFileContainer  = 'cmsafile'
 var cosmosdbLogContainer  = 'cmsalog'
-var deploymentType  = 'GlobalStandard'
 var containerName  = 'appstorage'
-var llmModel  = 'gpt-4o'
 var storageSkuName = 'Standard_LRS'
 var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
-var gptModelVersion = '2024-08-06'
 var azureAiServicesName = '${abbrs.ai.aiServices}${ResourcePrefix}'
 
 
@@ -70,7 +76,7 @@ var aiModelDeployments = [
 
 resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
   name: azureAiServicesName
-  location: location
+  location: AzureAiServiceLocation
   sku: {
     name: 'S0'
   }
@@ -106,7 +112,7 @@ module managedIdentityModule 'deploy_managed_identity.bicep' = {
   params: {
     miName:'${abbrs.security.managedIdentity}${ResourcePrefix}'
     solutionName: ResourcePrefix
-    solutionLocation: location 
+    solutionLocation: solutionLocation 
   }
   scope: resourceGroup(resourceGroup().name)
 }
@@ -118,7 +124,7 @@ module kvault 'deploy_keyvault.bicep' = {
   params: {
     keyvaultName: '${abbrs.security.keyVault}${ResourcePrefix}'
     solutionName: ResourcePrefix
-    solutionLocation: location
+    solutionLocation: solutionLocation
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
   }
   scope: resourceGroup(resourceGroup().name)
@@ -148,7 +154,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1
   params: {
     logAnalyticsWorkspaceResourceId: azureAifoundry.outputs.logAnalyticsId
     name: toLower('${ResourcePrefix}manenv')
-    location: location
+    location: solutionLocation
     zoneRedundant: false
     managedIdentities: managedIdentityModule
   }
@@ -161,7 +167,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
     name: toLower('${abbrs.databases.cosmosDBDatabase}${ResourcePrefix}databaseAccount')
     // Non-required parameters
     enableAnalyticalStorage: true
-    location: dblocation
+    location: solutionLocation
     managedIdentities: {
       systemAssigned: true
       userAssignedResourceIds: [
@@ -179,7 +185,7 @@ module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = 
       {
         failoverPriority: 0
         isZoneRedundant: false
-        locationName: dblocation
+        locationName: solutionLocation
       }
     ]
     sqlDatabases: [
@@ -254,14 +260,14 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Frontend')
     // Non-required parameters
-    location: location
+    location: solutionLocation
   }
 }
 
 
 resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
   name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Backend')
-  location: location
+  location: solutionLocation
   identity: {
     type: 'SystemAssigned'
   }
@@ -286,6 +292,10 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             {
               name: 'COSMOSDB_ENDPOINT'
               value: databaseAccount.outputs.endpoint
+            }
+            {
+              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+              value: azureAifoundry.outputs.applicationInsightsConnectionString
             }
             {
               name: 'COSMOSDB_DATABASE'
@@ -375,7 +385,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
 }
 resource storageContianerApp 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   name: storageContainerName
-  location: location
+  location: solutionLocation
   sku: {
     name: storageSkuName
   }
