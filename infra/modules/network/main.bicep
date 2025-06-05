@@ -16,7 +16,7 @@ param addressPrefixes array
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-param solutionSubnets array   
+param subnets array   
                     
 var vnetName = 'vnet-${resourcesName}'
 
@@ -42,9 +42,9 @@ var bastionHostName = 'bastionHost-${resourcesName}'
 module virtualNetwork 'virtualNetwork.bicep' = {
   name: '${resourcesName}-virtualNetwork'
   params: {
-    vnetName: vnetName
-    vnetAddressPrefixes: addressPrefixes
-    subnetArray: solutionSubnets
+    name: vnetName
+    addressPrefixes: addressPrefixes
+    subnets: subnets
     location: location
     tags: tags
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
@@ -60,8 +60,8 @@ module bastionHost 'bastionHost.bicep' = if (enableBastionHost && !empty(bastion
   params: {
     subnet: bastionSubnet
     location: location
-    vnetName: virtualNetwork.outputs.vnetName
-    vnetId: virtualNetwork.outputs.vnetResourceId
+    vnetName: virtualNetwork.outputs.name
+    vnetId: virtualNetwork.outputs.resourceId
     name: bastionHostName
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
     tags: tags
@@ -77,7 +77,7 @@ module jumpbox 'jumpbox.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
   params: {
     vmName: jumpboxVmName
     location: location
-    vnetName: virtualNetwork.outputs.vnetName
+    vnetName: virtualNetwork.outputs.name
     jumpboxVmSize: jumpboxVmSize
     jumpboxSubnet: jumpboxSubnet
     jumpboxAdminUser: jumpboxAdminUser
@@ -87,15 +87,14 @@ module jumpbox 'jumpbox.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
   }
 }
 
-
-output vnetName string = virtualNetwork.outputs.vnetName
-output vnetResourceId string = virtualNetwork.outputs.vnetResourceId
+output vnetName string = virtualNetwork.outputs.name
+output vnetResourceId string = virtualNetwork.outputs.resourceId
 output subnets array = virtualNetwork.outputs.subnets // This one holds critical info for subnets, including NSGs
 
-output bastionSubnetId string = bastionHost.outputs.bastionSubnetId
-output bastionSubnetName string = bastionHost.outputs.bastionSubnetName
-output bastionHostId string = bastionHost.outputs.bastionHostId
-output bastionHostName string = bastionHost.outputs.bastionHostName
+output bastionSubnetId string = bastionHost.outputs.subnetId
+output bastionSubnetName string = bastionHost.outputs.subnetName
+output bastionHostId string = bastionHost.outputs.resourceId
+output bastionHostName string = bastionHost.outputs.name
 
 output jumpboxSubnetName string = jumpbox.outputs.subnetId
 output jumpboxSubnetId string = jumpbox.outputs.subnetId
