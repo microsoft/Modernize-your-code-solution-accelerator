@@ -1,9 +1,16 @@
-// This module defines the network configuration object only.
-// It does NOT create any Azure resources.
-// The output 'networkConfig' object is used as input for network deployment modules.
+param resourcesName string
+param logAnalyticsWorkSpaceResourceId string
+param location string
+param tags object = {}
 
-var inputNetworkConfig object = {
-   addressPrefixes: ['10.0.0.0/21']
+module network 'network/main.bicep' =  {
+  name: take('network-${resourcesName}-create', 64)
+  params: {
+    resourcesName: resourcesName
+    location: location
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkSpaceResourceId
+    tags: tags
+    addressPrefixes: ['10.0.0.0/21']
     solutionSubnets: [
       // Only one delegation per subnet is supported by the AVM module as of June 2025.
       // For subnets that do not require delegation, leave the array empty.
@@ -176,6 +183,19 @@ var inputNetworkConfig object = {
       }
     }
   }
+}
 
-  output networkConfig object = inputNetworkConfig
+output vnetName string = network.outputs.vnetName
+output vnetResourceId string = network.outputs.vnetResourceId
+output subnets array = network.outputs.subnets // This one holds critical info for subnets, including NSGs
+
+output azureBastionSubnetId string = network.outputs.azureBastionSubnetId
+output azureBastionSubnetName string = network.outputs.azureBastionSubnetName
+output azureBastionHostId string = network.outputs.azureBastionHostId
+output azureBastionHostName string = network.outputs.azureBastionHostName
+
+output jumpboxSubnetName string = network.outputs.jumpboxSubnetName
+output jumpboxSubnetId string = network.outputs.jumpboxSubnetId
+output jumpboxVmName string = network.outputs.jumpboxVmName
+output jumpboxVmId string = network.outputs.jumpboxVmId
 
