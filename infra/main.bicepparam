@@ -8,3 +8,4 @@ param deploymentType = readEnvironmentVariable('AZURE_ENV_MODEL_DEPLOYMENT_TYPE'
 param llmModel = readEnvironmentVariable('AZURE_ENV_MODEL_NAME', 'gpt-4o')
 param gptModelVersion = readEnvironmentVariable('AZURE_ENV_MODEL_VERSION', '2024-08-06')
 param imageVersion = readEnvironmentVariable('AZURE_ENV_IMAGETAG', 'latest')
+param existingLogAnalyticsWorkspaceId = readEnvironmentVariable('AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID', '')

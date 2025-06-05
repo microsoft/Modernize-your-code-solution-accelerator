@@ -27,6 +27,11 @@ To customize any of the above values, run the following command **before** `azd 
 azd env set <PARAMETER_NAME> <VALUE>
 ```
 
+Set the Log Analytics Workspace Id if you need to reuse the existing workspace which is already existing
+```shell
+azd env set AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID '/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>'
+```
+
 **Example:**
 
 ```bash
