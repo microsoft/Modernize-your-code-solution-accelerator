@@ -27,6 +27,8 @@ param AzureAiServiceLocation string  // The location used for all deployed resou
 @description('Capacity of the GPT deployment:')
 param capacity int = 5
 
+param existingLogAnalyticsWorkspaceId string = ''
+
 @minLength(1)
 @description('GPT model deployment type:')
 param deploymentType string = 'GlobalStandard'
@@ -142,6 +144,7 @@ module azureAifoundry 'deploy_ai_foundry.bicep' = {
     aiServicesEndpoint: azureAiServices.properties.endpoint
     aiServicesKey: azureAiServices.listKeys().key1
     aiServicesId: azureAiServices.id
+    existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
   }
   scope: resourceGroup(resourceGroup().name)
 }
