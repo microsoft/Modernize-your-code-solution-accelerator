@@ -16,30 +16,25 @@
         "description": "Prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters."
       }
     },
+    "solutionLocation": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Required. Location for all Resources except AI Foundry."
+      }
+    },
     "AzureAiServiceLocation": {
       "type": "string",
       "allowedValues": [
         "australiaeast",
-        "brazilsouth",
-        "canadacentral",
-        "canadaeast",
         "eastus",
         "eastus2",
         "francecentral",
-        "germanywestcentral",
         "japaneast",
-        "koreacentral",
-        "northcentralus",
         "norwayeast",
-        "polandcentral",
-        "southafricanorth",
-        "southcentralus",
         "southindia",
         "swedencentral",
-        "switzerlandnorth",
-        "uaenorth",
         "uksouth",
-        "westeurope",
         "westus",
         "westus3"
       ],
@@ -49,7 +44,43 @@
     },
     "capacity": {
       "type": "int",
-      "defaultValue": 5
+      "defaultValue": 5,
+      "minValue": 5,
+      "metadata": {
+        "description": "Capacity of the GPT deployment:"
+      }
+    },
+    "deploymentType": {
+      "type": "string",
+      "defaultValue": "GlobalStandard",
+      "minLength": 1,
+      "metadata": {
+        "description": "GPT model deployment type:"
+      }
+    },
+    "llmModel": {
+      "type": "string",
+      "defaultValue": "gpt-4o",
+      "minLength": 1,
+      "metadata": {
+        "description": "Name of the GPT model to deploy:"
+      }
+    },
+    "imageVersion": {
+      "type": "string",
+      "defaultValue": "latest",
+      "minLength": 1,
+      "metadata": {
+        "description": "Set the Image tag:"
+      }
+    },
+    "gptModelVersion": {
+      "type": "string",
+      "defaultValue": "2024-08-06",
+      "minLength": 1,
+      "metadata": {
+        "description": "Version of the GPT model to deploy:"
+      }
     }
   },
   "variables": {
@@ -285,27 +316,21 @@
     "uniqueId": "[toLower(uniqueString(subscription().id, variables('safePrefix'), resourceGroup().location))]",
     "UniquePrefix": "[format('cm{0}', padLeft(take(variables('uniqueId'), 12), 12, '0'))]",
     "ResourcePrefix": "[take(format('cm{0}{1}', variables('safePrefix'), variables('UniquePrefix')), 15)]",
-    "imageVersion": "latest",
-    "location": "[resourceGroup().location]",
-    "dblocation": "[resourceGroup().location]",
     "cosmosdbDatabase": "cmsadb",
     "cosmosdbBatchContainer": "cmsabatch",
     "cosmosdbFileContainer": "cmsafile",
     "cosmosdbLogContainer": "cmsalog",
-    "deploymentType": "GlobalStandard",
     "containerName": "appstorage",
-    "llmModel": "gpt-4o",
     "storageSkuName": "Standard_LRS",
     "storageContainerName": "[replace(replace(replace(replace(format('{0}cast', variables('ResourcePrefix')), '-', ''), '_', ''), '.', ''), '/', '')]",
-    "gptModelVersion": "2024-08-06",
     "azureAiServicesName": "[format('{0}{1}', variables('abbrs').ai.aiServices, variables('ResourcePrefix'))]",
     "aiModelDeployments": [
       {
-        "name": "[variables('llmModel')]",
-        "model": "[variables('llmModel')]",
-        "version": "[variables('gptModelVersion')]",
+        "name": "[parameters('llmModel')]",
+        "model": "[parameters('llmModel')]",
+        "version": "[parameters('gptModelVersion')]",
         "sku": {
-          "name": "[variables('deploymentType')]",
+          "name": "[parameters('deploymentType')]",
           "capacity": "[parameters('capacity')]"
         },
         "raiPolicyName": "Microsoft.Default"
@@ -321,7 +346,7 @@
       "type": "Microsoft.CognitiveServices/accounts",
       "apiVersion": "2024-04-01-preview",
       "name": "[variables('azureAiServicesName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('AzureAiServiceLocation')]",
       "sku": {
         "name": "S0"
       },
@@ -360,7 +385,7 @@
       "type": "Microsoft.App/containerApps",
       "apiVersion": "2023-05-01",
       "name": "[toLower(format('{0}{1}Backend', variables('abbrs').containers.containerApp, variables('ResourcePrefix')))]",
-      "location": "[variables('location')]",
+      "location": "[parameters('solutionLocation')]",
       "identity": {
         "type": "SystemAssigned"
       },
@@ -380,7 +405,7 @@
           "containers": [
             {
               "name": "cmsabackend",
-              "image": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', variables('imageVersion'))]",
+              "image": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', parameters('imageVersion'))]",
               "env": [
                 {
                   "name": "COSMOSDB_ENDPOINT",
@@ -420,35 +445,35 @@
                 },
                 {
                   "name": "MIGRATOR_AGENT_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "PICKER_AGENT_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "FIXER_AGENT_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "SYNTAX_CHECKER_AGENT_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "SELECTION_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "TERMINATION_MODEL_DEPLOY",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME",
-                  "value": "[variables('llmModel')]"
+                  "value": "[parameters('llmModel')]"
                 },
                 {
                   "name": "AZURE_AI_AGENT_PROJECT_NAME",
@@ -486,7 +511,7 @@
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2022-09-01",
       "name": "[variables('storageContainerName')]",
-      "location": "[variables('location')]",
+      "location": "[parameters('solutionLocation')]",
       "sku": {
         "name": "[variables('storageSkuName')]"
       },
@@ -609,7 +634,7 @@
             "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
-            "value": "[variables('location')]"
+            "value": "[parameters('solutionLocation')]"
           }
         },
         "template": {
@@ -706,7 +731,7 @@
             "value": "[variables('ResourcePrefix')]"
           },
           "solutionLocation": {
-            "value": "[variables('location')]"
+            "value": "[parameters('solutionLocation')]"
           },
           "managedIdentityObjectId": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.managedIdentityOutput.value.objectId]"
@@ -830,10 +855,10 @@
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_keyvault'), '2022-09-01').outputs.keyvaultName.value]"
           },
           "gptModelName": {
-            "value": "[variables('llmModel')]"
+            "value": "[parameters('llmModel')]"
           },
           "gptModelVersion": {
-            "value": "[variables('gptModelVersion')]"
+            "value": "[parameters('gptModelVersion')]"
           },
           "managedIdentityObjectId": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity'), '2022-09-01').outputs.managedIdentityOutput.value.objectId]"
@@ -1489,7 +1514,7 @@
             "value": "[toLower(format('{0}manenv', variables('ResourcePrefix')))]"
           },
           "location": {
-            "value": "[variables('location')]"
+            "value": "[parameters('solutionLocation')]"
           },
           "zoneRedundant": {
             "value": false
@@ -2108,7 +2133,7 @@
             "value": true
           },
           "location": {
-            "value": "[variables('dblocation')]"
+            "value": "[parameters('solutionLocation')]"
           },
           "managedIdentities": {
             "value": {
@@ -2134,7 +2159,7 @@
               {
                 "failoverPriority": 0,
                 "isZoneRedundant": false,
-                "locationName": "[variables('dblocation')]"
+                "locationName": "[parameters('solutionLocation')]"
               }
             ]
           },
@@ -5934,7 +5959,7 @@
                     "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', toLower(format('{0}{1}Backend', variables('abbrs').containers.containerApp, variables('ResourcePrefix')))), '2023-05-01').configuration.ingress.fqdn)]"
                   }
                 ],
-                "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', variables('imageVersion'))]",
+                "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', parameters('imageVersion'))]",
                 "name": "cmsafrontend",
                 "resources": {
                   "cpu": "1",
@@ -5962,7 +5987,7 @@
             "value": "[toLower(format('{0}{1}Frontend', variables('abbrs').containers.containerApp, variables('ResourcePrefix')))]"
           },
           "location": {
-            "value": "[variables('location')]"
+            "value": "[parameters('solutionLocation')]"
           }
         },
         "template": {
