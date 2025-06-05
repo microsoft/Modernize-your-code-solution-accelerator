@@ -5,7 +5,7 @@ MODEL=""
 DEPLOYMENT_TYPE="Standard"
 CAPACITY=0
 
-ALL_REGIONS=('australiaeast' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'swedencentral' 'uksouth' 'westus')
+ALL_REGIONS=('australiaeast' 'eastus' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'southindia' 'swedencentral' 'uksouth' 'westus' 'westus3')
 
 while [[ $# -gt 0 ]]; do
   case "$1" in

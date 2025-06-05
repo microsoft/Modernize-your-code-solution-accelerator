@@ -25,7 +25,7 @@ if ($DeploymentType -ne "Standard" -and $DeploymentType -ne "GlobalStandard") {
 
 $ModelType = "OpenAI.$DeploymentType.$Model"
 
-$PreferredRegions = @('australiaeast', 'eastus2', 'francecentral', 'japaneast', 'norwayeast', 'swedencentral', 'uksouth', 'westus')
+$PreferredRegions = @('australiaeast', 'eastus', 'eastus2', 'francecentral', 'japaneast', 'norwayeast', 'southindia', 'swedencentral', 'uksouth', 'westus', 'westus3')
 $AllResults = @()
 
 function Check-Quota {
