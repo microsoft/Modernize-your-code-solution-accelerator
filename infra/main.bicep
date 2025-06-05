@@ -39,19 +39,19 @@ param azureAiServiceLocation string = location
 param capacity int = 5
 
 @description('Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
-param enableMonitoring bool = false
+param enableMonitoring bool = true
 
 @description('Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = false
+param enableScaling bool = true
 
 @description('Enable redundancy for applicable resources. Defaults to false.')
-param enableRedundancy bool = false
+param enableRedundancy bool = true
 
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
 
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking.')
-param enablePrivateNetworking bool = false
+param enablePrivateNetworking bool = true
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
@@ -113,34 +113,15 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
-// Attention: Below two modules are intended to be used together. 
-// You need to edit and verity modules/network/networkConfig.bicep before using the modules below.
-// // Otherwise, you will get the default configuration written in this file. 
-
-module configNetwork 'modules/network/networkConfig.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-config', 64)
+module network 'modules/network.bicep' = if (enablePrivateNetworking) {
+  name: take('network-${resourcesName}-deployment', 64)
   params: {
-  }
-}
-module network 'modules/network/network.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-create', 64)
-  params: {
-    resourcesName: take('network-${resourcesName}', 15)
+    resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
-    addressPrefixes: configNetwork.outputs.networkConfig.addressPrefixes
-    solutionSubnets: configNetwork.outputs.networkConfig.solutionSubnets
-    azureBationHost: configNetwork.outputs.networkConfig.azureBationHost
-    azureBastionSubnet: configNetwork.outputs.networkConfig.azureBastionSubnet
-    jumpboxVM: configNetwork.outputs.networkConfig.jumpboxVM
-    jumpboxVmSize: configNetwork.outputs.networkConfig.jumpboxVmSize
-    jumpboxAdminUser: configNetwork.outputs.networkConfig.jumpboxAdminUser
-    jumpboxAdminPassword: configNetwork.outputs.networkConfig.jumpboxAdminPassword
-    jumpboxSubnet:configNetwork.outputs.networkConfig.jumpboxSubnet
     location: location
     tags: allTags
   }
 }
-
 
 module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
