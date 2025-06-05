@@ -33,7 +33,9 @@ var aiHubFriendlyName = azureAiHubName
 var aiHubDescription = 'AI Hub for KM template'
 var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiProjectFriendlyName = aiProjectName
-var aiSearchName = '${abbrs.ai.aiSearch}${solutionName}'
+var aiSearchName = '${solutionName}-search'
+var applicationInsightsName = '${solutionName}-appi'
+
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
@@ -57,6 +59,17 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = if
   }
 }
 
+resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+  name: applicationInsightsName
+  location: location
+  kind: 'web'
+  properties: {
+    Application_Type: 'web'
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
+    WorkspaceResourceId: logAnalytics.id
+  }
+}
 
 var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
 
@@ -318,5 +331,6 @@ output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = useExisting ? existingLogAnalyticsWorkspace.id : logAnalytics.id
 output storageAccountId string = storage.id
+output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
 
 output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
