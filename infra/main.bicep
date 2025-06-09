@@ -81,10 +81,19 @@ var modelDeployment =  {
   raiPolicyName: 'Microsoft.Default'
 }
 
-module managedIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
-  name: take('identity-${resourcesName}-deployment', 64)
+module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
+  name: take('identity-app-${resourcesName}-deployment', 64)
   params: {
-    name: 'id-${resourcesName}'
+    name: 'id-app-${resourcesName}'
+    location: location
+    tags: allTags
+  }
+}
+
+module aiFoundryProjectIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
+  name: take('identity-proj-${resourcesName}-deployment', 64)
+  params: {
+    name: 'id-proj-${resourcesName}'
     location: location
     tags: allTags
   }
@@ -147,7 +156,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
       ]
     roleAssignments: [
       {
-        principalId: managedIdentity.outputs.principalId
+        principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
@@ -166,13 +175,24 @@ module azureAiServices 'modules/aiServices.bicep' = {
     kind: 'AIServices'
     deployments: [modelDeployment]
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    privateNetworking: enablePrivateNetworking ? {
-      virtualNetworkResourceId: network.outputs.vnetResourceId
-      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
-    } : null
+    // TODO - add back when container apps can properly access AI Services via Foundry Project over private endpoint
+    // Issue: When private endpoint is enabled for OpenAI, the container app cannot access the AI Services endpoint through the Foundry project connection string.
+    // Request: POST /api/start-processing
+    // Response: ERROR:sql_agents.agents.agent_base:Error creating agent definition: (403) Public access is disabled. Please configure private endpoint.
+    // ---------------------
+    // privateNetworking: enablePrivateNetworking ? {
+    //   virtualNetworkResourceId: network.outputs.vnetResourceId
+    //   subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
+    // } : null
+    // ---------------------
     roleAssignments: [
       {
-        principalId: managedIdentity.outputs.principalId
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+      }
+      {
+        principalId: aiFoundryProjectIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
       }
@@ -194,6 +214,13 @@ module keyVault 'modules/keyVault.bicep' = {
       virtualNetworkResourceId: network.outputs.vnetResourceId
       subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
     } : null 
+    roleAssignments: [
+      {
+        principalId: aiFoundryProjectIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Key Vault Reader'
+      }
+    ]
     tags: allTags
   }
 }
@@ -209,13 +236,20 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     projectName: 'proj-${resourcesName}'
     storageAccountResourceId: storageAccount.outputs.resourceId
     keyVaultResourceId: keyVault.outputs.resourceId
-    managedIdentityPrincpalId: managedIdentity.outputs.principalId
+    userAssignedIdentityResourceId: aiFoundryProjectIdentity.outputs.resourceId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
       subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
-    } : null 
+    } : null
+    roleAssignments: [
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
+      }
+    ]
     tags: allTags
   }
 }
@@ -227,7 +261,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   params: {
     name: 'cosmos-${uniqueResourcesName}'
     location: location
-    managedIdentityPrincipalId: managedIdentity.outputs.principalId
+    managedIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
@@ -251,7 +285,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
     infrastructureSubnetResourceId: enablePrivateNetworking ? first(filter(network.outputs.subnets, s => s.name == 'web')).resourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
+        appIdentity.outputs.resourceId
       ]
     }
     appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
@@ -280,7 +314,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
       userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
+        appIdentity.outputs.resourceId
       ]
     }
     containers: [
@@ -327,11 +361,11 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
     name: 'cae-${resourcesName}-backend'
     location: location
     zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Enabled' // This most likely needs to remain public so the container app can be deployed
+    publicNetworkAccess: 'Enabled' // TODO - verify -> This most likely needs to remain public so the container app can be deployed
     infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
+        appIdentity.outputs.resourceId
       ]
     }
     appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
@@ -364,7 +398,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
     environmentResourceId: containerAppsEnvironmentResourceId
     managedIdentities: {
       userAssignedResourceIds: [
-        managedIdentity.outputs.resourceId
+        appIdentity.outputs.resourceId
       ]
     }
     containers: [
@@ -454,7 +488,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
           }
           {
             name: 'AZURE_CLIENT_ID'
-            value: managedIdentity.outputs.clientId // TODO - VERIFY -> NOTE: This is the client ID of the managed identity, not the Entra application, and is needed for the App Service to access the Cosmos DB account.
+            value: appIdentity.outputs.clientId // TODO - VERIFY -> NOTE: This is the client ID of the managed identity, not the Entra application, and is needed for the App Service to access the Cosmos DB account.
           }
         ], enableMonitoring ? [
           {

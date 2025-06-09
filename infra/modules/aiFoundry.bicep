@@ -16,8 +16,8 @@ param storageAccountResourceId string
 @description('The resource ID of the Azure Key Vault to associate with AI Foundry.')
 param keyVaultResourceId string
 
-@description('The Princpal ID of the managed identity to assign access roles.')
-param managedIdentityPrincpalId string
+@description('The Resource ID of the managed identity to assign to the AI Foundry Project workspace.')
+param userAssignedIdentityResourceId string
 
 @description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
 param logAnalyticsWorkspaceResourceId string?
@@ -30,6 +30,9 @@ param aiServicesName string
 
 @description('Optional. Values to establish private networking for the AI Foundry resources.')
 param privateNetworking machineLearningPrivateNetworkingType?
+
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[]?
 
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
@@ -66,8 +69,6 @@ var notebooksPrivateDnsZoneResourceId = privateNetworking != null ? (empty(priva
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: aiServicesName
 }
-
-var aiServicesKey = aiServices.listKeys().key1
 
 module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
   name: take('ai-foundry-${hubName}-deployment', 64)
@@ -110,14 +111,12 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
         category: 'AIServices'
         target: aiServices.properties.endpoint
         connectionProperties: {
-          authType: 'ApiKey'
-          credentials: {
-            key: aiServicesKey
-          }
+          authType: 'AAD'
         }
         isSharedToAll: true
         metadata: {
           ApiType: 'Azure'
+          Kind: 'AIServices'
           ResourceId: aiServices.id
         }
       }
@@ -136,16 +135,11 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     hubResourceId: hub.outputs.resourceId
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     managedIdentities: {
-      systemAssigned: true
+      userAssignedResourceIds: [userAssignedIdentityResourceId]
     }
+    primaryUserAssignedIdentity: userAssignedIdentityResourceId
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
-    roleAssignments: [
-      {
-        principalId: managedIdentityPrincpalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
-      }
-    ]
+    roleAssignments: roleAssignments
     tags: tags
   }
 }
@@ -156,6 +150,8 @@ resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-
   name: projectName
   dependsOn: [project]
 }
+
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output projectName string = project.outputs.name
 output hubName string = hub.outputs.name

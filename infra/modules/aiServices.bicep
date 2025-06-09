@@ -107,7 +107,7 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = 
     }
     deployments: deployments
     customSubDomainName: name
-    disableLocalAuth: false // privateNetworking != null
+    disableLocalAuth: false // TODO - verify if this should remain false or be set dynamically via privateNetworking
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
       {
