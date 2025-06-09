@@ -327,7 +327,7 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
     name: 'cae-${resourcesName}-backend'
     location: location
     zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Enabled' // TODO confirm this
+    publicNetworkAccess: 'Enabled' // This most likely needs to remain public so the container app can be deployed
     infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
