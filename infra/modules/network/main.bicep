@@ -13,10 +13,12 @@ param logAnalyticsWorkSpaceResourceId string
 @description('Networking address prefix for the VNET and subnets.')
 param addressPrefixes array
 
+@description('Array of subnets to be created within the VNET.')
+param subnets array   
+
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-param subnets array   
                     
 var vnetName = 'vnet-${resourcesName}'
 
