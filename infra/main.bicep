@@ -56,16 +56,15 @@ param enablePrivateNetworking bool = true
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
+var allTags = union({
+  'azd-env-name': environmentName
+}, tags)
+
 var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
 var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
 var uniqueResourcesName = '${resourcesName}${resourcesToken}'
 
 var appStorageContainerName = 'appstorage'
-
-var defaultTags = {
-  'azd-env-name': resourcesName
-}
-var allTags = union(defaultTags, tags)
 
 var modelDeployment =  {
   name: 'gpt-4o'
@@ -170,7 +169,7 @@ module azureAiServices 'modules/aiServices.bicep' = {
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: 'ais-${uniqueResourcesName}'
-    location: location
+    location: azureAiServiceLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [modelDeployment]
