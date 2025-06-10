@@ -361,7 +361,7 @@ module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environmen
     name: 'cae-${resourcesName}-backend'
     location: location
     zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Enabled' // TODO - verify -> This most likely needs to remain public so the container app can be deployed
+    publicNetworkAccess: 'Disabled' // 'Enabled' or 'Disabled', both tested. Container deployed in both cases.
     infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
@@ -518,7 +518,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
       }
     ]
     ingressTargetPort: 8000
-    ingressExternal: true
+    ingressExternal: false // set to false to prevent public access
     scaleSettings: {
       maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
