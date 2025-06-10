@@ -272,15 +272,18 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   }
 }
 
+var containerAppsEnvironmentName = 'cae-${resourcesName}${enablePrivateNetworking ? '-frontend' : ''}'
+
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: 'cae-${resourcesName}${enablePrivateNetworking ? '-frontend' : ''}'
+    name: containerAppsEnvironmentName
+    infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentName}'
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Enabled' // public access required for frontend (and backend if private networking is not enabled)
     infrastructureSubnetResourceId: enablePrivateNetworking ? first(filter(network.outputs.subnets, s => s.name == 'web')).resourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
@@ -333,7 +336,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
       }
     ]
     ingressTargetPort: 3000
-    ingressExternal: true
+    ingressExternal: true // public access required for frontend
     scaleSettings: {
       maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
@@ -352,15 +355,18 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   }
 }
 
+var containerAppsEnvironmentBackendName = 'cae-${resourcesName}-backend'
+
 module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environment:0.11.2' = if (enablePrivateNetworking) {
   name: take('container-env-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
   params: {
-    name: 'cae-${resourcesName}-backend'
+    name: containerAppsEnvironmentBackendName
+    infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentBackendName}'
     location: location
     zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Disabled' // 'Enabled' or 'Disabled', both tested. Container deployed in both cases.
+    publicNetworkAccess: 'Disabled' // public access denied for backend
     infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
     managedIdentities: {
       userAssignedResourceIds: [
