@@ -51,58 +51,105 @@ if [[ "$DEPLOYMENT_TYPE" != "Standard" && "$DEPLOYMENT_TYPE" != "GlobalStandard"
 fi
 
 MODEL_TYPE="OpenAI.$DEPLOYMENT_TYPE.$MODEL"
-FALLBACK_REGIONS=()
+ALL_RESULTS=()
+FALLBACK_RESULTS=()
 ROW_NO=1
-QUOTA_CHECKED=false
 
-# -------------------- Output Table Header --------------------
-printf "\n%-5s | %-20s | %-40s | %-10s | %-10s | %-10s\n" "No." "Region" "Model Name" "Limit" "Used" "Available"
-printf -- "---------------------------------------------------------------------------------------------------------------------\n"
+# Print validating message only once
+echo -e "\n🔍 Validating model deployment: $MODEL ..."
 
-# -------------------- Check Quota --------------------
-for region in "${ALL_REGIONS[@]}"; do
-  MODEL_INFO=$(az cognitiveservices usage list --location "$region" --query "[?name.value=='$MODEL_TYPE']" --output json 2>/dev/null)
+echo "🔍 Checking quota in the requested region '$LOCATION'..."
 
-  if [[ -n "$MODEL_INFO" && "$MODEL_INFO" != "[]" ]]; then
-    CURRENT_VALUE=$(echo "$MODEL_INFO" | jq -r '.[0].currentValue // 0' | cut -d'.' -f1)
-    LIMIT=$(echo "$MODEL_INFO" | jq -r '.[0].limit // 0' | cut -d'.' -f1)
-    AVAILABLE=$((LIMIT - CURRENT_VALUE))
+# -------------------- Function: Check Quota --------------------
+check_quota() {
+  local region="$1"
+  local output
+  output=$(az cognitiveservices usage list --location "$region" --query "[?name.value=='$MODEL_TYPE']" --output json 2>/dev/null)
 
-    printf "%-5s | %-20s | %-40s | %-10s | %-10s | %-10s\n" "$ROW_NO" "$region" "$MODEL_TYPE" "$LIMIT" "$CURRENT_VALUE" "$AVAILABLE"
-
-    if [[ "$region" == "$LOCATION" ]]; then
-      QUOTA_CHECKED=true
-      if [[ "$AVAILABLE" -ge "$CAPACITY" ]]; then
-        echo -e "\n✅ Sufficient quota available in user-specified region: $LOCATION"
-        exit 0
-      fi
-    elif [[ "$AVAILABLE" -ge "$CAPACITY" ]]; then
-      FALLBACK_REGIONS+=("$region ($AVAILABLE)")
-    fi
+  if [[ -z "$output" || "$output" == "[]" ]]; then
+    return 2  # No data
   fi
-  ((ROW_NO++))
-done
 
-printf -- "---------------------------------------------------------------------------------------------------------------------\n"
+  local CURRENT_VALUE
+  local LIMIT
+  CURRENT_VALUE=$(echo "$output" | jq -r '.[0].currentValue // 0' | cut -d'.' -f1)
+  LIMIT=$(echo "$output" | jq -r '.[0].limit // 0' | cut -d'.' -f1)
+  local AVAILABLE=$((LIMIT - CURRENT_VALUE))
 
-# -------------------- Output Result --------------------
-if ! $QUOTA_CHECKED; then
-  echo -e "\n⚠️  Could not retrieve quota info for region: $LOCATION"
+  ALL_RESULTS+=("$region|$LIMIT|$CURRENT_VALUE|$AVAILABLE")
+
+  if [[ "$AVAILABLE" -ge "$CAPACITY" ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# -------------------- Check User-Specified Region --------------------
+check_quota "$LOCATION"
+primary_status=$?
+
+if [[ $primary_status -eq 2 ]]; then
+  echo -e "\n⚠️  Could not retrieve quota info for region: '$LOCATION'."
+  exit 1
 fi
 
-if [[ ${#FALLBACK_REGIONS[@]} -gt 0 ]]; then
-  echo -e "\n❌ Insufficient quota in '$LOCATION'."
-  echo "➡️  You may retry using one of the following fallback regions with enough quota:"
-  for region in "${FALLBACK_REGIONS[@]}"; do
-    echo "   • $region"
+if [[ $primary_status -eq 1 ]]; then
+  # Get available quota from ALL_RESULTS for LOCATION to use in warning
+  primary_entry="${ALL_RESULTS[0]}"
+  IFS='|' read -r _ limit used available <<< "$primary_entry"
+  echo -e "\n⚠️  Insufficient quota in '$LOCATION' (Available: $available, Required: $CAPACITY). Checking fallback regions..."
+fi
+
+# -------------------- Check Fallback Regions --------------------
+for region in "${ALL_REGIONS[@]}"; do
+  [[ "$region" == "$LOCATION" ]] && continue
+  check_quota "$region"
+  if [[ $? -eq 0 ]]; then
+    FALLBACK_RESULTS+=("$region")
+  fi
+done
+
+# -------------------- Print Results Table --------------------
+echo ""
+printf "%-6s | %-18s | %-35s | %-8s | %-8s | %-9s\n" "No." "Region" "Model Name" "Limit" "Used" "Available"
+printf -- "-------------------------------------------------------------------------------------------------------------\n"
+
+index=1
+for result in "${ALL_RESULTS[@]}"; do
+  IFS='|' read -r region limit used available <<< "$result"
+  printf "| %-4s | %-16s | %-33s | %-7s | %-7s | %-9s |\n" "$index" "$region" "$MODEL_TYPE" "$limit" "$used" "$available"
+  ((index++))
+done
+printf -- "-------------------------------------------------------------------------------------------------------------\n"
+
+# -------------------- Output Result --------------------
+if [[ $primary_status -eq 0 ]]; then
+  echo -e "\n✅ Sufficient quota found in original region '$LOCATION'."
+  exit 0
+fi
+
+if [[ ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
+  echo -e "\n❌ Deployment cannot proceed in '$LOCATION'."
+  echo "➡️ You can retry using one of the following regions with sufficient quota:"
+  echo ""
+  for region in "${FALLBACK_RESULTS[@]}"; do
+    for result in "${ALL_RESULTS[@]}"; do
+      IFS='|' read -r rgn _ _ avail <<< "$result"
+      if [[ "$rgn" == "$region" ]]; then
+        echo "   • $region (Available: $avail)"
+        break
+      fi
+    done
   done
+
   echo -e "\n🔧 To proceed, run:"
   echo "    azd env set AZURE_AISERVICE_LOCATION '<region>'"
-  echo "📌 To confirm, run:"
+  echo "📌 To confirm it's set correctly, run:"
   echo "    azd env get-value AZURE_AISERVICE_LOCATION"
-  echo "▶️  Then re-run: azd up"
+  echo "▶️  Once confirmed, re-run azd up to deploy the model in the new region."
   exit 2
 fi
 
-echo "❌ ERROR: No region has sufficient quota for '$MODEL_TYPE'."
+echo -e "\n❌ ERROR: No available quota found in any region."
 exit 1
