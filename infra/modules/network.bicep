@@ -87,7 +87,7 @@ module network 'network/main.bicep' =  {
           name: 'ai-nsg'
           securityRules: [
             {
-              name: 'AllowAppToAI'
+              name: 'AllowWebAppToAI'
               properties: {
                 access: 'Allow'
                 direction: 'Inbound'
