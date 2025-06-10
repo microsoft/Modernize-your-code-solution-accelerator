@@ -1,4 +1,4 @@
-# Deployment Plan
+# Deployment Plan 
 
 The deployment code will be in the **infra** folder. The **modules** subfolder contains reusable, parameterized modules. 
 
@@ -9,11 +9,9 @@ Creates a Virtual Network with subnets, private endpoints for all solution resou
 
 If you are new to AVM BICEP implementation, refer to [AVM Bicep Quickstart Guide](https://azure.github.io/Azure-Verified-Modules/usage/quickstart/bicep/).
 
+## Network & Subnets for Components  
 
-
-Below is an example deployment design. The Group (module) Name column shows how to group code in BICEP modules.
-
-**Solution Components and placements the Vnet/Subnets**
+**Solution Components and placements in the Vnet/Subnets**
 
 | #                           | Component Name                            | Notes                                   | Subnet            |
 | ----------------------------------------- | ------------------------------------------------------------ | ----------------- | ----------------- |
@@ -56,36 +54,32 @@ Below is an example deployment design. The Group (module) Name column shows how 
 
 #### Network Design 
 
-addressPrefixes = [
+**addressPrefixes** = ['10.0.0.0/20' ] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
 
- '10.0.0.0/21' // /21: **2048 addresses, good for up to 8-16 subnets**. Other options: /23:512, /22:1024, /21:2048, /20:4096, /16: 65,536 (max for a VNet)
+512 x 7 = 3584 allocated 
 
-]
-
-256 x 7 = 1792 allocated 
-
-| Subnet      | Address Prefix | IP Range              | Total IPs | Usable IPs* |
-| ----------- | -------------- | --------------------- | --------- | ----------- |
-| web         | 10.0.0.0/24    | 10.0.0.0 – 10.0.0.255 | 256       | 251         |
-| app         | 10.0.1.0/24    | 10.0.1.0 – 10.0.1.255 | 256       | 251         |
-| ai          | 10.0.2.0/24    | 10.0.2.0 – 10.0.2.255 | 256       | 251         |
-| data        | 10.0.3.0/24    | 10.0.3.0 – 10.0.3.255 | 256       | 251         |
-| services    | 10.0.4.0/24    | 10.0.4.0 – 10.0.4.255 | 256       | 251         |
-| jumpbox     | 10.0.5.0/24    | 10.0.5.0 – 10.0.5.255 | 256       | 251         |
-| bastionHost | 10.0.6.0/27    | 10.0.6.0 – 10.0.6.255 | 256       | 251         |
+| Subnet      | Address Prefix | IP Range                  | Total IPs | Usable IPs* |
+| ----------- | -------------- | ------------------------- | --------- | ----------- |
+| web         | 10.0.0.0/23    | (10.0.0.0 - 10.0.1.255)   | 512       | 507         |
+| app         | 10.0.2.0/23    | (10.0.2.0 - 10.0.3.255)   | 512       | 507         |
+| ai          | 10.0.4.0/23    | (10.0.4.0 - 10.0.5.255)   | 512       | 507         |
+| data        | 10.0.6.0/23    | (10.0.6.0 - 10.0.7.255)   | 512       | 507         |
+| services    | 10.0.8.0/23    | (10.0.8.0 - 10.0.9.255)   | 512       | 507         |
+| bastionHost | 10.0.10.0/23   | (10.0.10.0 - 10.0.11.255) | 512       | 507         |
+| jumpbox     | 10.0.12.0/23   | (10.0.12.0 - 10.0.13.255) | 512       | 507         |
 
 *Usable IPs = Total IPs minus 5 reserved by Azure per subnet.
 
 ### **Example Subnet/NSG Table**
 
-| Subnet   | NSG Rules (Inbound)                                 | NSG Rules (Outbound)        |
-|----------|-----------------------------------------------------|-----------------------------|
-| web      | 80/443 from internet or allowed IPs                 | To app, internet            |
-| app      | From web subnet only                                | To data, PaaS               |
-| ai       | From app subnet only                                | To data, PaaS               |
-| data     | From app/ai/private endpoints                       | To PaaS, as needed          |
-| jumpbox  | RDP/SSH from allowed IPs or Bastion                 | To internet, as needed      |
-| bastion  | Platform-managed (Bastion Host only, no direct NSG) | To VMs for RDP/SSH          |
+| Subnet  | NSG Rules (Inbound)                                 | NSG Rules (Outbound)   |
+| ------- | --------------------------------------------------- | ---------------------- |
+| web     | 80/443 from internet or allowed IPs                 | To app, internet       |
+| app     | From web subnet only                                | To data, PaaS          |
+| ai      | From web and app subnets only                       | To data, PaaS          |
+| data    | From web/app/ai/private endpoints                   | To PaaS, as needed     |
+| bastion | Platform-managed (Bastion Host only, no direct NSG) | To VMs for RDP/SSH     |
+| jumpbox | RDP/SSH from allowed IPs or Bastion                 | To internet, as needed |
 
 ## **Monitoring & Logging**
 - Enable diagnostic logs for all resources, send to Log Analytics Workspace.
@@ -93,9 +87,6 @@ addressPrefixes = [
 
 ## **DDoS Protection**
 - Enable at the VNet level for public-facing workloads.
-
-## **Route Tables (UDRs)**
-- Optional, but recommended for advanced routing (e.g., force tunneling through Azure Firewall if used).
 
 ## Azure Bastion Host
 
