@@ -4,21 +4,35 @@ param location string
 param tags object = {}
 
 
-// The address prefixes for the subnets - use below CIDR as a reference 
-// /24 subnet = 256 addresses
-// /23 = 512 addresses (enough for 2 /24 subnets)
-// /22 = 1024 addresses (enough for 4 /24 subnets)
-// /21 = 2048 addresses (enough for 8 /24 subnets)
-// /20 = 4096 addresses (enough for 16 /24 subnets)  // This was used for the default VNet address prefix
-// /19 = 8192 addresses (enough for 32 /24 subnets)
-// /18 = 16,384 addresses (enough for 64 /24 subnets)
-// /17 = 32,768 addresses (enough for 128 /24 subnets)
-// /16 = 65,536 addresses (enough for 256 /24 subnets)
-// /15 = 131,072 addresses (enough for 512 /24 subnets)
-// /14 = 262,144 addresses (enough for 1024 /24 subnets)
-// /13 = 524,288 addresses (enough for 2048 /24 subnets)
-// /12 = 1,048,576 addresses (enough for 4096 /24 subnets)
-
+// Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
+// | CIDR      | # of Addresses | # of /24s | Notes                                 |
+// |-----------|---------------|-----------|---------------------------------------|
+// | /24       | 256           | 1         | Smallest recommended for Azure subnets |
+// | /23       | 512           | 2         | Good for 1-2 workloads per subnet      |
+// | /22       | 1024          | 4         | Good for 2-4 workloads per subnet      |
+// | /21       | 2048          | 8         | Good for larger scale, future growth   |
+// | /20       | 4096          | 16        | Used for default VNet in this solution |
+// | /19       | 8192          | 32        |                                       |
+// | /18       | 16384         | 64        |                                       |
+// | /17       | 32768         | 128       |                                       |
+// | /16       | 65536         | 256       |                                       |
+// | /15       | 131072        | 512       |                                       |
+// | /14       | 262144        | 1024      |                                       |
+// | /13       | 524288        | 2048      |                                       |
+// | /12       | 1048576       | 4096      |                                       |
+// | /11       | 2097152       | 8192      |                                       |
+// | /10       | 4194304       | 16384     |                                       |
+// | /9        | 8388608       | 32768     |                                       |
+// | /8        | 16777216      | 65536     |                                       |
+//
+// Best Practice Notes:
+// - Use /24 as the minimum subnet size for Azure (smaller subnets are not supported for most services).
+// - Plan for future growth: allocate larger address spaces (e.g., /20 or /21 for VNets) to allow for new subnets.
+// - Avoid overlapping address spaces with on-premises or other VNets.
+// - Use contiguous, non-overlapping ranges for subnets.
+// - Document subnet usage and purpose in code comments.
+// - For AVM modules, ensure only one delegation per subnet and leave delegations empty if not required.
+//
 
 module network 'network/main.bicep' =  {
   name: take('network-${resourcesName}-create', 64)
