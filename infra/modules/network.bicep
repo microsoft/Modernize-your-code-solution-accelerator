@@ -95,7 +95,10 @@ module network 'network/main.bicep' =  {
                 protocol: 'Tcp'
                 sourcePortRange: '*'
                 destinationPortRange: '*'
-                sourceAddressPrefixes: ['10.0.2.0/23'] // app subnet
+                sourceAddressPrefixes: [
+                  '10.0.0.0/23' // web subnet
+                  '10.0.2.0/23' // app subnet
+                ] 
                 destinationAddressPrefixes: ['10.0.4.0/23']
               }
             }
