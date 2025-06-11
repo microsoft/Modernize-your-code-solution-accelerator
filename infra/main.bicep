@@ -39,19 +39,19 @@ param azureAiServiceLocation string = location
 param capacity int = 5
 
 @description('Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
-param enableMonitoring bool = true
+param enableMonitoring bool = false
 
 @description('Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = true
+param enableScaling bool = false
 
 @description('Enable redundancy for applicable resources. Defaults to false.')
-param enableRedundancy bool = true
+param enableRedundancy bool = false
 
-@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
+@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled. Defaults to false.')
 param secondaryLocation string?
 
-@description('Optional. Enable private networking for the resources. Set to true to enable private networking.')
-param enablePrivateNetworking bool = true
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
+param enablePrivateNetworking bool = false
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
@@ -89,7 +89,7 @@ module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.
   }
 }
 
-module aiFoundryProjectIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
+module aiFoundryIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
   name: take('identity-proj-${resourcesName}-deployment', 64)
   params: {
     name: 'id-proj-${resourcesName}'
@@ -98,12 +98,20 @@ module aiFoundryProjectIdentity 'br/public:avm/res/managed-identity/user-assigne
   }
 }
 
+// used for foundry to create and approve managed virtual network and approve private endpoint connections
+// Ref: https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#approval-of-private-endpoints
+var foundryNetworkConnectionApproverRoleAssignment = {
+  principalId: aiFoundryIdentity.outputs.principalId
+  principalType: 'ServicePrincipal'
+  roleDefinitionIdOrName: 'b556d68e-0be0-4f35-a333-ad7ee1ce17ea' // Azure AI Enterprise Network Connection Approver
+}
+
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring || enablePrivateNetworking) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
     name: 'log-${resourcesName}'
     location: location
-    skuName: 'PerGB2018'
+    skuName: 'PerGB2018' 
     dataRetention: 30
     diagnosticSettings: [{ useThisWorkspace: true }]
     tags: allTags
@@ -159,6 +167,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
+      foundryNetworkConnectionApproverRoleAssignment
     ]
   }
 }
@@ -191,10 +200,11 @@ module azureAiServices 'modules/aiServices.bicep' = {
         roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
       }
       {
-        principalId: aiFoundryProjectIdentity.outputs.principalId
+        principalId: aiFoundryIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
       }
+      foundryNetworkConnectionApproverRoleAssignment
     ]
     tags: allTags
   }
@@ -215,10 +225,11 @@ module keyVault 'modules/keyVault.bicep' = {
     } : null 
     roleAssignments: [
       {
-        principalId: aiFoundryProjectIdentity.outputs.principalId
+        principalId: aiFoundryIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Key Vault Reader'
       }
+      foundryNetworkConnectionApproverRoleAssignment
     ]
     tags: allTags
   }
@@ -235,7 +246,7 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     projectName: 'proj-${resourcesName}'
     storageAccountResourceId: storageAccount.outputs.resourceId
     keyVaultResourceId: keyVault.outputs.resourceId
-    userAssignedIdentityResourceId: aiFoundryProjectIdentity.outputs.resourceId
+    userAssignedIdentityResourceId: aiFoundryIdentity.outputs.resourceId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     aiServicesName: azureAiServices.outputs.name
     privateNetworking: enablePrivateNetworking ? {
@@ -260,7 +271,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   params: {
     name: 'cosmos-${uniqueResourcesName}'
     location: location
-    managedIdentityPrincipalId: appIdentity.outputs.principalId
+    dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
@@ -268,11 +279,14 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
       virtualNetworkResourceId: network.outputs.vnetResourceId
       subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
     } : null
+    roleAssignments: [
+      foundryNetworkConnectionApproverRoleAssignment
+    ]
     tags: allTags
   }
 }
 
-var containerAppsEnvironmentName = 'cae-${resourcesName}${enablePrivateNetworking ? '-frontend' : ''}'
+var containerAppsEnvironmentName = 'cae-${resourcesName}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
@@ -283,7 +297,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
     infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentName}'
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
-    publicNetworkAccess: 'Enabled' // public access required for frontend (and backend if private networking is not enabled)
+    publicNetworkAccess: 'Enabled' // public access required for frontend
     infrastructureSubnetResourceId: enablePrivateNetworking ? first(filter(network.outputs.subnets, s => s.name == 'web')).resourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
@@ -308,7 +322,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   }
 }
 
-module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
+module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-frontend-${resourcesName}-deployment', 64)
   params: {
     name: take('ca-${uniqueResourcesName}frontend', 32)
@@ -336,7 +350,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
       }
     ]
     ingressTargetPort: 3000
-    ingressExternal: true // public access required for frontend
+    ingressExternal: true
     scaleSettings: {
       maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
@@ -355,52 +369,14 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.16.0' = {
   }
 }
 
-var containerAppsEnvironmentBackendName = 'cae-${resourcesName}-backend'
-
-module containerAppsEnvironmentBackend 'br/public:avm/res/app/managed-environment:0.11.2' = if (enablePrivateNetworking) {
-  name: take('container-env-backend-${resourcesName}-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights, logAnalyticsWorkspace] // required due to optional flags that could change dependency
-  params: {
-    name: containerAppsEnvironmentBackendName
-    infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentBackendName}'
-    location: location
-    zoneRedundant: enableRedundancy
-    publicNetworkAccess: 'Disabled' // public access denied for backend
-    infrastructureSubnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'app')).resourceId
-    managedIdentities: {
-      userAssignedResourceIds: [
-        appIdentity.outputs.resourceId
-      ]
-    }
-    appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
-    appLogsConfiguration: enableMonitoring ? {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
-        sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
-      }
-    } : {}
-    workloadProfiles: [ // NOTE: workload profiles are required for private networking
-      {
-        name: 'Consumption'
-        workloadProfileType: 'Consumption'
-      }
-    ]
-    tags: allTags
-  }
-}
-
-var containerAppsEnvironmentResourceId = enablePrivateNetworking ? containerAppsEnvironmentBackend.outputs.resourceId : containerAppsEnvironment.outputs.resourceId
-
-module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
+module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights, containerAppsEnvironmentBackend] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
     name: take('ca-${uniqueResourcesName}backend', 32)
     location: location
-    environmentResourceId: containerAppsEnvironmentResourceId
+    environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId
@@ -523,7 +499,13 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
       }
     ]
     ingressTargetPort: 8000
-    ingressExternal: false // set to false to prevent public access
+    ingressExternal: true
+    // TODO - need way to set this CORS policy after frontend container app is deployed (issue is circular dependency since frontend needs backend to be deployed first)
+    // corsPolicy: {
+    //   allowedOrigins: [
+    //     'https://${containerAppFrontend.outputs.fqdn}'
+    //   ]
+    // }
     scaleSettings: {
       maxReplicas: enableScaling ? 3 : 1
       minReplicas: 1
@@ -541,3 +523,4 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.16.0' = {
     tags: allTags
   }
 }
+
