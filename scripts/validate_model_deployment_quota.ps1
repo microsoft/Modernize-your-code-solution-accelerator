@@ -4,17 +4,19 @@ param (
     [string]$ModelsParameter
 )
 
-# Verify all required parameters are provided
+# Read from environment variables (do not pass in azure.yaml)
+$AiServiceName = $env:AZURE_AISERVICE_NAME
+$ResourceGroup = $env:AZURE_RESOURCE_GROUP
+
+# Validate required parameters
 $MissingParams = @()
 
 if (-not $SubscriptionId) {
     $MissingParams += "subscription"
 }
-
 if (-not $Location) {
     $MissingParams += "location"
 }
-
 if (-not $ModelsParameter) {
     $MissingParams += "models-parameter"
 }
@@ -25,20 +27,56 @@ if ($MissingParams.Count -gt 0) {
     exit 1
 }
 
+# Load main.parameters.json
 $JsonContent = Get-Content -Path "./infra/main.parameters.json" -Raw | ConvertFrom-Json
-
 if (-not $JsonContent) {
     Write-Error "❌ ERROR: Failed to parse main.parameters.json. Ensure the JSON file is valid."
     exit 1
 }
 
 $aiModelDeployments = $JsonContent.parameters.$ModelsParameter.value
-
 if (-not $aiModelDeployments -or -not ($aiModelDeployments -is [System.Collections.IEnumerable])) {
-    Write-Error "❌ ERROR: The specified property $ModelsParameter does not exist or is not an array."
+    Write-Error "❌ ERROR: The specified property '$ModelsParameter' does not exist or is not an array."
     exit 1
 }
 
+# Check if AI resource + all deployments already exist
+if ($AiServiceName -and $ResourceGroup) {
+    $existing = az cognitiveservices account show `
+        --name $AiServiceName `
+        --resource-group $ResourceGroup `
+        --query "name" --output tsv 2>$null
+
+    if ($existing) {
+        $deployedModels = az cognitiveservices account deployment list `
+            --name $AiServiceName `
+            --resource-group $ResourceGroup `
+            --query "[].name" --output tsv 2>$null
+
+        $requiredDeployments = @()
+        foreach ($deployment in $aiModelDeployments) {
+            $requiredDeployments += $deployment.name
+        }
+
+        $missingDeployments = @()
+        foreach ($required in $requiredDeployments) {
+            if ($deployedModels -notcontains $required) {
+                $missingDeployments += $required
+            }
+        }
+
+        if ($missingDeployments.Count -eq 0) {
+            Write-Host "ℹ️ Azure AI service '$AiServiceName' exists and all required model deployments are provisioned."
+            Write-Host "⏭️ Skipping quota validation."
+            exit 0
+        } else {
+            Write-Host "🔍 AI service exists, but the following model deployments are missing: $($missingDeployments -join ', ')"
+            Write-Host "➡️ Proceeding with quota validation for missing models..."
+        }
+    }
+}
+
+# Start quota validation
 az account set --subscription $SubscriptionId
 Write-Host "🎯 Active Subscription: $(az account show --query '[name, id]' --output tsv)"
 
@@ -56,8 +94,7 @@ foreach ($deployment in $aiModelDeployments) {
 
     if ($exitCode -ne 0) {
         if ($exitCode -eq 2) {
-            # Quota error already printed inside the script, exit gracefully without reprinting
-            exit 1
+            exit 1  # already printed, graceful
         }
         Write-Error "❌ ERROR: Quota validation failed for model deployment: $name"
         $QuotaAvailable = $false
