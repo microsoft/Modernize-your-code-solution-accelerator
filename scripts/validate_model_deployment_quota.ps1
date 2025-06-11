@@ -12,15 +12,13 @@ $MissingParams = @()
 if (-not $SubscriptionId) { $MissingParams += "SubscriptionId" }
 if (-not $Location) { $MissingParams += "Location" }
 if (-not $ModelsParameter) { $MissingParams += "ModelsParameter" }
-if (-not $AiFoundryName) { $MissingParams += "AZURE_AISERVICE_NAME" }
-if (-not $ResourceGroup) { $MissingParams += "AZURE_RESOURCE_GROUP" }
 
 if ($MissingParams.Count -gt 0) {
     Write-Error "❌ ERROR: Missing required parameters: $($MissingParams -join ', ')"
     exit 1
 }
 
-# Load model deployment parameters
+# Load model deployments from parameter file
 $JsonContent = Get-Content -Path "./infra/main.parameters.json" -Raw | ConvertFrom-Json
 if (-not $JsonContent) {
     Write-Error "❌ ERROR: Failed to parse main.parameters.json. Ensure the JSON file is valid."
@@ -28,17 +26,19 @@ if (-not $JsonContent) {
 }
 
 $aiModelDeployments = $JsonContent.parameters.$ModelsParameter.value
-
 if (-not $aiModelDeployments -or -not ($aiModelDeployments -is [System.Collections.IEnumerable])) {
     Write-Error "❌ ERROR: The specified property '$ModelsParameter' does not exist or is not an array."
     exit 1
 }
 
-# Check if AI Foundry and model deployments already exist
-$existing = az cognitiveservices account show `
-    --name $AiFoundryName `
-    --resource-group $ResourceGroup `
-    --query "name" --output tsv 2>$null
+# Check if AI Foundry exists and has all required model deployments
+$existing = $null
+if ($AiFoundryName -and $ResourceGroup) {
+    $existing = az cognitiveservices account show `
+        --name $AiFoundryName `
+        --resource-group $ResourceGroup `
+        --query "name" --output tsv 2>$null
+}
 
 if ($existing) {
     $deployedModelsOutput = az cognitiveservices account deployment list `
@@ -46,7 +46,6 @@ if ($existing) {
         --resource-group $ResourceGroup `
         --query "[].name" --output tsv 2>$null
 
-    # Normalize output to array
     $deployedModels = @()
     if ($deployedModelsOutput -is [string]) {
         $deployedModels += $deployedModelsOutput
@@ -65,11 +64,9 @@ if ($existing) {
         Write-Host "🔍 AI Foundry exists, but the following model deployments are missing: $($missingDeployments -join ', ')"
         Write-Host "➡️ Proceeding with quota validation for missing models..."
     }
-} else {
-    Write-Host "❌ AI Foundry '$AiFoundryName' not found. Proceeding with quota validation."
 }
 
-# Run quota validation
+# Run quota validation for all models
 az account set --subscription $SubscriptionId
 Write-Host "🎯 Active Subscription: $(az account show --query '[name, id]' --output tsv)"
 
