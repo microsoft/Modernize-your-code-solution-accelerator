@@ -6,15 +6,15 @@ MODELS_PARAMETER=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --subscription)
+    --SubscriptionId)
       SUBSCRIPTION_ID="$2"
       shift 2
       ;;
-    --location)
+    --Location)
       LOCATION="$2"
       shift 2
       ;;
-    --models-parameter)
+    --ModelsParameter)
       MODELS_PARAMETER="$2"
       shift 2
       ;;
@@ -25,57 +25,57 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+AIFOUNDRY_NAME="${AZURE_AIFOUNDRY_NAME}"
+RESOURCE_GROUP="${AZURE_RESOURCE_GROUP}"
+
 # Validate required parameters
 MISSING_PARAMS=()
-[[ -z "$SUBSCRIPTION_ID" ]] && MISSING_PARAMS+=("subscription")
-[[ -z "$LOCATION" ]] && MISSING_PARAMS+=("location")
-[[ -z "$MODELS_PARAMETER" ]] && MISSING_PARAMS+=("models-parameter")
+[[ -z "$SUBSCRIPTION_ID" ]] && MISSING_PARAMS+=("SubscriptionId")
+[[ -z "$LOCATION" ]] && MISSING_PARAMS+=("Location")
+[[ -z "$MODELS_PARAMETER" ]] && MISSING_PARAMS+=("ModelsParameter")
+[[ -z "$AIFOUNDRY_NAME" ]] && MISSING_PARAMS+=("AZURE_AIFOUNDRY_NAME")
+[[ -z "$RESOURCE_GROUP" ]] && MISSING_PARAMS+=("AZURE_RESOURCE_GROUP")
 
 if [[ ${#MISSING_PARAMS[@]} -ne 0 ]]; then
   echo "❌ ERROR: Missing required parameters: ${MISSING_PARAMS[*]}"
-  echo "Usage: $0 --subscription <SUBSCRIPTION_ID> --location <LOCATION> --models-parameter <MODELS_PARAMETER>"
+  echo "Usage: $0 --SubscriptionId <SUBSCRIPTION_ID> --Location <LOCATION> --ModelsParameter <MODELS_PARAMETER>"
   exit 1
 fi
 
-# Read from environment
-AISERVICE_NAME="${AZURE_AISERVICE_NAME}"
-RESOURCE_GROUP="${AZURE_RESOURCE_GROUP}"
+# Check if AI Foundry exists and has required deployments
+existing=$(az cognitiveservices account show --name "$AIFOUNDRY_NAME" --resource-group "$RESOURCE_GROUP" --query "name" --output tsv 2>/dev/null)
+if [[ -n "$existing" ]]; then
+  echo "ℹ️ Found AI Foundry: $AIFOUNDRY_NAME"
 
-# Check service and deployment existence
-if [[ -n "$AISERVICE_NAME" && -n "$RESOURCE_GROUP" ]]; then
-  existing=$(az cognitiveservices account show --name "$AISERVICE_NAME" --resource-group "$RESOURCE_GROUP" --query "name" --output tsv 2>/dev/null)
-  if [[ -n "$existing" ]]; then
-    echo "ℹ️ Found Azure AI service: $AISERVICE_NAME"
+  existing_deployments=$(az cognitiveservices account deployment list --name "$AIFOUNDRY_NAME" --resource-group "$RESOURCE_GROUP" --query "[].name" --output tsv 2>/dev/null)
 
-    existing_deployments=$(az cognitiveservices account deployment list --name "$AISERVICE_NAME" --resource-group "$RESOURCE_GROUP" --query "[].name" --output tsv 2>/dev/null)
+  required_models=$(jq -r ".parameters.$MODELS_PARAMETER.value[].name" ./infra/main.parameters.json 2>/dev/null)
 
-    # Extract required model names
-    required_models=$(jq -r ".parameters.$MODELS_PARAMETER.value[].name" ./infra/main.parameters.json 2>/dev/null)
-
-    if [[ -z "$required_models" ]]; then
-      echo "❌ ERROR: Failed to extract required model names from main.parameters.json"
-      exit 1
-    fi
-
-    all_present=true
-    for model in $required_models; do
-      if ! grep -q -w "$model" <<< "$existing_deployments"; then
-        all_present=false
-        break
-      fi
-    done
-
-    if [[ "$all_present" == "true" ]]; then
-      echo "✅ All required model deployments already exist in AI service '$AISERVICE_NAME'."
-      echo "⏭️ Skipping quota validation."
-      exit 0
-    else
-      echo "🔍 AI service exists but some model deployments are missing — proceeding with quota validation."
-    fi
+  if [[ -z "$required_models" ]]; then
+    echo "❌ ERROR: Failed to extract required model names from main.parameters.json"
+    exit 1
   fi
+
+  all_present=true
+  for model in $required_models; do
+    if ! grep -q -w "$model" <<< "$existing_deployments"; then
+      all_present=false
+      break
+    fi
+  done
+
+  if [[ "$all_present" == "true" ]]; then
+    echo "✅ All required model deployments already exist in AI Foundry '$AIFOUNDRY_NAME'."
+    echo "⏭️ Skipping quota validation."
+    exit 0
+  else
+    echo "🔍 AI Foundry exists, but some model deployments are missing — proceeding with quota validation."
+  fi
+else
+  echo "❌ AI Foundry '$AIFOUNDRY_NAME' not found. Proceeding with quota validation."
 fi
 
-# If we reach here, continue with normal quota checks
+# Load deployment definitions
 aiModelDeployments=$(jq -c ".parameters.$MODELS_PARAMETER.value[]" ./infra/main.parameters.json)
 if [[ $? -ne 0 ]]; then
   echo "❌ ERROR: Failed to parse main.parameters.json. Ensure jq is installed and the JSON is valid."

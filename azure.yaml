@@ -26,7 +26,7 @@ hooks:
     posix:
       shell: sh
       run: >
-        chmod u+r+x ./scripts/validate_model_deployment_quota.sh; chmod u+r+x ./scripts/validate_model_quota.sh; ./scripts/validate_model_deployment_quota.sh --subscription "$AZURE_SUBSCRIPTION_ID" --location "${AZURE_AISERVICE_LOCATION:-japaneast}" --models-parameter "aiModelDeployments"
+        chmod u+r+x ./scripts/validate_model_deployment_quota.sh; chmod u+r+x ./scripts/validate_model_quota.sh; ./scripts/validate_model_deployment_quota.sh --SubscriptionId "$AZURE_SUBSCRIPTION_ID" --Location "${AZURE_AISERVICE_LOCATION:-japaneast}" --ModelsParameter "aiModelDeployments"
       interactive: false
       continueOnError: false
 

@@ -506,3 +506,5 @@ module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1'
     scriptContent: cosmosAssignCli
   }
 }
+
+output AZURE_AIFOUNDRY_NAME string = azureAiServices.name
