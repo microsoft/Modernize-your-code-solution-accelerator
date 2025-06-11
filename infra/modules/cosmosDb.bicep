@@ -8,7 +8,7 @@ param location string
 param tags object = {}
 
 @description('Managed Identity princpial to assign data plane roles for the Cosmos DB Account.')
-param managedIdentityPrincipalId string
+param dataAccessIdentityPrincipalId string
 
 @description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
 param logAnalyticsWorkspaceResourceId string?
@@ -21,6 +21,9 @@ param secondaryLocation string?
 
 @description('Optional. Values to establish private networking for the Cosmos DB resource.')
 param privateNetworking resourcePrivateNetworkingType?
+
+@description('Optional. Array of role assignments to create.')
+param roleAssignments roleAssignmentType[]?
 
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
   name: take('${name}-documents-pdns-deployment', 64)
@@ -131,15 +134,17 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     ]
     dataPlaneRoleAssignments: [
       {
-        principalId: managedIdentityPrincipalId
+        principalId: dataAccessIdentityPrincipalId
         roleDefinitionId: sqlContributorRoleDefinition.id
       }
     ]
+    roleAssignments: roleAssignments
     tags: tags
   }
 }
 
 import { resourcePrivateNetworkingType } from 'customTypes.bicep'
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output resourceId string = cosmosAccount.outputs.resourceId
 output name string = cosmosAccount.outputs.name

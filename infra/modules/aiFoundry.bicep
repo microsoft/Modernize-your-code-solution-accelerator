@@ -84,9 +84,24 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     associatedStorageAccountResourceId: storageAccountResourceId
     associatedApplicationInsightsResourceId: applicationInsightsResourceId
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
+    managedNetworkSettings: {
+      isolationMode: privateNetworking != null ? 'AllowInternetOutbound' : 'Disabled'
+      outboundRules: {
+        cog_services_pep: {
+          category: 'UserDefined'
+          destination: {
+            serviceResourceId: aiServices.id
+            sparkEnabled: true
+            subresourceTarget: 'account'
+          }
+          type: 'PrivateEndpoint'
+        }
+      }
+    }
     managedIdentities: {
       systemAssigned: true
     }
+    systemDatastoresAuthMode: 'Identity'
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     privateEndpoints: privateNetworking != null ? [
       {
@@ -133,6 +148,8 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     sku: 'Standard'
     location: location
     hubResourceId: hub.outputs.resourceId
+    hbiWorkspace: false
+    systemDatastoresAuthMode: 'Identity'
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     managedIdentities: {
       userAssignedResourceIds: [userAssignedIdentityResourceId]
