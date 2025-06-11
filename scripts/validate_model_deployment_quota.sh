@@ -61,20 +61,20 @@ if [[ -n "$existing" ]]; then
 
   required_models=$(jq -r ".parameters.$MODELS_PARAMETER.value[].name" ./infra/main.parameters.json)
 
-  all_present=true
+  missing_models=()
   for model in $required_models; do
     if ! grep -q -w "$model" <<< "$existing_deployments"; then
-      all_present=false
-      break
+      missing_models+=("$model")
     fi
   done
 
-  if [[ "$all_present" == "true" ]]; then
-    echo "✅ All required model deployments already exist in AI Foundry '$AIFOUNDRY_NAME'."
+  if [[ ${#missing_models[@]} -eq 0 ]]; then
+    echo "ℹ️ AI Foundry '$AIFOUNDRY_NAME' exists and all required model deployments are already provisioned."
     echo "⏭️ Skipping quota validation."
     exit 0
   else
-    echo "🔍 Some model deployments are missing — proceeding with quota validation."
+    echo "🔍 AI Foundry exists, but the following model deployments are missing: ${missing_models[*]}"
+    echo "➡️ Proceeding with quota validation for missing models..."
   fi
 fi
 
@@ -90,6 +90,7 @@ while IFS= read -r deployment; do
   type=${AZURE_ENV_MODEL_DEPLOYMENT_TYPE:-$(echo "$deployment" | jq -r '.sku.name')}
   capacity=${AZURE_ENV_MODEL_CAPACITY:-$(echo "$deployment" | jq -r '.sku.capacity')}
 
+  echo ""
   echo "🔍 Validating model deployment: $name ..."
   ./scripts/validate_model_quota.sh --location "$LOCATION" --model "$model" --capacity "$capacity" --deployment-type "$type"
   exit_code=$?
@@ -104,7 +105,7 @@ while IFS= read -r deployment; do
 done <<< "$(echo "$aiModelDeployments")"
 
 if [[ "$quotaAvailable" = false ]]; then
-  echo "❌ ERROR: One or more model deployments failed validation."
+  echo "❌ ERROR: One or more model deployments failed quota validation."
   exit 1
 else
   echo "✅ All model deployments passed quota validation successfully."
