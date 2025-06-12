@@ -1,7 +1,7 @@
 // /******************************************************************************************************************/
 //  This is an example test program to create private networking resources independently with sample inputs
 // 
-//  Please review below modules to understand the how things are wired together:
+//  Please review below modules to understand how things are wired together:
 //      infra/main.bicep
 //      infra/modules/network.bicep
 //      infra/moddules/network/main.bicep 
@@ -205,14 +205,13 @@ param jumpboxSubnet object = {
 // Azure Bastion Host parameters
 param bastionSubnet object = {
   addressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
-  networkSecurityGroup: null // Azure Bastion subnet must NOT have an NSG
+  networkSecurityGroup: null // Azure Bastion subnet must NOT have custom NSG as it is managed by Azure
 }
 
 
-// /****************************************************************************************************************************/
-// Create Log Analytics Workspace for monitoring and diagnostics 
-// /****************************************************************************************************************************/
-
+// /******************************************************************************************************************/
+//  Create Log Analytics Workspace for monitoring and diagnostics 
+// /******************************************************************************************************************/
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
@@ -225,10 +224,9 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
-// /****************************************************************************************************************************/
+// /******************************************************************************************************************/
 //  Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
-// /****************************************************************************************************************************/
-
+// /******************************************************************************************************************/
 module virtualNetwork 'virtualNetwork.bicep' = {
   name: '${resourcesName}-virtualNetwork'
   params: {
@@ -241,10 +239,9 @@ module virtualNetwork 'virtualNetwork.bicep' = {
   }
 }
 
-// /****************************************************************************************************************************/
+// /******************************************************************************************************************/
 // // Create Azure Bastion Subnet and Azure Bastion Host
-// /****************************************************************************************************************************/
-
+// /******************************************************************************************************************/
 module bastionHost 'bastionHost.bicep' = if(enableBastionHost && !empty(bastionSubnet)) {
   name: '${resourcesName}-bastionHost'
   params: {
@@ -258,10 +255,9 @@ module bastionHost 'bastionHost.bicep' = if(enableBastionHost && !empty(bastionS
   }
 }
 
-// /****************************************************************************************************************************/
+// /******************************************************************************************************************/
 // // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
-// /****************************************************************************************************************************/
-
+// /******************************************************************************************************************/
 module jumpbox 'jumpbox.bicep' =  if (jumpboxVM && !empty(jumpboxSubnet)) {
   name: '${resourcesName}-jumpbox'
   params: {
