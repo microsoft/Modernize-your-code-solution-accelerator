@@ -1,12 +1,12 @@
-// /****************************************************************************************************************************/
-//  This is an example test program to create private networking resources independently to show the usage of the modules
-//    with sample inputs.
+// /******************************************************************************************************************/
+//  This is an example test program to create private networking resources independently with sample inputs
 // 
-//  Next Steps: 
-//    Review infra/main.bicep and infra/modules/network.bicep for intended usage of the modules
-//    Please infra/modules/network.bicep on how to  customize the networking resources for your application.
+//  Please review below modules to understand the how things are wired together:
+//      infra/main.bicep
+//      infra/modules/network.bicep
+//      infra/moddules/network/main.bicep 
 //  
-// /****************************************************************************************************************************/
+// /******************************************************************************************************************/
 
 @minLength(6)
 @maxLength(25)
