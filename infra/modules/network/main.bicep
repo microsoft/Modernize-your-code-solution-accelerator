@@ -10,7 +10,7 @@ param location string
 @description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
 param logAnalyticsWorkSpaceResourceId string
 
-@description('Networking address prefix for the VNET and subnets.')
+@description('Networking address prefix for the VNET only.')
 param addressPrefixes array
 
 @description('Array of subnets to be created within the VNET.')
@@ -23,17 +23,17 @@ param tags object = {}
 var vnetName = 'vnet-${resourcesName}'
 
 // jumpbox parameters
-param jumpboxVM bool = false                         // set in .bicepparam file  
-param jumpboxSubnet object = {}                      // set in .bicepparam file 
-param jumpboxAdminUser string = 'JumpboxAdminUser'   // set in .bicepparam file 
+param jumpboxVM bool = false                         
+param jumpboxSubnet object = {}                      
+param jumpboxAdminUser string = 'JumpboxAdminUser'   
 @secure()
-param jumpboxAdminPassword string                    // set in .bicepparam file 
+param jumpboxAdminPassword string                    
 param jumpboxVmSize string = 'Standard_D2s_v3'  
 var jumpboxVmName = 'jumpboxVM-${resourcesName}'            
 
 // Azure Bastion Host parameters
-param enableBastionHost bool = false                   // set in .bicepparam file 
-param bastionSubnet object = {}                 // set in .bicepparam file 
+param enableBastionHost bool = true                   
+param bastionSubnet object = {}                 
 var bastionHostName = 'bastionHost-${resourcesName}'  
 
 
