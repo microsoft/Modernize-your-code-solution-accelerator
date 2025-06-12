@@ -1,6 +1,6 @@
 @minLength(6)
 @maxLength(25)
-@description('Default name used for all resources.')
+@description('Name used for naming all network resources.')
 param resourcesName string
 
 @minLength(3)
@@ -10,17 +10,17 @@ param location string
 @description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
 param logAnalyticsWorkSpaceResourceId string
 
-@description('Networking address prefix for the VNET and subnets.')
+@description('Networking address prefix for the VNET.')
 param addressPrefixes array
 
+import { subnetType } from 'virtualNetwork.bicep'
 @description('Array of subnets to be created within the VNET.')
-param subnets array   
+param subnets subnetType[]   
 
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
+         
 
-                    
-var vnetName = 'vnet-${resourcesName}'
 
 // jumpbox parameters
 param jumpboxVM bool = false                         // set in .bicepparam file  
@@ -40,6 +40,7 @@ var bastionHostName = 'bastionHost-${resourcesName}'
 // /****************************************************************************************************************************/
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /****************************************************************************************************************************/
+var vnetName = 'vnet-${resourcesName}'
 
 module virtualNetwork 'virtualNetwork.bicep' = {
   name: '${resourcesName}-virtualNetwork'
@@ -91,7 +92,9 @@ module jumpbox 'jumpbox.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
 
 output vnetName string = virtualNetwork.outputs.name
 output vnetResourceId string = virtualNetwork.outputs.resourceId
-output subnets array = virtualNetwork.outputs.subnets // This one holds critical info for subnets, including NSGs
+
+import { subnetOutputType } from 'virtualNetwork.bicep'
+output subnets subnetOutputType[] = virtualNetwork.outputs.subnets // This one holds critical info for subnets, including NSGs
 
 output bastionSubnetId string = bastionHost.outputs.subnetId
 output bastionSubnetName string = bastionHost.outputs.subnetName
@@ -102,5 +105,6 @@ output jumpboxSubnetName string = jumpbox.outputs.subnetId
 output jumpboxSubnetId string = jumpbox.outputs.subnetId
 output jumpboxVmName string = jumpbox.outputs.vmName
 output jumpboxVmId string = jumpbox.outputs.vmId
+
 
 

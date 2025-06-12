@@ -31,6 +31,7 @@ param aiServicesName string
 @description('Optional. Values to establish private networking for the AI Foundry resources.')
 param privateNetworking machineLearningPrivateNetworkingType?
 
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
@@ -86,7 +87,7 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     managedNetworkSettings: {
       isolationMode: privateNetworking != null ? 'AllowInternetOutbound' : 'Disabled'
-      outboundRules: {
+      outboundRules: privateNetworking != null ? {
         cog_services_pep: {
           category: 'UserDefined'
           destination: {
@@ -96,8 +97,8 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
           }
           type: 'PrivateEndpoint'
         }
-      }
-    }
+      } : null
+    } 
     managedIdentities: {
       systemAssigned: true
     }
@@ -167,8 +168,6 @@ resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-
   name: projectName
   dependsOn: [project]
 }
-
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output projectName string = project.outputs.name
 output hubName string = hub.outputs.name
