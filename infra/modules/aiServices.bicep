@@ -51,9 +51,11 @@ param sku string = 'S0'
 @description('Optional. The resource ID of the Log Analytics workspace to use for diagnostic settings.')
 param logAnalyticsWorkspaceResourceId string?
 
+import { deploymentType } from 'br/public:avm/res/cognitive-services/account:0.10.2'
 @description('Optional. Specifies the OpenAI deployments to create.')
 param deployments deploymentType[] = []
 
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
@@ -107,7 +109,7 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = 
     }
     deployments: deployments
     customSubDomainName: name
-    disableLocalAuth: false // TODO - verify if this should remain false or be set dynamically via privateNetworking
+    disableLocalAuth: false
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
       {
@@ -132,9 +134,6 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = 
     ] : []
   }
 }
-
-import { deploymentType } from 'br/public:avm/res/cognitive-services/account:0.10.2'
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output resourceId string = cognitiveService.outputs.resourceId
 output name string = cognitiveService.outputs.name

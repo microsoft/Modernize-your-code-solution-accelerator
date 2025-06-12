@@ -1,8 +1,15 @@
+@description('Named used for all resource naming.')
 param resourcesName string
-param logAnalyticsWorkSpaceResourceId string
-param location string
-param tags object = {}
 
+@description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
+param logAnalyticsWorkSpaceResourceId string
+
+@minLength(3)
+@description('Azure region for all services.')
+param location string
+
+@description('Optional. Tags to be applied to the resources.')
+param tags object = {}
 
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
@@ -32,7 +39,6 @@ param tags object = {}
 // - Use contiguous, non-overlapping ranges for subnets.
 // - Document subnet usage and purpose in code comments.
 // - For AVM modules, ensure only one delegation per subnet and leave delegations empty if not required.
-//
 
 module network 'network/main.bicep' =  {
   name: take('network-${resourcesName}-create', 64)
@@ -44,7 +50,7 @@ module network 'network/main.bicep' =  {
     addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
     subnets: [
       // Only one delegation per subnet is supported by the AVM module as of June 2025.
-      // For subnets that do not require delegation, leave the array empty.
+      // For subnets that do not require delegation, leave the value empty.
       {
         name: 'web'
         addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
@@ -66,120 +72,13 @@ module network 'network/main.bicep' =  {
             }
           ]
         }
-        delegations: [
-          {
-            name: 'containerapps-delegation'
-            serviceName: 'Microsoft.App/environments'
-          }
-        ]
+        delegation: 'Microsoft.App/environments'
       }
       {
-        name: 'app'
+        name: 'peps'
         addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
-        networkSecurityGroup: {
-          name: 'app-nsg'
-          securityRules: [
-            {
-              name: 'AllowWebToApp'
-              properties: {
-                access: 'Allow'
-                direction: 'Inbound'
-                priority: 100
-                protocol: 'Tcp'
-                sourcePortRange: '*'
-                destinationPortRange: '*'
-                sourceAddressPrefixes: ['10.0.0.0/23'] // web subnet
-                destinationAddressPrefixes: ['10.0.2.0/23']
-              }
-            }
-          ]
-        }
-        delegations: [
-          {
-            name: 'containerapps-delegation'
-            serviceName: 'Microsoft.App/environments'
-          }
-        ]
-      }
-      {
-        name: 'ai'
-        addressPrefixes: ['10.0.4.0/23'] // /23 (10.0.4.0 - 10.0.5.255), 512 addresses
-        networkSecurityGroup: {
-          name: 'ai-nsg'
-          securityRules: [
-            {
-              name: 'AllowWebAppToAI'
-              properties: {
-                access: 'Allow'
-                direction: 'Inbound'
-                priority: 100
-                protocol: 'Tcp'
-                sourcePortRange: '*'
-                destinationPortRange: '*'
-                sourceAddressPrefixes: [
-                  '10.0.0.0/23' // web subnet
-                  '10.0.2.0/23' // app subnet
-                ] 
-                destinationAddressPrefixes: ['10.0.4.0/23']
-              }
-            }
-          ]
-        }
-        delegations: [] // No delegation required for this subnet.
-      }
-      {
-        name: 'data'
-        addressPrefixes: ['10.0.6.0/23'] // /23 (10.0.6.0 - 10.0.7.255)
-        networkSecurityGroup: {
-          name: 'data-nsg'
-          securityRules: [
-            {
-              name: 'AllowWebAppAiToData'
-              properties: {
-                access: 'Allow'
-                direction: 'Inbound'
-                priority: 100
-                protocol: 'Tcp'
-                sourcePortRange: '*'
-                destinationPortRange: '*'
-                sourceAddressPrefixes: [
-                  '10.0.0.0/23' // web subnet
-                  '10.0.2.0/23' // app subnet
-                  '10.0.4.0/23' // ai subnet
-                ]
-                destinationAddressPrefixes: ['10.0.6.0/23']
-              }
-            }
-          ]
-        }
-        delegations: [] // No delegation required for this subnet.
-      }
-      {
-        name: 'services'
-        addressPrefixes: ['10.0.8.0/23'] // /23 (10.0.8.0 - 10.0.9.255), 512 addresses
-        networkSecurityGroup: {
-          name: 'services-nsg'
-          securityRules: [
-            {
-              name: 'AllowWebAppAiToServices'
-              properties: {
-                access: 'Allow'
-                direction: 'Inbound'
-                priority: 100
-                protocol: 'Tcp'
-                sourcePortRange: '*'
-                destinationPortRange: '*'
-                sourceAddressPrefixes: [
-                  '10.0.0.0/23' // web subnet
-                  '10.0.2.0/23' // app subnet
-                  '10.0.4.0/23' // ai subnet
-                ]
-                destinationAddressPrefixes: ['10.0.8.0/23']
-              }
-            }
-          ]
-        }
-        delegations: [] // No delegation required for this subnet.
+        privateEndpointNetworkPolicies: 'Disabled'
+        privateLinkServiceNetworkPolicies: 'Disabled'
       }
     ]
     enableBastionHost: true // Set to true to enable Azure Bastion Host creation.
@@ -220,7 +119,9 @@ module network 'network/main.bicep' =  {
 
 output vnetName string = network.outputs.vnetName
 output vnetResourceId string = network.outputs.vnetResourceId
-output subnets array = network.outputs.subnets // This one holds critical info for subnets, including NSGs
+
+output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
+output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
 
 output bastionSubnetId string = network.outputs.bastionSubnetId
 output bastionSubnetName string = network.outputs.bastionSubnetName
@@ -231,4 +132,3 @@ output jumpboxSubnetName string = network.outputs.jumpboxSubnetName
 output jumpboxSubnetId string = network.outputs.jumpboxSubnetId
 output jumpboxVmName string = network.outputs.jumpboxVmName
 output jumpboxVmId string = network.outputs.jumpboxVmId
-

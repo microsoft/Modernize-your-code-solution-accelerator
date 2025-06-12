@@ -17,12 +17,15 @@ param sku string = 'premium'
 @description('Optional. Resource ID of the Log Analytics workspace to use for diagnostic settings.')
 param logAnalyticsWorkspaceResourceId string?
 
+import { resourcePrivateNetworkingType } from 'customTypes.bicep'
 @description('Optional. Values to establish private networking for the Key Vault resource.')
 param privateNetworking resourcePrivateNetworkingType?
 
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
+import { secretType } from 'br/public:avm/res/key-vault/vault:0.12.1'
 @description('Optional. Array of secrets to create in the Key Vault.')
 param secrets secretType[]?
 
@@ -84,10 +87,6 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     secrets: secrets
   }
 }
-
-import { resourcePrivateNetworkingType } from 'customTypes.bicep'
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
-import { secretType } from 'br/public:avm/res/key-vault/vault:0.12.1'
 
 output resourceId string = keyvault.outputs.resourceId
 output name string = keyvault.outputs.name

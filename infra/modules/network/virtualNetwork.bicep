@@ -5,10 +5,9 @@
 param location string = resourceGroup().location
 param name string 
 param addressPrefixes array
-param subnets array
+param subnets subnetType[] = []
 param tags object = {}
 param logAnalyticsWorkspaceId string
-
 
 // 1. Create NSGs for subnets 
 // using AVM Network Security Group module
@@ -16,12 +15,12 @@ param logAnalyticsWorkspaceId string
 
 @batchSize(1)
 module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
-  for (subnet, i) in subnets: if (!empty(subnet.networkSecurityGroup)) {
-    name: take('${name}-${subnet.networkSecurityGroup.name}-networksecuritygroup', 64)
+  for (subnet, i) in subnets: if (!empty(subnet.?networkSecurityGroup)) {
+    name: take('${name}-${subnet.?networkSecurityGroup.name}-networksecuritygroup', 64)
     params: {
-      name: '${name}-${subnet.networkSecurityGroup.name}'
+      name: '${name}-${subnet.?networkSecurityGroup.name}'
       location: location
-      securityRules: subnet.networkSecurityGroup.securityRules
+      securityRules: subnet.?networkSecurityGroup.securityRules
       tags: tags
     }
   }
@@ -40,9 +39,11 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
     subnets: [
       for (subnet, i) in subnets: {
         name: subnet.name
-        addressPrefixes: subnet.addressPrefixes
-        networkSecurityGroupResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
-        delegation: !empty(subnet.delegations) ? subnet.delegations[0].serviceName : null  // AVM module expects a single delegation per subnet
+        addressPrefixes: subnet.?addressPrefixes
+        networkSecurityGroupResourceId: !empty(subnet.?networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
+        privateEndpointNetworkPolicies: subnet.?privateEndpointNetworkPolicies
+        privateLinkServiceNetworkPolicies: subnet.?privateLinkServiceNetworkPolicies
+        delegation: subnet.?delegation
       }
     ]
     diagnosticSettings: [
@@ -71,11 +72,74 @@ output name string = virtualNetwork.outputs.name
 output resourceId string = virtualNetwork.outputs.resourceId
 
 // combined output array that holds subnet details along with NSG information
-output subnets array = [
+output subnets subnetOutputType[] = [
   for (subnet, i) in subnets: {
     name: subnet.name
     resourceId: virtualNetwork.outputs.subnetResourceIds[i]
-    nsgName: !empty(subnet.networkSecurityGroup) ? subnet.networkSecurityGroup.name : null
-    nsgResourceId: !empty(subnet.networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
+    nsgName: !empty(subnet.?networkSecurityGroup) ? subnet.?networkSecurityGroup.name : null
+    nsgResourceId: !empty(subnet.?networkSecurityGroup) ? nsgs[i].outputs.resourceId : null
   }
 ]
+
+@export()
+@description('Custom type definition for subnet resource information as output')
+type subnetOutputType = {
+  @description('The name of the subnet.')
+  name: string
+
+  @description('The resource ID of the subnet.')
+  resourceId: string
+
+  @description('The name of the associated network security group, if any.')
+  nsgName: string?
+
+  @description('The resource ID of the associated network security group, if any.')
+  nsgResourceId: string?
+}
+
+@export()
+@description('Custom type definition for subnet configuration')
+type subnetType = {
+  @description('Required. The Name of the subnet resource.')
+  name: string
+
+  @description('Conditional. The address prefix for the subnet. Required if `addressPrefixes` is empty.')
+  addressPrefix: string?
+
+  @description('Conditional. List of address prefixes for the subnet. Required if `addressPrefix` is empty.')
+  addressPrefixes: string[]?
+
+  @description('Optional. The delegation to enable on the subnet.')
+  delegation: string?
+
+  @description('Optional. enable or disable apply network policies on private endpoint in the subnet.')
+  privateEndpointNetworkPolicies: ('Disabled' | 'Enabled' | 'NetworkSecurityGroupEnabled' | 'RouteTableEnabled')?
+
+  @description('Optional. Enable or disable apply network policies on private link service in the subnet.')
+  privateLinkServiceNetworkPolicies: ('Disabled' | 'Enabled')?
+
+  @description('Optional. Network Security Group configuration for the subnet.')
+  networkSecurityGroup: networkSecurityGroupType?
+
+  @description('Optional. The resource ID of the route table to assign to the subnet.')
+  routeTableResourceId: string?
+
+  @description('Optional. An array of service endpoint policies.')
+  serviceEndpointPolicies: object[]?
+
+  @description('Optional. The service endpoints to enable on the subnet.')
+  serviceEndpoints: string[]?
+
+  @description('Optional. Set this property to false to disable default outbound connectivity for all VMs in the subnet. This property can only be set at the time of subnet creation and cannot be updated for an existing subnet.')
+  defaultOutboundAccess: bool?
+}
+
+@export()
+@description('Custom type definition for network security group configuration')
+type networkSecurityGroupType = {
+  @description('Required. The name of the network security group.')
+  name: string
+
+  @description('Required. The security rules for the network security group.')
+  securityRules: object[]
+}

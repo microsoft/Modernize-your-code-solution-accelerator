@@ -1,7 +1,11 @@
 @minLength(3)
-@maxLength(20)
-@description('A unique application/env name for all resources in this deployment. This should be 3-20 characters long')
-param environmentName string
+@maxLength(16)
+@description('A unique application/solution name for all resources in this deployment. This should be 3-16 characters long.')
+param solutionName string
+
+@maxLength(5)
+@description('A unique token for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name.')
+param solutionUniqueToken string = substring(uniqueString(subscription().id, resourceGroup().name, solutionName), 0, 5)
 
 @minLength(3)
 @description('Azure region for all services.')
@@ -57,14 +61,10 @@ param enablePrivateNetworking bool = false
 param tags object = {}
 
 var allTags = union({
-  'azd-env-name': environmentName
+  'azd-env-name': solutionName
 }, tags)
 
-var resourcesName = trim(replace(replace(replace(replace(replace(environmentName, '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
-var resourcesToken = substring(uniqueString(subscription().id, location, resourcesName), 0, 5)
-var uniqueResourcesName = '${resourcesName}${resourcesToken}'
-
-var appStorageContainerName = 'appstorage'
+var resourcesName = trim(replace(replace(replace(replace(replace('${solutionName}${solutionUniqueToken}', '-', ''), '_', ''), '.', ''),'/', ''), ' ', ''))
 
 var modelDeployment =  {
   name: 'gpt-4o'
@@ -96,14 +96,6 @@ module aiFoundryIdentity 'br/public:avm/res/managed-identity/user-assigned-ident
     location: location
     tags: allTags
   }
-}
-
-// used for foundry to create and approve managed virtual network and approve private endpoint connections
-// Ref: https://learn.microsoft.com/en-us/azure/ai-foundry/how-to/configure-managed-network?tabs=portal#approval-of-private-endpoints
-var foundryNetworkConnectionApproverRoleAssignment = {
-  principalId: aiFoundryIdentity.outputs.principalId
-  principalType: 'ServicePrincipal'
-  roleDefinitionIdOrName: 'b556d68e-0be0-4f35-a333-ad7ee1ce17ea' // Azure AI Enterprise Network Connection Approver
 }
 
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring || enablePrivateNetworking) {
@@ -139,19 +131,58 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   }
 }
 
+module aiServices 'modules/aiServices.bicep' = {
+  name: take('aiservices-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: 'ais-${resourcesName}'
+    location: azureAiServiceLocation
+    sku: 'S0'
+    kind: 'AIServices'
+    deployments: [modelDeployment]
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    // TODO - add back when container apps can properly access AI Services via Foundry Project over private endpoint
+    // Issue: When private endpoint is enabled for OpenAI, the container app cannot access the AI Services endpoint through the Foundry project connection string.
+    // Request: POST /api/start-processing
+    // Response: ERROR:sql_agents.agents.agent_base:Error creating agent definition: (403) Public access is disabled. Please configure private endpoint.
+    // ---------------------
+    // privateNetworking: enablePrivateNetworking ? {
+    //   virtualNetworkResourceId: network.outputs.vnetResourceId
+    //   subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'peps')).resourceId
+    // } : null
+    // ---------------------
+    roleAssignments: [
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+      }
+      {
+        principalId: aiFoundryIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+      }
+    ]
+    tags: allTags
+  }
+}
+
+var appStorageContainerName = 'appstorage'
+
 module storageAccount 'modules/storageAccount.bicep' = {
   name: take('storage-account-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('st${uniqueResourcesName}', 24)
+    name: take('st${resourcesName}', 24)
     location: location
     tags: allTags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
-      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+      subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
     } : null
     containers: [
         {
@@ -167,46 +198,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
-      foundryNetworkConnectionApproverRoleAssignment
     ]
-  }
-}
-
-module azureAiServices 'modules/aiServices.bicep' = {
-  name: take('aiservices-${resourcesName}-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
-  params: {
-    name: 'ais-${uniqueResourcesName}'
-    location: azureAiServiceLocation
-    sku: 'S0'
-    kind: 'AIServices'
-    deployments: [modelDeployment]
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    // TODO - add back when container apps can properly access AI Services via Foundry Project over private endpoint
-    // Issue: When private endpoint is enabled for OpenAI, the container app cannot access the AI Services endpoint through the Foundry project connection string.
-    // Request: POST /api/start-processing
-    // Response: ERROR:sql_agents.agents.agent_base:Error creating agent definition: (403) Public access is disabled. Please configure private endpoint.
-    // ---------------------
-    // privateNetworking: enablePrivateNetworking ? {
-    //   virtualNetworkResourceId: network.outputs.vnetResourceId
-    //   subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
-    // } : null
-    // ---------------------
-    roleAssignments: [
-      {
-        principalId: appIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
-      }
-      {
-        principalId: aiFoundryIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
-      }
-      foundryNetworkConnectionApproverRoleAssignment
-    ]
-    tags: allTags
   }
 }
 
@@ -215,13 +207,13 @@ module keyVault 'modules/keyVault.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('kv-${uniqueResourcesName}', 24)
+    name: take('kv-${resourcesName}', 24)
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
-      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+      subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
     } : null 
     roleAssignments: [
       {
@@ -229,7 +221,6 @@ module keyVault 'modules/keyVault.bicep' = {
         principalType: 'ServicePrincipal'
         roleDefinitionIdOrName: 'Key Vault Reader'
       }
-      foundryNetworkConnectionApproverRoleAssignment
     ]
     tags: allTags
   }
@@ -248,10 +239,10 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
     keyVaultResourceId: keyVault.outputs.resourceId
     userAssignedIdentityResourceId: aiFoundryIdentity.outputs.resourceId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    aiServicesName: azureAiServices.outputs.name
+    aiServicesName: aiServices.outputs.name
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
-      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'ai')).resourceId
+      subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
     } : null
     roleAssignments: [
       {
@@ -269,7 +260,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: 'cosmos-${uniqueResourcesName}'
+    name: 'cosmos-${resourcesName}'
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
@@ -277,11 +268,8 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
     privateNetworking: enablePrivateNetworking ? {
       virtualNetworkResourceId: network.outputs.vnetResourceId
-      subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'data')).resourceId
+      subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
     } : null
-    roleAssignments: [
-      foundryNetworkConnectionApproverRoleAssignment
-    ]
     tags: allTags
   }
 }
@@ -298,7 +286,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled' // public access required for frontend
-    infrastructureSubnetResourceId: enablePrivateNetworking ? first(filter(network.outputs.subnets, s => s.name == 'web')).resourceId : null
+    infrastructureSubnetResourceId: enablePrivateNetworking ? network.outputs.subnetWebResourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId
@@ -325,7 +313,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-frontend-${resourcesName}-deployment', 64)
   params: {
-    name: take('ca-${uniqueResourcesName}frontend', 32)
+    name: take('ca-${resourcesName}frontend', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -374,7 +362,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
-    name: take('ca-${uniqueResourcesName}backend', 32)
+    name: take('ca-${resourcesName}backend', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -417,7 +405,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
           }
           {
             name: 'AZURE_OPENAI_ENDPOINT'
-            value: 'https://${azureAiServices.outputs.name}.openai.azure.com/'
+            value: 'https://${aiServices.outputs.name}.openai.azure.com/'
           }
           {
             name: 'MIGRATOR_AGENT_MODEL_DEPLOY'

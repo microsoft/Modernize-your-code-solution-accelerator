@@ -19,9 +19,11 @@ param zoneRedundant bool
 @description('Optional. The secondary location for the Cosmos DB Account for failover and multiple writes.')
 param secondaryLocation string?
 
+import { resourcePrivateNetworkingType } from 'customTypes.bicep'
 @description('Optional. Values to establish private networking for the Cosmos DB resource.')
 param privateNetworking resourcePrivateNetworkingType?
 
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
@@ -142,9 +144,6 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     tags: tags
   }
 }
-
-import { resourcePrivateNetworkingType } from 'customTypes.bicep'
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output resourceId string = cosmosAccount.outputs.resourceId
 output name string = cosmosAccount.outputs.name

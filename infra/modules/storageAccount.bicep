@@ -26,6 +26,7 @@ param logAnalyticsWorkspaceResourceId string?
 @description('Optional. Values to establish private networking for the Storage Account.')
 param privateNetworking storageAccountPrivateNetworkingType?
 
+import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
@@ -122,8 +123,6 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     }
   }
 }
-
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 
 output name string = storageAccount.outputs.name
 output resourceId string = storageAccount.outputs.resourceId

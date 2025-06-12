@@ -108,3 +108,25 @@ output subnetId string = jbSubnet.outputs.resourceId
 output subnetName string = jbSubnet.outputs.name
 output nsgId string = jbNsg.outputs.resourceId
 output nsgName string = jbNsg.outputs.name
+
+import { subnetType } from 'virtualNetwork.bicep'
+
+@export()
+@description('Custom type definition for establishing Jumpbox Virtual Machine and its associated resources.')
+type jumpBoxConfigurationType = {
+  @description('The name of the Virtual Machine.')
+  name: string
+
+  @description('The size of the VM.')
+  size: string
+
+  @description('Username to access VM.')
+  username: string
+
+  @secure()
+  @description('Password to access VM.')
+  password: string
+
+  @description('Optional. Subnet configuration for the Jumpbox VM.')
+  subnet: subnetType?
+}
