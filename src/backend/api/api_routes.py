@@ -166,6 +166,8 @@ async def download_files(batch_id: str):
         raise HTTPException(
             status_code=404, detail=f"Error creating ZIP file: {str(e)}"
         ) from e
+
+
 @router.websocket("/socket/{batch_id}")
 async def batch_status_updates(
     websocket: WebSocket, batch_id: str
@@ -363,6 +365,8 @@ async def get_batch_status(request: Request, batch_id: str):
             raise HTTPException(status_code=403, detail="Incorrect user_id") from e
         else:
             raise HTTPException(status_code=500, detail="Internal server error") from e
+
+
 @router.get("/batch-summary/{batch_id}")
 async def get_batch_summary(request: Request, batch_id: str):
     """Retrieve batch summary for a given batch ID."""
@@ -729,6 +733,7 @@ async def delete_file_details(request: Request, file_id: str):
     except Exception as e:
         logger.error("Failed to delete file from database", error=str(e))
         raise HTTPException(status_code=500, detail="Database connection error") from e
+
 
 @router.delete("/delete_all")
 async def delete_all_details(request: Request):
