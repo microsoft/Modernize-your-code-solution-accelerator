@@ -10,7 +10,6 @@ $MissingParams = @()
 if (-not $Location) { $MissingParams += "location" }
 if (-not $Model) { $MissingParams += "model" }
 if (-not $Capacity) { $MissingParams += "capacity" }
-if (-not $DeploymentType) { $MissingParams += "deployment-type" }
 
 if ($MissingParams.Count -gt 0) {
     Write-Error "❌ ERROR: Missing required parameters: $($MissingParams -join ', ')"
@@ -35,7 +34,7 @@ function Check-Quota {
     try {
         $ModelInfoRaw = az cognitiveservices usage list --location $Region --query "[?name.value=='$ModelType']" --output json
         $ModelInfo = $ModelInfoRaw | ConvertFrom-Json
-        if (-not $ModelInfo) { return }
+        if (-not $ModelInfo) { return $null }
 
         $CurrentValue = ($ModelInfo | Where-Object { $_.name.value -eq $ModelType }).currentValue
         $Limit = ($ModelInfo | Where-Object { $_.name.value -eq $ModelType }).limit
@@ -52,11 +51,23 @@ function Check-Quota {
             Available = $Available
         }
     } catch {
-        return
+        return $null
     }
 }
 
-# First, check the user-specified region
+function Show-Table {
+    Write-Host "`n--------------------------------------------------------------------------------------------"
+    Write-Host "| No. | Region         | Model Name                          | Limit | Used  | Available |"
+    Write-Host "--------------------------------------------------------------------------------------------"
+    $count = 1
+    foreach ($entry in $AllResults) {
+        Write-Host ("| {0,-3} | {1,-14} | {2,-35} | {3,-5} | {4,-5} | {5,-9} |" -f $count, $entry.Region, $entry.Model, $entry.Limit, $entry.Used, $entry.Available)
+        $count++
+    }
+    Write-Host "--------------------------------------------------------------------------------------------"
+}
+
+# ----------- First check the user-specified region -----------
 Write-Host "`n🔍 Checking quota in the requested region '$Location'..."
 $PrimaryResult = Check-Quota -Region $Location
 
@@ -72,45 +83,53 @@ if ($PrimaryResult) {
     Write-Host "`n⚠️  Could not retrieve quota info for region '$Location'. Checking fallback regions..."
 }
 
-# Remove primary region from fallback list
+# ----------- Check all other fallback regions -----------
 $FallbackRegions = $PreferredRegions | Where-Object { $_ -ne $Location }
+$EligibleFallbacks = @()
 
 foreach ($region in $FallbackRegions) {
     $result = Check-Quota -Region $region
     if ($result) {
         $AllResults += $result
+        if ($result.Available -ge $Capacity) {
+            $EligibleFallbacks += $result
+        }
     }
 }
 
-# Display Results Table
-Write-Host "`n-------------------------------------------------------------------------------------------------------------"
-Write-Host "| No.  | Region            | Model Name                           | Limit   | Used    | Available |"
-Write-Host "-------------------------------------------------------------------------------------------------------------"
+# ----------- Show Table of All Regions Checked -----------
+$AllResults = $AllResults | Where-Object { $_.Available -gt 50 }
+Show-Table
 
-$count = 1
-foreach ($entry in $AllResults) {
-    $modelShort = $entry.Model.Substring($entry.Model.LastIndexOf(".") + 1)
-    Write-Host ("| {0,-4} | {1,-16} | {2,-35} | {3,-7} | {4,-7} | {5,-9} |" -f $count, $entry.Region, $entry.Model, $entry.Limit, $entry.Used, $entry.Available)
-    $count++
-}
-Write-Host "-------------------------------------------------------------------------------------------------------------"
-
-# Suggest fallback regions
-$EligibleFallbacks = $AllResults | Where-Object { $_.Region -ne $Location -and $_.Available -ge $Capacity }
-
+# ----------- If eligible fallback regions found, ask user -----------
 if ($EligibleFallbacks.Count -gt 0) {
     Write-Host "`n❌ Deployment cannot proceed in '$Location'."
-    Write-Host "➡️ You can retry using one of the following regions with sufficient quota:`n"
-    foreach ($region in $EligibleFallbacks) {
-        Write-Host "   • $($region.Region) (Available: $($region.Available))"
-    }
+    Write-Host "➡️  Found fallback regions with sufficient quota."
+    
+    while ($true) {
+        Write-Host "`nPlease enter a fallback region from the list above to proceed:"
+        $NewLocation = Read-Host "Enter region"
 
-    Write-Host "`n🔧 To proceed, run:"
-    Write-Host "    azd env set AZURE_AISERVICE_LOCATION '<region>'"
-    Write-Host "📌 To confirm it's set correctly, run:"
-    Write-Host "    azd env get-value AZURE_AISERVICE_LOCATION"
-    Write-Host "▶️  Once confirmed, re-run azd up to deploy the model in the new region."
-    exit 2
+        if (-not $NewLocation) {
+            Write-Host "❌ No location entered. Exiting."
+            exit 1
+        }
+
+        $UserResult = Check-Quota -Region $NewLocation
+        if (-not $UserResult) {
+            Write-Host "⚠️ Could not retrieve quota info for region '$NewLocation'. Try again."
+            continue
+        }
+
+        if ($UserResult.Available -ge $Capacity) {
+            Write-Host "✅ Sufficient quota found in '$NewLocation'. Proceeding with deployment."
+            azd env set AZURE_AISERVICE_LOCATION "$NewLocation" | Out-Null
+            Write-Host "➡️  Set AZURE_AISERVICE_LOCATION to '$NewLocation'."
+            exit 0
+        } else {
+            Write-Host "❌ Insufficient quota in '$NewLocation'. Try another."
+        }
+    }
 }
 
 Write-Error "`n❌ ERROR: No available quota found in any region."
