@@ -27,7 +27,7 @@ hooks:
       shell: sh
       run: >
         chmod u+r+x ./scripts/validate_model_deployment_quota.sh; chmod u+r+x ./scripts/validate_model_quota.sh; ./scripts/validate_model_deployment_quota.sh --SubscriptionId "$AZURE_SUBSCRIPTION_ID" --Location "${AZURE_AISERVICE_LOCATION:-japaneast}" --ModelsParameter "aiModelDeployments"
-      interactive: false
+      interactive: true
       continueOnError: false
 
     windows:
@@ -35,5 +35,5 @@ hooks:
       run: >
         $location = if ($env:AZURE_AISERVICE_LOCATION) { $env:AZURE_AISERVICE_LOCATION } else { "japaneast" };
         ./scripts/validate_model_deployment_quota.ps1 -SubscriptionId $env:AZURE_SUBSCRIPTION_ID -Location $location -ModelsParameter "aiModelDeployments"
-      interactive: false
+      interactive: true
       continueOnError: false

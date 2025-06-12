@@ -47,34 +47,44 @@ if [[ $? -ne 0 || -z "$aiModelDeployments" ]]; then
   exit 1
 fi
 
-# Check if AI Foundry exists and has all required model deployments
-existing=""
-if [[ -n "$AIFOUNDRY_NAME" && -n "$RESOURCE_GROUP" ]]; then
-  existing=$(az cognitiveservices account show --name "$AIFOUNDRY_NAME" --resource-group "$RESOURCE_GROUP" --query "name" --output tsv 2>/dev/null)
+# Try to discover AI Foundry name if not set
+if [[ -z "$AIFOUNDRY_NAME" && -n "$RESOURCE_GROUP" ]]; then
+  AIFOUNDRY_NAME=$(az cognitiveservices account list --resource-group "$RESOURCE_GROUP" \
+    --query "sort_by([?kind=='AIServices'], &name)[0].name" -o tsv 2>/dev/null)
 fi
 
-if [[ -n "$existing" ]]; then
-  existing_deployments=$(az cognitiveservices account deployment list \
-    --name "$AIFOUNDRY_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --query "[].name" --output tsv 2>/dev/null)
+# Check if AI Foundry exists
+if [[ -n "$AIFOUNDRY_NAME" && -n "$RESOURCE_GROUP" ]]; then
+  existing=$(az cognitiveservices account show --name "$AIFOUNDRY_NAME" \
+    --resource-group "$RESOURCE_GROUP" --query "name" --output tsv 2>/dev/null)
 
-  required_models=$(jq -r ".parameters.$MODELS_PARAMETER.value[].name" ./infra/main.parameters.json)
+  if [[ -n "$existing" ]]; then
+    # adding into .env
+    azd env set AZURE_AIFOUNDRY_NAME "$existing" > /dev/null
 
-  missing_models=()
-  for model in $required_models; do
-    if ! grep -q -w "$model" <<< "$existing_deployments"; then
-      missing_models+=("$model")
+    # Check model deployments
+    existing_deployments=$(az cognitiveservices account deployment list \
+      --name "$AIFOUNDRY_NAME" \
+      --resource-group "$RESOURCE_GROUP" \
+      --query "[].name" --output tsv 2>/dev/null)
+
+    required_models=$(jq -r ".parameters.$MODELS_PARAMETER.value[].name" ./infra/main.parameters.json)
+
+    missing_models=()
+    for model in $required_models; do
+      if ! grep -q -w "$model" <<< "$existing_deployments"; then
+        missing_models+=("$model")
+      fi
+    done
+
+    if [[ ${#missing_models[@]} -eq 0 ]]; then
+      echo "ℹ️ AI Foundry '$AIFOUNDRY_NAME' exists and all required model deployments are already provisioned."
+      echo "⏭️ Skipping quota validation."
+      exit 0
+    else
+      echo "🔍 AI Foundry exists, but the following model deployments are missing: ${missing_models[*]}"
+      echo "➡️ Proceeding with quota validation for missing models..."
     fi
-  done
-
-  if [[ ${#missing_models[@]} -eq 0 ]]; then
-    echo "ℹ️ AI Foundry '$AIFOUNDRY_NAME' exists and all required model deployments are already provisioned."
-    echo "⏭️ Skipping quota validation."
-    exit 0
-  else
-    echo "🔍 AI Foundry exists, but the following model deployments are missing: ${missing_models[*]}"
-    echo "➡️ Proceeding with quota validation for missing models..."
   fi
 fi
 
