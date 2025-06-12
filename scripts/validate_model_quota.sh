@@ -110,14 +110,16 @@ done
 
 # -------------------- Print Results Table --------------------
 echo ""
-printf "%-6s | %-18s | %-35s | %-8s | %-8s | %-9s\n" "No." "Region" "Model Name" "Limit" "Used" "Available"
-printf -- "-------------------------------------------------------------------------------------------------------------\n"
+printf "%-5s | %-16s | %-33s | %-6s | %-6s | %-9s\n" "No." "Region" "Model Name" "Limit" "Used" "Available"
+printf -- "---------------------------------------------------------------------------------------------\n"
 
 index=1
 for result in "${ALL_RESULTS[@]}"; do
   IFS='|' read -r region limit used available <<< "$result"
-  printf "| %-4s | %-16s | %-33s | %-7s | %-7s | %-9s |\n" "$index" "$region" "$MODEL_TYPE" "$limit" "$used" "$available"
-  ((index++))
+  if [[ "$available" -gt 50 ]]; then
+    printf "| %-3s | %-14s | %-31s | %-5s | %-5s | %-9s |\n" "$index" "$region" "$MODEL_TYPE" "$limit" "$used" "$available"
+    ((index++))
+  fi
 done
 printf -- "-------------------------------------------------------------------------------------------------------------\n"
 

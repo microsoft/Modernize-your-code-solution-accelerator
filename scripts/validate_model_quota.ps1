@@ -56,15 +56,15 @@ function Check-Quota {
 }
 
 function Show-Table {
-    Write-Host "`n-------------------------------------------------------------------------------------------------------------"
-    Write-Host "| No.  | Region            | Model Name                           | Limit   | Used    | Available |"
-    Write-Host "-------------------------------------------------------------------------------------------------------------"
+    Write-Host "`n--------------------------------------------------------------------------------------------"
+    Write-Host "| No. | Region         | Model Name                          | Limit | Used  | Available |"
+    Write-Host "--------------------------------------------------------------------------------------------"
     $count = 1
     foreach ($entry in $AllResults) {
-        Write-Host ("| {0,-4} | {1,-16} | {2,-35} | {3,-7} | {4,-7} | {5,-9} |" -f $count, $entry.Region, $entry.Model, $entry.Limit, $entry.Used, $entry.Available)
+        Write-Host ("| {0,-3} | {1,-14} | {2,-35} | {3,-5} | {4,-5} | {5,-9} |" -f $count, $entry.Region, $entry.Model, $entry.Limit, $entry.Used, $entry.Available)
         $count++
     }
-    Write-Host "-------------------------------------------------------------------------------------------------------------"
+    Write-Host "--------------------------------------------------------------------------------------------"
 }
 
 # ----------- First check the user-specified region -----------
@@ -98,6 +98,7 @@ foreach ($region in $FallbackRegions) {
 }
 
 # ----------- Show Table of All Regions Checked -----------
+$AllResults = $AllResults | Where-Object { $_.Available -gt 50 }
 Show-Table
 
 # ----------- If eligible fallback regions found, ask user -----------
