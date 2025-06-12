@@ -35,5 +35,5 @@ hooks:
       run: >
         $location = if ($env:AZURE_AISERVICE_LOCATION) { $env:AZURE_AISERVICE_LOCATION } else { "japaneast" };
         ./scripts/validate_model_deployment_quota.ps1 -SubscriptionId $env:AZURE_SUBSCRIPTION_ID -Location $location -ModelsParameter "aiModelDeployments"
-      interactive: false
+      interactive: true
       continueOnError: false

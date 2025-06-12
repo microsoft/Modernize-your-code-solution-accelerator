@@ -56,9 +56,7 @@ FALLBACK_RESULTS=()
 ROW_NO=1
 
 # Print validating message only once
-echo -e "\n🔍 Validating model deployment: $MODEL ..."
-
-echo "🔍 Checking quota in the requested region '$LOCATION'..."
+echo "🔍 Checking quota in the requested region '$LOCATION' for the Model '$MODEL'..."
 
 # -------------------- Function: Check Quota --------------------
 check_quota() {
@@ -129,27 +127,40 @@ if [[ $primary_status -eq 0 ]]; then
   exit 0
 fi
 
+
+# Function: Ask user for location and validate quota
+ask_for_location() {
+  echo "Please enter any other location from the above table where you want to deploy AI Services:"
+  read LOCATION < /dev/tty
+
+  # Validate user input
+  if [[ -z "$LOCATION" ]]; then
+    echo "❌ ERROR: No location entered. Exiting."
+    exit 1
+  fi
+
+  echo "🔍 Checking quota in '$LOCATION'..."
+  check_quota "$LOCATION"
+  user_region_status=$?
+
+  if [[ $user_region_status -eq 0 ]]; then
+    echo "✅ Sufficient quota found in '$LOCATION'. Proceeding with deployment."
+    azd env set AZURE_AISERVICE_LOCATION "$LOCATION"
+    echo "➡️  Set AZURE_AISERVICE_LOCATION to '$LOCATION'."
+    exit 0
+  elif [[ $user_region_status -eq 2 ]]; then
+    echo "⚠️ Could not retrieve quota info for region: '$LOCATION'. Exiting."
+    exit 1
+  else
+    echo "❌ Insufficient quota in '$LOCATION'."
+    ask_for_location  # **Recursively call the function until valid input is provided**
+  fi
+}
+
+# Main Logic
 if [[ ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
-  echo -e "\n❌ Deployment cannot proceed in '$LOCATION'."
-  echo "➡️ You can retry using one of the following regions with sufficient quota:"
-  echo ""
-  for region in "${FALLBACK_RESULTS[@]}"; do
-    for result in "${ALL_RESULTS[@]}"; do
-      IFS='|' read -r rgn _ _ avail <<< "$result"
-      if [[ "$rgn" == "$region" ]]; then
-        echo "   • $region (Available: $avail)"
-        break
-      fi
-    done
-  done
-
-  echo -e "\n🔧 To proceed, run:"
-  echo "    azd env set AZURE_AISERVICE_LOCATION '<region>'"
-  echo "📌 To confirm it's set correctly, run:"
-  echo "    azd env get-value AZURE_AISERVICE_LOCATION"
-  echo "▶️  Once confirmed, re-run azd up to deploy the model in the new region."
-  exit 2
+  echo -e "\n❌ Deployment cannot proceed in this location: '$LOCATION'."
+  echo "➡️  Found fallback regions with sufficient quota."
+  
+  ask_for_location  # **Call function to prompt user for input**
 fi
-
-echo -e "\n❌ ERROR: No available quota found in any region."
-exit 1
