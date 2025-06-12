@@ -117,7 +117,7 @@ index=1
 for result in "${ALL_RESULTS[@]}"; do
   IFS='|' read -r region limit used available <<< "$result"
   if [[ "$available" -gt 50 ]]; then
-    printf "| %-3s | %-14s | %-31s | %-5s | %-5s | %-9s |\n" "$index" "$region" "$MODEL_TYPE" "$limit" "$used" "$available"
+    printf "| %-3s | %-16s | %-33s | %-6s | %-6s | %-9s |\n" "$index" "$region" "$MODEL_TYPE" "$limit" "$used" "$available"
     ((index++))
   fi
 done
