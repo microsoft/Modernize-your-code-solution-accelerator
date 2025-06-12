@@ -23,17 +23,17 @@ param tags object = {}
 var vnetName = 'vnet-${resourcesName}'
 
 // jumpbox parameters
-param jumpboxVM bool = false                         // set in .bicepparam file  
-param jumpboxSubnet object = {}                      // set in .bicepparam file 
-param jumpboxAdminUser string = 'JumpboxAdminUser'   // set in .bicepparam file 
+param jumpboxVM bool = false                         
+param jumpboxSubnet object = {}                      
+param jumpboxAdminUser string = 'JumpboxAdminUser'   
 @secure()
-param jumpboxAdminPassword string                    // set in .bicepparam file 
+param jumpboxAdminPassword string                    
 param jumpboxVmSize string = 'Standard_D2s_v3'  
 var jumpboxVmName = 'jumpboxVM-${resourcesName}'            
 
 // Azure Bastion Host parameters
-param enableBastionHost bool = false                   // set in .bicepparam file 
-param bastionSubnet object = {}                 // set in .bicepparam file 
+param enableBastionHost bool = false                   
+param bastionSubnet object = {}                 
 var bastionHostName = 'bastionHost-${resourcesName}'  
 
 
