@@ -110,6 +110,7 @@ if ($PrimaryResult) {
             Write-Host "`n⚠️  Selected region '$Location' has sufficient quota but is not among the recommended regions (≥ $RECOMMENDED_TOKENS tokens)."
             Write-Host "🚨 Your application may not work as expected due to limited quota."
             Write-Host "`nℹ️  Recommended regions: $($RecommendedRegions -join ', ')"
+            Write-Host "👉 It's advisable to deploy in one of these regions for optimal app performance."
             $choice = Read-Host "❓ Do you want to choose a recommended region instead? (y/n)"
             if ($choice -match "^[Yy]$") {
                 Show-Table
