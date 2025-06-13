@@ -218,8 +218,15 @@ ask_for_location() {
 
 # -------------------- Final Decision Logic --------------------
 if [[ $primary_status -eq 0 ]]; then
+  
   if [[ " ${NOT_RECOMMENDED_REGIONS[*]} " == *" $LOCATION "* ]]; then
-    echo -e "\n⚠️  Region '$LOCATION' is not recommended (available < $RECOMMENDED_TOKENS)."
+    recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
+    bold_regions=$(printf "\033[1m%s\033[0m" "$recommended_list")
+    echo -e "\n⚠️  \033[1mWarning:\033[0m Region '$LOCATION' has available tokens less than the recommended threshold ($RECOMMENDED_TOKENS)."
+    echo -e "🚨 Your application may not work as expected due to limited quota."
+    echo -e "\nℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $bold_regions"
+    echo -e "👉 It's advisable to deploy in one of these regions for optimal app performance."
+    
     echo -n "❓ Proceed anyway? (y/n): "
     read -r proceed < /dev/tty
     if [[ "$proceed" =~ ^[Yy]$ ]]; then
