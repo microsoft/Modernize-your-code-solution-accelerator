@@ -27,6 +27,9 @@ param bastionConfiguration bastionHostConfigurationType?
 
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
+
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
             
 // /****************************************************************************************************************************/
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
@@ -41,6 +44,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
     location: location
     tags: tags
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -58,6 +62,7 @@ module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
     subnetAddressPrefixes: bastionConfiguration.?subnetAddressPrefixes
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -76,6 +81,8 @@ module jumpbox 'jumpbox.bicep' = if (!empty(jumpboxConfiguration)) {
     subnet: jumpboxConfiguration.?subnet
     username: jumpboxConfiguration.?username ?? '' // required
     password: jumpboxConfiguration.?password ?? '' // required
+    enableTelemetry: enableTelemetry
+    tags: tags
   }
 }
 

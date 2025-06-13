@@ -27,6 +27,9 @@ import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
   name: take('${name}-documents-pdns-deployment', 64)
   params: {
@@ -37,6 +40,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (p
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -142,6 +146,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     ]
     roleAssignments: roleAssignments
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 

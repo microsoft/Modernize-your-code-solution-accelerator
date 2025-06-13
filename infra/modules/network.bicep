@@ -11,6 +11,9 @@ param location string
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
 // |-----------|---------------|-----------|----------------------------------------|
@@ -115,6 +118,7 @@ module network 'network/main.bicep' =  {
         }
       }
     }
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -123,13 +127,3 @@ output vnetResourceId string = network.outputs.vnetResourceId
 
 output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
 output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
-
-output bastionSubnetId string = network.outputs.bastionSubnetId
-output bastionSubnetName string = network.outputs.bastionSubnetName
-output bastionHostId string = network.outputs.bastionHostId
-output bastionHostName string = network.outputs.bastionHostName
-
-output jumpboxSubnetName string = network.outputs.jumpboxSubnetName
-output jumpboxSubnetId string = network.outputs.jumpboxSubnetId
-output jumpboxName string = network.outputs.jumpboxName
-output jumpboxResourceId string = network.outputs.jumpboxResourceId

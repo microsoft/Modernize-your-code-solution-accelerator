@@ -65,6 +65,9 @@ param privateNetworking aiServicesPrivateNetworkingType?
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 module cognitiveServicesPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-cognitiveservices-pdns-deployment', 64) 
   params: {
@@ -75,6 +78,7 @@ module cognitiveServicesPrivateDnsZone 'br/public:avm/res/network/private-dns-zo
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -88,6 +92,7 @@ module openAiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' =
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -132,6 +137,7 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = 
         subnetResourceId: privateNetworking.?subnetResourceId ?? ''
       }
     ] : []
+    enableTelemetry: enableTelemetry
   }
 }
 

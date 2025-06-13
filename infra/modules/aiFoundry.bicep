@@ -38,6 +38,9 @@ param roleAssignments roleAssignmentType[]?
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 module mlApiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?apiPrivateDnsZoneResourceId)) {
   name: take('${hubName}-mlapi-pdns-deployment', 64)
   params: {
@@ -48,6 +51,7 @@ module mlApiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = 
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -61,6 +65,7 @@ module mlNotebooksPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -138,6 +143,7 @@ module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -159,6 +165,7 @@ module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = 
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
     roleAssignments: roleAssignments
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
