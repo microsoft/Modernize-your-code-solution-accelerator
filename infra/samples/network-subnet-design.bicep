@@ -1,46 +1,99 @@
 // /******************************************************************************************************************/
-//  This is an example test program to create private networking resources independently with sample inputs
-// 
+//  This is an example test program to create private networking resources independently with sample network design.
+//    It is an illustration of how to use the main.bicep in the infra/modules/network folder, with your own parameters.
+//    You can independently deploy this module to create a network with subnets, NSGs, Azure Bastion Host, and Jumpbox VM.
+//    Test them with this test program. Then integrate your design into the modules/network.bicep which is intended for 
+//    a specific network design. 
+//  
+//  All things in infra/modules/network are designed to be reusable and composable without the need to modify 
+//     any code in the network folder. 
+//
 //  Please review below modules to understand how things are wired together:
-//      infra/main.bicep
-//      infra/modules/network.bicep
-//      infra/moddules/network/main.bicep 
+//    infra/main.bicep
+//    infra/modules/network.bicep
+//    infra/moddules/network/main.bicep 
 //  
 // /******************************************************************************************************************/
 
 @minLength(6)
 @maxLength(25)
-@description('Default name used for all resources.')
-param resourcesName string = 'testNetwork'
+@description('Name used for naming all network resources.')
+param resourcesName string = 'nettest'
 
 @minLength(3)
 @description('Azure region for all services.')
-param location string = 'eastus'
+param location string = resourceGroup().location
+
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
 
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
-var vnetName = 'vnet-${resourcesName}'
-@description('Networking address prefix for the VNET only')
+import { bastionHostConfigurationType } from '../modules/network/bastionHost.bicep'
+@description('Optional. Configuration for the Azure Bastion Host. Leave null to omit Bastion creation.')
+param bastionConfiguration bastionHostConfigurationType = {
+  name: 'bastion-${resourcesName}'
+  subnetAddressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
+}
+
+import { jumpBoxConfigurationType } from '../modules/network/jumpbox.bicep'
+@description('Optional. Configuration for the Jumpbox VM. Leave null to omit Jumpbox creation.')
+param jumpboxConfiguration jumpBoxConfigurationType = {
+  name: 'vm-jumpbox-${resourcesName}'
+  size: 'Standard_D2s_v3' // Default size, can be overridden
+  username: 'JumpboxAdminUser'
+  password: 'JumpboxAdminP@ssw0rd1234!'
+  subnet: {
+    name: 'jumpbox-subnet'
+    addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
+    networkSecurityGroup: {
+      name: 'jumpbox-nsg'
+      securityRules: [
+        {
+          name: 'AllowJumpboxInbound'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '22'
+            sourceAddressPrefixes: [
+              '10.0.10.0/23' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
+            ]
+            destinationAddressPrefixes: ['10.0.12.0/23']
+          }
+        }
+      ]
+    }
+  }
+}
+
+// ====================================================================================================================
+// Below paremeters define default the VNET and subnets. You can customize them as needed. 
+// ====================================================================================================================
+@description('Networking address prefix for the VNET.')
 param addressPrefixes array = ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24 subnets)
 
-param enableBastionHost bool = true      
-var bastionHostName = 'bastionHost-${resourcesName}'
-
-param jumpboxVM bool = true       
-param jumpboxAdminUser string = 'JumpboxAdminUser' 
-@secure()
-param jumpboxAdminPassword string = 'JumpboxAdminP@ssw0rd1234!'
-param jumpboxVmSize string = 'Standard_D2s_v3'
-var jumpboxVmName = 'jumpboxVM-${resourcesName}'
-
+import { subnetType } from '../modules/network/virtualNetwork.bicep'
 @description('Array of subnets to be created within the VNET.')
-param subnets array = [
-  // Only one delegation per subnet is supported by the AVM module as of June 2025.
-  // For subnets that do not require delegation, leave the array empty.
+param subnets subnetType[] = [
+  {
+    name: 'peps'
+    addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Disabled'
+    networkSecurityGroup: {
+      name: 'peps-nsg'
+      securityRules: []
+    }
+  }
   {
     name: 'web'
-    addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
+    addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Disabled'
     networkSecurityGroup: {
       name: 'web-nsg'
       securityRules: [
@@ -54,34 +107,6 @@ param subnets array = [
             sourcePortRange: '*'
             destinationPortRange: '443'
             sourceAddressPrefixes: ['0.0.0.0/0']
-            destinationAddressPrefixes: ['10.0.0.0/23']
-          }
-        }
-      ]
-    }
-    delegations: [
-      {
-        name: 'containerapps-delegation'
-        serviceName: 'Microsoft.App/environments'
-      }
-    ]
-  }
-  {
-    name: 'app'
-    addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
-    networkSecurityGroup: {
-      name: 'app-nsg'
-      securityRules: [
-        {
-          name: 'AllowWebToApp'
-          properties: {
-            access: 'Allow'
-            direction: 'Inbound'
-            priority: 100
-            protocol: 'Tcp'
-            sourcePortRange: '*'
-            destinationPortRange: '*'
-            sourceAddressPrefixes: ['10.0.0.0/23'] // web subnet
             destinationAddressPrefixes: ['10.0.2.0/23']
           }
         }
@@ -95,8 +120,40 @@ param subnets array = [
     ]
   }
   {
-    name: 'ai'
+    name: 'app'
     addressPrefixes: ['10.0.4.0/23'] // /23 (10.0.4.0 - 10.0.5.255), 512 addresses
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Disabled'
+    networkSecurityGroup: {
+      name: 'app-nsg'
+      securityRules: [
+        {
+          name: 'AllowWebToApp'
+          properties: {
+            access: 'Allow'
+            direction: 'Inbound'
+            priority: 100
+            protocol: 'Tcp'
+            sourcePortRange: '*'
+            destinationPortRange: '*'
+            sourceAddressPrefixes: ['10.0.2.0/23'] // web subnet
+            destinationAddressPrefixes: ['10.0.4.0/23']
+          }
+        }
+      ]
+    }
+    delegations: [
+      {
+        name: 'containerapps-delegation'
+        serviceName: 'Microsoft.App/environments'
+      }
+    ]
+  }
+  {
+    name: 'ai'
+    addressPrefixes: ['10.0.6.0/23'] // /23 (10.0.6.0 - 10.0.7.255), 512 addresses
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Disabled'
     networkSecurityGroup: {
       name: 'ai-nsg'
       securityRules: [
@@ -110,10 +167,10 @@ param subnets array = [
             sourcePortRange: '*'
             destinationPortRange: '*'
             sourceAddressPrefixes: [
-              '10.0.0.0/23' // web subnet
-              '10.0.2.0/23' // app subnet
+              '10.0.2.0/23' // web subnet
+              '10.0.4.0/23' // app subnet
             ]
-            destinationAddressPrefixes: ['10.0.4.0/23']
+            destinationAddressPrefixes: ['10.0.6.0/23']
           }
         }
       ]
@@ -122,7 +179,9 @@ param subnets array = [
   }
   {
     name: 'data'
-    addressPrefixes: ['10.0.6.0/23'] // /23 (10.0.6.0 - 10.0.7.255)
+    addressPrefixes: ['10.0.8.0/23'] // /23 (10.0.8.0 - 10.0.9.255), 512 addresses
+    privateEndpointNetworkPolicies: 'Disabled'
+    privateLinkServiceNetworkPolicies: 'Disabled'
     networkSecurityGroup: {
       name: 'data-nsg'
       securityRules: [
@@ -136,36 +195,9 @@ param subnets array = [
             sourcePortRange: '*'
             destinationPortRange: '*'
             sourceAddressPrefixes: [
-              '10.0.0.0/23' // web subnet
-              '10.0.2.0/23' // app subnet
-              '10.0.4.0/23' // ai subnet
-            ]
-            destinationAddressPrefixes: ['10.0.6.0/23']
-          }
-        }
-      ]
-    }
-    delegations: [] // No delegation required for this subnet.
-  }
-  {
-    name: 'services'
-    addressPrefixes: ['10.0.8.0/23'] // /23 (10.0.8.0 - 10.0.9.255), 512 addresses
-    networkSecurityGroup: {
-      name: 'services-nsg'
-      securityRules: [
-        {
-          name: 'AllowWebAppAiToServices'
-          properties: {
-            access: 'Allow'
-            direction: 'Inbound'
-            priority: 100
-            protocol: 'Tcp'
-            sourcePortRange: '*'
-            destinationPortRange: '*'
-            sourceAddressPrefixes: [
-              '10.0.0.0/23' // web subnet
-              '10.0.2.0/23' // app subnet
-              '10.0.4.0/23' // ai subnet
+              '10.0.2.0/23' // web subnet
+              '10.0.4.0/23' // app subnet
+              '10.0.6.0/23' // ai subnet
             ]
             destinationAddressPrefixes: ['10.0.8.0/23']
           }
@@ -175,39 +207,6 @@ param subnets array = [
     delegations: [] // No delegation required for this subnet.
   }
 ]
-
-// jumpbox parameters
-param jumpboxSubnet object = {
-  name: 'jumpbox'
-  addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
-  networkSecurityGroup: {
-    name: 'jumpbox-nsg'
-    securityRules: [
-      {
-        name: 'AllowJumpboxInbound'
-        properties: {
-          access: 'Allow'
-          direction: 'Inbound'
-          priority: 100
-          protocol: 'Tcp'
-          sourcePortRange: '*'
-          destinationPortRange: '22'
-          sourceAddressPrefixes: [
-            '10.0.7.0/24' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
-          ]
-          destinationAddressPrefixes: ['10.0.12.0/23']
-        }
-      }
-    ]
-  }
-}
-
-// Azure Bastion Host parameters
-param bastionSubnet object = {
-  addressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
-  networkSecurityGroup: null // Azure Bastion subnet must NOT have custom NSG as it is managed by Azure
-}
-
 
 // /******************************************************************************************************************/
 //  Create Log Analytics Workspace for monitoring and diagnostics 
@@ -224,65 +223,21 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
+// /******************************************************************************************************************/          
+// Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /******************************************************************************************************************/
-//  Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
-// /******************************************************************************************************************/
-module virtualNetwork 'virtualNetwork.bicep' = {
-  name: '${resourcesName}-virtualNetwork'
+
+module network '../modules/network/main.bicep' = {
+  name: take('network-${resourcesName}-create', 64)
   params: {
-    name: vnetName
+    resourcesName: resourcesName
+    location: location
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    tags: tags
     addressPrefixes: addressPrefixes
     subnets: subnets
-    location: location
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.resourceId
+    bastionConfiguration: bastionConfiguration
+    jumpboxConfiguration: jumpboxConfiguration
+    enableTelemetry: enableTelemetry
   }
 }
-
-// /******************************************************************************************************************/
-// // Create Azure Bastion Subnet and Azure Bastion Host
-// /******************************************************************************************************************/
-module bastionHost 'bastionHost.bicep' = if(enableBastionHost && !empty(bastionSubnet)) {
-  name: '${resourcesName}-bastionHost'
-  params: {
-    subnet: bastionSubnet
-    location: location
-    vnetName: virtualNetwork.outputs.name
-    vnetId: virtualNetwork.outputs.resourceId
-    name: bastionHostName
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.resourceId
-    tags: tags
-  }
-}
-
-// /******************************************************************************************************************/
-// // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
-// /******************************************************************************************************************/
-module jumpbox 'jumpbox.bicep' =  if (jumpboxVM && !empty(jumpboxSubnet)) {
-  name: '${resourcesName}-jumpbox'
-  params: {
-    vmName: jumpboxVmName
-    location: location
-    vnetName: virtualNetwork.outputs.name
-    jumpboxVmSize: jumpboxVmSize
-    jumpboxSubnet: jumpboxSubnet
-    jumpboxAdminUser: jumpboxAdminUser
-    jumpboxAdminPassword: jumpboxAdminPassword
-    tags: tags
-    logAnalyticsWorkspaceId: logAnalyticsWorkspace.outputs.resourceId
-  }
-}
-
-output vnetName string = virtualNetwork.outputs.name
-output vnetResourceId string = virtualNetwork.outputs.resourceId
-output subnets array = virtualNetwork.outputs.subnets // This one holds critical info for subnets, including NSGs
-
-output bastionSubnetId string = bastionHost.outputs.subnetId
-output bastionSubnetName string = bastionHost.outputs.subnetName
-output bastionHostId string = bastionHost.outputs.resourceId
-output bastionHostName string = bastionHost.outputs.name
-
-output jumpboxSubnetName string = jumpbox.outputs.subnetId
-output jumpboxSubnetId string = jumpbox.outputs.subnetId
-output jumpboxVmName string = jumpbox.outputs.vmName
-output jumpboxVmId string = jumpbox.outputs.vmId
