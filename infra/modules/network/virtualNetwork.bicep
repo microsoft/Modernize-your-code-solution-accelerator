@@ -118,11 +118,11 @@ type subnetType = {
   @description('Required. The Name of the subnet resource.')
   name: string
 
-  @description('Conditional. The address prefix for the subnet. Required if `addressPrefixes` is empty.')
-  addressPrefix: string?
+  // @description('Conditional. The address prefix for the subnet. Required if `addressPrefixes` is empty.')
+  // addressPrefix: string?
 
-  @description('Conditional. List of address prefixes for the subnet. Required if `addressPrefix` is empty.')
-  addressPrefixes: string[]?
+  @description('Required. Prefixes for the subnet.')  // Required to ensure at least one prefix is provided
+  addressPrefixes: string[]   
 
   @description('Optional. The delegation to enable on the subnet.')
   delegation: string?
