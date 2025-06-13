@@ -1,28 +1,45 @@
 // /****************************************************************************************************************************/
 // Create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
 // /****************************************************************************************************************************/
-param vmName string = 'jumpboxVM' // Default name for Jumpbox VM
+
+@description('Name of the Jumpbox Virtual Machine.')
+param name string
+
+@description('Azure region to deploy resources.')
 param location string = resourceGroup().location
+
+@description('Name of the Virtual Network where the Jumpbox VM will be deployed.')
 param vnetName string 
-param jumpboxVmSize string = 'Standard_D2s_v3' // Default VM size for Jumpbox, can be overridden
 
-param jumpboxSubnet object = {} // This was defined in the .param file as a complex object 
-param jumpboxAdminUser string = 'JumpboxAdminUser' // Default admin username for Jumpbox VM
+@description('Size of the Jumpbox Virtual Machine.')
+param size string
+
+import { subnetType } from 'virtualNetwork.bicep'
+@description('Optional. Subnet configuration for the Jumpbox VM.')
+param subnet subnetType?  
+
+@description('Username to access the Jumpbox VM.')
+param username string
+
 @secure()
-param jumpboxAdminPassword string 
+@description('Password to access the Jumpbox VM.')
+param password string 
 
+@description('Optional. Tags to apply to the resources.')
 param tags object = {}
+
+@description('Log Analytics Workspace Resource ID for VM diagnostics.')
 param logAnalyticsWorkspaceId string
 
 // 1. Create Jumpbox NSG 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
-module jbNsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(jumpboxSubnet)) {
-  name: '${vnetName}-${jumpboxSubnet.networkSecurityGroup.name}'
+module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
+  name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
   params: {
-    name: '${vnetName}-${jumpboxSubnet.networkSecurityGroup.name}'
+    name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
     location: location
-    securityRules: jumpboxSubnet.networkSecurityGroup.securityRules
+    securityRules: subnet.?networkSecurityGroup.securityRules
     tags: tags
   }
 }
@@ -30,28 +47,29 @@ module jbNsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!emp
 // 2. Create Jumpbox subnet as part of the existing VNet 
 // using AVM Virtual Network Subnet module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
-module jbSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(jumpboxSubnet)) {
-  name: jumpboxSubnet.name
+module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnet)) {
+  name: subnet.?name ?? '${vnetName}-jumpbox-subnet'
   params: {
     virtualNetworkName: vnetName
-    name: jumpboxSubnet.name
-    addressPrefixes: jumpboxSubnet.addressPrefixes
-    networkSecurityGroupResourceId: jbNsg.outputs.resourceId
+    name: subnet.?name ?? ''
+    addressPrefixes: subnet.?addressPrefixes
+    networkSecurityGroupResourceId: nsg.outputs.resourceId
   }
 }
 
 // 3. Create Jumpbox VM 
 // using AVM Virtual Machine module 
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/compute/virtual-machine
-var limitedVmName = take(vmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
-module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
-  name: vmName
+var vmName = take(name, 15) // Shorten VM name to 15 characters to avoid Azure limits
+
+module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
+  name: take('${vmName}-jumpbox', 64)
   params: {
-    name: limitedVmName
-    vmSize: jumpboxVmSize
+    name: vmName
+    vmSize: size
     location: location
-    adminUsername: jumpboxAdminUser
-    adminPassword: jumpboxAdminPassword
+    adminUsername: username
+    adminPassword: password
     tags: tags
     zone: 2
     imageReference: {
@@ -69,14 +87,14 @@ module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     encryptionAtHost: false // Some Azure subscriptions do not support encryption at host
     nicConfigurations: [
       {
-        name: '${limitedVmName}-nic'
+        name: '${vmName}-nic'
         ipConfigurations: [
           {
             name: 'ipconfig1'
-            subnetResourceId: jbSubnet.outputs.resourceId
+            subnetResourceId: subnetResource.outputs.resourceId
           }
         ]
-        networkSecurityGroupResourceId: jbNsg.outputs.resourceId
+        networkSecurityGroupResourceId: nsg.outputs.resourceId
         diagnosticSettings: [
           {
             name: 'jumpboxDiagnostics'
@@ -100,16 +118,14 @@ module jbVm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
   }
 }
 
-output vmId string = jbVm.outputs.resourceId
-output vmName string = jbVm.outputs.name
-output vMLocation string = jbVm.outputs.location
+output resourceId string = vm.outputs.resourceId
+output name string = vm.outputs.name
+output location string = vm.outputs.location
 
-output subnetId string = jbSubnet.outputs.resourceId
-output subnetName string = jbSubnet.outputs.name
-output nsgId string = jbNsg.outputs.resourceId
-output nsgName string = jbNsg.outputs.name
-
-import { subnetType } from 'virtualNetwork.bicep'
+output subnetId string = subnetResource.outputs.resourceId
+output subnetName string = subnetResource.outputs.name
+output nsgId string = nsg.outputs.resourceId
+output nsgName string = nsg.outputs.name
 
 @export()
 @description('Custom type definition for establishing Jumpbox Virtual Machine and its associated resources.')
@@ -118,7 +134,7 @@ type jumpBoxConfigurationType = {
   name: string
 
   @description('The size of the VM.')
-  size: string
+  size: string?
 
   @description('Username to access VM.')
   username: string
