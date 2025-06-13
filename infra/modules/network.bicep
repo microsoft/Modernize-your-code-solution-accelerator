@@ -81,37 +81,38 @@ module network 'network/main.bicep' =  {
         privateLinkServiceNetworkPolicies: 'Disabled'
       }
     ]
-    enableBastionHost: true // Set to true to enable Azure Bastion Host creation.
-    bastionSubnet: {
-      addressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
-      networkSecurityGroup: null // Azure Bastion subnet must NOT have an NSG
+    bastionConfiguration: {
+      name: 'bastion-${resourcesName}'
+      subnetAddressPrefixes: ['10.0.10.0/23']
     }
-    jumpboxVM: true // Set to true to enable Jumpbox VM creation.
-    jumpboxVmSize: 'Standard_D2s_v3'
-    jumpboxAdminUser: 'JumpboxAdminUser'
-    jumpboxAdminPassword: 'JumpboxAdminP@ssw0rd1234!'
-    jumpboxSubnet: {
-      name: 'jumpbox'
-      addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
-      networkSecurityGroup: {
-        name: 'jumpbox-nsg'
-        securityRules: [
-          {
-            name: 'AllowJumpboxInbound'
-            properties: {
-              access: 'Allow'
-              direction: 'Inbound'
-              priority: 100
-              protocol: 'Tcp'
-              sourcePortRange: '*'
-              destinationPortRange: '22'
-              sourceAddressPrefixes: [
-                '10.0.7.0/24' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
-              ]
-              destinationAddressPrefixes: ['10.0.12.0/23']
+    jumpboxConfiguration: {
+      name: 'vm-jumpbox-${resourcesName}'
+      size: 'Standard_D2s_v3'
+      username: 'JumpboxAdminUser'
+      password: 'JumpboxAdminP@ssw0rd1234!'
+      subnet:  {
+        name: 'jumpbox'
+        addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
+        networkSecurityGroup: {
+          name: 'jumpbox-nsg'
+          securityRules: [
+            {
+              name: 'AllowJumpboxInbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 100
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '22'
+                sourceAddressPrefixes: [
+                  '10.0.7.0/24' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
+                ]
+                destinationAddressPrefixes: ['10.0.12.0/23']
+              }
             }
-          }
-        ]
+          ]
+        }
       }
     }
   }
@@ -130,5 +131,5 @@ output bastionHostName string = network.outputs.bastionHostName
 
 output jumpboxSubnetName string = network.outputs.jumpboxSubnetName
 output jumpboxSubnetId string = network.outputs.jumpboxSubnetId
-output jumpboxVmName string = network.outputs.jumpboxVmName
-output jumpboxVmId string = network.outputs.jumpboxVmId
+output jumpboxName string = network.outputs.jumpboxName
+output jumpboxResourceId string = network.outputs.jumpboxResourceId

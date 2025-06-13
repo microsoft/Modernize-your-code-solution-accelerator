@@ -17,35 +17,25 @@ import { subnetType } from 'virtualNetwork.bicep'
 @description('Array of subnets to be created within the VNET.')
 param subnets subnetType[]   
 
+import { jumpBoxConfigurationType } from 'jumpbox.bicep'
+@description('Optional. Configuration for the Jumpbox VM. Leave null to omit Jumpbox creation.')
+param jumpboxConfiguration jumpBoxConfigurationType? 
+
+import { bastionHostConfigurationType } from 'bastionHost.bicep'
+@description('Optional. Configuration for the Azure Bastion Host. Leave null to omit Bastion creation.')
+param bastionConfiguration bastionHostConfigurationType?
+
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
-         
-
-
-// jumpbox parameters
-param jumpboxVM bool = false                         
-param jumpboxSubnet object = {}                      
-param jumpboxAdminUser string = 'JumpboxAdminUser'   
-@secure()
-param jumpboxAdminPassword string                    
-param jumpboxVmSize string = 'Standard_D2s_v3'  
-var jumpboxVmName = 'jumpboxVM-${resourcesName}'            
-
-// Azure Bastion Host parameters
-param enableBastionHost bool = false                   
-param bastionSubnet object = {}                 
-var bastionHostName = 'bastionHost-${resourcesName}'  
-
-
+            
 // /****************************************************************************************************************************/
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /****************************************************************************************************************************/
-var vnetName = 'vnet-${resourcesName}'
 
 module virtualNetwork 'virtualNetwork.bicep' = {
   name: '${resourcesName}-virtualNetwork'
   params: {
-    name: vnetName
+    name: 'vnet-${resourcesName}'
     addressPrefixes: addressPrefixes
     subnets: subnets
     location: location
@@ -58,15 +48,15 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 // // Create Azure Bastion Subnet and Azure Bastion Host
 // /****************************************************************************************************************************/
 
-module bastionHost 'bastionHost.bicep' = if (enableBastionHost && !empty(bastionSubnet)) {
+module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
   name: '${resourcesName}-bastionHost'
   params: {
-    subnet: bastionSubnet
-    location: location
-    vnetName: virtualNetwork.outputs.name
+    name: bastionConfiguration.?name ?? 'bastion-${resourcesName}'
     vnetId: virtualNetwork.outputs.resourceId
-    name: bastionHostName
+    vnetName: virtualNetwork.outputs.name
+    location: location
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
+    subnetAddressPrefixes: bastionConfiguration.?subnetAddressPrefixes
     tags: tags
   }
 }
@@ -75,18 +65,17 @@ module bastionHost 'bastionHost.bicep' = if (enableBastionHost && !empty(bastion
 // // create Jumpbox NSG and Jumpbox Subnet, then create Jumpbox VM
 // /****************************************************************************************************************************/
 
-module jumpbox 'jumpbox.bicep' = if (jumpboxVM && !empty(jumpboxSubnet)) {
+module jumpbox 'jumpbox.bicep' = if (!empty(jumpboxConfiguration)) {
   name: '${resourcesName}-jumpbox'
   params: {
-    vmName: jumpboxVmName
-    location: location
+    name: jumpboxConfiguration.?name ?? 'vm-jumpbox-${resourcesName}'
     vnetName: virtualNetwork.outputs.name
-    jumpboxVmSize: jumpboxVmSize
-    jumpboxSubnet: jumpboxSubnet
-    jumpboxAdminUser: jumpboxAdminUser
-    jumpboxAdminPassword: jumpboxAdminPassword
-    tags: tags
+    size: jumpboxConfiguration.?size ?? 'Standard_D2s_v3'
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
+    location: location
+    subnet: jumpboxConfiguration.?subnet
+    username: jumpboxConfiguration.?username ?? '' // required
+    password: jumpboxConfiguration.?password ?? '' // required
   }
 }
 
@@ -101,8 +90,8 @@ output bastionSubnetName string = bastionHost.outputs.subnetName
 output bastionHostId string = bastionHost.outputs.resourceId
 output bastionHostName string = bastionHost.outputs.name
 
-output jumpboxSubnetName string = jumpbox.outputs.subnetId
+output jumpboxSubnetName string = jumpbox.outputs.subnetName
 output jumpboxSubnetId string = jumpbox.outputs.subnetId
-output jumpboxVmName string = jumpbox.outputs.vmName
-output jumpboxVmId string = jumpbox.outputs.vmId
+output jumpboxName string = jumpbox.outputs.name
+output jumpboxResourceId string = jumpbox.outputs.resourceId
 
