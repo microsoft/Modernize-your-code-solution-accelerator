@@ -33,6 +33,9 @@ param roleAssignments roleAssignmentType[]?
 @description('Optional. List of the blob storage containers to create in the Storage Account.')
 param containers array?
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 module blobPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?blobPrivateDnsZoneResourceId)) {
   name: take('${name}-blob-pdns-deployment', 64) 
   params: {
@@ -43,6 +46,7 @@ module blobPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = i
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -56,6 +60,7 @@ module filePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = i
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -121,6 +126,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
      blobServices: {
       containers: containers ?? []
     }
+    enableTelemetry: enableTelemetry
   }
 }
 

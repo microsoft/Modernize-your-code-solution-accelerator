@@ -31,6 +31,9 @@ param tags object = {}
 @description('Log Analytics Workspace Resource ID for VM diagnostics.')
 param logAnalyticsWorkspaceId string
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 // 1. Create Jumpbox NSG 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
@@ -41,6 +44,7 @@ module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty
     location: location
     securityRules: subnet.?networkSecurityGroup.securityRules
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -54,6 +58,7 @@ module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' =
     name: subnet.?name ?? ''
     addressPrefixes: subnet.?addressPrefixes
     networkSecurityGroupResourceId: nsg.outputs.resourceId
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -115,6 +120,7 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
         ]
       }
     ]
+    enableTelemetry: enableTelemetry
   }
 }
 

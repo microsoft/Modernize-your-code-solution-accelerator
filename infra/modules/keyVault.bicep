@@ -29,6 +29,9 @@ import { secretType } from 'br/public:avm/res/key-vault/vault:0.12.1'
 @description('Optional. Array of secrets to create in the Key Vault.')
 param secrets secretType[]?
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
   name: take('${name}-kv-pdns-deployment', 64)
   params: {
@@ -39,6 +42,7 @@ module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (p
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -85,6 +89,7 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     ] : []
     roleAssignments: roleAssignments
     secrets: secrets
+    enableTelemetry: enableTelemetry
   }
 }
 

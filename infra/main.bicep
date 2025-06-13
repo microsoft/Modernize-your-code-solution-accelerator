@@ -60,6 +60,9 @@ param enablePrivateNetworking bool = false
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 var allTags = union({
   'azd-env-name': solutionName
 }, tags)
@@ -86,6 +89,7 @@ module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.
     name: 'id-app-${resourcesName}'
     location: location
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -95,6 +99,7 @@ module aiFoundryIdentity 'br/public:avm/res/managed-identity/user-assigned-ident
     name: 'id-proj-${resourcesName}'
     location: location
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -107,6 +112,7 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
     dataRetention: 30
     diagnosticSettings: [{ useThisWorkspace: true }]
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -118,6 +124,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
     workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId
     diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId }]
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -128,6 +135,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
     location: location
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -165,6 +173,7 @@ module aiServices 'modules/aiServices.bicep' = {
       }
     ]
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -199,6 +208,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -223,6 +233,7 @@ module keyVault 'modules/keyVault.bicep' = {
       }
     ]
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -252,6 +263,7 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
       }
     ]
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -271,6 +283,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
       subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
     } : null
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -307,6 +320,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
       }
     ] : []
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -354,6 +368,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
       ] : []
     }
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -509,6 +524,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
       ] : []
     }
     tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
-

@@ -23,6 +23,9 @@ param logAnalyticsWorkspaceId string
 @description('Optional. Tags to apply to the resources.')
 param tags object = {}
 
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
+
 // 1. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnetAddressPrefixes)) {
@@ -31,6 +34,7 @@ module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = 
     virtualNetworkName: vnetName
     name: 'AzureBastionSubnet' 
     addressPrefixes: subnetAddressPrefixes
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -57,6 +61,7 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
       }
     ]
     tags: tags
+    enableTelemetry: enableTelemetry
   }
 }
 
