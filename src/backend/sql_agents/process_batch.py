@@ -24,7 +24,7 @@ from common.storage.blob_factory import BlobStorageFactory
 from fastapi import HTTPException
 
 
-from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent, AzureAIAgentSettings  # pylint: disable=E0611
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
 
@@ -57,10 +57,11 @@ async def process_batch_async(
     except Exception as exc:
         logger.error("Error updating batch status. %s", exc)
 
+    ai_agent_settings = AzureAIAgentSettings()
     # Add client and auto cleanup
     async with (
         DefaultAzureCredential() as creds,
-        AzureAIAgent.create_client(credential=creds) as client,
+        AzureAIAgent.create_client(credential=creds, endpoint="https://fdp-rg-psl-codmod-main-resource.services.ai.azure.com/api/projects/fdp-rg-psl-codmod-main") as client,
     ):
 
         # setup all agent settings and agents per batch

@@ -38,6 +38,7 @@ class Config:
         self.azure_queue_name = os.getenv("AZURE_QUEUE_NAME")
 
         self.azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
+        self.ai_project_endpoint = os.getenv("AI_PROJECT_ENDPOINT")
         self.migrator_agent_model_deploy = os.getenv("MIGRATOR_AGENT_MODEL_DEPLOY")
         self.picker_agent_model_deploy = os.getenv("PICKER_AGENT_MODEL_DEPLOY")
         self.fixer_agent_model_deploy = os.getenv("FIXER_AGENT_MODEL_DEPLOY")
@@ -62,3 +63,4 @@ class Config:
 
 
 app_config = Config()
+print(f"[DEBUG] AI_PROJECT_ENDPOINT: '{os.getenv('AI_PROJECT_ENDPOINT')}'")
