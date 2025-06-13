@@ -32,7 +32,7 @@ module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = 
   name: take('bastionSubnet-${vnetName}', 64)
   params: {
     virtualNetworkName: vnetName
-    name: 'AzureBastionSubnet' 
+    name: 'AzureBastionSubnet' // this name required as is for Azure Bastion Host subnet
     addressPrefixes: subnetAddressPrefixes
     enableTelemetry: enableTelemetry
   }
