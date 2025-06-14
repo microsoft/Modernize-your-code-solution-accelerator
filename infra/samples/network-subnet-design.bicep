@@ -241,3 +241,17 @@ module network '../modules/network/main.bicep' = {
     enableTelemetry: enableTelemetry
   }
 }
+
+
+output vnetName string = network.outputs.vnetName
+output vnetResourceId string = network.outputs.vnetResourceId
+
+output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
+output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
+output subnetAppResourceId string = first(filter(network.outputs.subnets, s => s.name == 'app')).?resourceId ?? ''
+output subnetAiResourceId string = first(filter(network.outputs.subnets, s => s.name == 'ai')).?resourceId ?? ''
+output subnetDataResourceId string = first(filter(network.outputs.subnets, s => s.name == 'data')).?resourceId ?? ''
+
+output bastionHostResourceId string = bastionConfiguration != null ? network.outputs.bastionHostId : ''
+output bastionSubnetResourceId string = bastionConfiguration != null ? network.outputs.bastionSubnetId : ''
+
