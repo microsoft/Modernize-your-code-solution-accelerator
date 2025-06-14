@@ -82,8 +82,8 @@ param subnets subnetType[] = [
   {
     name: 'peps'
     addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Disabled'
+    privateEndpointNetworkPolicies: 'Disabled'         // 'Disabled': to use private endpoints in the subnet.
+    privateLinkServiceNetworkPolicies: 'Disabled'      // 'Disabled': to deploy a private link service in the subnet.
     networkSecurityGroup: {
       name: 'peps-nsg'
       securityRules: []
@@ -92,8 +92,8 @@ param subnets subnetType[] = [
   {
     name: 'web'
     addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Disabled'
+    privateEndpointNetworkPolicies: 'Enabled'        // 'Disabled' only if you need to support private endpoints or private link services in the subnet. 
+    privateLinkServiceNetworkPolicies: 'Enabled'     // 'Disabled' only if you need to support private endpoints or private link services in the subnet.
     networkSecurityGroup: {
       name: 'web-nsg'
       securityRules: [
@@ -122,8 +122,8 @@ param subnets subnetType[] = [
   {
     name: 'app'
     addressPrefixes: ['10.0.4.0/23'] // /23 (10.0.4.0 - 10.0.5.255), 512 addresses
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Disabled'
+    privateEndpointNetworkPolicies: 'Enabled'      // 'Disabled' only if you need to support private endpoints or private link services in the subnet.
+    privateLinkServiceNetworkPolicies: 'Enabled'   // 'Disabled' only if you need to support private endpoints or private link services in the subnet.
     networkSecurityGroup: {
       name: 'app-nsg'
       securityRules: [
@@ -152,8 +152,8 @@ param subnets subnetType[] = [
   {
     name: 'ai'
     addressPrefixes: ['10.0.6.0/23'] // /23 (10.0.6.0 - 10.0.7.255), 512 addresses
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Disabled'
+    privateEndpointNetworkPolicies: 'Enabled'   // 'Disabled' only if you need to support private endpoints or private link services in the subnet.
+    privateLinkServiceNetworkPolicies: 'Enabled' // 'Disabled' only if you need to support private endpoints or private link services in the subnet.
     networkSecurityGroup: {
       name: 'ai-nsg'
       securityRules: [
@@ -180,8 +180,8 @@ param subnets subnetType[] = [
   {
     name: 'data'
     addressPrefixes: ['10.0.8.0/23'] // /23 (10.0.8.0 - 10.0.9.255), 512 addresses
-    privateEndpointNetworkPolicies: 'Disabled'
-    privateLinkServiceNetworkPolicies: 'Disabled'
+    privateEndpointNetworkPolicies: 'Disabled'    // 'Disabled': to use private endpoints in the subnet.
+    privateLinkServiceNetworkPolicies: 'Disabled' // 'Disabled': to deploy a private link service in the subnet.
     networkSecurityGroup: {
       name: 'data-nsg'
       securityRules: [
@@ -246,8 +246,10 @@ module network '../modules/network/main.bicep' = {
 output vnetName string = network.outputs.vnetName
 output vnetResourceId string = network.outputs.vnetResourceId
 
-output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
 output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
+
+
+output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
 output subnetAppResourceId string = first(filter(network.outputs.subnets, s => s.name == 'app')).?resourceId ?? ''
 output subnetAiResourceId string = first(filter(network.outputs.subnets, s => s.name == 'ai')).?resourceId ?? ''
 output subnetDataResourceId string = first(filter(network.outputs.subnets, s => s.name == 'data')).?resourceId ?? ''
