@@ -20,7 +20,7 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
-
+from common.config.config import app_config
 from fastapi import HTTPException
 
 
@@ -36,7 +36,6 @@ from sql_agents.helpers.utils import is_text
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-
 
 # Walk through batch structure processing each file
 async def process_batch_async(
@@ -61,7 +60,7 @@ async def process_batch_async(
     # Add client and auto cleanup
     async with (
         DefaultAzureCredential() as creds,
-        AzureAIAgent.create_client(credential=creds, endpoint="https://fdp-rg-psl-codmod-main-resource.services.ai.azure.com/api/projects/fdp-rg-psl-codmod-main") as client,
+        AzureAIAgent.create_client(credential=creds, endpoint=app_config.ai_project_endpoint) as client,
     ):
 
         # setup all agent settings and agents per batch
