@@ -15,6 +15,29 @@ NOT_RECOMMENDED_REGIONS=()
 ALL_RESULTS=()
 FALLBACK_RESULTS=()
 
+# ---------- Helper Functions ----------
+
+prompt_yes_no() {
+  local prompt="$1"
+  local response
+  echo -n "$prompt"
+  read -r response < /dev/tty
+  while [[ ! "$response" =~ ^[YyNn]$ ]]; do
+    echo "❌ Invalid input. Please enter 'y' or 'n': "
+    read -r response < /dev/tty
+  done
+  [[ "$response" =~ ^[Yy]$ ]]
+}
+
+print_recommended_warning() {
+  local capacity="$1"
+  local recommended_list
+  recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
+  echo -e "\n⚠️  You have entered a capacity of $capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
+  echo -e "🚨 This may cause performance issues or unexpected behavior."
+  echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
+}
+
 update_env_and_parameters() {
   local new_location="$1"
   local new_capacity="$2"
@@ -46,9 +69,7 @@ check_quota() {
   output=$(az cognitiveservices usage list --location "$region" --query "[?name.value=='$MODEL_TYPE']" --output json 2>/dev/null)
 
   if [[ -z "$output" || "$output" == "[]" ]]; then
-    if [[ "$region" == "$LOCATION" ]]; then
-      echo "⚠️ Could not retrieve the quota info for the region: $LOCATION"
-    fi
+    [[ "$region" == "$LOCATION" ]] && echo "⚠️ Could not retrieve the quota info for the region: $LOCATION"
     return 2
   fi
 
@@ -58,21 +79,13 @@ check_quota() {
 
   ALL_RESULTS+=("$region|$LIMIT|$CURRENT_VALUE|$AVAILABLE")
 
-  if [[ "$AVAILABLE" -ge "$RECOMMENDED_TOKENS" ]]; then
-    if [[ ! " ${RECOMMENDED_REGIONS[@]} " =~ " $region " ]]; then
-      RECOMMENDED_REGIONS+=("$region")
-    fi
+  if (( AVAILABLE >= RECOMMENDED_TOKENS )); then
+    [[ ! " ${RECOMMENDED_REGIONS[*]} " =~ " $region " ]] && RECOMMENDED_REGIONS+=("$region")
   else
-    if [[ ! " ${NOT_RECOMMENDED_REGIONS[@]} " =~ " $region " ]]; then
-      NOT_RECOMMENDED_REGIONS+=("$region")
-    fi
+    [[ ! " ${NOT_RECOMMENDED_REGIONS[*]} " =~ " $region " ]] && NOT_RECOMMENDED_REGIONS+=("$region")
   fi
 
-  if [[ "$AVAILABLE" -ge "$CAPACITY" ]]; then
-    return 0
-  else
-    return 1
-  fi
+  (( AVAILABLE >= CAPACITY ))
 }
 
 show_table() {
@@ -95,10 +108,7 @@ ask_for_location() {
   echo -n "📍 Enter region: "
   read -r new_location < /dev/tty
 
-  if [[ -z "$new_location" ]]; then
-    echo "❌ ERROR: No location entered. Exiting."
-    exit 1
-  fi
+  [[ -z "$new_location" ]] && echo "❌ ERROR: No location entered. Exiting." && exit 1
 
   echo -n "🔢 Enter capacity (tokens): "
   read -r new_capacity < /dev/tty
@@ -110,33 +120,23 @@ ask_for_location() {
   fi
 
   if (( new_capacity < RECOMMENDED_TOKENS )); then
-    recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
-    echo -e "\n⚠️  You have entered a capacity of $new_capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
-    echo -e "🚨 This may cause performance issues or unexpected behavior."
-    echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
-    echo -n "❓ Proceed anyway? (y/n): "
-    read -r proceed_anyway < /dev/tty
-    while [[ ! "$proceed_anyway" =~ ^[YyNn]$ ]]; do
-      echo "❌ Invalid input. Please enter 'y' or 'n': "
-      read -r proceed_anyway < /dev/tty
-    done
-    if [[ ! "$proceed_anyway" =~ ^[Yy]$ ]]; then
-      ask_for_location
-      return
-    fi
+    print_recommended_warning "$new_capacity"
+    prompt_yes_no "❓ Proceed anyway? (y/n): " || { ask_for_location; return; }
   fi
 
   echo -e "\n🔍 Checking quota in region '$new_location' for requested capacity: $new_capacity..."
   CAPACITY=$new_capacity
   LOCATION=$new_location
 
-  check_quota "$LOCATION"
-  if [[ $? -eq 0 ]]; then
+  if check_quota "$LOCATION"; then
+    if (( CAPACITY < RECOMMENDED_TOKENS )); then
+      print_recommended_warning "$CAPACITY"
+      prompt_yes_no "❓ Proceed anyway? (y/n): " || { ask_for_location; exit 0; }
+    fi
     update_env_and_parameters "$LOCATION" "$CAPACITY"
-    echo "✅ Updated and ready to deploy in '$LOCATION'."
+    echo "✅ Proceeding with deployment in '$LOCATION'."
     exit 0
   else
-    # echo "❌ Insufficient quota in '$LOCATION'. Checking fallback regions..."
     check_fallback_regions
   fi
 }
@@ -144,10 +144,7 @@ ask_for_location() {
 check_fallback_regions() {
   for region in "${ALL_REGIONS[@]}"; do
     [[ "$region" == "$LOCATION" ]] && continue
-    check_quota "$region"
-    if [[ $? -eq 0 ]]; then
-      FALLBACK_RESULTS+=("$region")
-    fi
+    check_quota "$region" && FALLBACK_RESULTS+=("$region")
   done
 
   if [[ "$TABLE_SHOWN" == false ]]; then
@@ -155,7 +152,7 @@ check_fallback_regions() {
     TABLE_SHOWN=true
   fi
 
-  if [[ "$RECOMMENDATIONS_SHOWN" == false && ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
+  if [[ ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
     echo -e "\n➡️  Found fallback regions with sufficient quota."
     if [[ ${#RECOMMENDED_REGIONS[@]} -gt 0 ]]; then
       echo -e "\nℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available):"
@@ -166,25 +163,14 @@ check_fallback_regions() {
     echo -e "\n❗ The originally selected region '$LOCATION' does not have enough quota."
     echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
     RECOMMENDATIONS_SHOWN=true
-  elif [[ "$RECOMMENDATIONS_SHOWN" == true ]]; then
-    echo -e "\n⚠️ Could not retrieve the quota info for the region: $LOCATION"
-    echo "👉 You can manually choose one of the recommended fallback regions for deployment from the list shown above."
   else
     echo -e "\n❌ ERROR: No region has sufficient quota."
   fi
 
-  echo -n "❓ Would you like to retry with a different region? (y/n): "
-  read -r retry < /dev/tty
-  while [[ ! "$retry" =~ ^[YyNn]$ ]]; do
-    echo "❌ Invalid input. Please enter 'y' or 'n': "
-    read -r retry < /dev/tty
-  done
-  if [[ "$retry" =~ ^[Yy]$ ]]; then
-    ask_for_location
-  else
+  prompt_yes_no "❓ Would you like to retry with a different region? (y/n): " && ask_for_location || {
     echo "Exiting... No region with sufficient quota."
     exit 1
-  fi
+  }
 }
 
 # ---------- Parse Inputs ----------
@@ -207,8 +193,7 @@ fi
 
 # ---------- Start Process ----------
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
-check_quota "$LOCATION"
-if [[ $? -eq 0 ]]; then
+if check_quota "$LOCATION"; then
   update_env_and_parameters "$LOCATION" "$CAPACITY"
   echo "✅ Proceeding with deployment in '$LOCATION'."
   exit 0
