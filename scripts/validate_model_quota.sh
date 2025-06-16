@@ -7,7 +7,7 @@ CAPACITY=0
 RECOMMENDED_TOKENS=200
 TABLE_SHOWN=false
 RECOMMENDATIONS_SHOWN=false
-INITIAL_LOCATION=""  # NEW: track the original region
+INITIAL_LOCATION=""
 
 ALL_REGIONS=('australiaeast' 'eastus' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'southindia' 'swedencentral' 'uksouth' 'westus' 'westus3')
 
@@ -15,8 +15,6 @@ RECOMMENDED_REGIONS=()
 NOT_RECOMMENDED_REGIONS=()
 ALL_RESULTS=()
 FALLBACK_RESULTS=()
-
-# ---------- Helper Functions ----------
 
 prompt_yes_no() {
   local prompt="$1"
@@ -32,14 +30,28 @@ prompt_yes_no() {
 
 print_recommended_warning() {
   local capacity="$1"
-  local recommended_list
-  recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
-  primary_entry="${ALL_RESULTS[0]}"
-  IFS='|' read -r _ limit used available <<< "$primary_entry"
-  echo -e "\n⚠️  You have entered a capacity of $capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
-  echo -e "🚨 This may cause performance issues or unexpected behavior."
-  echo -e "📊 Available quota in '$LOCATION': $available, Required: $capacity"
-  if [[ -n "$recommended_list" ]]; then
+  local matched_entry=""
+
+  for entry in "${ALL_RESULTS[@]}"; do
+    IFS='|' read -r region _ _ _ <<< "$entry"
+    if [[ "$region" == "$LOCATION" ]]; then
+      matched_entry="$entry"
+      break
+    fi
+  done
+
+  if [[ -n "$matched_entry" ]]; then
+    IFS='|' read -r _ limit used available <<< "$matched_entry"
+    echo -e "\n⚠️  You have entered a capacity of $capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
+    echo -e "🚨 This may cause performance issues or unexpected behavior."
+    echo -e "📊 Available quota in '$LOCATION': $available, Required: $capacity"
+  else
+    echo -e "\n⚠️  Capacity entered is below recommended, but region quota data was not found."
+  fi
+
+  if [[ ${#RECOMMENDED_REGIONS[@]} -gt 0 ]]; then
+    local recommended_list
+    recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
     echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
   fi
 }
@@ -125,30 +137,31 @@ ask_for_location() {
     return
   fi
 
-  if (( new_capacity < RECOMMENDED_TOKENS )); then
-    print_recommended_warning "$new_capacity"
-    prompt_yes_no "❓ Proceed anyway? (y/n): " || { ask_for_location; return; }
-  fi
+  LOCATION="$new_location"
+  CAPACITY="$new_capacity"
 
-  echo -e "\n🔍 Checking quota in region '$new_location' for requested capacity: $new_capacity..."
-  CAPACITY=$new_capacity
-  LOCATION=$new_location
+  update_env_and_parameters "$LOCATION" "$CAPACITY"
+
+  echo -e "\n🔍 Checking quota in region '$LOCATION' for requested capacity: $CAPACITY..."
 
   if check_quota "$LOCATION"; then
     if (( CAPACITY < RECOMMENDED_TOKENS )); then
       print_recommended_warning "$CAPACITY"
-      prompt_yes_no "❓ Proceed anyway? (y/n): " || { ask_for_location; exit 0; }
+      prompt_yes_no "❓ Proceed anyway? (y/n): " || {
+        ask_for_location
+        return
+      }
     fi
-    update_env_and_parameters "$LOCATION" "$CAPACITY"
+    # update_env_and_parameters "$LOCATION" "$CAPACITY"
     echo "✅ Proceeding with deployment in '$LOCATION'."
     exit 0
   else
-    check_fallback_regions false
+    echo "❌ Quota insufficient in '$LOCATION'. Checking fallback regions..."
+    check_fallback_regions
   fi
 }
 
 check_fallback_regions() {
-  local is_first_check="${1:-true}"
   for region in "${ALL_REGIONS[@]}"; do
     [[ "$region" == "$LOCATION" ]] && continue
     check_quota "$region" && FALLBACK_RESULTS+=("$region")
@@ -167,15 +180,7 @@ check_fallback_regions() {
         echo "  - $region"
       done
     fi
-    RECOMMENDATIONS_SHOWN=true
-    if [[ "$is_first_check" == true ]]; then
-      echo -e "\n❗ The originally selected region '$INITIAL_LOCATION' does not have enough quota."
-    else
-      echo -e "\n⚠️  Region '$LOCATION' does not have enough quota."
-      RECOMMENDATIONS_SHOWN=false
-    fi
     echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
-    
   else
     echo -e "\n❌ ERROR: No region has sufficient quota."
   fi
@@ -205,12 +210,12 @@ if [[ -z "$LOCATION" || -z "$MODEL" || -z "$CAPACITY" || "$CAPACITY" -le 0 ]]; t
 fi
 
 # ---------- Start Process ----------
-INITIAL_LOCATION="$LOCATION"  # Set initial region
+INITIAL_LOCATION="$LOCATION"
 
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
 if check_quota "$LOCATION"; then
   if (( CAPACITY < RECOMMENDED_TOKENS )); then
-    check_fallback_regions true
+    check_fallback_regions
     print_recommended_warning "$CAPACITY"
     prompt_yes_no "❓ Proceed anyway? (y/n): " || {
       ask_for_location
@@ -224,5 +229,5 @@ else
   primary_entry="${ALL_RESULTS[0]}"
   IFS='|' read -r _ limit used available <<< "$primary_entry"
   echo "❌ Quota insufficient in '$LOCATION' (Available: $available, Required: $CAPACITY). Checking fallback regions..."
-  check_fallback_regions true
+  check_fallback_regions
 fi
