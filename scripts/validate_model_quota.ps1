@@ -109,7 +109,8 @@ function Set-DeploymentValues($Region, $Capacity) {
 
 function Manual-Prompt {
     while ($true) {
-        $ManualRegion = Read-Host "`nPlease enter a region you want to try manually"
+        Write-Host "`n📍 Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $($RecommendedRegions -join ', ')"
+        $ManualRegion = Read-Host "Please enter a region you want to try manually"
         if (-not $ManualRegion) {
             Write-Host "❌ ERROR: No region entered. Exiting."
             exit 1
@@ -151,80 +152,57 @@ function Manual-Prompt {
     }
 }
 
-# Start validation and execution
+# Start validation and quota checks
 Validate-Inputs
 
 Write-Host "`n🔍 Checking quota in the requested region '$Location'..."
 $PrimaryResult = Check-Quota -Region $Location
-
 if ($PrimaryResult) {
-    $AllResults += $PrimaryResult
-    if ($PrimaryResult.Available -ge $Capacity) {
-        if ($RecommendedRegions -notcontains $Location -and $RecommendedRegions.Count -gt 0) {
-            Write-Host "`n⚠️  Selected region '$Location' has sufficient quota but is not among the recommended regions (≥ $RECOMMENDED_TOKENS tokens)."
-            Write-Host "🚨 Your application may not work as expected due to limited quota."
-            Write-Host "`nℹ️  Recommended regions: $($RecommendedRegions -join ', ')"
-            if (Confirm-Action "❓ Do you want to choose a recommended region instead?") {
-                Show-Table
-                exit 0
-            } else {
-                if ($Capacity -gt $RECOMMENDED_TOKENS) {
-                    Write-Host "`n⚠️  Reducing capacity to $RECOMMENDED_TOKENS in '$BicepParamsFile' for safer deployment..."
-                    (Get-Content $BicepParamsFile) -replace "capacity\s*:\s*\d+", "capacity: $RECOMMENDED_TOKENS" | Set-Content $BicepParamsFile
-                    Write-Host "✅ Updated '$BicepParamsFile' with capacity $RECOMMENDED_TOKENS."
-                }
-                Set-DeploymentValues $Location $Capacity
-                Write-Host "✅ Proceeding with '$Location' as selected."
-                exit 0
-            }
-        } else {
-            Write-Host "`n✅ Sufficient quota found in original region '$Location'."
-            if ($PrimaryResult.Available -lt $RECOMMENDED_TOKENS) {
-                Write-Host "`n⚠️  You have provided a capacity of $Capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
-                Write-Host "🚨 This may cause performance issues or unexpected behavior."
-                if ($RecommendedRegions.Count -gt 0) {
-                    Write-Host "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $($RecommendedRegions -join ', ')"
-                }
-                if (-not (Confirm-Action "❓ Proceed anyway?")) {
-                    Write-Host "❌ Deployment aborted by user. Please select another region or capacity."
-                    exit 1
-                }
-            }
-            Set-DeploymentValues $Location $Capacity
-            exit 0
-        }
-    } else {
-        Write-Host "`n⚠️  Insufficient quota in '$Location' (Available: $($PrimaryResult.Available), Required: $Capacity). Checking fallback regions..."
-    }
-} else {
-    Write-Host "`n⚠️  Could not retrieve quota info for region '$Location'."
+    $AllResults = @($AllResults) + $PrimaryResult
 }
 
 foreach ($region in $PreferredRegions) {
-    if ($region -eq $Location) { continue }
-    $result = Check-Quota -Region $region
-    if ($result) {
-        $AllResults += $result
-        if ($result.Available -ge $Capacity) {
-            $EligibleFallbacks += $region
+    if ($region -ne $Location) {
+        $fallbackResult = Check-Quota -Region $region
+        if ($fallbackResult) {
+            $AllResults = @($AllResults) + $fallbackResult
+            if ($fallbackResult.Available -ge $Capacity) {
+                $EligibleFallbacks += $region
+            }
         }
     }
 }
 
 Show-Table
 
-if ($EligibleFallbacks.Count -gt 0) {
-    Write-Host "`n➡️  Found fallback regions with sufficient quota."
+if ($Capacity -lt $RECOMMENDED_TOKENS) {
+    Write-Host "`n⚠️  You have entered a capacity of $Capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
+    Write-Host "🚨 This may cause performance issues or unexpected behavior."
+    Write-Host "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available):"
     if ($RecommendedRegions.Count -gt 0) {
-        Write-Host "`nℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available):"
         foreach ($region in $RecommendedRegions) {
             Write-Host "  - $region"
         }
+    } else {
+        Write-Host "  ❌ No recommended regions currently available."
     }
-    Write-Host "`n❗ The originally selected region '$Location' does not have enough quota."
+    if (-not (Confirm-Action "❓ Proceed anyway?")) {
+        Manual-Prompt
+        exit 0
+    }
+}
+
+if ($PrimaryResult -and $PrimaryResult.Available -ge $Capacity) {
+    Set-DeploymentValues $Location $Capacity
+    Write-Host "✅ Proceeding with '$Location' as selected."
+    exit 0
+}
+
+Write-Host "`n❗ The originally selected region '$Location' does not have enough quota."
+if ($EligibleFallbacks.Count -gt 0) {
     Write-Host "👉 You can manually choose one of the recommended fallback regions for deployment."
 } else {
-    Write-Host "`n❌ ERROR: No region has sufficient quota."
+    Write-Host "❌ ERROR: No region has sufficient quota."
 }
 
 Manual-Prompt
