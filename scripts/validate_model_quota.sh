@@ -194,6 +194,13 @@ fi
 # ---------- Start Process ----------
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
 if check_quota "$LOCATION"; then
+  if (( CAPACITY < RECOMMENDED_TOKENS )); then
+    print_recommended_warning "$CAPACITY"
+    prompt_yes_no "❓ Proceed anyway? (y/n): " || {
+      ask_for_location
+      exit 0
+    }
+  fi
   update_env_and_parameters "$LOCATION" "$CAPACITY"
   echo "✅ Proceeding with deployment in '$LOCATION'."
   exit 0
