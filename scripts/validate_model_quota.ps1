@@ -131,7 +131,7 @@ if ($PrimaryResult) {
             exit 0
         }
     } else {
-        Write-Host "`n⚠️  Insufficient quota in '$Location'. Checking fallback regions..."
+        Write-Host "`n⚠️  Insufficient quota in '$LOCATION' (Available: $($PrimaryResult.Available), Required: $Capacity). Checking fallback regions..."
     }
 } else {
     Write-Host "`n⚠️  Could not retrieve quota info for region '$Location'."
@@ -159,11 +159,14 @@ if ($EligibleFallbacks.Count -gt 0) {
             Write-Host "  - $region"
         }
     }
+
+    Write-Host "`n❗ The originally selected region '$Location' does not have enough quota."
+    Write-Host "👉 You can manually choose one of the recommended fallback regions for deployment."
+} else {
+    Write-Host "`n❌ ERROR: No region has sufficient quota."
 }
 
-# ------------------ Manual Prompt if No Quota Found ------------------
-Write-Host "`n❌ ERROR: No region has sufficient quota."
-
+# ------------------ Manual Prompt ------------------
 while ($true) {
     $ManualRegion = Read-Host "`nPlease enter a region you want to try manually"
     if (-not $ManualRegion) {
@@ -178,6 +181,18 @@ while ($true) {
     }
 
     $ManualCapacity = [int]$ManualCapacityStr
+
+    if ($ManualCapacity -lt 200) {
+        Write-Host "`n⚠️  You have entered a capacity of $ManualCapacity, which is less than the recommended minimum (200)."
+        Write-Host "🚨 This may cause performance issues or unexpected behavior."
+        Write-Host "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $($RecommendedRegions -join ', ')"
+        $proceed = Read-Host "❓ Proceed anyway? (y/n)"
+        if ($proceed -notmatch "^[Yy]$") {
+            continue
+        }
+    }
+
+    Write-Host "`n🔍 Checking quota in region '$ManualRegion' for requested capacity: $ManualCapacity..."
     $ManualResult = Check-Quota -Region $ManualRegion
 
     if (-not $ManualResult) {
