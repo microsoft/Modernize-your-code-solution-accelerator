@@ -7,10 +7,10 @@ param solutionLocation string
 param keyVaultName string
 param gptModelName string
 param gptModelVersion string
-// param managedIdentityObjectId string
+param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
-// param aiServicesId string
+param aiServicesId string
 
 param existingLogAnalyticsWorkspaceId string = ''
 

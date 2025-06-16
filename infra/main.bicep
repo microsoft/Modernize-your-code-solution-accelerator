@@ -59,6 +59,7 @@ var storageSkuName = 'Standard_LRS'
 var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
 var azureAiServicesName = '${abbrs.ai.aiServices}${ResourcePrefix}'
 
+// param aiProjectName string
 
 
 var aiModelDeployments = [
@@ -466,19 +467,55 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
   dependsOn: [azureAifoundry]
 }]
 
-resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' existing = {
-  name: '${abbrs.ai.aiHubProject}${ResourcePrefix}' // aiProjectName must be calculated - available at main start.
-}
+// resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' existing = {
+//   name: '${abbrs.ai.aiHubProject}${ResourcePrefix}' // aiProjectName must be calculated - available at main start.
+// }
 
 resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '64702f94-c441-49e6-a78b-ef80e0188fee'
 }
 
+// var aiServicesName string=azureAifoundry.outputs.aiFoundryName
+// var aiProjectName string=azureAifoundry.outputs.aiProjectName
+
+
+// resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing= {
+//   name: azureAifoundry.outputs.aiFoundryName
+// }
+
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' existing= {
+  name: azureAifoundry.outputs.aiProjectName
+}
+
+
 resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.name, aiHubProject.id, aiDeveloper.id)
-  scope: aiHubProject
+  name: guid(containerAppBackend.name, aiDeveloper.id)
+  scope: resourceGroup()
   properties: {
     roleDefinitionId: aiDeveloper.id
+    principalId: containerAppBackend.identity.principalId
+  }
+}
+
+
+resource aiUser 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
+  name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
+}
+
+resource aiUserAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(containerAppBackend.name, aiUser.id)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: aiUser.id
+    principalId: containerAppBackend.identity.principalId
+  }
+}
+
+resource aiUserAccessFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(containerAppBackend.name, aiProject.id)
+  scope: resourceGroup()
+  properties: {
+    roleDefinitionId: aiUser.id
     principalId: containerAppBackend.identity.principalId
   }
 }
