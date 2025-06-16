@@ -33,9 +33,14 @@ print_recommended_warning() {
   local capacity="$1"
   local recommended_list
   recommended_list=$(IFS=, ; echo "${RECOMMENDED_REGIONS[*]}")
+  primary_entry="${ALL_RESULTS[0]}"
+  IFS='|' read -r _ limit used available <<< "$primary_entry"
   echo -e "\n⚠️  You have entered a capacity of $capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
   echo -e "🚨 This may cause performance issues or unexpected behavior."
-  echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
+  echo -e "📊 Available quota in '$LOCATION': $available, Required: $capacity"
+  if [[ -n "$recommended_list" ]]; then
+    echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
+  fi
 }
 
 update_env_and_parameters() {
@@ -195,6 +200,7 @@ fi
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
 if check_quota "$LOCATION"; then
   if (( CAPACITY < RECOMMENDED_TOKENS )); then
+    check_fallback_regions
     print_recommended_warning "$CAPACITY"
     prompt_yes_no "❓ Proceed anyway? (y/n): " || {
       ask_for_location
