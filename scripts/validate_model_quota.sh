@@ -7,6 +7,7 @@ CAPACITY=0
 RECOMMENDED_TOKENS=200
 TABLE_SHOWN=false
 RECOMMENDATIONS_SHOWN=false
+INITIAL_LOCATION=""  # NEW: track the original region
 
 ALL_REGIONS=('australiaeast' 'eastus' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'southindia' 'swedencentral' 'uksouth' 'westus' 'westus3')
 
@@ -142,11 +143,12 @@ ask_for_location() {
     echo "✅ Proceeding with deployment in '$LOCATION'."
     exit 0
   else
-    check_fallback_regions
+    check_fallback_regions false
   fi
 }
 
 check_fallback_regions() {
+  local is_first_check="${1:-true}"
   for region in "${ALL_REGIONS[@]}"; do
     [[ "$region" == "$LOCATION" ]] && continue
     check_quota "$region" && FALLBACK_RESULTS+=("$region")
@@ -165,9 +167,15 @@ check_fallback_regions() {
         echo "  - $region"
       done
     fi
-    echo -e "\n❗ The originally selected region '$LOCATION' does not have enough quota."
-    echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
     RECOMMENDATIONS_SHOWN=true
+    if [[ "$is_first_check" == true ]]; then
+      echo -e "\n❗ The originally selected region '$INITIAL_LOCATION' does not have enough quota."
+    else
+      echo -e "\n⚠️  Region '$LOCATION' does not have enough quota."
+      RECOMMENDATIONS_SHOWN=false
+    fi
+    echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
+    
   else
     echo -e "\n❌ ERROR: No region has sufficient quota."
   fi
@@ -197,10 +205,12 @@ if [[ -z "$LOCATION" || -z "$MODEL" || -z "$CAPACITY" || "$CAPACITY" -le 0 ]]; t
 fi
 
 # ---------- Start Process ----------
+INITIAL_LOCATION="$LOCATION"  # Set initial region
+
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
 if check_quota "$LOCATION"; then
   if (( CAPACITY < RECOMMENDED_TOKENS )); then
-    check_fallback_regions
+    check_fallback_regions true
     print_recommended_warning "$CAPACITY"
     prompt_yes_no "❓ Proceed anyway? (y/n): " || {
       ask_for_location
@@ -214,5 +224,5 @@ else
   primary_entry="${ALL_RESULTS[0]}"
   IFS='|' read -r _ limit used available <<< "$primary_entry"
   echo "❌ Quota insufficient in '$LOCATION' (Available: $available, Required: $CAPACITY). Checking fallback regions..."
-  check_fallback_regions
+  check_fallback_regions true
 fi
