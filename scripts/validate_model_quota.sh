@@ -5,6 +5,7 @@ MODEL=""
 DEPLOYMENT_TYPE="Standard"
 CAPACITY=0
 RECOMMENDED_TOKENS=200
+TABLE_SHOWN=false
 
 ALL_REGIONS=('australiaeast' 'eastus' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'southindia' 'swedencentral' 'uksouth' 'westus' 'westus3')
 
@@ -44,6 +45,9 @@ check_quota() {
   output=$(az cognitiveservices usage list --location "$region" --query "[?name.value=='$MODEL_TYPE']" --output json 2>/dev/null)
 
   if [[ -z "$output" || "$output" == "[]" ]]; then
+    if [[ "$region" == "$LOCATION" ]]; then
+      echo "⚠️ Could not retrieve the quota info for the region: $LOCATION"
+    fi
     return 2
   fi
 
@@ -107,6 +111,10 @@ ask_for_location() {
     echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $recommended_list"
     echo -n "❓ Proceed anyway? (y/n): "
     read -r proceed_anyway < /dev/tty
+    while [[ ! "$proceed_anyway" =~ ^[YyNn]$ ]]; do
+      echo "❌ Invalid input. Please enter 'y' or 'n': "
+      read -r proceed_anyway < /dev/tty
+    done
     if [[ ! "$proceed_anyway" =~ ^[Yy]$ ]]; then
       ask_for_location
       return
@@ -138,7 +146,10 @@ check_fallback_regions() {
     fi
   done
 
-  show_table
+  if [[ "$TABLE_SHOWN" == false ]]; then
+    show_table
+    TABLE_SHOWN=true
+  fi
 
   if [[ ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
     echo -e "\n➡️  Found fallback regions with sufficient quota."
@@ -189,6 +200,10 @@ manual_region_input() {
     echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): ${RECOMMENDED_REGIONS[*]}"
     echo -n "❓ Proceed anyway? (y/n): "
     read -r proceed_anyway < /dev/tty
+    while [[ ! "$proceed_anyway" =~ ^[YyNn]$ ]]; do
+      echo "❌ Invalid input. Please enter 'y' or 'n': "
+      read -r proceed_anyway < /dev/tty
+    done
     if [[ ! "$proceed_anyway" =~ ^[Yy]$ ]]; then
       manual_region_input
       return

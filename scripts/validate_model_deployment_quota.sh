@@ -40,6 +40,13 @@ if [[ ${#MISSING_PARAMS[@]} -ne 0 ]]; then
   exit 1
 fi
 
+# Check if user is logged in to Azure
+if ! az account show > /dev/null 2>&1; then
+  echo "❌ ERROR: You are not logged in to Azure CLI."
+  echo "👉 Please run 'az login' to continue."
+  exit 1
+fi
+
 # Load model definitions
 aiModelDeployments=$(jq -c ".parameters.$MODELS_PARAMETER.value[]" ./infra/main.parameters.json 2>/dev/null)
 if [[ $? -ne 0 || -z "$aiModelDeployments" ]]; then

@@ -111,7 +111,13 @@ if ($PrimaryResult) {
             Write-Host "🚨 Your application may not work as expected due to limited quota."
             Write-Host "`nℹ️  Recommended regions: $($RecommendedRegions -join ', ')"
             Write-Host "👉 It's advisable to deploy in one of these regions for optimal app performance."
-            $choice = Read-Host "❓ Do you want to choose a recommended region instead? (y/n)"
+            do {
+                $choice = Read-Host "❓ Do you want to choose a recommended region instead? (y/n)"
+                if ($choice -notmatch "^[YyNn]$") {
+                    Write-Host "❌ Invalid input. Please enter 'y' or 'n'."
+                }
+            } while ($choice -notmatch "^[YyNn]$")
+
             if ($choice -match "^[Yy]$") {
                 Show-Table
                 break
@@ -186,7 +192,13 @@ while ($true) {
         Write-Host "`n⚠️  You have entered a capacity of $ManualCapacity, which is less than the recommended minimum (200)."
         Write-Host "🚨 This may cause performance issues or unexpected behavior."
         Write-Host "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): $($RecommendedRegions -join ', ')"
-        $proceed = Read-Host "❓ Proceed anyway? (y/n)"
+        do {
+            $proceed = Read-Host "❓ Proceed anyway? (y/n)"
+            if ($proceed -notmatch "^[YyNn]$") {
+                Write-Host "❌ Invalid input. Please enter 'y' or 'n'."
+            }
+        } while ($proceed -notmatch "^[YyNn]$")
+
         if ($proceed -notmatch "^[Yy]$") {
             continue
         }
