@@ -7,10 +7,10 @@ param solutionLocation string
 param keyVaultName string
 param gptModelName string
 param gptModelVersion string
-param managedIdentityObjectId string
+// param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
-param aiServicesId string
+// param aiServicesId string
 
 param existingLogAnalyticsWorkspaceId string = ''
 
@@ -22,15 +22,23 @@ var existingLawName = useExisting ? split(existingLogAnalyticsWorkspaceId, '/')[
 var abbrs = loadJsonContent('./abbreviations.json')
 
 var storageName = '${abbrs.storage.storageAccount}${solutionName}'
+
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
+// var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
+var aiFoundryName = '${abbrs.ai.aiFoundry}${solutionName}'
 var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
 var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
-var aiProjectFriendlyName = aiProjectName
+// var azureAiHubName = '${abbrs.ai.aiHub}${solutionName}'
+// var aiHubFriendlyName = azureAiHubName
+// var aiHubDescription = 'AI Hub for KM template'
+// var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
 var aiSearchName = '${solutionName}-search'
 var applicationInsightsName = '${solutionName}-appi'
+var aiProjectDescription = 'AI foundary project for CPS template'
+var aiProjectName = '${abbrs.ai.aiFoundryProject}${solutionName}'
+var aiProjectFriendlyName = aiProjectName
+
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
   name: keyVaultName
@@ -67,187 +75,124 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
 
 var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
 
-resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: storageNameCleaned
-  location: location
-  sku: {
-    name: storageSkuName
-  }
-  kind: 'StorageV2'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowCrossTenantReplication: false
-    allowSharedKeyAccess: false
-    encryption: {
-      keySource: 'Microsoft.Storage'
-      requireInfrastructureEncryption: false
-      services: {
-        blob: {
-          enabled: true
-          keyType: 'Account'
-        }
-        file: {
-          enabled: true
-          keyType: 'Account'
-        }
-        queue: {
-          enabled: true
-          keyType: 'Service'
-        }
-        table: {
-          enabled: true
-          keyType: 'Service'
-        }
-      }
-    }
-    isHnsEnabled: false
-    isNfsV3Enabled: false
-    keyPolicy: {
-      keyExpirationPeriodInDays: 7
-    }
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-  }
-}
 
-// Create AI Services resource (pavan approach)
-resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
-  name: aiServicesName
-  location: location
-  sku: {
-    name: 'S0'
-  }
-  kind: 'AIServices'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    allowProjectManagement: true
-    customSubDomainName: aiServicesName
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false //needs to be false to access keys 
-  }
-}
 
-@description('This is the built-in Storage Blob Data Contributor.')
-resource blobDataContributor 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  scope: subscription()
-  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-}
 
-resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, managedIdentityObjectId, blobDataContributor.id)
-  scope: storage
-  properties: {
-    principalId: managedIdentityObjectId
-    roleDefinitionId: blobDataContributor.id
-    principalType: 'ServicePrincipal'
-  }
-}
+// resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+//   name: storageNameCleaned
+//   location: location
+//   sku: {
+//     name: storageSkuName
+//   }
+//   kind: 'StorageV2'
+//   identity: {
+//     type: 'SystemAssigned'
+//   }
+//   properties: {
+//     accessTier: 'Hot'
+//     allowBlobPublicAccess: false
+//     allowCrossTenantReplication: false
+//     allowSharedKeyAccess: false
+//     encryption: {
+//       keySource: 'Microsoft.Storage'
+//       requireInfrastructureEncryption: false
+//       services: {
+//         blob: {
+//           enabled: true
+//           keyType: 'Account'
+//         }
+//         file: {
+//           enabled: true
+//           keyType: 'Account'
+//         }
+//         queue: {
+//           enabled: true
+//           keyType: 'Service'
+//         }
+//         table: {
+//           enabled: true
+//           keyType: 'Service'
+//         }
+//       }
+//     }
+//     isHnsEnabled: false
+//     isNfsV3Enabled: false
+//     keyPolicy: {
+//       keyExpirationPeriodInDays: 7
+//     }
+//     largeFileSharesState: 'Disabled'
+//     minimumTlsVersion: 'TLS1_2'
+//     networkAcls: {
+//       bypass: 'AzureServices'
+//       defaultAction: 'Allow'
+//     }
+//     supportsHttpsTrafficOnly: true
+//   }
+// }
 
-resource storageroleAiServiceAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, aiServices.id, blobDataContributor.id)
-  scope: storage
-  properties: {
-    principalId: aiServices.identity.principalId
-    roleDefinitionId: blobDataContributor.id
-    principalType: 'ServicePrincipal' 
-  }
-}
+// @description('This is the built-in Storage Blob Data Contributor.')
+// resource blobDataContributor 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
+//   scope: subscription()
+//   name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+// }
 
-resource cognitiveServicesUserRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  scope: aiServices
-  name: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-}
+// resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+//   name: guid(resourceGroup().id, managedIdentityObjectId, blobDataContributor.id)
+//   scope: storage
+//   properties: {
+//     principalId: managedIdentityObjectId
+//     roleDefinitionId: blobDataContributor.id
+//     principalType: 'ServicePrincipal'
+//   }
+// }
 
-resource cognitiveServicesUserAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, managedIdentityObjectId, cognitiveServicesUserRoleDefinition.id)
-  scope: aiServices
-  properties: {
-    principalId: managedIdentityObjectId
-    roleDefinitionId: cognitiveServicesUserRoleDefinition.id
-    principalType: 'ServicePrincipal' 
-  }
-}
+// resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
+//   name: azureAiHubName
+//   location: location
+//   identity: {
+//     type: 'SystemAssigned'
+//   }
+//   properties: {
+//     // organization
+//     friendlyName: aiHubFriendlyName
+//     description: aiHubDescription
 
-resource cognitiveServicesUserAiServiceAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, aiServices.id, cognitiveServicesUserRoleDefinition.id)
-  scope: aiServices
-  properties: {
-    principalId: aiServices.identity.principalId
-    roleDefinitionId: cognitiveServicesUserRoleDefinition.id
-    principalType: 'ServicePrincipal' 
-  }
-}
+//     // dependent resources
+//     keyVault: keyVault.id
+//     storageAccount: storage.id
+//   }
+//   kind: 'hub'
 
-resource aiDeveloperRoleDefinition 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  scope: aiServices
-  name: '64702f94-c441-49e6-a78b-ef80e0188fee'
-}
+//   resource aiServicesConnection 'connections@2024-07-01-preview' = {
+//     name: '${azureAiHubName}-connection-AzureOpenAI'
+//     properties: {
+//       category: 'AIServices'
+//       target: aiServicesEndpoint
+//       authType: 'ApiKey'
+//       isSharedToAll: true
+//       credentials: {
+//         key: aiServicesKey
+//       }
+//       metadata: {
+//         ApiType: 'Azure'
+//         ResourceId: aiServicesId
+//       }
+//     }
+//   }
+// }
 
-resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, managedIdentityObjectId, aiDeveloperRoleDefinition.id)
-  scope: aiServices
-  properties: {
-    principalId: managedIdentityObjectId
-    roleDefinitionId: aiDeveloperRoleDefinition.id
-    principalType: 'ServicePrincipal' 
-  }
-}
-
-resource aiDeveloperAiServiceAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, aiServices.id, aiDeveloperRoleDefinition.id)
-  scope: aiServices
-  properties: {
-    principalId: aiServices.identity.principalId
-    roleDefinitionId: aiDeveloperRoleDefinition.id
-    principalType: 'ServicePrincipal' 
-  }
-}
-
-// Create AI Project (pavan approach)
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
-  parent: aiServices
-  name: aiProjectName
-  location: solutionLocation
-  kind: 'AIServices'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {}
-}
-
-// Create project-level storage connection
-resource project_connection_azure_storage 'Microsoft.CognitiveServices/accounts/projects/connections@2025-04-01-preview' = {
-  name: 'myStorageProjectConnectionName'
-  parent: aiProject
-  properties: {
-    category: 'AzureBlob'
-    target: storage.properties.primaryEndpoints.blob
-    authType: 'AAD'
-    metadata: {
-      ApiType: 'Azure'
-      ResourceId: storage.id
-      location: storage.location
-      containerName: 'ai-container'
-      accountName: storage.name
-    }
-  }
-}
+// resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' = {
+//   name: aiProjectName
+//   location: location
+//   kind: 'Project'
+//   identity: {
+//     type: 'SystemAssigned'
+//   }
+//   properties: {
+//     friendlyName: aiProjectFriendlyName
+//     hubResourceId: aiHub.id
+//   }
+// }
 
 resource tenantIdEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
@@ -277,7 +222,7 @@ resource azureOpenAIApiKeyEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-pr
   parent: keyVault
   name: 'AZURE-OPENAI-KEY'
   properties: {
-    value: aiServices.listKeys().key1
+    value: aiServicesKey //aiServices_m.listKeys().key1
   }
 }
 
@@ -301,17 +246,55 @@ resource azureOpenAIEndpointEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-
   parent: keyVault
   name: 'AZURE-OPENAI-ENDPOINT'
   properties: {
-    value: aiServices.properties.endpoints['OpenAI Language Model Instance API']
+    value: aiServicesEndpoint//aiServices_m.properties.endpoint
   }
 }
 
-resource azureAIProjectConnectionStringEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
-  parent: keyVault
-  name: 'AZURE-AI-PROJECT-CONN-STRING'
+
+resource aiFoundry 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+  name: aiFoundryName
+  location: location
+  sku: {
+    name: 'S0'
+  }
+  kind: 'AIServices'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    value: '${aiProjectName};${subscription().subscriptionId};${resourceGroup().name};${aiProject.name}'
+    allowProjectManagement: true
+    customSubDomainName: aiFoundryName
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: false
   }
 }
+
+resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+  parent: aiFoundry
+  name: aiProjectName
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    description: aiProjectDescription
+    displayName: aiProjectFriendlyName
+  }
+}
+
+
+// resource azureAIProjectConnectionStringEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+//   parent: keyVault
+//   name: 'AZURE-AI-PROJECT-CONN-STRING'
+//   properties: {
+//     value: '${split(aiFoundryProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiFoundryProject.name}'
+//   }
+// }
 
 resource azureOpenAICUApiVersionEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
@@ -333,7 +316,7 @@ resource cogServiceEndpointEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-p
   parent: keyVault
   name: 'COG-SERVICES-ENDPOINT'
   properties: {
-    value: aiServices.properties.endpoints['OpenAI Language Model Instance API']
+    value: aiServicesEndpoint
   }
 }
 
@@ -341,15 +324,15 @@ resource cogServiceKeyEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-previe
   parent: keyVault
   name: 'COG-SERVICES-KEY'
   properties: {
-    value: aiServices.listKeys().key1
+    value: aiServicesKey
   }
 }
 
-resource cogServiceNameEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+resource cogServiceNameEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {  // need to discuss with roopan
   parent: keyVault
   name: 'COG-SERVICES-NAME'
   properties: {
-    value: aiServicesName
+    value:  aiFoundryName
   }
 }
 
@@ -380,17 +363,14 @@ resource azureLocatioEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview
 output keyvaultName string = keyvaultName
 output keyvaultId string = keyVault.id
 
-output aiServicesName string = aiServicesName 
-output aiServicesTarget string = aiServices.properties.endpoints['OpenAI Language Model Instance API']
-output aiServicesId string = aiServices.id
+output aiFoundryName string = aiFoundryName 
 output aiSearchName string = aiSearchName
-output aiProjectName string = aiProject.name
+output aiProjectName string = aiFoundryProject.name
 
 output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = useExisting ? existingLogAnalyticsWorkspace.id : logAnalytics.id
-output storageAccountId string = storage.id
+// output storageAccountId string = storage.id
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
 
-output projectConnectionString string = '${aiProjectName};${subscription().subscriptionId};${resourceGroup().name};${aiProject.name}'
-output projectEndpoint string = aiProject.properties.endpoints['AI Foundry API']
+output projectConnectionString string = aiFoundryProject.properties.endpoints['AI Foundry API']
