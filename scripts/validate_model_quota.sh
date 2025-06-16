@@ -6,6 +6,7 @@ DEPLOYMENT_TYPE="Standard"
 CAPACITY=0
 RECOMMENDED_TOKENS=200
 TABLE_SHOWN=false
+RECOMMENDATIONS_SHOWN=false
 
 ALL_REGIONS=('australiaeast' 'eastus' 'eastus2' 'francecentral' 'japaneast' 'norwayeast' 'southindia' 'swedencentral' 'uksouth' 'westus' 'westus3')
 
@@ -58,9 +59,13 @@ check_quota() {
   ALL_RESULTS+=("$region|$LIMIT|$CURRENT_VALUE|$AVAILABLE")
 
   if [[ "$AVAILABLE" -ge "$RECOMMENDED_TOKENS" ]]; then
-    RECOMMENDED_REGIONS+=("$region")
+    if [[ ! " ${RECOMMENDED_REGIONS[@]} " =~ " $region " ]]; then
+      RECOMMENDED_REGIONS+=("$region")
+    fi
   else
-    NOT_RECOMMENDED_REGIONS+=("$region")
+    if [[ ! " ${NOT_RECOMMENDED_REGIONS[@]} " =~ " $region " ]]; then
+      NOT_RECOMMENDED_REGIONS+=("$region")
+    fi
   fi
 
   if [[ "$AVAILABLE" -ge "$CAPACITY" ]]; then
@@ -131,13 +136,12 @@ ask_for_location() {
     echo "✅ Updated and ready to deploy in '$LOCATION'."
     exit 0
   else
-    echo "❌ Insufficient quota in '$LOCATION'. Checking fallback regions..."
+    # echo "❌ Insufficient quota in '$LOCATION'. Checking fallback regions..."
     check_fallback_regions
   fi
 }
 
 check_fallback_regions() {
-  # Check fallback regions if the primary location fails
   for region in "${ALL_REGIONS[@]}"; do
     [[ "$region" == "$LOCATION" ]] && continue
     check_quota "$region"
@@ -151,7 +155,7 @@ check_fallback_regions() {
     TABLE_SHOWN=true
   fi
 
-  if [[ ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
+  if [[ "$RECOMMENDATIONS_SHOWN" == false && ${#FALLBACK_RESULTS[@]} -gt 0 ]]; then
     echo -e "\n➡️  Found fallback regions with sufficient quota."
     if [[ ${#RECOMMENDED_REGIONS[@]} -gt 0 ]]; then
       echo -e "\nℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available):"
@@ -159,68 +163,27 @@ check_fallback_regions() {
         echo "  - $region"
       done
     fi
-
     echo -e "\n❗ The originally selected region '$LOCATION' does not have enough quota."
     echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
+    RECOMMENDATIONS_SHOWN=true
+  elif [[ "$RECOMMENDATIONS_SHOWN" == true ]]; then
+    echo -e "\n⚠️ Could not retrieve the quota info for the region: $LOCATION"
+    echo "👉 You can manually choose one of the recommended fallback regions for deployment from the list shown above."
   else
     echo -e "\n❌ ERROR: No region has sufficient quota."
   fi
 
-  # Allow retry or exit
   echo -n "❓ Would you like to retry with a different region? (y/n): "
   read -r retry < /dev/tty
+  while [[ ! "$retry" =~ ^[YyNn]$ ]]; do
+    echo "❌ Invalid input. Please enter 'y' or 'n': "
+    read -r retry < /dev/tty
+  done
   if [[ "$retry" =~ ^[Yy]$ ]]; then
     ask_for_location
   else
     echo "Exiting... No region with sufficient quota."
     exit 1
-  fi
-}
-
-manual_region_input() {
-  echo -n "Please enter a region you want to try manually: "
-  read -r manual_region < /dev/tty
-  if [[ -z "$manual_region" ]]; then
-    echo "❌ ERROR: No region entered. Exiting."
-    exit 1
-  fi
-
-  echo -n "Enter the capacity you want to use (numeric value): "
-  read -r manual_capacity < /dev/tty
-
-  if ! [[ "$manual_capacity" =~ ^[0-9]+$ ]] || (( manual_capacity <= 0 )); then
-    echo "❌ Invalid capacity value. Try again."
-    manual_region_input
-    return
-  fi
-
-  if (( manual_capacity < RECOMMENDED_TOKENS )); then
-    echo -e "\n⚠️  You have entered a capacity of $manual_capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
-    echo -e "🚨 This may cause performance issues or unexpected behavior."
-    echo -e "ℹ️  Recommended regions (≥ $RECOMMENDED_TOKENS tokens available): ${RECOMMENDED_REGIONS[*]}"
-    echo -n "❓ Proceed anyway? (y/n): "
-    read -r proceed_anyway < /dev/tty
-    while [[ ! "$proceed_anyway" =~ ^[YyNn]$ ]]; do
-      echo "❌ Invalid input. Please enter 'y' or 'n': "
-      read -r proceed_anyway < /dev/tty
-    done
-    if [[ ! "$proceed_anyway" =~ ^[Yy]$ ]]; then
-      manual_region_input
-      return
-    fi
-  fi
-
-  echo -e "\n🔍 Checking quota in region '$manual_region' for requested capacity: $manual_capacity..."
-  CAPACITY=$manual_capacity
-  LOCATION=$manual_region
-  check_quota "$LOCATION"
-
-  if [[ $? -eq 0 ]]; then
-    update_env_and_parameters "$LOCATION" "$CAPACITY"
-    echo "✅ Deployment values set. Exiting."
-    exit 0
-  else
-    echo "❌ Quota in region '$LOCATION' is insufficient. Available: $manual_capacity"
   fi
 }
 
