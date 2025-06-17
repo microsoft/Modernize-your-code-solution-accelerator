@@ -162,7 +162,7 @@ ask_for_location() {
     echo "✅ Proceeding with deployment in '$LOCATION'."
     exit 0
   else
-    echo "❌ Quota insufficient in '$LOCATION'. Checking fallback regions..."
+    # echo "❌ Quota insufficient in '$LOCATION'. Checking fallback regions..."
     check_fallback_regions
   fi
 }
