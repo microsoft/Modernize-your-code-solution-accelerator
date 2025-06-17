@@ -196,6 +196,7 @@ jobs:
 
 
       - name: Wait for resource deletion to complete
+        if: always()
         run: |
 
           # List of keyvaults 
