@@ -6,6 +6,7 @@ on:
       - main
   schedule:
     - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -93,6 +94,7 @@ jobs:
 
 
       - name: Get Log Analytics Workspace and OpenAI from Resource Group
+        if: always()
         id: get_azure_resources
         run: |
 
@@ -125,6 +127,7 @@ jobs:
 
 
       - name: List KeyVaults and Store in Array
+        if: always()
         id: list_keyvaults
         run: |
 
@@ -158,6 +161,7 @@ jobs:
           fi
 
       - name: Purge log analytics workspace
+        if: always()
         id: log_analytics_workspace
         run: |
 
@@ -174,7 +178,7 @@ jobs:
       
 
       - name: Delete Bicep Deployment
-        if: success()
+        if: always()
         run: |
           set -e  
           echo "Checking if resource group exists..."
@@ -252,7 +256,7 @@ jobs:
 
           
       - name: Purging the Resources
-        if: success()
+        if: always()
         run: |
 
           set -e
