@@ -45,6 +45,12 @@ print_recommended_warning() {
     echo -e "\n⚠️  You have entered a capacity of $capacity, which is less than the recommended minimum ($RECOMMENDED_TOKENS)."
     echo -e "🚨 This may cause performance issues or unexpected behavior."
     echo -e "📊 Available quota in '$LOCATION': $available, Required: $capacity"
+    if (( available < RECOMMENDED_TOKENS )); then
+      echo -e "❗️ Available quota is below recommended minimum ($RECOMMENDED_TOKENS)."
+      check_fallback_regions
+    else
+      echo -e "ℹ️  Available quota is sufficient for the requested capacity."
+    fi
   else
     echo -e "\n⚠️  Capacity entered is below recommended, but region quota data was not found."
   fi
@@ -113,7 +119,7 @@ show_table() {
   local index=1
   for result in "${ALL_RESULTS[@]}"; do
     IFS='|' read -r region limit used available <<< "$result"
-    if (( available >= 50 )); then
+    if (( available >= 50 ))  && [[ -z "${printed_regions[$region]}" ]]; then
       printf "| %-3s | %-16s | %-33s | %-6s | %-6s | %-9s |\n" "$index" "$region" "OpenAI.$DEPLOYMENT_TYPE.$MODEL" "$limit" "$used" "$available"
       ((index++))
     fi
@@ -185,9 +191,9 @@ check_fallback_regions() {
     echo -e "\n❌ ERROR: No region has sufficient quota."
   fi
 
-  prompt_yes_no "❓ Would you like to retry with a different region? (y/n): " && ask_for_location || {
-    echo "Exiting... No region with sufficient quota."
-    exit 1
+  prompt_yes_no "❓ Proceed anyway? (y/n): " || {
+    ask_for_location
+    return
   }
 }
 
