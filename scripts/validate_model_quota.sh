@@ -215,7 +215,6 @@ INITIAL_LOCATION="$LOCATION"
 echo -e "\n🔍 Checking quota in the requested region '$LOCATION'..."
 if check_quota "$LOCATION"; then
   if (( CAPACITY < RECOMMENDED_TOKENS )); then
-    check_fallback_regions
     print_recommended_warning "$CAPACITY"
     prompt_yes_no "❓ Proceed anyway? (y/n): " || {
       ask_for_location
