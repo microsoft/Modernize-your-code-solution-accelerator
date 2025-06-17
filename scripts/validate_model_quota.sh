@@ -185,10 +185,10 @@ check_fallback_regions() {
       for region in "${RECOMMENDED_REGIONS[@]}"; do
         echo "  - $region"
       done
-      prompt_yes_no "❓ Do you want to proceed by selecting one of these regions? (y/n): " || {
+      if prompt_yes_no "❓ Do you want to proceed by selecting one of these regions? (y/n): "; then
         ask_for_location
-        return
-      }
+      fi
+
     fi
     echo -e "👉 You can manually choose one of the recommended fallback regions for deployment."
   else
