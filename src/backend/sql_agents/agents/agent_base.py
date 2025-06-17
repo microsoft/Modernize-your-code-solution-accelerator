@@ -3,10 +3,11 @@
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List, Optional, TypeVar, Union
-import json
 
-# Removed broken import:
-# from azure.ai.projects.models import ResponseFormatJsonSchema, ResponseFormatJsonSchemaType
+from azure.ai.agents.models import (
+    ResponseFormatJsonSchema,
+    ResponseFormatJsonSchemaType,
+)
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent
 from semantic_kernel.functions import KernelArguments
@@ -106,30 +107,23 @@ class BaseSQLAgent(Generic[T], ABC):
 
         kernel_args = self.get_kernel_arguments()
 
-        # Define an agent on the Azure AI agent service
-        # Construct response_format manually
-        response_format = None
-        if self.response_object:
-            response_format = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": self.response_object.__name__,
-                    "description": f"respond with {self.response_object.__name__.lower()}",
-                    "schema": self.response_object.model_json_schema()
-                }
-            }
-
         try:
+            # Define an agent on the Azure AI agent service
             agent_definition = await self.config.ai_project_client.agents.create_agent(
                 model=_deployment_name,
                 name=_name,
                 instructions=template_content,
                 temperature=self.temperature,
-                response_format=response_format,
+                response_format=ResponseFormatJsonSchemaType(
+                    json_schema=ResponseFormatJsonSchema(
+                        name=self.response_object.__name__,
+                        description=f"respond with {self.response_object.__name__.lower()}",
+                        schema=self.response_object.model_json_schema(),
+                    )
+                ),
             )
         except Exception as exc:
             logger.error("Error creating agent definition: %s", exc)
-            raise
         # Set the agent definition with the response format
 
         # Create a Semantic Kernel agent based on the agent definition
