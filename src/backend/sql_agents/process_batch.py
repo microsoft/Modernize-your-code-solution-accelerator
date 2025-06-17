@@ -1,4 +1,4 @@
-﻿"""
+﻿﻿"""
 This script demonstrates how to use the backend agents to migrate
 a query from one SQL dialect to another.
 It is the main entry point for the SQL migration process.
@@ -131,7 +131,7 @@ async def process_batch_async(
                 else:
                     await batch_service.update_file_counts(file["file_id"])
                 # TEMPORARY: awaiting bug fix for rate limits
-                await asyncio.sleep(5)
+                # await asyncio.sleep(5)
             except UnicodeDecodeError as ucde:
                 logger.error("Error decoding file: %s", file)
                 logger.error("Error decoding file. %s", ucde)
