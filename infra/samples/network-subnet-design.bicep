@@ -30,6 +30,15 @@ param enableTelemetry bool = true
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
 
+@description('Admin username for the VM.')
+@secure()
+param vmAdminUsername string = 'JumpboxAdminUser'
+
+@description('Admin password for the VM.')
+@secure()
+param vmAdminPassword string = 'JumpboxAdminP@ssw0rd1234!'
+
+
 import { bastionHostConfigurationType } from '../modules/network/bastionHost.bicep'
 @description('Optional. Configuration for the Azure Bastion Host. Leave null to omit Bastion creation.')
 param bastionConfiguration bastionHostConfigurationType = {
@@ -42,8 +51,8 @@ import { jumpBoxConfigurationType } from '../modules/network/jumpbox.bicep'
 param jumpboxConfiguration jumpBoxConfigurationType = {
   name: 'vm-jumpbox-${resourcesName}'
   size: 'Standard_D2s_v3' // Default size, can be overridden
-  username: 'JumpboxAdminUser'
-  password: 'JumpboxAdminP@ssw0rd1234!'
+  username: vmAdminUsername
+  password: vmAdminPassword 
   subnet: {
     name: 'jumpbox-subnet'
     addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
