@@ -172,6 +172,7 @@ module azureAifoundry 'deploy_ai_foundry.bicep' = {
     aiServicesKey: azureAiServices.listKeys().key1
     aiServicesId: azureAiServices.id
     existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
+    aureaiFoundryEndpoint: aiFoundryProject.properties.endpoints['AI Foundry API']
   }
   scope: resourceGroup(resourceGroup().name)
 }
@@ -467,6 +468,7 @@ resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
     principalId: containerAppBackend.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 var openAiContributorRoleId = 'a001fd3d-188f-4b5d-821b-7da978bf7442'  // Fixed Role ID for OpenAI Contributor
@@ -477,6 +479,7 @@ resource openAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-0
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiContributorRoleId) // OpenAI Service Contributor
     principalId: containerAppBackend.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -493,10 +496,6 @@ resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2
   dependsOn: [azureAifoundry]
 }]
 
-// resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' existing = {
-//   name: '${abbrs.ai.aiHubProject}${ResourcePrefix}' // aiProjectName must be calculated - available at main start.
-// }
-
 resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
   name: '64702f94-c441-49e6-a78b-ef80e0188fee'
 }
@@ -507,6 +506,7 @@ resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-
   properties: {
     roleDefinitionId: aiDeveloper.id
     principalId: containerAppBackend.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -521,6 +521,7 @@ resource aiUserAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' =
   properties: {
     roleDefinitionId: aiUser.id
     principalId: containerAppBackend.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
@@ -530,6 +531,7 @@ resource aiUserAccessFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01
   properties: {
     roleDefinitionId: aiUser.id
     principalId: containerAppBackend.identity.principalId
+    principalType: 'ServicePrincipal'
   }
 }
 
