@@ -36,13 +36,18 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 
 When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
 
-| **Setting** | **Description** |  **Default value** |
-|------------|----------------|  ------------|
-| **Azure Region** | The region where resources will be created. | East US| 
-| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
-| **Capacity** | Configure capacity for **gpt-4o**. |  5k |
-| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id. |  |
+| **Setting**                       | **Description**                                                                                      | **Default value**         |
+|----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
+| **Azure Region**                 | The region where resources will be created.                                                         | East US                   |
+| **Resource Prefix**              | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | azdtemp                   |
+| **AI Location**                  | Location for all AI services resources. This location can be different from the resource group location. | japaneast                 |
+| **Capacity**                     | Configure capacity for **gpt-4o**.                                                                   | 200                        |
+| **Model Deployment Type**        | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                        | GlobalStandard             |
+| **Model Name**                   | Set the Model Name (allowed values: gpt-4o).                                                        | gpt-4o                     |
+| **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
+| **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
+| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
+
 
 This accelerator can be configured to  use authentication. 
 
