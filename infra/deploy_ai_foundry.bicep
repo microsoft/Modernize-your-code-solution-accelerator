@@ -12,6 +12,7 @@ param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
 
+param aiFoundryName string
 param existingLogAnalyticsWorkspaceId string = ''
 
 var useExisting = !empty(existingLogAnalyticsWorkspaceId)
@@ -24,20 +25,13 @@ var abbrs = loadJsonContent('./abbreviations.json')
 var storageName = '${abbrs.storage.storageAccount}${solutionName}'
 
 var storageSkuName = 'Standard_LRS'
-// var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
-var aiFoundryName = '${abbrs.ai.aiFoundry}${solutionName}'
 var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
 var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-// var azureAiHubName = '${abbrs.ai.aiHub}${solutionName}'
-// var aiHubFriendlyName = azureAiHubName
-// var aiHubDescription = 'AI Hub for KM template'
-// var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
+
 var aiSearchName = '${solutionName}-search'
 var applicationInsightsName = '${solutionName}-appi'
-var aiProjectDescription = 'AI foundary project for CPS template'
-var aiProjectName = '${abbrs.ai.aiFoundryProject}${solutionName}'
-var aiProjectFriendlyName = aiProjectName
+
 
 
 resource keyVault 'Microsoft.KeyVault/vaults@2022-07-01' existing = {
@@ -250,44 +244,6 @@ resource azureOpenAIEndpointEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-
   }
 }
 
-
-resource aiFoundry 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
-  name: aiFoundryName
-  location: location
-  sku: {
-    name: 'S0'
-  }
-  kind: 'AIServices'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    allowProjectManagement: true
-    customSubDomainName: aiFoundryName
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
-  }
-}
-
-resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
-  parent: aiFoundry
-  name: aiProjectName
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    description: aiProjectDescription
-    displayName: aiProjectFriendlyName
-  }
-}
-
-
 // resource azureAIProjectConnectionStringEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
 //   parent: keyVault
 //   name: 'AZURE-AI-PROJECT-CONN-STRING'
@@ -328,11 +284,11 @@ resource cogServiceKeyEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-previe
   }
 }
 
-resource cogServiceNameEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {  // need to discuss with roopan
+resource cogServiceNameEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
   name: 'COG-SERVICES-NAME'
   properties: {
-    value:  aiFoundryName
+    value: aiFoundryName
   }
 }
 
@@ -363,14 +319,10 @@ resource azureLocatioEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview
 output keyvaultName string = keyvaultName
 output keyvaultId string = keyVault.id
 
-output aiFoundryName string = aiFoundryName 
 output aiSearchName string = aiSearchName
-output aiProjectName string = aiFoundryProject.name
 
 output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = useExisting ? existingLogAnalyticsWorkspace.id : logAnalytics.id
 // output storageAccountId string = storage.id
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
-
-output projectConnectionString string = aiFoundryProject.properties.endpoints['AI Foundry API']
