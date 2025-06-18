@@ -62,8 +62,6 @@ var aiFoundryName = '${abbrs.ai.aiFoundry}${ResourcePrefix}'
 var aiProjectDescription = 'AI foundary project for CPS template'
 var aiProjectName = '${abbrs.ai.aiFoundryProject}${ResourcePrefix}'
 var aiProjectFriendlyName = aiProjectName
-var projectEndpointString =''
-
 
 var aiModelDeployments = [
   {
@@ -400,7 +398,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              value: projectEndpointString
+              value: aiFoundryProject.properties.endpoints['AI Foundry API']
             }
           ]
           resources: {
