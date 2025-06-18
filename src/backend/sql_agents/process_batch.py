@@ -11,6 +11,7 @@ from api.status_updates import send_status_update
 
 from azure.identity.aio import DefaultAzureCredential
 
+from common.config.config import app_config
 from common.models.api import (
     FileProcessUpdate,
     FileRecord,
@@ -20,11 +21,11 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
-from common.config.config import app_config
+
 from fastapi import HTTPException
 
 
-from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent, AzureAIAgentSettings  # pylint: disable=E0611
+from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
 
@@ -36,6 +37,7 @@ from sql_agents.helpers.utils import is_text
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
+
 
 # Walk through batch structure processing each file
 async def process_batch_async(
@@ -56,7 +58,6 @@ async def process_batch_async(
     except Exception as exc:
         logger.error("Error updating batch status. %s", exc)
 
-    ai_agent_settings = AzureAIAgentSettings()
     # Add client and auto cleanup
     async with (
         DefaultAzureCredential() as creds,
