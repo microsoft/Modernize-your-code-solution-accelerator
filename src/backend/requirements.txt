@@ -35,8 +35,8 @@ structlog
 typing-extensions
 python-jose[cryptography]
 passlib[bcrypt]
-semantic-kernel[azure]==1.27.2
-openai
+semantic-kernel[azure]==1.32.2
+openai==1.84.0
 sqlparse
 sqlglot
 unittest2
@@ -51,4 +51,4 @@ opentelemetry-api==1.31.1
 opentelemetry-semantic-conventions==0.52b1
 opentelemetry-instrumentation==0.52b1
 azure-monitor-opentelemetry==1.6.8
-azure-ai-projects==1.0.0b9
+azure-ai-projects==1.0.0b11
