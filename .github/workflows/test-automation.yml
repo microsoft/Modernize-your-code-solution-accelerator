@@ -1,23 +1,23 @@
 name: Test Automation Code Modernization
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-    paths:
-      - 'tests/e2e-test/**'
-  schedule:
-      - cron: '0 13 * * *'  # Runs at 1 PM UTC
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      CODEMOD_WEB_URL:
+        required: true
+        type: string
+        description: "Web URL for Code Modernization"
+    secrets:
+      EMAILNOTIFICATION_LOGICAPP_URL_TA:
+        required: false
+        description: "Logic App URL for email notifications"
 
 env:
-    url: ${{ vars.CODEMOD_WEB_URL }}
-    accelerator_name: "Code Modernization"
+  url: ${{ inputs.CODEMOD_WEB_URL }}
+  accelerator_name: "Code Modernization"
 
 jobs:
   test:
-
     runs-on: ubuntu-latest
     steps:      
       - name: Checkout repository
