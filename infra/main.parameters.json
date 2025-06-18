@@ -63,7 +63,7 @@
           },
           "sku": {
             "name": "GlobalStandard",
-            "capacity": 200
+            "capacity": 50
           }
         }
       ]
