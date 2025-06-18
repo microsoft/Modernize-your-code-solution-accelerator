@@ -64,6 +64,7 @@ jobs:
           else
             echo "Resource group already exists."
           fi
+          echo "RESOURCE_GROUP_NAME=${{ env.RESOURCE_GROUP_NAME }}" >> $GITHUB_OUTPUT
 
       - name: Generate Unique Solution Prefix
         id: generate_solution_prefix
@@ -97,9 +98,6 @@ jobs:
             --parameters \
                 Prefix="${{ env.SOLUTION_PREFIX }}" \
                 AzureAiServiceLocation="westus" \
-                deploymentType="GlobalStandard" \
-                llmModel="gpt-4o" \
-                gptModelVersion="2024-08-06" \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}"\
             --debug
