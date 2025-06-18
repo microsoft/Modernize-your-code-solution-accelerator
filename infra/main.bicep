@@ -57,9 +57,12 @@ var cosmosdbLogContainer  = 'cmsalog'
 var containerName  = 'appstorage'
 var storageSkuName = 'Standard_LRS'
 var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
-var azureAiServicesName = '${abbrs.ai.aiServices}${ResourcePrefix}'
 
-// param aiProjectName string
+var aiFoundryName = '${abbrs.ai.aiFoundry}${ResourcePrefix}'
+var aiProjectDescription = 'AI foundary project for CPS template'
+var aiProjectName = '${abbrs.ai.aiFoundryProject}${ResourcePrefix}'
+var aiProjectFriendlyName = aiProjectName
+var projectEndpointString =''
 
 
 var aiModelDeployments = [
@@ -75,15 +78,39 @@ var aiModelDeployments = [
   }
 ]
 
-resource azureAiServices 'Microsoft.CognitiveServices/accounts@2024-04-01-preview' = {
-  name: azureAiServicesName
+resource azureAiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
+  name: aiFoundryName
   location: AzureAiServiceLocation
   sku: {
     name: 'S0'
   }
   kind: 'AIServices'
+  identity: {
+    type: 'SystemAssigned'
+  }
   properties: {
-    customSubDomainName: azureAiServicesName
+    allowProjectManagement: true
+    customSubDomainName: aiFoundryName
+    networkAcls: {
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
+      ipRules: []
+    }
+    publicNetworkAccess: 'Enabled'
+    disableLocalAuth: false
+  }
+}
+
+resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+  parent: azureAiServices
+  name: aiProjectName
+  location: AzureAiServiceLocation
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    description: aiProjectDescription
+    displayName: aiProjectFriendlyName
   }
 }
 
@@ -138,6 +165,7 @@ module azureAifoundry 'deploy_ai_foundry.bicep' = {
   params: {
     solutionName: ResourcePrefix
     solutionLocation: AzureAiServiceLocation
+    aiFoundryName: aiFoundryName
     keyVaultName: kvault.outputs.keyvaultName
     gptModelName: llmModel
     gptModelVersion: gptModelVersion
@@ -324,7 +352,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://${azureAifoundry.outputs.aiFoundryName}.openai.azure.com/'
+              value: 'https://${aiFoundryName}.openai.azure.com/'
             }
             {
               name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
@@ -360,7 +388,7 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: azureAifoundry.outputs.aiProjectName
+              value: aiProjectName
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
@@ -371,8 +399,8 @@ resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
               value: subscription().subscriptionId
             }
             {
-              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING'
-              value: azureAifoundry.outputs.projectConnectionString
+              name: 'AI_PROJECT_ENDPOINT'
+              value: projectEndpointString
             }
           ]
           resources: {
@@ -475,19 +503,6 @@ resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existi
   name: '64702f94-c441-49e6-a78b-ef80e0188fee'
 }
 
-// var aiServicesName string=azureAifoundry.outputs.aiFoundryName
-// var aiProjectName string=azureAifoundry.outputs.aiProjectName
-
-
-// resource aiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing= {
-//   name: azureAifoundry.outputs.aiFoundryName
-// }
-
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' existing= {
-  name: azureAifoundry.outputs.aiProjectName
-}
-
-
 resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(containerAppBackend.name, aiDeveloper.id)
   scope: resourceGroup()
@@ -512,7 +527,7 @@ resource aiUserAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' =
 }
 
 resource aiUserAccessFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.name, aiProject.id)
+  name: guid(containerAppBackend.name, aiFoundryProject.id)
   scope: resourceGroup()
   properties: {
     roleDefinitionId: aiUser.id
@@ -545,3 +560,7 @@ module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1'
 }
 
 output AZURE_AIFOUNDRY_NAME string = azureAiServices.name
+
+output aiFoundryName string = aiFoundryName 
+output aiProjectName string = aiFoundryProject.name
+output projectEndpointString string = aiFoundryProject.properties.endpoints['AI Foundry API']
