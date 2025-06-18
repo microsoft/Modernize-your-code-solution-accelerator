@@ -14,6 +14,18 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
+@description('Admin username for the VM.')
+@secure()
+param vmAdminUsername string 
+
+@description('Admin password for the VM.')
+@secure()
+param vmAdminPassword string 
+
+
+
+
+
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
 // |-----------|---------------|-----------|----------------------------------------|
@@ -91,8 +103,8 @@ module network 'network/main.bicep' =  {
     jumpboxConfiguration: {
       name: 'vm-jumpbox-${resourcesName}'
       size: 'Standard_D2s_v3'
-      username: 'JumpboxAdminUser'
-      password: 'JumpboxAdminP@ssw0rd1234!'
+      username: vmAdminUsername
+      password: vmAdminPassword
       subnet:  {
         name: 'jumpbox'
         addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses

@@ -57,6 +57,14 @@ param secondaryLocation string?
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
 param enablePrivateNetworking bool = false
 
+@description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@secure()
+param vmAdminUsername string 
+
+@description('Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@secure()
+param vmAdminPassword string 
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -133,6 +141,8 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   params: {
     resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    vmAdminUsername: vmAdminUsername
+    vmAdminPassword: vmAdminPassword
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry
