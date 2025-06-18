@@ -96,7 +96,7 @@ jobs:
             --template-file infra/main.bicep \
             --parameters \
                 Prefix="${{ env.SOLUTION_PREFIX }}" \
-                AzureAiServiceLocation="swedencentral" \
+                AzureAiServiceLocation="westus" \
                 deploymentType="GlobalStandard" \
                 llmModel="gpt-4o" \
                 gptModelVersion="2024-08-06" \
