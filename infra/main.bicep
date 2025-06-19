@@ -123,7 +123,6 @@ module kvault 'deploy_keyvault.bicep' = {
   name: 'deploy_keyvault'
   params: {
     keyvaultName: '${abbrs.security.keyVault}${ResourcePrefix}'
-    solutionName: ResourcePrefix
     solutionLocation: solutionLocation
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
   }
@@ -508,3 +507,4 @@ module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1'
 }
 
 output AZURE_AIFOUNDRY_NAME string = azureAiServices.name
+output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
