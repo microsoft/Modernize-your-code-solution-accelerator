@@ -50,6 +50,11 @@ jobs:
       - name: Ensure browsers are installed
         run: python -m playwright install --with-deps chromium
 
+      - name: Open URL
+        run: |
+          echo "Opening URL: ${{ env.url }}"
+          python -m webbrowser "${{ env.url }}"
+
       - name: Run tests(1)
         id: test1
         run: |
