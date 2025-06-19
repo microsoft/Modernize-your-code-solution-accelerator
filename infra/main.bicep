@@ -59,11 +59,11 @@ param enablePrivateNetworking bool = false
 
 @description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
-param vmAdminUsername string 
+param vmAdminUsername string? 
 
 @description('Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
-param vmAdminPassword string 
+param vmAdminPassword string?
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
