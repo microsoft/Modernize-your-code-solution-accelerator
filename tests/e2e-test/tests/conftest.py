@@ -1,9 +1,10 @@
-import os
 import atexit
+import os
 import io
+import logging
+
 from bs4 import BeautifulSoup
 import pytest
-import logging
 from config.constants import URL
 from playwright.sync_api import sync_playwright
 from py.xml import html  # type: ignore
@@ -80,12 +81,14 @@ def pytest_runtest_makereport(item, call):
     else:
         report.description = ""
 
+
 def pytest_collection_modifyitems(items):
     for item in items:
         if hasattr(item, 'callspec'):
             prompt = item.callspec.params.get("prompt")
             if prompt:
                 item._nodeid = prompt  # This controls how the test name appears in the report
+
 
 def rename_duration_column():
     report_path = os.path.abspath("report.html")  # or your report filename
@@ -109,8 +112,10 @@ def rename_duration_column():
     with open(report_path, 'w', encoding='utf-8') as f:
         f.write(str(soup))
 
+
 # Register this function to run after everything is done
 atexit.register(rename_duration_column)
+
 
 # Add logs and docstring to report
 @pytest.hookimpl(hookwrapper=True)
