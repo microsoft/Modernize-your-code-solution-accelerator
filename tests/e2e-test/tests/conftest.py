@@ -1,11 +1,11 @@
 import atexit
-import os
 import io
+import os
 import logging
 
 from bs4 import BeautifulSoup
-import pytest
 from config.constants import URL
+import pytest
 from playwright.sync_api import sync_playwright
 
 
