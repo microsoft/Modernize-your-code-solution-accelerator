@@ -1,10 +1,8 @@
-﻿﻿"""
+﻿"""
 This script demonstrates how to use the backend agents to migrate
 a query from one SQL dialect to another.
 It is the main entry point for the SQL migration process.
 """
-
-import asyncio
 import logging
 
 from api.status_updates import send_status_update

@@ -128,8 +128,8 @@ class CommsManager:
         agent_dict,
         exception_types: tuple = (Exception,),
         max_retries: int = 10,
-        initial_delay: float = 1.0,
-        backoff_factor: float = 2.0,
+        initial_delay: float = 0.5,
+        backoff_factor: float = 1.5,
         simple_truncation: int = None,
     ):
         """Initialize the CommsManager and agent_chat with the given agents.
@@ -142,19 +142,7 @@ class CommsManager:
             backoff_factor: Factor by which the delay increases with each retry (default: 2.0)
             simple_truncation: Optional truncation limit for chat history
         """
-        # Store retry configuration
-        self.max_retries = max_retries
-        self.initial_delay = initial_delay
-        self.backoff_factor = backoff_factor
-        self.exception_types = exception_types
-        self.simple_truncation = simple_truncation
-        
-        # Auto-detection variables
-        self._rate_limit_encountered = False
-        self._successful_runs = 0
-        self._consecutive_successes = 0
-        
-        # Initialize the group chat (maintaining original functionality)
+        # Initialize the group chat (exactly like original)
         self.group_chat = AgentGroupChat(
             agents=agent_dict.values(),
             termination_strategy=self.ApprovalTerminationStrategy(
@@ -167,139 +155,83 @@ class CommsManager:
             ),
             selection_strategy=self.SelectionStrategy(agents=agent_dict.values()),
         )
-
-    def _should_use_retry_logic(self) -> bool:
-        """
-        Determine if retry logic should be used based on historical patterns.
         
-        Returns:
-            bool: True if retry logic should be used, False for simple invoke
-        """
-        # If we've encountered rate limits recently, use retry logic
-        if self._rate_limit_encountered:
-            return True
-            
-        # If we haven't had enough successful runs to establish pattern, be safe
-        if self._successful_runs < 3:
-            return False  # Start optimistic
-            
-        # If we've had consistent success, don't use retry logic
-        if self._consecutive_successes >= 5:
-            return False
-            
-        return True
-
-    def _record_success(self):
-        """Record a successful invocation."""
-        self._successful_runs += 1
-        self._consecutive_successes += 1
+        # Store retry configuration (only used when needed)
+        self.max_retries = max_retries
+        self.initial_delay = initial_delay
+        self.backoff_factor = backoff_factor
+        self.exception_types = exception_types
+        self.simple_truncation = simple_truncation
         
-        # Reset rate limit flag after several consecutive successes
-        if self._consecutive_successes >= 10:
-            self._rate_limit_encountered = False
-            self.logger.info("Rate limit pattern cleared after consistent success")
+        # Learning variables
+        self._rate_limit_detected = False
+        self._successful_simple_calls = 0
 
-    def _record_rate_limit(self):
-        """Record a rate limit encounter."""
-        self._rate_limit_encountered = True
-        self._consecutive_successes = 0
-        self.logger.info("Rate limit pattern detected, will use retry logic for future calls")
+    def _is_rate_limit_error(self, error_message: str) -> bool:
+        """Check if the error message indicates a rate limit issue."""
+        error_lower = error_message.lower()
+        return any(indicator in error_lower for indicator in self._RATE_LIMIT_INDICATORS)
 
     async def invoke_async(self):
-        """Invoke the group chat with the given agents (original method maintained for compatibility)."""
+        """Original invoke method - maintained for compatibility."""
         return self.group_chat.invoke()
 
-    async def async_invoke_simple(self) -> AsyncIterable[ChatMessageContent]:
-        """Simple invoke without retry logic - for high token availability scenarios."""
-        # Apply simple truncation if configured
-        if (
-            self.simple_truncation
-            and len(self.group_chat.history) > self.simple_truncation
-        ):
-            self.group_chat.history = self.group_chat.history[-self.simple_truncation:]
-        
-        # Direct invocation without retry overhead
-        async for item in self.group_chat.invoke():
-            yield item
-
-    async def async_invoke_with_retry(self) -> AsyncIterable[ChatMessageContent]:
-        """Invoke with full retry logic - for rate-limited scenarios."""
+    async def _invoke_with_retry_logic(self) -> AsyncIterable[ChatMessageContent]:
+        """Full retry logic - only used when rate limits are detected."""
         attempt = 0
         current_delay = self.initial_delay
 
         while attempt < self.max_retries:
             try:
-                # Grab a snapshot of the history of the group chat
-                # Using copy to avoid getting a reference to the original list
+                # Grab a snapshot of the history
                 history_snap = copy.deepcopy(self.group_chat.history)
                 
-                self.logger.debug(
-                    "History before invoke: %s",
-                    [msg.name for msg in self.group_chat.history],
-                )
-                
-                # Get a fresh iterator from the function
-                async_iter = self.group_chat.invoke()
-
-                # If simple truncation is set, truncate the history
+                # Apply truncation if configured
                 if (
                     self.simple_truncation
                     and len(self.group_chat.history) > self.simple_truncation
                 ):
-                    # Truncate the history to the last n messages
                     self.group_chat.history = history_snap[-self.simple_truncation:]
 
-                # Yield each item from the iterator
-                async for item in async_iter:
+                # Get iterator and yield results
+                async for item in self.group_chat.invoke():
                     yield item
 
-                # If we get here without exception, we're done
+                # Success - break out of retry loop
                 break
 
             except AgentInvokeException as aie:
                 attempt += 1
                 if attempt >= self.max_retries:
                     self.logger.error(
-                        "Function invoke failed after %d attempts. Final error: %s. Consider increasing the models rate limit.",
+                        "Function invoke failed after %d attempts. Final error: %s",
                         self.max_retries,
                         str(aie),
                     )
-                    # Re-raise the last exception if all retries failed
                     raise
 
-                # Return history state for retry
+                # Restore history for retry
                 self.group_chat.history = history_snap
 
-                try:
-                    # Try to extract wait time from error message
-                    wait_time_match = re.search(self._EXTRACT_WAIT_TIME, str(aie))
-                    if wait_time_match:
-                        # If regex is found, set the delay to the value in seconds
-                        current_delay = int(wait_time_match.group(1))
-                    else:
-                        current_delay = self.initial_delay
-
-                    self.logger.warning(
-                        "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
-                        attempt,
-                        self.max_retries,
-                        str(aie),
-                        current_delay,
-                    )
-
-                    # Wait before retrying
-                    await asyncio.sleep(current_delay)
-
-                    if not wait_time_match:
-                        # Increase delay for next attempt using backoff factor
-                        current_delay *= self.backoff_factor
-
-                except Exception as ex:
-                    self.logger.error(
-                        "Retry error: %s. Using default delay.",
-                        ex,
-                    )
+                # Extract wait time or use default
+                wait_time_match = re.search(self._EXTRACT_WAIT_TIME, str(aie))
+                if wait_time_match:
+                    current_delay = int(wait_time_match.group(1))
+                else:
                     current_delay = self.initial_delay
+
+                self.logger.warning(
+                    "Attempt %d/%d failed: %s. Retrying in %.2f seconds...",
+                    attempt,
+                    self.max_retries,
+                    str(aie),
+                    current_delay,
+                )
+
+                await asyncio.sleep(current_delay)
+                
+                if not wait_time_match:
+                    current_delay *= self.backoff_factor
 
             except self.exception_types as e:
                 attempt += 1
@@ -323,51 +255,68 @@ class CommsManager:
                 await asyncio.sleep(current_delay)
                 current_delay *= self.backoff_factor
 
-    def _is_rate_limit_error(self, error_message: str) -> bool:
-        """Check if the error message indicates a rate limit issue."""
-        error_lower = error_message.lower()
-        return any(indicator in error_lower for indicator in self._RATE_LIMIT_INDICATORS)
+    # async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
+    #     """
+    #     Smart invoke that starts with original performance and only adds retry when needed.
+    #     """
+    #     # If we've never hit rate limits and have some successful calls, use original path
+    #     if not self._rate_limit_detected and self._successful_simple_calls >= 2:
+    #         try:
+    #             # EXACTLY the same as original - zero overhead
+    #             async for item in self.group_chat.invoke():
+    #                 yield item
+                
+    #             self._successful_simple_calls += 1
+    #             return
+                
+    #         except (AgentInvokeException, *self.exception_types) as e:
+    #             if self._is_rate_limit_error(str(e)):
+    #                 self.logger.info("Rate limit detected, enabling retry logic")
+    #                 self._rate_limit_detected = True
+    #                 # Fall through to retry logic
+    #             else:
+    #                 # Non-rate-limit error, re-raise immediately
+    #                 raise
+        
+    #     # First few calls OR after rate limit detection - use retry logic
+    #     try:
+    #         async for item in self._invoke_with_retry_logic():
+    #             yield item
+            
+    #         # Track successful calls
+    #         if not self._rate_limit_detected:
+    #             self._successful_simple_calls += 1
+                
+    #     except Exception:
+    #         # Reset success counter on any failure
+    #         self._successful_simple_calls = 0
+    #         raise
 
     async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
         """
-        Intelligent invoke that automatically adapts to rate limiting patterns.
-        Starts optimistic and learns from errors to optimize future performance.
+        Smart invoke that avoids retry unless rate limits are hit.
+        Optimized for fast paths when token budget is high.
         """
-        use_retry = self._should_use_retry_logic()
-        
-        if not use_retry:
-            # Try simple invoke first for optimal performance
-            try:
-                async for item in self.async_invoke_simple():
-                    yield item
-                
-                # Record successful completion
-                self._record_success()
-                return
-                
-            except (AgentInvokeException, *self.exception_types) as e:
-                if self._is_rate_limit_error(str(e)):
-                    self.logger.info(
-                        "Rate limit detected, switching to retry logic: %s", 
-                        str(e)
-                    )
-                    self._record_rate_limit()
-                    
-                    # Fall through to retry logic below
-                    pass
-                else:
-                    # Non-rate-limit error, fail immediately
-                    self._consecutive_successes = 0  # Reset success counter
-                    raise
-        
-        # Use retry logic (either because pattern suggests it, or fallback from simple)
         try:
-            async for item in self.async_invoke_with_retry():
+            # Attempt fast path
+            async for item in self.group_chat.invoke():
                 yield item
-            
-            # Record successful completion with retry logic
-            self._record_success()
-            
-        except Exception as e:
-            self._consecutive_successes = 0  # Reset success counter
+            self._successful_simple_calls += 1
+            return
+
+        except (AgentInvokeException, *self.exception_types) as e:
+            if self._is_rate_limit_error(str(e)):
+                self.logger.info("Rate limit detected, enabling retry logic")
+                self._rate_limit_detected = True
+            else:
+                raise  # Non-rate-limit error – don't retry
+
+        # Use retry logic only when absolutely needed
+        try:
+            async for item in self._invoke_with_retry_logic():
+                yield item
+            if not self._rate_limit_detected:
+                self._successful_simple_calls += 1
+        except Exception:
+            self._successful_simple_calls = 0
             raise
