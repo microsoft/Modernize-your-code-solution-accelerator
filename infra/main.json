@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.35.1.17967",
-      "templateHash": "13571363186442322406"
+      "templateHash": "11434822242315080162"
     }
   },
   "parameters": {
@@ -49,6 +49,10 @@
       "metadata": {
         "description": "Capacity of the GPT deployment:"
       }
+    },
+    "existingLogAnalyticsWorkspaceId": {
+      "type": "string",
+      "defaultValue": ""
     },
     "deploymentType": {
       "type": "string",
@@ -727,9 +731,6 @@
           "keyvaultName": {
             "value": "[format('{0}{1}', variables('abbrs').security.keyVault, variables('ResourcePrefix'))]"
           },
-          "solutionName": {
-            "value": "[variables('ResourcePrefix')]"
-          },
           "solutionLocation": {
             "value": "[parameters('solutionLocation')]"
           },
@@ -744,18 +745,10 @@
             "_generator": {
               "name": "bicep",
               "version": "0.35.1.17967",
-              "templateHash": "14711167186840027914"
+              "templateHash": "1503106947863889964"
             }
           },
           "parameters": {
-            "solutionName": {
-              "type": "string",
-              "minLength": 3,
-              "maxLength": 15,
-              "metadata": {
-                "description": "Solution Name"
-              }
-            },
             "solutionLocation": {
               "type": "string"
             },
@@ -871,6 +864,9 @@
           },
           "aiServicesId": {
             "value": "[resourceId('Microsoft.CognitiveServices/accounts', variables('azureAiServicesName'))]"
+          },
+          "existingLogAnalyticsWorkspaceId": {
+            "value": "[parameters('existingLogAnalyticsWorkspaceId')]"
           }
         },
         "template": {
@@ -880,7 +876,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.35.1.17967",
-              "templateHash": "6185941478702970428"
+              "templateHash": "12979035986870693989"
             }
           },
           "parameters": {
@@ -915,6 +911,10 @@
             },
             "aiServicesId": {
               "type": "string"
+            },
+            "existingLogAnalyticsWorkspaceId": {
+              "type": "string",
+              "defaultValue": ""
             }
           },
           "variables": {
@@ -1145,6 +1145,10 @@
                 "virtualDesktopScalingPlan": "vdscaling-"
               }
             },
+            "useExisting": "[not(empty(parameters('existingLogAnalyticsWorkspaceId')))]",
+            "existingLawSubscription": "[if(variables('useExisting'), split(parameters('existingLogAnalyticsWorkspaceId'), '/')[2], '')]",
+            "existingLawResourceGroup": "[if(variables('useExisting'), split(parameters('existingLogAnalyticsWorkspaceId'), '/')[4], '')]",
+            "existingLawName": "[if(variables('useExisting'), split(parameters('existingLogAnalyticsWorkspaceId'), '/')[8], '')]",
             "abbrs": "[variables('$fxv#0')]",
             "storageName": "[format('{0}{1}', variables('abbrs').storage.storageAccount, parameters('solutionName'))]",
             "storageSkuName": "Standard_LRS",
@@ -1184,6 +1188,7 @@
               ]
             },
             {
+              "condition": "[not(variables('useExisting'))]",
               "type": "Microsoft.OperationalInsights/workspaces",
               "apiVersion": "2023-09-01",
               "name": "[variables('workspaceName')]",
@@ -1474,7 +1479,7 @@
             },
             "logAnalyticsId": {
               "type": "string",
-              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName'))]"
+              "value": "[if(variables('useExisting'), extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('existingLawSubscription'), variables('existingLawResourceGroup')), 'Microsoft.OperationalInsights/workspaces', variables('existingLawName')), resourceId('Microsoft.OperationalInsights/workspaces', variables('workspaceName')))]"
             },
             "storageAccountId": {
               "type": "string",
@@ -7725,5 +7730,15 @@
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, resourceGroup().name), 'Microsoft.Resources/deployments', 'deploy_managed_identity')]"
       ]
     }
-  ]
+  ],
+  "outputs": {
+    "AZURE_AIFOUNDRY_NAME": {
+      "type": "string",
+      "value": "[variables('azureAiServicesName')]"
+    },
+    "WEB_APP_URL": {
+      "type": "string",
+      "value": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', toLower(format('{0}{1}containerAppFrontend', variables('abbrs').containers.containerApp, variables('ResourcePrefix')))), '2022-09-01').outputs.fqdn.value)]"
+    }
+  }
 }
