@@ -1,14 +1,17 @@
 @description('The Azure region where resources will be deployed.')
 param location string
 
-@description('The name of the AI Foundry Project workspace.')
+@description('Required. The name of the AI Foundry project to create.')
 param projectName string
 
-@description('The name of the AI Foundry Hub workspace.')
-param hubName string
+@description('Required. The description of the AI Foundry project to create.')
+param projectDescription string
 
-@description('The description of the AI Hub workspace.')
-param hubDescription string = hubName
+// @description('The name of the AI Foundry Hub workspace.')
+// param hubName string
+
+// @description('The description of the AI Hub workspace.')
+// param hubDescription string = hubName
 
 @description('The Resource Id of an existing storage account to attach to AI Foundry.')
 param storageAccountResourceId string
@@ -42,7 +45,7 @@ param tags object = {}
 param enableTelemetry bool = true
 
 module mlApiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?apiPrivateDnsZoneResourceId)) {
-  name: take('${hubName}-mlapi-pdns-deployment', 64)
+  name: take('${projectName}-mlapi-pdns-deployment', 64)
   params: {
     name: 'privatelink.api.${toLower(environment().name) == 'azureusgovernment' ? 'ml.azure.us' : 'azureml.ms'}'
     virtualNetworkLinks: [
@@ -56,7 +59,7 @@ module mlApiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = 
 }
 
 module mlNotebooksPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?notebooksPrivateDnsZoneResourceId)) {
-  name: take('${hubName}-mlnotebook-pdns-deployment', 64)
+  name: take('${projectName}-mlnotebook-pdns-deployment', 64)
   params: {
     name: 'privatelink.notebooks.${toLower(environment().name) == 'azureusgovernment' ? 'azureml.us' : 'azureml.net'}'
     virtualNetworkLinks: [
@@ -72,102 +75,26 @@ module mlNotebooksPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7
 var apiPrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?apiPrivateDnsZoneResourceId) ? mlApiPrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?apiPrivateDnsZoneResourceId) : ''
 var notebooksPrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?notebooksPrivateDnsZoneResourceId) ? mlNotebooksPrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?notebooksPrivateDnsZoneResourceId) : ''
 
+//AVM module uses 'Microsoft.CognitiveServices/accounts@2023-05-01' 
 resource aiServices 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: aiServicesName
 }
 
-module hub 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
-  name: take('ai-foundry-${hubName}-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [mlApiPrivateDnsZone, mlNotebooksPrivateDnsZone] // required due to optional flags that could change dependency
-  params: {
-    name: hubName
-    location: location
-    sku: 'Standard'
-    kind: 'Hub'
-    description: hubDescription
-    associatedKeyVaultResourceId: keyVaultResourceId
-    associatedStorageAccountResourceId: storageAccountResourceId
-    associatedApplicationInsightsResourceId: applicationInsightsResourceId
-    publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
-    managedNetworkSettings: {
-      isolationMode: privateNetworking != null ? 'AllowInternetOutbound' : 'Disabled'
-      outboundRules: privateNetworking != null ? {
-        cog_services_pep: {
-          category: 'UserDefined'
-          destination: {
-            serviceResourceId: aiServices.id
-            sparkEnabled: true
-            subresourceTarget: 'account'
-          }
-          type: 'PrivateEndpoint'
-        }
-      } : null
-    } 
-    managedIdentities: {
-      systemAssigned: true
-    }
-    systemDatastoresAuthMode: 'Identity'
-    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
-    privateEndpoints: privateNetworking != null ? [
-      {
-        privateDnsZoneGroup: {
-          privateDnsZoneGroupConfigs: [
-            {
-              privateDnsZoneResourceId: apiPrivateDnsZoneResourceId
-            }
-            {
-              privateDnsZoneResourceId: notebooksPrivateDnsZoneResourceId
-            }
-          ]
-        }
-        service: 'amlworkspace'
-        subnetResourceId: privateNetworking.?subnetResourceId ?? ''
-      }
-    ] : []
-    connections: [
-      {
-        name: aiServicesName
-        value: null
-        category: 'AIServices'
-        target: aiServices.properties.endpoint
-        connectionProperties: {
-          authType: 'AAD'
-        }
-        isSharedToAll: true
-        metadata: {
-          ApiType: 'Azure'
-          Kind: 'AIServices'
-          ResourceId: aiServices.id
-        }
-      }
-    ]
-    tags: tags
-    enableTelemetry: enableTelemetry
+resource project 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+  parent: aiServices
+  name: projectName
+  tags: tags
+  location: location
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    description: projectDescription
+    displayName: projectName
   }
 }
 
-module project 'br/public:avm/res/machine-learning-services/workspace:0.12.1' = {
-  name: take('ai-foundry-${projectName}-deployment', 64)
-  params: {
-    name: projectName
-    kind: 'Project'
-    sku: 'Standard'
-    location: location
-    hubResourceId: hub.outputs.resourceId
-    hbiWorkspace: false
-    systemDatastoresAuthMode: 'Identity'
-    publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
-    managedIdentities: {
-      userAssignedResourceIds: [userAssignedIdentityResourceId]
-    }
-    primaryUserAssignedIdentity: userAssignedIdentityResourceId
-    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [{workspaceResourceId: logAnalyticsWorkspaceResourceId}] : []
-    roleAssignments: roleAssignments
-    tags: tags
-    enableTelemetry: enableTelemetry
-  }
-}
+
 
 // get reference to the AI Hub project to get access to the discovery URL property (not presently available on AVM)
 // adjust this logic if support on the AVM module is added 
@@ -176,8 +103,8 @@ resource projectReference 'Microsoft.MachineLearningServices/workspaces@2024-10-
   dependsOn: [project]
 }
 
-output projectName string = project.outputs.name
-output hubName string = hub.outputs.name
+output projectName string = project.name
+//output hubName string = hub.outputs.name
 output projectConnectionString string = '${split(projectReference.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${projectReference.name}'
 
 @export()
