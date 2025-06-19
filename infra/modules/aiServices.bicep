@@ -99,6 +99,7 @@ module openAiPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' =
 var cogServicesPrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId) ? cognitiveServicesPrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?cogServicesPrivateDnsZoneResourceId) : ''
 var openAIPrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?openAIPrivateDnsZoneResourceId) ? openAiPrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?openAIPrivateDnsZoneResourceId) : ''
 
+//AVM module uses 'Microsoft.CognitiveServices/accounts@2023-05-01' 
 module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = {
   name: take('${name}-aiservices-deployment', 64)
   #disable-next-line no-unnecessary-dependson

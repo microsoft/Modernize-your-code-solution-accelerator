@@ -141,8 +141,8 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   params: {
     resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
-    vmAdminUsername: vmAdminUsername
-    vmAdminPassword: vmAdminPassword
+    vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
+    vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry
@@ -165,11 +165,11 @@ module aiServices 'modules/aiServices.bicep' = {
     // Request: POST /api/start-processing
     // Response: ERROR:sql_agents.agents.agent_base:Error creating agent definition: (403) Public access is disabled. Please configure private endpoint.
     // ---------------------
-    // privateNetworking: enablePrivateNetworking ? {
-    //   virtualNetworkResourceId: network.outputs.vnetResourceId
-    //   subnetResourceId: first(filter(network.outputs.subnets, s => s.name == 'peps')).resourceId
-    // } : null
-    // ---------------------
+    privateNetworking: enablePrivateNetworking ? {
+      virtualNetworkResourceId: network.outputs.vnetResourceId
+      subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+    } : null
+
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
@@ -253,9 +253,8 @@ module azureAifoundry 'modules/aiFoundry.bicep' = {
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     location: azureAiServiceLocation
-    hubName: 'hub-${resourcesName}'
-    hubDescription: 'AI Hub for Modernize Your Code'
     projectName: 'proj-${resourcesName}'
+    projectDescription: 'AI Foundry Project for Modernize Your Code'
     storageAccountResourceId: storageAccount.outputs.resourceId
     keyVaultResourceId: keyVault.outputs.resourceId
     userAssignedIdentityResourceId: aiFoundryIdentity.outputs.resourceId
