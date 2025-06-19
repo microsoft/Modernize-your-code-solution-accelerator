@@ -8,9 +8,9 @@ from bs4 import BeautifulSoup
 
 from config.constants import URL
 
-import pytest
-
 from playwright.sync_api import sync_playwright
+
+import pytest
 
 
 @pytest.fixture(scope="session")
