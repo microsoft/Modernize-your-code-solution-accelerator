@@ -107,8 +107,7 @@ while IFS= read -r deployment; do
   type=${AZURE_ENV_MODEL_DEPLOYMENT_TYPE:-$(echo "$deployment" | jq -r '.sku.name')}
   capacity=${AZURE_ENV_MODEL_CAPACITY:-$(echo "$deployment" | jq -r '.sku.capacity')}
 
-  echo ""
-  echo "🔍 Validating model deployment: $name ..."
+  echo -e "🔍 Validation started for model deployment: \e[1m$name\e[0m in region \e[1m$LOCATION\e[0m with capacity \e[1m$capacity\e[0m tokens..."
   ./scripts/validate_model_quota.sh --location "$LOCATION" --model "$model" --capacity "$capacity" --deployment-type "$type"
   exit_code=$?
 
@@ -116,13 +115,14 @@ while IFS= read -r deployment; do
     if [[ $exit_code -eq 2 ]]; then
       exit 1
     fi
-    echo "❌ ERROR: Quota validation failed for model deployment: $name"
+    echo -e "\n❌ ERROR: Quota validation failed for model deployment: \033[1m$name\033[0m"
     quotaAvailable=false
   fi
 done <<< "$(echo "$aiModelDeployments")"
 
 if [[ "$quotaAvailable" = false ]]; then
-  echo "❌ ERROR: One or more model deployments failed quota validation."
+  echo -e "\n❌ ERROR: Quota validation failed — insufficient quota in all regions. Deployment cannot proceed."
+  echo -e "\nℹ️  Please request a quota increase at https://portal.azure.com/#blade/Microsoft_Azure_Capacity/UsageAndQuota and try again."
   exit 1
 else
   echo "✅ All model deployments passed quota validation successfully."
