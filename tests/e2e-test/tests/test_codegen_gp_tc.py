@@ -23,6 +23,7 @@ def _timed_translation(home):
     end = time.time()
     logger.info(f"Translation process for uploaded files took {end - start:.2f} seconds")
 
+
 @pytest.mark.parametrize("description, action", golden_path_steps, ids=[desc for desc, _ in golden_path_steps])
 def test_codegen_golden_path(login_logout, description, action, request):
     """
