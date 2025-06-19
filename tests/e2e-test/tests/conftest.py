@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 import pytest
 from config.constants import URL
 from playwright.sync_api import sync_playwright
-from py.xml import html  # type: ignore
+
 
 @pytest.fixture(scope="session")
 def login_logout():
@@ -42,6 +42,7 @@ def pytest_html_report_title(report):
 
 
 log_streams = {}
+
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item):
@@ -104,7 +105,7 @@ def rename_duration_column():
     for th in headers:
         if th.text.strip() == 'Duration':
             th.string = 'Execution Time'
-            #print("Renamed 'Duration' to 'Execution Time'")
+            # print("Renamed 'Duration' to 'Execution Time'")
             break
     else:
         print("'Duration' column not found in report.")
@@ -118,11 +119,11 @@ atexit.register(rename_duration_column)
 
 
 # Add logs and docstring to report
-@pytest.hookimpl(hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    report = outcome.get_result()
-    report.description = str(item.function.__doc__)
-    os.makedirs("logs", exist_ok=True)
-    extra = getattr(report, "extra", [])
-    report.extra = extra
+# @pytest.hookimpl(hookwrapper=True)
+# def pytest_runtest_makereport(item, call):
+#     outcome = yield
+#     report = outcome.get_result()
+#     report.description = str(item.function.__doc__)
+#     os.makedirs("logs", exist_ok=True)
+#     extra = getattr(report, "extra", [])
+#     report.extra = extra
