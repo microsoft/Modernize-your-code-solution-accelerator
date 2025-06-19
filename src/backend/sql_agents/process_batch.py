@@ -11,6 +11,7 @@ from api.status_updates import send_status_update
 
 from azure.identity.aio import DefaultAzureCredential
 
+from common.config.config import app_config
 from common.models.api import (
     FileProcessUpdate,
     FileRecord,
@@ -60,7 +61,7 @@ async def process_batch_async(
     # Add client and auto cleanup
     async with (
         DefaultAzureCredential() as creds,
-        AzureAIAgent.create_client(credential=creds) as client,
+        AzureAIAgent.create_client(credential=creds, endpoint=app_config.ai_project_endpoint) as client,
     ):
 
         # setup all agent settings and agents per batch

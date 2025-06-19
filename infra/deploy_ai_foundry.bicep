@@ -11,7 +11,9 @@ param managedIdentityObjectId string
 param aiServicesEndpoint string
 param aiServicesKey string
 param aiServicesId string
+param aureaiFoundryEndpoint string
 
+param aiFoundryName string
 param existingLogAnalyticsWorkspaceId string = ''
 
 var useExisting = !empty(existingLogAnalyticsWorkspaceId)
@@ -24,15 +26,10 @@ var abbrs = loadJsonContent('./abbreviations.json')
 var storageName = '${abbrs.storage.storageAccount}${solutionName}'
 
 var storageSkuName = 'Standard_LRS'
-var aiServicesName = '${abbrs.ai.aiServices}${solutionName}'
 var workspaceName = '${abbrs.managementGovernance.logAnalyticsWorkspace}${solutionName}'
 var keyvaultName = '${abbrs.security.keyVault}${solutionName}'
 var location = solutionLocation 
-var azureAiHubName = '${abbrs.ai.aiHub}${solutionName}'
-var aiHubFriendlyName = azureAiHubName
-var aiHubDescription = 'AI Hub for KM template'
-var aiProjectName = '${abbrs.ai.aiHubProject}${solutionName}'
-var aiProjectFriendlyName = aiProjectName
+
 var aiSearchName = '${solutionName}-search'
 var applicationInsightsName = '${solutionName}-appi'
 
@@ -67,130 +64,11 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     Application_Type: 'web'
     publicNetworkAccessForIngestion: 'Enabled'
     publicNetworkAccessForQuery: 'Enabled'
-    WorkspaceResourceId: logAnalytics.id
+    WorkspaceResourceId: useExisting ? existingLogAnalyticsWorkspaceId : logAnalytics.id
   }
 }
 
 var storageNameCleaned = replace(replace(replace(replace('${storageName}cast', '-', ''), '_', ''), '.', ''),'/', '')
-
-
-
-
-resource storage 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: storageNameCleaned
-  location: location
-  sku: {
-    name: storageSkuName
-  }
-  kind: 'StorageV2'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowCrossTenantReplication: false
-    allowSharedKeyAccess: false
-    encryption: {
-      keySource: 'Microsoft.Storage'
-      requireInfrastructureEncryption: false
-      services: {
-        blob: {
-          enabled: true
-          keyType: 'Account'
-        }
-        file: {
-          enabled: true
-          keyType: 'Account'
-        }
-        queue: {
-          enabled: true
-          keyType: 'Service'
-        }
-        table: {
-          enabled: true
-          keyType: 'Service'
-        }
-      }
-    }
-    isHnsEnabled: false
-    isNfsV3Enabled: false
-    keyPolicy: {
-      keyExpirationPeriodInDays: 7
-    }
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-  }
-}
-
-@description('This is the built-in Storage Blob Data Contributor.')
-resource blobDataContributor 'Microsoft.Authorization/roleDefinitions@2018-01-01-preview' existing = {
-  scope: subscription()
-  name: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
-}
-
-resource storageroleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, managedIdentityObjectId, blobDataContributor.id)
-  scope: storage
-  properties: {
-    principalId: managedIdentityObjectId
-    roleDefinitionId: blobDataContributor.id
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource aiHub 'Microsoft.MachineLearningServices/workspaces@2023-08-01-preview' = {
-  name: azureAiHubName
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    // organization
-    friendlyName: aiHubFriendlyName
-    description: aiHubDescription
-
-    // dependent resources
-    keyVault: keyVault.id
-    storageAccount: storage.id
-  }
-  kind: 'hub'
-
-  resource aiServicesConnection 'connections@2024-07-01-preview' = {
-    name: '${azureAiHubName}-connection-AzureOpenAI'
-    properties: {
-      category: 'AIServices'
-      target: aiServicesEndpoint
-      authType: 'ApiKey'
-      isSharedToAll: true
-      credentials: {
-        key: aiServicesKey
-      }
-      metadata: {
-        ApiType: 'Azure'
-        ResourceId: aiServicesId
-      }
-    }
-  }
-}
-
-resource aiHubProject 'Microsoft.MachineLearningServices/workspaces@2024-01-01-preview' = {
-  name: aiProjectName
-  location: location
-  kind: 'Project'
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    friendlyName: aiProjectFriendlyName
-    hubResourceId: aiHub.id
-  }
-}
 
 resource tenantIdEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
@@ -248,11 +126,11 @@ resource azureOpenAIEndpointEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-
   }
 }
 
-resource azureAIProjectConnectionStringEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
+resource azureAIProjectEndpointEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
-  name: 'AZURE-AI-PROJECT-CONN-STRING'
+  name: 'AI-PROJECT-ENDPOINT'
   properties: {
-    value: '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
+    value: aureaiFoundryEndpoint
   }
 }
 
@@ -292,7 +170,7 @@ resource cogServiceNameEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-previ
   parent: keyVault
   name: 'COG-SERVICES-NAME'
   properties: {
-    value: aiServicesName
+    value: aiFoundryName
   }
 }
 
@@ -323,14 +201,9 @@ resource azureLocatioEntry 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview
 output keyvaultName string = keyvaultName
 output keyvaultId string = keyVault.id
 
-output aiServicesName string = aiServicesName 
 output aiSearchName string = aiSearchName
-output aiProjectName string = aiHubProject.name
 
 output storageAccountName string = storageNameCleaned
 
 output logAnalyticsId string = useExisting ? existingLogAnalyticsWorkspace.id : logAnalytics.id
-output storageAccountId string = storage.id
 output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
-
-output projectConnectionString string = '${split(aiHubProject.properties.discoveryUrl, '/')[2]};${subscription().subscriptionId};${resourceGroup().name};${aiHubProject.name}'
