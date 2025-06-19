@@ -149,6 +149,7 @@ module kvault 'deploy_keyvault.bicep' = {
   name: 'deploy_keyvault'
   params: {
     keyvaultName: '${abbrs.security.keyVault}${ResourcePrefix}'
+    solutionName: ResourcePrefix
     solutionLocation: solutionLocation
     managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
   }
