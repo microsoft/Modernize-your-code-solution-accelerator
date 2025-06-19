@@ -560,7 +560,7 @@ module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1'
 }
 
 output AZURE_AIFOUNDRY_NAME string = azureAiServices.name
-
+output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
 output aiFoundryName string = aiFoundryName 
 output aiProjectName string = aiFoundryProject.name
 output projectEndpointString string = aiFoundryProject.properties.endpoints['AI Foundry API']
