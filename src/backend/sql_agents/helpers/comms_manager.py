@@ -26,6 +26,15 @@ class CommsManager:
 
     # regex to extract the recommended wait time in seconds from response
     _EXTRACT_WAIT_TIME = r"in (\d+) seconds"
+    
+    # Rate limit error indicators
+    _RATE_LIMIT_INDICATORS = [
+        "rate limit",
+        "too many requests",
+        "quota exceeded",
+        "throttled",
+        "429",
+    ]
 
     group_chat: AgentGroupChat = None
 
@@ -140,6 +149,11 @@ class CommsManager:
         self.exception_types = exception_types
         self.simple_truncation = simple_truncation
         
+        # Auto-detection variables
+        self._rate_limit_encountered = False
+        self._successful_runs = 0
+        self._consecutive_successes = 0
+        
         # Initialize the group chat (maintaining original functionality)
         self.group_chat = AgentGroupChat(
             agents=agent_dict.values(),
@@ -154,12 +168,62 @@ class CommsManager:
             selection_strategy=self.SelectionStrategy(agents=agent_dict.values()),
         )
 
+    def _should_use_retry_logic(self) -> bool:
+        """
+        Determine if retry logic should be used based on historical patterns.
+        
+        Returns:
+            bool: True if retry logic should be used, False for simple invoke
+        """
+        # If we've encountered rate limits recently, use retry logic
+        if self._rate_limit_encountered:
+            return True
+            
+        # If we haven't had enough successful runs to establish pattern, be safe
+        if self._successful_runs < 3:
+            return False  # Start optimistic
+            
+        # If we've had consistent success, don't use retry logic
+        if self._consecutive_successes >= 5:
+            return False
+            
+        return True
+
+    def _record_success(self):
+        """Record a successful invocation."""
+        self._successful_runs += 1
+        self._consecutive_successes += 1
+        
+        # Reset rate limit flag after several consecutive successes
+        if self._consecutive_successes >= 10:
+            self._rate_limit_encountered = False
+            self.logger.info("Rate limit pattern cleared after consistent success")
+
+    def _record_rate_limit(self):
+        """Record a rate limit encounter."""
+        self._rate_limit_encountered = True
+        self._consecutive_successes = 0
+        self.logger.info("Rate limit pattern detected, will use retry logic for future calls")
+
     async def invoke_async(self):
         """Invoke the group chat with the given agents (original method maintained for compatibility)."""
         return self.group_chat.invoke()
 
-    async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
-        """Invoke the group chat with retry logic and error handling."""
+    async def async_invoke_simple(self) -> AsyncIterable[ChatMessageContent]:
+        """Simple invoke without retry logic - for high token availability scenarios."""
+        # Apply simple truncation if configured
+        if (
+            self.simple_truncation
+            and len(self.group_chat.history) > self.simple_truncation
+        ):
+            self.group_chat.history = self.group_chat.history[-self.simple_truncation:]
+        
+        # Direct invocation without retry overhead
+        async for item in self.group_chat.invoke():
+            yield item
+
+    async def async_invoke_with_retry(self) -> AsyncIterable[ChatMessageContent]:
+        """Invoke with full retry logic - for rate-limited scenarios."""
         attempt = 0
         current_delay = self.initial_delay
 
@@ -183,7 +247,7 @@ class CommsManager:
                     and len(self.group_chat.history) > self.simple_truncation
                 ):
                     # Truncate the history to the last n messages
-                    self.group_chat.history = history_snap[-self.simple_truncation :]
+                    self.group_chat.history = history_snap[-self.simple_truncation:]
 
                 # Yield each item from the iterator
                 async for item in async_iter:
@@ -258,3 +322,52 @@ class CommsManager:
 
                 await asyncio.sleep(current_delay)
                 current_delay *= self.backoff_factor
+
+    def _is_rate_limit_error(self, error_message: str) -> bool:
+        """Check if the error message indicates a rate limit issue."""
+        error_lower = error_message.lower()
+        return any(indicator in error_lower for indicator in self._RATE_LIMIT_INDICATORS)
+
+    async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
+        """
+        Intelligent invoke that automatically adapts to rate limiting patterns.
+        Starts optimistic and learns from errors to optimize future performance.
+        """
+        use_retry = self._should_use_retry_logic()
+        
+        if not use_retry:
+            # Try simple invoke first for optimal performance
+            try:
+                async for item in self.async_invoke_simple():
+                    yield item
+                
+                # Record successful completion
+                self._record_success()
+                return
+                
+            except (AgentInvokeException, *self.exception_types) as e:
+                if self._is_rate_limit_error(str(e)):
+                    self.logger.info(
+                        "Rate limit detected, switching to retry logic: %s", 
+                        str(e)
+                    )
+                    self._record_rate_limit()
+                    
+                    # Fall through to retry logic below
+                    pass
+                else:
+                    # Non-rate-limit error, fail immediately
+                    self._consecutive_successes = 0  # Reset success counter
+                    raise
+        
+        # Use retry logic (either because pattern suggests it, or fallback from simple)
+        try:
+            async for item in self.async_invoke_with_retry():
+                yield item
+            
+            # Record successful completion with retry logic
+            self._record_success()
+            
+        except Exception as e:
+            self._consecutive_successes = 0  # Reset success counter
+            raise
