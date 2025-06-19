@@ -1,11 +1,15 @@
 import atexit
 import io
-import os
 import logging
+import os
+
 
 from bs4 import BeautifulSoup
+
 from config.constants import URL
+
 import pytest
+
 from playwright.sync_api import sync_playwright
 
 
