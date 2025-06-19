@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.35.1.17967",
-      "templateHash": "579302863923783953"
+      "templateHash": "17669563175804664564"
     }
   },
   "parameters": {
@@ -793,6 +793,9 @@
           "keyvaultName": {
             "value": "[format('{0}{1}', variables('abbrs').security.keyVault, variables('ResourcePrefix'))]"
           },
+          "solutionName": {
+            "value": "[variables('ResourcePrefix')]"
+          },
           "solutionLocation": {
             "value": "[parameters('solutionLocation')]"
           },
@@ -807,10 +810,18 @@
             "_generator": {
               "name": "bicep",
               "version": "0.35.1.17967",
-              "templateHash": "1503106947863889964"
+              "templateHash": "14711167186840027914"
             }
           },
           "parameters": {
+            "solutionName": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 15,
+              "metadata": {
+                "description": "Solution Name"
+              }
+            },
             "solutionLocation": {
               "type": "string"
             },
