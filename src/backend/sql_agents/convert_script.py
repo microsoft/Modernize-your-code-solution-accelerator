@@ -50,8 +50,8 @@ async def convert_script(
     comms_manager = CommsManager(
         sql_agents.idx_agents,
         max_retries=5,          # Retry up to 5 times for rate limits
-        initial_delay=1.0,      # Start with 1 second delay
-        backoff_factor=2.0,     # Double delay each retry
+        initial_delay=0.5,      # Start with 1 second delay
+        backoff_factor=1.5,     # Double delay each retry
     )
 
     # send websocket notification that file processing has started
