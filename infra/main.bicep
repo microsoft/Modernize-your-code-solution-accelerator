@@ -418,11 +418,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
         env: concat(
           [
             {
-              name: 'AI_PROJECT_ENDPOINT'
-              //   value: aiFoundryProject.properties.endpoints['AI Foundry API']
-              value: aiServices.outputs.project.apiEndpoint // or equivalent
-            }
-            {
               name: 'COSMOSDB_ENDPOINT'
               value: cosmosDb.outputs.endpoint
             }
@@ -452,6 +447,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AZURE_OPENAI_ENDPOINT'
+              //value: 'https://${aiFoundryName}.openai.azure.com/'
               value: 'https://${aiServices.outputs.name}.openai.azure.com/'
             }
             {
@@ -487,8 +483,13 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
               value: modelDeployment.name
             }
             {
+              name: 'AI_PROJECT_ENDPOINT'
+              //value: aiFoundryProject.properties.endpoints['AI Foundry API']
+              value: aiServices.outputs.project.apiEndpoint // or equivalent
+            }
+            {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiServices.outputs.project.name
+              value: aiServices.outputs.project.name 
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
