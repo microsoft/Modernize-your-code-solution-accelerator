@@ -19,6 +19,18 @@ if ($MissingParams.Count -gt 0) {
     exit 1
 }
 
+# Check Azure login
+try {
+    $accountCheck = az account show --output none 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error "❌ ERROR: You are not logged in to Azure CLI. Please run 'az login' to continue."
+        exit 1
+    }
+} catch {
+    Write-Error "❌ ERROR: Failed to verify Azure login. Please run 'az login' to continue."
+    exit 1
+}
+
 # Load model deployments from parameter file
 $JsonContent = Get-Content -Path "./infra/main.parameters.json" -Raw | ConvertFrom-Json
 $aiModelDeployments = $JsonContent.parameters.$ModelsParameter.value
