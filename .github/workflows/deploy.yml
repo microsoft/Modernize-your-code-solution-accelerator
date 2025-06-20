@@ -1,16 +1,28 @@
-name: Validate Deployment
+name: Deploy-Test-Cleanup Pipeline
 
 on:
-  push:
-    branches:
-      - main
-  schedule:
-    - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
-  workflow_dispatch:
+    workflow_run:
+      workflows: ["Build Docker and Optional Push"]
+      types:
+        - completed
+      branches:
+        - main
+        - dev
+        - demo
+    schedule:
+      - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
+    workflow_dispatch:
+
+env:
+  GPT_MIN_CAPACITY: 200
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    outputs:
+      RESOURCE_GROUP_NAME: ${{ steps.check_create_rg.outputs.RESOURCE_GROUP_NAME }}
+      WEBAPP_URL: ${{ steps.get_output.outputs.WEBAPP_URL }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -36,7 +48,6 @@ jobs:
           UNIQUE_RG_NAME="arg-${ACCL_NAME}-${SHORT_UUID}"
           echo "RESOURCE_GROUP_NAME=${UNIQUE_RG_NAME}" >> $GITHUB_ENV
           echo "Generated RESOURCE_GROUP_NAME: ${UNIQUE_RG_NAME}"
-  
 
       - name: Check and Create Resource Group
         id: check_create_rg
@@ -50,8 +61,8 @@ jobs:
           else
             echo "Resource group already exists."
           fi
+          echo "RESOURCE_GROUP_NAME=${{ env.RESOURCE_GROUP_NAME }}" >> $GITHUB_OUTPUT
 
-      
       - name: Generate Unique Solution Prefix
         id: generate_solution_prefix
         run: |
@@ -63,17 +74,42 @@ jobs:
           echo "SOLUTION_PREFIX=${UNIQUE_SOLUTION_PREFIX}" >> $GITHUB_ENV
           echo "Generated SOLUTION_PREFIX: ${UNIQUE_SOLUTION_PREFIX}"
 
-
       - name: Deploy Bicep Template
         id: deploy
         run: |
           set -e
+          # set image tag based on branch
+          if [[ "${{ env.BRANCH_NAME }}" == "main" ]]; then
+            IMAGE_TAG="latest"
+          elif [[ "${{ env.BRANCH_NAME }}" == "dev" ]]; then
+            IMAGE_TAG="dev"
+          elif [[ "${{ env.BRANCH_NAME }}" == "demo" ]]; then
+            IMAGE_TAG="demo"
+          else
+            IMAGE_TAG="latest"
+          fi
+
           az deployment group create \
+            --name ${{ env.SOLUTION_PREFIX }}-deployment \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
-            --parameters AzureAiServiceLocation=swedencentral Prefix=${{ env.SOLUTION_PREFIX }}\
+            --parameters \
+                Prefix="${{ env.SOLUTION_PREFIX }}" \
+                AzureAiServiceLocation="eastus" \
+                capacity=${{ env.GPT_MIN_CAPACITY }} \
+                imageVersion="${IMAGE_TAG}"\
             --debug
 
+      - name: Get Deployment Output and extract Values
+        id: get_output
+        run: |
+          set -e
+          echo "Fetching deployment output..."
+          BICEP_OUTPUT=$(az deployment group show --name ${{ env.SOLUTION_PREFIX }}-deployment --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "properties.outputs" -o json)
+          echo "Extracting deployment output..."
+          WEBAPP_URL=$(echo $BICEP_OUTPUT | jq -r '.weB_APP_URL.value')
+          echo "WEBAPP_URL=$WEBAPP_URL" >> $GITHUB_OUTPUT
+          echo "Deployment output: $BICEP_OUTPUT"
 
       - name: Send Notification on Failure
         if: failure()
@@ -93,6 +129,34 @@ jobs:
             -H "Content-Type: application/json" \
             -d "$EMAIL_BODY" || echo "Failed to send notification"
 
+      - name: Logout from Azure
+        if: always()
+        run: |
+          az logout
+          echo "Logged out from Azure."
+
+  e2e-test:
+    needs: deploy
+    uses: ./.github/workflows/test-automation.yml
+    with:
+      CODEMOD_WEB_URL: ${{ needs.deploy.outputs.WEBAPP_URL }}
+    secrets: inherit
+
+  cleanup-deployment:
+    if: always() && needs.deploy.outputs.RESOURCE_GROUP_NAME != ''
+    needs: [deploy, e2e-test]
+    runs-on: ubuntu-latest
+    env:
+      RESOURCE_GROUP_NAME: ${{ needs.deploy.outputs.RESOURCE_GROUP_NAME }}
+    steps:
+      - name: Setup Azure CLI
+        run: |
+          curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          az --version  # Verify installation
+
+      - name: Login to Azure
+        run: |
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Get Log Analytics Workspace and OpenAI from Resource Group
         if: always()
@@ -125,7 +189,6 @@ jobs:
             echo "OPENAI_RESOURCE_NAME=${openai_resource_name}" >> $GITHUB_ENV
             echo "OpenAI resource name: ${openai_resource_name}" 
           fi
-
 
       - name: List KeyVaults and Store in Array
         if: always()
@@ -177,7 +240,6 @@ jobs:
 
           echo "Log analytics workspace resource purging completed successfully"    
       
-
       - name: Delete Bicep Deployment
         if: always()
         run: |
@@ -194,7 +256,6 @@ jobs:
           else
             echo "Resource group does not exists."
           fi
-
 
       - name: Wait for resource deletion to complete
         if: always()
@@ -255,7 +316,6 @@ jobs:
               break
             fi
           done
-
           
       - name: Purging the Resources
         if: always()
@@ -302,3 +362,9 @@ jobs:
             fi
           done
           echo "Resource purging completed successfully"
+
+      - name: Logout from Azure
+        if: always()
+        run: |
+          az logout
+          echo "Logged out from Azure."

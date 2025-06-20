@@ -24,7 +24,7 @@ Installing Playwright Pytest from Virtual Environment
 
 Run test cases
 
-- To run test cases from your 'tests' folder : "pytest --html=report.html --self-contained-html"
+- To run test cases from your 'tests/e2e-test' folder : "pytest --html=report.html --self-contained-html"
 
 Create .env file in project root level with web app url and client credentials
 
