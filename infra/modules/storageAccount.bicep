@@ -1,7 +1,7 @@
-@description('Name of the Storage Account.')
+@description('Required. Name of the Storage Account.')
 param name string
 
-@description('Specifies the location for all the Azure resources.')
+@description('Required. Specifies the location for all the Azure resources.')
 param location string
 
 @allowed([
@@ -14,7 +14,7 @@ param location string
   'Standard_GZRS'
   'Standard_RAGZRS'
 ])
-@description('Storage Account Sku Name. Defaults to Standard_LRS.')
+@description('Optional. Storage Account Sku Name. Defaults to Standard_LRS.')
 param skuName string = 'Standard_LRS'
 
 @description('Optional. Tags to be applied to the resources.')
@@ -36,36 +36,36 @@ param containers array?
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module blobPrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?blobPrivateDnsZoneResourceId)) {
-  name: take('${name}-blob-pdns-deployment', 64) 
+module blobPrivateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?blobPrivateDnsZoneResourceId)) {
+  name: take('${name}-blob-pdns-deployment', 64)
   params: {
     name: 'privatelink.blob.${environment().suffixes.storage}'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-      }
-    ]
+    //location: location
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
     tags: tags
-    enableTelemetry: enableTelemetry
   }
 }
 
-module filePrivateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?filePrivateDnsZoneResourceId)) {
-  name: take('${name}-file-pdns-deployment', 64) 
+module filePrivateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?filePrivateDnsZoneResourceId)) {
+  name: take('${name}-file-pdns-deployment', 64)
   params: {
     name: 'privatelink.file.${environment().suffixes.storage}'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-      }
-    ]
+    //location: location
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
     tags: tags
-    enableTelemetry: enableTelemetry
   }
 }
 
-var blobPrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?blobPrivateDnsZoneResourceId) ? blobPrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?blobPrivateDnsZoneResourceId) : ''
-var filePrivateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?filePrivateDnsZoneResourceId) ? filePrivateDnsZone.outputs.resourceId ?? '' : privateNetworking.?filePrivateDnsZoneResourceId) : ''
+var blobPrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?blobPrivateDnsZoneResourceId)
+      ? blobPrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?blobPrivateDnsZoneResourceId)
+  : ''
+var filePrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?filePrivateDnsZoneResourceId)
+      ? filePrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?filePrivateDnsZoneResourceId)
+  : ''
 
 module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
   name: take('${name}-sa-deployment', 64)
@@ -89,48 +89,55 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     enableNfsV3: false
     largeFileSharesState: 'Disabled'
     networkAcls: {
-      defaultAction: 'Allow'
+      defaultAction: privateNetworking != null ? 'Deny' : 'Allow'
       bypass: 'AzureServices'
     }
     supportsHttpsTrafficOnly: true
-    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
-      {
-        workspaceResourceId: logAnalyticsWorkspaceResourceId
-      }
-    ] : []
-    privateEndpoints: privateNetworking != null ? [
-      {
-        privateDnsZoneGroup: {
-          privateDnsZoneGroupConfigs: [
-            {
-              privateDnsZoneResourceId: blobPrivateDnsZoneResourceId
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
+      ? [
+          {
+            workspaceResourceId: logAnalyticsWorkspaceResourceId
+          }
+        ]
+      : []
+    privateEndpoints: privateNetworking != null
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: blobPrivateDnsZoneResourceId
+                }
+              ]
             }
-          ]
-        }
-        service: 'blob'
-        subnetResourceId: privateNetworking.?subnetResourceId ?? ''
-      }
-      {
-        privateDnsZoneGroup: {
-          privateDnsZoneGroupConfigs: [
-            {
-              privateDnsZoneResourceId: filePrivateDnsZoneResourceId
+            service: 'blob'
+            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+          }
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: filePrivateDnsZoneResourceId
+                }
+              ]
             }
-          ]
-        }
-        service: 'file'
-        subnetResourceId: privateNetworking.?subnetResourceId ?? ''
-      }
-    ] : []
+            service: 'file'
+            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+          }
+        ]
+      : []
     roleAssignments: roleAssignments
-     blobServices: {
+    blobServices: {
       containers: containers ?? []
     }
     enableTelemetry: enableTelemetry
   }
 }
 
+@description('Name of the Storage Account.')
 output name string = storageAccount.outputs.name
+
+@description('Resource ID of the Storage Account.')
 output resourceId string = storageAccount.outputs.resourceId
 
 @export()

@@ -1,11 +1,11 @@
-@description('Named used for all resource naming.')
+@description('Required. Named used for all resource naming.')
 param resourcesName string
 
-@description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
+@description('Required. Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
 param logAnalyticsWorkSpaceResourceId string
 
 @minLength(3)
-@description('Azure region for all services.')
+@description('Required. Azure region for all services.')
 param location string
 
 @description('Optional. Tags to be applied to the resources.')
@@ -14,17 +14,13 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-@description('Admin username for the VM.')
+@description('Required. Admin username for the VM.')
 @secure()
-param vmAdminUsername string 
+param vmAdminUsername string
 
-@description('Admin password for the VM.')
+@description('Required. Admin password for the VM.')
 @secure()
-param vmAdminPassword string 
-
-
-
-
+param vmAdminPassword string
 
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
@@ -55,7 +51,7 @@ param vmAdminPassword string
 // - Document subnet usage and purpose in code comments.
 // - For AVM modules, ensure only one delegation per subnet and leave delegations empty if not required.
 
-module network 'network/main.bicep' =  {
+module network 'network/main.bicep' = {
   name: take('network-${resourcesName}-create', 64)
   params: {
     resourcesName: resourcesName
@@ -105,7 +101,7 @@ module network 'network/main.bicep' =  {
       size: 'Standard_D2s_v3'
       username: vmAdminUsername
       password: vmAdminPassword
-      subnet:  {
+      subnet: {
         name: 'jumpbox'
         addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
         networkSecurityGroup: {
@@ -134,8 +130,14 @@ module network 'network/main.bicep' =  {
   }
 }
 
+@description('Name of the Virtual Network resource.')
 output vnetName string = network.outputs.vnetName
+
+@description('Resource ID of the Virtual Network.')
 output vnetResourceId string = network.outputs.vnetResourceId
 
+@description('Resource ID of the "web" subnet.')
 output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
+
+@description('Resource ID of the "peps" subnet for Private Endpoints.')
 output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
