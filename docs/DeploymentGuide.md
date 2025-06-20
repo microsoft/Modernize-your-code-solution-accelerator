@@ -25,9 +25,8 @@ When you start the deployment, most parameters will have **default values**, but
 
 | **Setting** | **Description** |  **Default value** |
 |------------|----------------|  ------------|
-| **Azure Region** | The region where resources will be created. | East US|
+| **Azure Region** | The region where resources will be created. | None |
 | **SolutionName** | Text/String used for part of all resources created by this template. | None |
-| **Azure Location** | Location for all AI services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **gpt-4o**. |  5k |
 
 This accelerator can be configured to  use authentication. 
