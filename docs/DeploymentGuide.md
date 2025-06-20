@@ -25,9 +25,9 @@ When you start the deployment, most parameters will have **default values**, but
 
 | **Setting** | **Description** |  **Default value** |
 |------------|----------------|  ------------|
-| **Azure Region** | The region where resources will be created. | East US| 
-| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
+| **Azure Region** | The region where resources will be created. | East US|
+| **SolutionName** | Text/String used for part of all resources created by this template. | None |
+| **Azure Location** | Location for all AI services resources. This location can be different from the resource group location | None |
 | **Capacity** | Configure capacity for **gpt-4o**. |  5k |
 
 This accelerator can be configured to  use authentication. 
@@ -45,7 +45,7 @@ To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
 ### Deployment Options & Steps 
 ### Sandbox or WAF Aligned Deployment Options
 
-The [`infra`](../infra) folder of the Multi Agent Solution Accelerator contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
+The [`infra`](../infra) folder contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
 
 By default, the `azd up` command uses the [`main.bicepparam`](../infra/main.bicepparam) file to deploy the solution. This file is pre-configured for a **sandbox environment** — ideal for development and proof-of-concept scenarios, with minimal security and cost controls for rapid iteration.
 
