@@ -117,6 +117,9 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.10.2' = 
     customSubDomainName: name
     disableLocalAuth: false
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
+    apiProperties: {
+      allowProjectManagement: true
+    }
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
       {
         workspaceResourceId: logAnalyticsWorkspaceResourceId
