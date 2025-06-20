@@ -73,7 +73,6 @@ param vmAdminUsername string?
 //param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
 
-
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -418,6 +417,11 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
         image: 'cmsacontainerreg.azurecr.io/cmsabackend:latest'
         env: concat(
           [
+            {
+              name: 'AI_PROJECT_ENDPOINT'
+              //   value: aiFoundryProject.properties.endpoints['AI Foundry API']
+              value: aiServices.outputs.project.apiEndpoint // or equivalent
+            }
             {
               name: 'COSMOSDB_ENDPOINT'
               value: cosmosDb.outputs.endpoint
