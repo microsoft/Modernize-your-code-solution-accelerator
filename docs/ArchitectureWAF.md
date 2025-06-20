@@ -1,11 +1,10 @@
 # WAF-Aligned Solution Architecture
 
-This document describes the architecture and key features of the WAF-aligned (Well-Architected Framework) deployment option for the Modernize Your Code Solution Accelerator.
+This page describes the architecture and key features of the WAF-aligned (Well-Architected Framework) deployment option for the Modernize Your Code Solution Accelerator.
 
 ![WAF-Aligned Architecture Diagram](../docs/images/read_me/solArchitectureWAF.png)
 
-## Overview
-The WAF-aligned deployment is hardened architecture following Azure Well-Architected Framework pillars:
+The [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) architecture enables below pillars: 
 - Security
 - Reliability
 - Performance Efficiency
@@ -14,6 +13,7 @@ The WAF-aligned deployment is hardened architecture following Azure Well-Archite
 
 ## Key Features
 - **Private Networking:**
+  - Solution components are enclosed with Azure Virtual Network.
   - Critical resources are accessible only via private endpoints within a Virtual Network (VNet).
   - Private DNS zones and virtual network links ensure secure, internal name resolution.
 - **Monitoring & Diagnostics:**
@@ -32,20 +32,3 @@ The WAF-aligned deployment is hardened architecture following Azure Well-Archite
 - **Jumpbox/Bastion Host:** Secure admin access to the VNet.
 - **Monitoring:** Centralized logging and application insights.
 - **App Services/Container Apps:** Deployed within the VNet, with private access to dependencies.
-
-## Deployment
-- Use the `main.waf.bicepparam` parameter file to enable all WAF features.
-- Deploy with:
-  ```sh
-  cp infra/main.waf.bicepparam infra/main.bicepparam
-  azd up
-  ```
-
-## Customization
-- Adjust parameters in `main.waf.bicepparam` to fit your organization's requirements (e.g., enable/disable redundancy, monitoring, private networking).
-
-## References
-- [Azure Well-Architected Framework](https://learn.microsoft.com/azure/architecture/framework/)
-- [Parameter file example](../infra/main.waf.bicepparam)
-- [Main deployment Bicep](../infra/main.bicep)
-
