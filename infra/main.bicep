@@ -46,7 +46,7 @@ param location string = resourceGroup().location
 param azureAiServiceLocation string = location
 
 @description('Optional. AI model deployment token capacity. Defaults to 5K tokens per minute.')
-param capacity int = 5
+param capacity int = 100 // was 5 before = 5K
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false
@@ -348,7 +348,6 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   }
 }
 
-
 module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
@@ -398,7 +397,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AZURE_OPENAI_ENDPOINT'
-              //value: 'https://${aiFoundryName}.openai.azure.com/'
+              //value: 'https://${aiFoundryName}.openai.azure.com/'   // old AI Foundry HUB setup
               value: 'https://${aiServices.outputs.name}.openai.azure.com/'
             }
             {
@@ -435,12 +434,17 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              //value: aiFoundryProject.properties.endpoints['AI Foundry API']
+              //value: aiFoundryProject.properties.endpoints['AI Foundry API'] // old AI Foundry HUB API endpoint
               value: aiServices.outputs.project.apiEndpoint // or equivalent
             }
             {
+              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
+              //value: azureAifoundry.outputs.projectConnectionString // OLD AI Foundry HUB connection string
+              value: aiServices.outputs.project.apiEndpoint
+            }
+            {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiServices.outputs.project.name 
+              value: aiServices.outputs.project.name
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
