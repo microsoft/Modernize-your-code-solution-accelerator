@@ -348,55 +348,6 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   }
 }
 
-module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
-  name: take('container-app-frontend-${resourcesName}-deployment', 64)
-  params: {
-    name: take('ca-${resourcesName}frontend', 32)
-    location: location
-    environmentResourceId: containerAppsEnvironment.outputs.resourceId
-    managedIdentities: {
-      userAssignedResourceIds: [
-        appIdentity.outputs.resourceId
-      ]
-    }
-    containers: [
-      {
-        env: [
-          {
-            name: 'API_URL'
-            value: 'https://${containerAppBackend.outputs.fqdn}'
-          }
-        ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:latest'
-        name: 'cmsafrontend'
-        resources: {
-          cpu: '1'
-          memory: '2.0Gi'
-        }
-      }
-    ]
-    ingressTargetPort: 3000
-    ingressExternal: true
-    scaleSettings: {
-      maxReplicas: enableScaling ? 3 : 1
-      minReplicas: 1
-      rules: enableScaling
-        ? [
-            {
-              name: 'http-scaler'
-              http: {
-                metadata: {
-                  concurrentRequests: 100
-                }
-              }
-            }
-          ]
-        : []
-    }
-    tags: allTags
-    enableTelemetry: enableTelemetry
-  }
-}
 
 module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-backend-${resourcesName}-deployment', 64)
@@ -541,6 +492,56 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
       }
     ]
     ingressTargetPort: 8000
+    ingressExternal: true
+    scaleSettings: {
+      maxReplicas: enableScaling ? 3 : 1
+      minReplicas: 1
+      rules: enableScaling
+        ? [
+            {
+              name: 'http-scaler'
+              http: {
+                metadata: {
+                  concurrentRequests: 100
+                }
+              }
+            }
+          ]
+        : []
+    }
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
+  name: take('container-app-frontend-${resourcesName}-deployment', 64)
+  params: {
+    name: take('ca-${resourcesName}frontend', 32)
+    location: location
+    environmentResourceId: containerAppsEnvironment.outputs.resourceId
+    managedIdentities: {
+      userAssignedResourceIds: [
+        appIdentity.outputs.resourceId
+      ]
+    }
+    containers: [
+      {
+        env: [
+          {
+            name: 'API_URL'
+            value: 'https://${containerAppBackend.outputs.fqdn}'
+          }
+        ]
+        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:latest'
+        name: 'cmsafrontend'
+        resources: {
+          cpu: '1'
+          memory: '2.0Gi'
+        }
+      }
+    ]
+    ingressTargetPort: 3000
     ingressExternal: true
     scaleSettings: {
       maxReplicas: enableScaling ? 3 : 1
