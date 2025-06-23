@@ -46,7 +46,7 @@ param location string = resourceGroup().location
 param azureAiServiceLocation string = location
 
 @description('Optional. AI model deployment token capacity. Defaults to 5K tokens per minute.')
-param capacity int = 100 // was 5 before = 5K
+param capacity int = 5 // was 5 before = 5K
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false
@@ -192,12 +192,13 @@ module aiServices 'modules/ai-services/main.bicep' = {
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    // privateNetworking: enablePrivateNetworking
-    //   ? {
-    //       virtualNetworkResourceId: network.outputs.vnetResourceId
-    //       subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
-    //     }
-    //   : null
+    // Enable privateNetworking. See infra/modules/ai-services/main.bicep for addtional configurations.
+    privateNetworking: enablePrivateNetworking
+      ? {
+          virtualNetworkResourceId: network.outputs.vnetResourceId
+          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+        }
+      : null
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId

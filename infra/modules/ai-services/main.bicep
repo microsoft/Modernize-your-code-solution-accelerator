@@ -118,6 +118,7 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
     tags: tags
     sku: sku
     kind: kind
+ 
     allowProjectManagement: true
     managedIdentities: {
       systemAssigned: true
@@ -126,6 +127,17 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
     customSubDomainName: name
     disableLocalAuth: false
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
+    // rules to allow firewall and virtual network access
+    networkAcls: {
+      defaultAction: 'Deny'
+      bypass: 'AzureServices'
+      virtualNetworkRules: privateNetworking != null ? [
+        {
+          id: privateNetworking!.subnetResourceId
+        }
+      ] : []
+      ipRules: []
+    } // end of rules to allow firewall and virtual network access
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
       ? [
           {
