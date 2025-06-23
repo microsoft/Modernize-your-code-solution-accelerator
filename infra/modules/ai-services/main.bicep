@@ -81,7 +81,6 @@ module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNe
   name: take('${name}-cognitiveservices-pdns-deployment', 64)
   params: {
     name: 'privatelink.cognitiveservices.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
-    //location: location
     virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
     tags: tags
   }
