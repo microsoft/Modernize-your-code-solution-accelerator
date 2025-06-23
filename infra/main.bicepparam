@@ -10,12 +10,13 @@ param location = readEnvironmentVariable('AZURE_LOCATION')
 //      Refer to infra/main.waf-aligned.bicep for the WAF-aligned configuration
 // //*******************************************************************************
 
-// param enableMonitoring = true
-// param enableScaling = true
-// param enableRedundancy = true
-
-// param enablePrivateNetworking = true
-// param vmAdminUsername = 'JumpboxAdminUser'
-// param vmAdminPassword = 'JumpboxAdminP@ssw0rd1234!'
-
+param enableMonitoring = true
+param enableScaling = true
+param enableRedundancy = true
 //param secondaryLocation = 'uksouth' // TODO - test this
+
+param enablePrivateNetworking = true
+param vmAdminUsername = 'JumpboxAdminUser'
+param vmAdminPassword = 'JumpboxAdminP@ssw0rd1234!'
+
+
