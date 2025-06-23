@@ -192,12 +192,12 @@ module aiServices 'modules/ai-services/main.bicep' = {
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    privateNetworking: enablePrivateNetworking
-      ? {
-          virtualNetworkResourceId: network.outputs.vnetResourceId
-          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
-        }
-      : null
+    // privateNetworking: enablePrivateNetworking
+    //   ? {
+    //       virtualNetworkResourceId: network.outputs.vnetResourceId
+    //       subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+    //     }
+    //   : null
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
