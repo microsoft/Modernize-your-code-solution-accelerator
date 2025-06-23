@@ -90,7 +90,6 @@ module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking !=
   name: take('${name}-openai-pdns-deployment', 64)
   params: {
     name: 'privatelink.openai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
-   // location: location
     virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
     tags: tags
   }
@@ -128,7 +127,7 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     // rules to allow firewall and virtual network access
     networkAcls: {
-      defaultAction: 'Deny'
+      defaultAction: privateNetworking != null ? 'Deny' : 'Allow'
       bypass: 'AzureServices'
       virtualNetworkRules: privateNetworking != null ? [
         {
