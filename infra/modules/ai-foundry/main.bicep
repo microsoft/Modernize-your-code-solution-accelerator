@@ -5,7 +5,7 @@ metadata description = 'This module creates an AI Services resource and an AI Fo
 param name string
 
 @description('Optional. The location of the Cognitive Services resource.')
-param location string = resourceGroup().location
+param location string // this should be passed 
 
 @description('Optional. Kind of the Cognitive Services account. Use \'Get-AzCognitiveServicesAccountSku\' to determine a valid combinations of \'kind\' and \'SKU\' for your Azure region.')
 @allowed([
@@ -95,6 +95,16 @@ module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking !=
   }
 }
 
+// added
+module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
+  name: take('${name}-ai-services-pdns-deployment', 64)
+  params: {
+    name: 'privatelink.services.ai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
+    tags: tags
+  }
+}
+
 var cogServicesPrivateDnsZoneResourceId = privateNetworking != null
   ? (empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)
       ? cognitiveServicesPrivateDnsZone.outputs.resourceId ?? ''
@@ -106,7 +116,14 @@ var openAIPrivateDnsZoneResourceId = privateNetworking != null
       : privateNetworking.?openAIPrivateDnsZoneResourceId)
   : ''
 
-module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = {
+
+var aiServicesPrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)
+      ? aiServicesPrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?aiServicesPrivateDnsZoneResourceId)
+  : ''
+
+module cognitiveService 'ai-services.bicep' = {
   name: take('${name}-aiservices-deployment', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone] // required due to optional flags that could change dependency
@@ -116,26 +133,21 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
     tags: tags
     sku: sku
     kind: kind
- 
-    allowProjectManagement: true
     managedIdentities: {
       systemAssigned: true
     }
+    projectName: projectName
+    projectDescription: projectDescription
     deployments: deployments
     customSubDomainName: name
     disableLocalAuth: false
     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     // rules to allow firewall and virtual network access
     networkAcls: {
-      defaultAction: privateNetworking != null ? 'Deny' : 'Allow'
-      bypass: 'AzureServices'
-      virtualNetworkRules: privateNetworking != null ? [
-        {
-          id: privateNetworking!.subnetResourceId
-        }
-      ] : []
+      defaultAction: 'Allow'
+      virtualNetworkRules: []
       ipRules: []
-    } // end of rules to allow firewall and virtual network access
+    }
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
       ? [
           {
@@ -147,6 +159,9 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
     privateEndpoints: privateNetworking != null
       ? [
           {
+            name:'pep-${name}-aiservices' // private endpoint name
+            customNetworkInterfaceName: 'nic-${name}-aiservices'
+            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
                 {
@@ -155,15 +170,17 @@ module cognitiveService 'br/public:avm/res/cognitive-services/account:0.11.0' = 
                 {
                   privateDnsZoneResourceId: openAIPrivateDnsZoneResourceId
                 }
+                {
+                  privateDnsZoneResourceId: aiServicesPrivateDnsZoneResourceId
+                }
               ]
             }
-            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
           }
         ]
       : []
-    enableTelemetry: enableTelemetry
   }
 }
+
 
 module aiProject 'project.bicep' = {
   name: take('${name}-ai-project-${projectName}-deployment', 64)
@@ -231,4 +248,7 @@ type aiServicesPrivateNetworkingType = {
 
   @description('Optional. The Resource ID of an existing "openai" Private DNS Zone Resource to link to the virtual network. If not provided, a new "openai" Private DNS Zone(s) will be created.')
   openAIPrivateDnsZoneResourceId: string?
+  
+  @description('Optional. The Resource ID of an existing "services.ai" Private DNS Zone Resource to link to the virtual network. If not provided, a new "services.ai" Private DNS Zone(s) will be created.')
+  aiServicesPrivateDnsZoneResourceId: string?
 }
