@@ -76,7 +76,7 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     adminUsername: username
     adminPassword: password
     tags: tags
-    zone: 2
+    zone: 0
     imageReference: {
       offer: 'WindowsServer'
       publisher: 'MicrosoftWindowsServer'
