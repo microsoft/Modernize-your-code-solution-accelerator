@@ -9,7 +9,7 @@ param location = readEnvironmentVariable('AZURE_LOCATION')
 
 param enableMonitoring = true
 param enableScaling = true
-param enableRedundancy = true
+param enableRedundancy = false
 //param secondaryLocation = 'uksouth' // TODO - test this
 param enablePrivateNetworking = true
 param vmAdminUsername = 'JumpboxAdminUser'
