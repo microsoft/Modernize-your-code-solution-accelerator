@@ -1,4 +1,4 @@
-# WAF-Aligned Solution Architecture
+# Azure WAF-Aligned Architecture
 
 This architecture implements [Azure Well-Architected Framework (WAF)](https://learn.microsoft.com/en-us/azure/well-architected/) principles for enterprise-grade deployments, deployed with the WAF-Aligned deployment option: 
 
