@@ -6,15 +6,15 @@ MODELS_PARAMETER=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --subscription)
+    --SubscriptionId)
       SUBSCRIPTION_ID="$2"
       shift 2
       ;;
-    --location)
+    --Location)
       LOCATION="$2"
       shift 2
       ;;
-    --models-parameter)
+    --ModelsParameter)
       MODELS_PARAMETER="$2"
       shift 2
       ;;
@@ -27,13 +27,13 @@ done
 
 # Validate required parameters
 MISSING_PARAMS=()
-[[ -z "$SUBSCRIPTION_ID" ]] && MISSING_PARAMS+=("subscription")
-[[ -z "$LOCATION" ]] && MISSING_PARAMS+=("location")
-[[ -z "$MODELS_PARAMETER" ]] && MISSING_PARAMS+=("models-parameter")
+[[ -z "$SUBSCRIPTION_ID" ]] && MISSING_PARAMS+=("SubscriptionId")
+[[ -z "$LOCATION" ]] && MISSING_PARAMS+=("Location")
+[[ -z "$MODELS_PARAMETER" ]] && MISSING_PARAMS+=("ModelsParameter")
 
 if [[ ${#MISSING_PARAMS[@]} -ne 0 ]]; then
   echo "❌ ERROR: Missing required parameters: ${MISSING_PARAMS[*]}"
-  echo "Usage: $0 --subscription <SUBSCRIPTION_ID> --location <LOCATION> --models-parameter <MODELS_PARAMETER>"
+  echo "Usage: $0 --SubscriptionId <SUBSCRIPTION_ID> --Location <LOCATION> --ModelsParameter <MODELS_PARAMETER>"
   exit 1
 fi
 
