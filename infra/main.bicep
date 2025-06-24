@@ -42,8 +42,11 @@ param location string = resourceGroup().location
   'westus3'
 ])
 @metadata({ azd: { type: 'location' } })
+
+
 @description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
 param azureAiServiceLocation string = location
+
 
 @description('Optional. AI model deployment token capacity. Defaults to 5K tokens per minute.')
 param capacity int = 5 // was 5 before = 5K
@@ -180,7 +183,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   }
 }
 
-module aiServices 'modules/ai-services/main.bicep' = {
+module aiServices 'modules/ai-foundry/main.bicep' = {
   name: take('aiservices-${resourcesName}-deployment', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
@@ -192,7 +195,6 @@ module aiServices 'modules/ai-services/main.bicep' = {
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
-    // Enable privateNetworking. See infra/modules/ai-services/main.bicep for addtional configurations.
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -398,7 +400,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AZURE_OPENAI_ENDPOINT'
-              //value: 'https://${aiFoundryName}.openai.azure.com/'   // old AI Foundry HUB setup
               value: 'https://${aiServices.outputs.name}.openai.azure.com/'
             }
             {
@@ -435,12 +436,10 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              //value: aiFoundryProject.properties.endpoints['AI Foundry API'] // old AI Foundry HUB API endpoint
               value: aiServices.outputs.project.apiEndpoint // or equivalent
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
-              //value: azureAifoundry.outputs.projectConnectionString // OLD AI Foundry HUB connection string
               value: aiServices.outputs.project.apiEndpoint
             }
             {
