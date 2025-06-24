@@ -95,7 +95,6 @@ module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking !=
   }
 }
 
-// added
 module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-ai-services-pdns-deployment', 64)
   params: {
@@ -115,7 +114,6 @@ var openAIPrivateDnsZoneResourceId = privateNetworking != null
       ? openAiPrivateDnsZone.outputs.resourceId ?? ''
       : privateNetworking.?openAIPrivateDnsZoneResourceId)
   : ''
-
 
 var aiServicesPrivateDnsZoneResourceId = privateNetworking != null
   ? (empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)

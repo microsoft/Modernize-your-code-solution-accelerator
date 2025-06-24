@@ -60,7 +60,7 @@ param enableScaling bool = false
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
 
-@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled. Defaults to false.')
+@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
 
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
