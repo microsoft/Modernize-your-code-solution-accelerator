@@ -24,7 +24,7 @@ The solution leverages Azure AI Foundry, Azure OpenAI Service, Azure Container A
 |![image](./docs/images/read_me/solArchitecture.png)|
 |---|
 
-This architecture will be deployed with the 'sandbox' setting of our deployment process. Optionally you can deploy [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) architecture, described in [WAF Aligned Solution Architecture](./docs/ArchitectureWAF.md), with the WAF-Aligned deployment option described in [Deployment Guide](./docs/DeploymentGuide.md).
+This architecture will be deployed with the 'sandbox' setting of our deployment process. Optionally you can deploy [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) architecture, described in [WAF-Aligned Solution Architecture](./docs/ArchitectureWAF.md), with the WAF-Aligned deployment option described in [Deployment Guide](./docs/DeploymentGuide.md).
 
 ### Agentic architecture
 
