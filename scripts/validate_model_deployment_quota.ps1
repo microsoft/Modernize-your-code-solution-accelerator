@@ -11,15 +11,9 @@ $ResourceGroup = $env:AZURE_RESOURCE_GROUP
 # Validate required parameters
 $MissingParams = @()
 
-if (-not $SubscriptionId) {
-    $MissingParams += "subscription"
-}
-if (-not $Location) {
-    $MissingParams += "location"
-}
-if (-not $ModelsParameter) {
-    $MissingParams += "models-parameter"
-}
+if (-not $SubscriptionId) { $MissingParams += "SubscriptionId" }
+if (-not $Location) { $MissingParams += "Location" }
+if (-not $ModelsParameter) { $MissingParams += "ModelsParameter" }
 
 if ($MissingParams.Count -gt 0) {
     Write-Error "❌ ERROR: Missing required parameters: $($MissingParams -join ', ')"
