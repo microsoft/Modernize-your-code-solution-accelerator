@@ -124,7 +124,7 @@ var aiServicesPrivateDnsZoneResourceId = privateNetworking != null
 module cognitiveService 'ai-services.bicep' = {
   name: take('${name}-aiservices-deployment', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone] // required due to optional flags that could change dependency
+  dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone, aiServicesPrivateDnsZone] // required due to optional flags that could change dependency
   params: {
     name: name
     location: location
