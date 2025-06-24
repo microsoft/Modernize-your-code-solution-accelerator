@@ -57,12 +57,6 @@ param kind string = 'AIServices'
 ])
 param sku string = 'S0'
 
-@description('Required. The name of the AI Foundry project to create.')
-param projectName string
-
-@description('Required. The description of the AI Foundry project to create.')
-param projectDescription string = projectName
-
 @description('Optional. Location for all Resources.')
 param location string = resourceGroup().location
 
@@ -90,10 +84,6 @@ import { privateEndpointSingleServiceType } from 'br/public:avm/utl/types/avm-co
 @description('Optional. Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible.')
 param privateEndpoints privateEndpointSingleServiceType[]?
 
-import { lockType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
-@description('Optional. The lock settings of the service.')
-param lock lockType?
-
 import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
@@ -109,10 +99,6 @@ param apiProperties object?
 
 @description('Optional. Allow only Azure AD authentication. Should be enabled for security reasons.')
 param disableLocalAuth bool = true
-
-import { customerManagedKeyType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
-@description('Optional. The customer managed key definition.')
-param customerManagedKey customerManagedKeyType?
 
 @description('Optional. The flag to enable dynamic throttling.')
 param dynamicThrottlingEnabled bool = false
@@ -274,26 +260,6 @@ var formattedRoleAssignments = [
   })
 ]
 
-resource cMKKeyVault 'Microsoft.KeyVault/vaults@2024-11-01' existing = if (!empty(customerManagedKey.?keyVaultResourceId)) {
-  name: last(split(customerManagedKey.?keyVaultResourceId!, '/'))
-  scope: resourceGroup(
-    split(customerManagedKey.?keyVaultResourceId!, '/')[2],
-    split(customerManagedKey.?keyVaultResourceId!, '/')[4]
-  )
-
-  resource cMKKey 'keys@2024-11-01' existing = if (!empty(customerManagedKey.?keyVaultResourceId) && !empty(customerManagedKey.?keyName)) {
-    name: customerManagedKey.?keyName!
-  }
-}
-
-resource cMKUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = if (!empty(customerManagedKey.?userAssignedIdentityResourceId)) {
-  name: last(split(customerManagedKey.?userAssignedIdentityResourceId!, '/'))
-  scope: resourceGroup(
-    split(customerManagedKey.?userAssignedIdentityResourceId!, '/')[2],
-    split(customerManagedKey.?userAssignedIdentityResourceId!, '/')[4]
-  )
-}
-
 resource cognitiveService 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
   name: name
   kind: kind
@@ -330,21 +296,7 @@ resource cognitiveService 'Microsoft.CognitiveServices/accounts@2025-04-01-previ
         ]
       : null
     // true is not supported today
-    encryption: !empty(customerManagedKey)
-      ? {
-          keySource: 'Microsoft.KeyVault'
-          keyVaultProperties: {
-            identityClientId: !empty(customerManagedKey.?userAssignedIdentityResourceId ?? '')
-              ? cMKUserAssignedIdentity.properties.clientId
-              : null
-            keyVaultUri: cMKKeyVault.properties.vaultUri
-            keyName: customerManagedKey!.keyName
-            keyVersion: !empty(customerManagedKey.?keyVersion ?? '')
-              ? customerManagedKey!.?keyVersion
-              : last(split(cMKKeyVault::cMKKey.properties.keyUriWithVersion, '/'))
-          }
-        }
-      : null
+    encryption: null // Customer managed key encryption is used, but the property is required.
     migrationToken: migrationToken
     restore: restore
     restrictOutboundNetworkAccess: restrictOutboundNetworkAccess
@@ -372,31 +324,6 @@ resource cognitiveService_deployments 'Microsoft.CognitiveServices/accounts/depl
     }
   }
 ]
-
-resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
-  parent: cognitiveService
-  name: projectName
-  tags: tags
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    description: projectDescription
-    displayName: projectName
-  }
-}
-
-resource cognitiveService_lock 'Microsoft.Authorization/locks@2020-05-01' = if (!empty(lock ?? {}) && lock.?kind != 'None') {
-  name: lock.?name ?? 'lock-${name}'
-  properties: {
-    level: lock.?kind ?? ''
-    notes: lock.?kind == 'CanNotDelete'
-      ? 'Cannot delete resource or child resources.'
-      : 'Cannot delete or modify the resource or child resources.'
-  }
-  scope: cognitiveService
-}
 
 #disable-next-line use-recent-api-versions
 resource cognitiveService_diagnosticSettings 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = [
@@ -471,7 +398,6 @@ module cognitiveService_privateEndpoints 'br/public:avm/res/network/private-endp
         '2020-06-01',
         'Full'
       ).location
-      lock: privateEndpoint.?lock ?? lock
       privateDnsZoneGroup: privateEndpoint.?privateDnsZoneGroup
       roleAssignments: privateEndpoint.?roleAssignments
       tags: privateEndpoint.?tags ?? tags
@@ -504,12 +430,6 @@ output name string = cognitiveService.name
 
 @description('The resource ID of the cognitive services account.')
 output resourceId string = cognitiveService.id
-
-@description('The resource ID of AI project.')
-output aiProjectResourceId string = aiFoundryProject.id
-
-@description('The endpoint to connect to the AI Project API')
-output aiProjectApiEndpoint string = aiFoundryProject.properties.endpoints['AI Foundry API']
 
 @description('The resource group the cognitive services account was deployed into.')
 output resourceGroupName string = resourceGroup().name
