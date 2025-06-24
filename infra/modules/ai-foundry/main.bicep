@@ -134,8 +134,6 @@ module cognitiveService 'ai-services.bicep' = {
     managedIdentities: {
       systemAssigned: true
     }
-    projectName: projectName
-    projectDescription: projectDescription
     deployments: deployments
     customSubDomainName: name
     disableLocalAuth: false
