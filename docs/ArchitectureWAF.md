@@ -46,3 +46,14 @@ This architecture implements [Azure Well-Architected Framework (WAF)](https://le
 - **Network-first Design:** All components deployed within private network boundaries
 - **Enterprise-ready:** Production-grade security and monitoring enabled
 
+## Application Information Flow
+
+The application information flow remains the same for both 'sandbox' and 'waf-aligned' configuration. 
+
+The solution is composed of several services:
+
+- The web app front end and the backend app logic are containerized and run from Azure Container service instances. 
+- When a request for conversion is created in the web app admin console, the user specifies what files should be converted and the target SQL dialect for conversion. 
+- These files are then uploaded to blob storage and initial data about the request is stored in Cosmos DB. 
+- The conversion takes place using appropriate LLM models using multiple agents, with each agent having a dedicated purpose in the conversion process. As files are converted, they are placed into blob storage, with metadata collected into Cosmos detailing the conversion process and the current state of the batch. 
+- Cosmos also stores the logs from the individual agents so the results can be fully reviewed before any of the converted files are put into production.
