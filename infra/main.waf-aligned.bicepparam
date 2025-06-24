@@ -6,10 +6,10 @@ param location = readEnvironmentVariable('AZURE_LOCATION')
 
 //**************************************************************************************************
 // WAF-aligned configurations:
-// monitoring
-// scaling
-// redundancy
-// private networking
+//   Monitoring
+//   Scaling
+//   Redundancy
+//   Private networking
 //*************************************************************************************************
 
 param enableMonitoring = true
@@ -20,7 +20,7 @@ param enableScaling = true
 //    !!! Please check capacity and availability for redundancy in your desirable regions first 
 //    and set it accordingly. We recommend to set this to false if you are not sure.
 // 
-param enableRedundancy = false              // If true, need to set secondaryLocation
+param enableRedundancy = false               // If true, need to set secondaryLocation
 //param secondaryLocation = 'westus2'       // Set the secondary location for redundancy
 // 
 //*************************************************************************************************
