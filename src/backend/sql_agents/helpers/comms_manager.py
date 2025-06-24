@@ -156,91 +156,98 @@ class CommsManager:
             selection_strategy=self.SelectionStrategy(agents=agent_dict.values()),
         )
         
-        # Store retry configuration (only used when needed)
+        # Store retry configuration
         self.max_retries = max_retries
         self.initial_delay = initial_delay
         self.backoff_factor = backoff_factor
         self.exception_types = exception_types
         self.simple_truncation = simple_truncation
         
-        # Performance optimization flags
-        self._rate_limit_ever_detected = False
+        # Adaptive retry state - starts optimistic
+        self._rate_limit_detected_recently = False
         self._consecutive_successes = 0
-        self._use_fast_path = True
+        self._session_has_rate_limits = False
 
     def _is_rate_limit_error(self, error_message: str) -> bool:
         """Check if the error message indicates a rate limit issue."""
         error_lower = error_message.lower()
         return any(indicator in error_lower for indicator in self._RATE_LIMIT_INDICATORS)
 
-    def _should_use_fast_path(self) -> bool:
-        """Determine if we should use the fast path (no retry overhead)."""
-        # Use fast path if we've never seen rate limits and have some successful calls
+    def _should_use_zero_overhead_path(self) -> bool:
+        """
+        Determine if we should use zero-overhead path.
+        
+        Use zero overhead when:
+        - No rate limits detected in current session AND
+        - We have some successful calls OR this is the first call
+        """
         return (
-            not self._rate_limit_ever_detected 
-            and self._consecutive_successes >= 3
-            and self._use_fast_path
+            not self._session_has_rate_limits 
+            and (self._consecutive_successes >= 1 or self._consecutive_successes == 0)
         )
 
-    async def _fast_invoke(self) -> AsyncIterable[ChatMessageContent]:
-        """Original invoke method with zero overhead - matches no-retry performance."""
+    async def _zero_overhead_invoke(self) -> AsyncIterable[ChatMessageContent]:
+        """Pure delegation to original group_chat.invoke() - zero overhead."""
         async for item in self.group_chat.invoke():
             yield item
 
-    async def _safe_invoke_with_retry(self) -> AsyncIterable[ChatMessageContent]:
-        """Retry logic with optimized snapshot handling."""
+    async def _retry_enabled_invoke(self) -> AsyncIterable[ChatMessageContent]:
+        """Invoke with retry logic - only used when rate limits are expected."""
         attempt = 0
         current_delay = self.initial_delay
         
-        # Only create snapshot when we actually need to retry
-        history_snap = None
+        # Create history snapshot only when we need it
+        history_snapshot = None
 
         while attempt < self.max_retries:
             try:
-                # Apply truncation if configured (only on first attempt or retry)
+                # Apply truncation if configured and on first attempt
                 if (
                     attempt == 0
                     and self.simple_truncation
                     and len(self.group_chat.history) > self.simple_truncation
                 ):
-                    # Create snapshot only when truncating
-                    if history_snap is None:
-                        history_snap = copy.deepcopy(self.group_chat.history)
-                    self.group_chat.history = history_snap[-self.simple_truncation:]
+                    if history_snapshot is None:
+                        history_snapshot = copy.deepcopy(self.group_chat.history)
+                    self.group_chat.history = history_snapshot[-self.simple_truncation:]
 
-                # Get iterator and yield results
+                # Execute and yield results
                 async for item in self.group_chat.invoke():
                     yield item
 
-                # Success - break out of retry loop
-                break
+                # Success - exit retry loop
+                return
 
             except AgentInvokeException as aie:
-                # Create snapshot only when we need to retry
-                if history_snap is None:
-                    history_snap = copy.deepcopy(self.group_chat.history)
+                # Create snapshot only when we actually need to retry
+                if history_snapshot is None:
+                    history_snapshot = copy.deepcopy(self.group_chat.history)
                 
                 attempt += 1
                 if attempt >= self.max_retries:
                     self.logger.error(
-                        "Function invoke failed after %d attempts. Final error: %s",
+                        "AgentInvokeException: Max retries (%d) exceeded. Final error: %s",
                         self.max_retries,
                         str(aie),
                     )
                     raise
 
-                # Restore history for retry
-                self.group_chat.history = history_snap
+                # Restore history from snapshot
+                self.group_chat.history = copy.deepcopy(history_snapshot)
 
-                # Extract wait time or use default
+                # Check for rate limit specific wait time
                 wait_time_match = re.search(self._EXTRACT_WAIT_TIME, str(aie))
                 if wait_time_match:
                     current_delay = int(wait_time_match.group(1))
+                    self.logger.info(
+                        "Rate limit detected, waiting %d seconds as requested",
+                        current_delay
+                    )
                 else:
-                    current_delay = self.initial_delay
+                    current_delay = self.initial_delay * (self.backoff_factor ** (attempt - 1))
 
                 self.logger.warning(
-                    "Attempt %d/%d failed: %s. Retrying in %.2f seconds...",
+                    "Attempt %d/%d failed with AgentInvokeException: %s. Retrying in %.2f seconds...",
                     attempt,
                     self.max_retries,
                     str(aie),
@@ -248,24 +255,25 @@ class CommsManager:
                 )
 
                 await asyncio.sleep(current_delay)
-                
-                if not wait_time_match:
-                    current_delay *= self.backoff_factor
 
             except self.exception_types as e:
-                # Create snapshot only when we need to retry
-                if history_snap is None:
-                    history_snap = copy.deepcopy(self.group_chat.history)
+                if history_snapshot is None:
+                    history_snapshot = copy.deepcopy(self.group_chat.history)
                 
                 attempt += 1
                 if attempt >= self.max_retries:
                     self.logger.error(
-                        "Function invoke failed after %d attempts. Final error: %s",
+                        "Generic exception: Max retries (%d) exceeded. Final error: %s",
                         self.max_retries,
                         str(e),
                     )
                     raise
 
+                # Restore history from snapshot
+                self.group_chat.history = copy.deepcopy(history_snapshot)
+
+                current_delay = self.initial_delay * (self.backoff_factor ** (attempt - 1))
+                
                 self.logger.warning(
                     "Attempt %d/%d failed with %s: %s. Retrying in %.2f seconds...",
                     attempt,
@@ -276,21 +284,23 @@ class CommsManager:
                 )
 
                 await asyncio.sleep(current_delay)
-                current_delay *= self.backoff_factor
 
     async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
         """
-        Ultra-optimized invoke that achieves original performance when no rate limits are detected.
+        Optimized invoke method that dynamically chooses between zero-overhead and retry modes.
         
         Performance targets:
-        - 200k tokens: 1.2 mins (matches no-retry performance)
-        - 30k-50k tokens: 1.8 mins (minimal retry overhead)
+        - 200k tokens: 1.2 mins (zero overhead when no rate limits expected)
+        - 30k-50k tokens: 1.8-2 mins (retry overhead only when needed)
         """
         
-        # Fast path: Use original performance when safe
-        if self._should_use_fast_path():
+        # Decide which path to take
+        use_zero_overhead = self._should_use_zero_overhead_path()
+        
+        if use_zero_overhead:
+            # Zero overhead path - matches original performance exactly
             try:
-                async for item in self._fast_invoke():
+                async for item in self._zero_overhead_invoke():
                     yield item
                 
                 # Track success
@@ -298,38 +308,49 @@ class CommsManager:
                 return
                 
             except (AgentInvokeException, *self.exception_types) as e:
-                # Check if it's a rate limit error
-                if self._is_rate_limit_error(str(e)):
-                    self.logger.info("Rate limit detected, switching to safe mode")
-                    self._rate_limit_ever_detected = True
-                    self._use_fast_path = False
-                    # Fall through to retry logic
+                # Check if this is a rate limit error
+                error_str = str(e)
+                if self._is_rate_limit_error(error_str):
+                    self.logger.info(
+                        "Rate limit detected on zero-overhead path, switching to retry mode for this session"
+                    )
+                    self._session_has_rate_limits = True
+                    self._rate_limit_detected_recently = True
+                    # Fall through to retry logic below
                 else:
-                    # Non-rate-limit error, re-raise immediately
+                    # Non-rate-limit error, re-raise immediately (fail fast)
+                    self.logger.error("Non-rate-limit error in zero-overhead path: %s", error_str)
                     raise
         
-        # Safe path: Use retry logic
+        # Retry-enabled path - used when rate limits are expected or detected
         try:
-            async for item in self._safe_invoke_with_retry():
+            async for item in self._retry_enabled_invoke():
                 yield item
             
-            # Track success (but don't immediately switch back to fast path)
+            # Track success
             self._consecutive_successes += 1
             
-            # Re-enable fast path after many consecutive successes and no recent rate limits
-            if (
-                self._consecutive_successes >= 10 
-                and self._rate_limit_ever_detected
-            ):
-                self.logger.info("Re-enabling fast path after sustained success")
-                self._use_fast_path = True
+            # Gradually become more optimistic about rate limits
+            if self._consecutive_successes >= 5:
+                self._rate_limit_detected_recently = False
+                # Note: We keep _session_has_rate_limits = True to remember for this session
                 
-        except Exception:
-            # Reset success counter on any failure
+        except Exception as e:
+            # Reset success counter on failure
             self._consecutive_successes = 0
-            self._use_fast_path = False
+            self._rate_limit_detected_recently = True
             raise
 
     async def invoke_async(self):
-        """Original invoke method - maintained for compatibility."""
+        """Legacy method - maintained for compatibility."""
         return self.group_chat.invoke()
+
+    def reset_rate_limit_state(self):
+        """
+        Reset rate limit detection state - call this between different processing sessions
+        if you want to reset the adaptive behavior.
+        """
+        self._rate_limit_detected_recently = False
+        self._consecutive_successes = 0
+        self._session_has_rate_limits = False
+        self.logger.info("Rate limit detection state reset")
