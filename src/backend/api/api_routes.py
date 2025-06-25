@@ -35,7 +35,6 @@ logger = AppLogger("APIRoutes")
 async def start_processing(request: Request):
     """
     Start processing files for a given batch.
-
     ---
     tags:
     - File Processing
@@ -55,7 +54,6 @@ async def start_processing(request: Request):
     responses:
       200:
         description: Processing initiated successfully
-
         content:
           application/json:
             schema:
@@ -67,7 +65,6 @@ async def start_processing(request: Request):
                   type: string
       400:
         description: Invalid processing request
-
       500:
         description: Internal server error
     """
@@ -80,9 +77,7 @@ async def start_processing(request: Request):
         await process_batch_async(
             batch_id=batch_id, convert_from=translate_from, convert_to=translate_to
         )
-
         await close_connection(batch_id)
-
         return {
             "batch_id": batch_id,
             "status": "Processing completed",
@@ -101,7 +96,6 @@ async def start_processing(request: Request):
 async def download_files(batch_id: str):
     """
     Download files as ZIP.
-
     ---
     tags:
       - File Download
@@ -155,14 +149,11 @@ async def download_files(batch_id: str):
                 file_name = file_name.replace("/", "_").replace("\\", "_")
                 # Write the file into the zip archive with its content
                 zf.writestr(file_name, content)
-
         # Reset the stream's position to the beginning
         zip_stream.seek(0)
         zip_data = zip_stream.getvalue()
-
         # Get the size of the zip file for the Content-Length header
         zip_size = len(zip_data)
-
         # Prepare headers for file download
         headers = {
             "Content-Disposition": "attachment; filename=tsql_relts.zip",
@@ -183,7 +174,6 @@ async def batch_status_updates(
 ):  # , request: Request):
     """
     Web-Socket endpoint for real-time batch status updates.
-
     ---
     tags:
       - Batch Status
@@ -226,7 +216,6 @@ async def batch_status_updates(
     try:
         batch_service = BatchService()
         await batch_service.initialize_database()
-
         # Validate batch_id format
         if not batch_service.is_valid_uuid(batch_id):
             await websocket.close(code=4002, reason="Invalid batch_id format")
@@ -259,7 +248,6 @@ async def batch_status_updates(
 async def get_batch_status(request: Request, batch_id: str):
     """
     Retrieve batch history and file statuses.
-
     ---
     tags:
       - Batch History
@@ -385,7 +373,6 @@ async def get_batch_summary(request: Request, batch_id: str):
     try:
         batch_service = BatchService()
         await batch_service.initialize_database()
-
         # Authenticate user
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
@@ -413,7 +400,6 @@ async def upload_file(
 ):
     """
     Upload file for conversion.
-
     ---
     tags:
       - File Conversion
@@ -526,7 +512,6 @@ async def upload_file(
 async def get_file_details(request: Request, file_id: str):
     """
     Retrieve file details and processing logs.
-
     ---
     tags:
       - File Management
@@ -643,7 +628,6 @@ async def get_file_details(request: Request, file_id: str):
 async def delete_batch_details(request: Request, batch_id: str):
     """
     Delete batch history using batch_id.
-
     ---
     tags:
       - Batch Delete
@@ -698,7 +682,6 @@ async def delete_batch_details(request: Request, batch_id: str):
 async def delete_file_details(request: Request, file_id: str):
     """
     Delete file history using batch_id.
-
     ---
     tags:
       - File Delete
@@ -756,7 +739,6 @@ async def delete_file_details(request: Request, file_id: str):
 async def delete_all_details(request: Request):
     """
     Delete all the history of batches, files and logs.
-
     ---
     tags:
       - Delete All
@@ -805,7 +787,6 @@ async def delete_all_details(request: Request):
 async def list_batch_history(request: Request, offset: int = 0, limit: Optional[int] = None):
     """
     Retrieve batch processing history for the authenticated user.
-
     ---
     tags:
       - Batch History
@@ -860,7 +841,6 @@ async def list_batch_history(request: Request, offset: int = 0, limit: Optional[
     try:
         batch_service = BatchService()
         await batch_service.initialize_database()
-
         # Authenticate user
         authenticated_user = get_authenticated_user(request)
         user_id = authenticated_user.user_principal_id
