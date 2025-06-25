@@ -18,32 +18,18 @@ param location string = resourceGroup().location
 
 @allowed([
   'australiaeast'
-  'brazilsouth'
-  'canadacentral'
-  'canadaeast'
   'eastus'
   'eastus2'
   'francecentral'
-  'germanywestcentral'
   'japaneast'
-  'koreacentral'
-  'northcentralus'
   'norwayeast'
-  'polandcentral'
-  'southafricanorth'
-  'southcentralus'
   'southindia'
   'swedencentral'
-  'switzerlandnorth'
-  'uaenorth'
   'uksouth'
-  'westeurope'
   'westus'
   'westus3'
 ])
 @metadata({ azd: { type: 'location' } })
-
-
 @description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
 param azureAiServiceLocation string = location
 
@@ -82,6 +68,26 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
+@minLength(1)
+@description('GPT model deployment type:')
+param deploymentType string = 'GlobalStandard'
+
+@minLength(1)
+@description('Name of the GPT model to deploy:')
+param llmModel string = 'gpt-4o'
+
+@minLength(1)
+@description('Set the Image tag:')
+param imageVersion string = 'latest'
+
+@minLength(1)
+@description('Version of the GPT model to deploy:')
+param gptModelVersion string = '2024-08-06'
+
+param existingLogAnalyticsWorkspaceId string = ''
+
+var useExisting = !empty(existingLogAnalyticsWorkspaceId)
+
 var allTags = union(
   {
     'azd-env-name': solutionName
@@ -100,14 +106,14 @@ var resourcesName = toLower(trim(replace(
 )))
 
 var modelDeployment = {
-  name: 'gpt-4o'
+  name: llmModel
   model: {
-    name: 'gpt-4o'
+    name: llmModel
     format: 'OpenAI'
-    version: '2024-08-06'
+    version: gptModelVersion
   }
   sku: {
-    name: 'GlobalStandard'
+    name: deploymentType
     capacity: capacity
   }
   raiPolicyName: 'Microsoft.Default'
@@ -145,7 +151,7 @@ module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.
   }
 }
 
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring || enablePrivateNetworking) {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExisting) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
     name: 'log-${resourcesName}'
@@ -158,13 +164,15 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
+var logAnalyticsWorkspaceResourceId = useExisting ? existingLogAnalyticsWorkspaceId : logAnalyticsWorkspace.outputs.resourceId
+
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
   name: take('app-insights-${resourcesName}-deployment', 64)
   params: {
     name: 'appi-${resourcesName}'
     location: location
-    workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId
-    diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspace.outputs.resourceId }]
+    workspaceResourceId: logAnalyticsWorkspaceResourceId
+    diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
     tags: allTags
     enableTelemetry: enableTelemetry
   }
@@ -174,7 +182,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   name: take('network-${resourcesName}-deployment', 64)
   params: {
     resourcesName: resourcesName
-    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspace.outputs.resourceId
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
     vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
     vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
     location: location
@@ -194,7 +202,7 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
     kind: 'AIServices'
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -234,7 +242,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
     location: location
     tags: allTags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -268,7 +276,7 @@ module keyVault 'modules/keyVault.bicep' = {
     name: take('kv-${resourcesName}', 24)
     location: location
     sku: 'standard'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -295,7 +303,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     name: take('cosmos-${resourcesName}', 44)
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspace.outputs.resourceId : ''
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     zoneRedundant: enableRedundancy
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
     privateNetworking: enablePrivateNetworking
@@ -367,7 +375,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
     containers: [
       {
         name: 'cmsabackend'
-        image: 'cmsacontainerreg.azurecr.io/cmsabackend:latest'
+        image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
         env: concat(
           [
             {
@@ -537,7 +545,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
             value: 'https://${containerAppBackend.outputs.fqdn}'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:latest'
+        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
         resources: {
           cpu: '1'
