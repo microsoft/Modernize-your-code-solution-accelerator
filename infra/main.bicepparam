@@ -1,8 +1,8 @@
 using './main.bicep'
 
-param Prefix = readEnvironmentVariable('AZURE_ENV_NAME','azdtemp')
-param solutionLocation = readEnvironmentVariable('AZURE_LOCATION', 'eastus2')
-param AzureAiServiceLocation = readEnvironmentVariable('AZURE_AISERVICE_LOCATION','japaneast')
+param solutionName = readEnvironmentVariable('AZURE_ENV_NAME','azdtemp')
+param location = readEnvironmentVariable('AZURE_LOCATION','eastus2')
+param azureAiServiceLocation = readEnvironmentVariable('AZURE_AISERVICE_LOCATION','japaneast')
 param capacity = int(readEnvironmentVariable('AZURE_ENV_MODEL_CAPACITY', '50'))
 param deploymentType = readEnvironmentVariable('AZURE_ENV_MODEL_DEPLOYMENT_TYPE', 'GlobalStandard')
 param llmModel = readEnvironmentVariable('AZURE_ENV_MODEL_NAME', 'gpt-4o')
