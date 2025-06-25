@@ -1,7 +1,7 @@
-@description('Name of the Key Vault.')
+@description('Required. Name of the Key Vault.')
 param name string
 
-@description('Specifies the location for all the Azure resources.')
+@description('Required. Specifies the location for all the Azure resources.')
 param location string
 
 @description('Optional. Tags to be applied to the resources.')
@@ -32,21 +32,20 @@ param secrets secretType[]?
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.7.1' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
+module privateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
   name: take('${name}-kv-pdns-deployment', 64)
   params: {
     name: 'privatelink.${toLower(environment().name) == 'azureusgovernment' ? 'vaultcore.usgovcloudapi.net' : 'vaultcore.azure.net'}'
-    virtualNetworkLinks: [
-      {
-        virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-      }
-    ]
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
     tags: tags
-    enableTelemetry: enableTelemetry
   }
 }
 
-var privateDnsZoneResourceId = privateNetworking != null ? (empty(privateNetworking.?privateDnsZoneResourceId) ? privateDnsZone.outputs.resourceId ?? '' : privateNetworking.?privateDnsZoneResourceId ?? '') : ''
+var privateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?privateDnsZoneResourceId)
+      ? privateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?privateDnsZoneResourceId ?? '')
+  : ''
 
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
   name: take('${name}-kv-deployment', 64)
@@ -58,9 +57,9 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     tags: tags
     createMode: 'default'
     sku: sku
-    publicNetworkAccess: privateNetworking != null ?  'Disabled' : 'Enabled'
+    publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
     networkAcls: {
-     defaultAction: 'Allow'
+      defaultAction: 'Allow'
     }
     enableVaultForDeployment: true
     enableVaultForDiskEncryption: true
@@ -69,29 +68,36 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId) ? [
-      {
-        workspaceResourceId: logAnalyticsWorkspaceResourceId
-      } 
-    ] : []
-    privateEndpoints: privateNetworking != null ? [
-      {
-        privateDnsZoneGroup: {
-          privateDnsZoneGroupConfigs: [
-            {
-              privateDnsZoneResourceId: privateDnsZoneResourceId
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
+      ? [
+          {
+            workspaceResourceId: logAnalyticsWorkspaceResourceId
+          }
+        ]
+      : []
+    privateEndpoints: privateNetworking != null
+      ? [
+          {
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: privateDnsZoneResourceId
+                }
+              ]
             }
-          ]
-        }
-        service: 'vault'
-        subnetResourceId: privateNetworking.?subnetResourceId ?? ''
-      }
-    ] : []
+            service: 'vault'
+            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+          }
+        ]
+      : []
     roleAssignments: roleAssignments
     secrets: secrets
     enableTelemetry: enableTelemetry
   }
 }
 
-output resourceId string = keyvault.outputs.resourceId
+@description('Name of the Key Vault resource.')
 output name string = keyvault.outputs.name
+
+@description('Resource ID of the Key Vault.')
+output resourceId string = keyvault.outputs.resourceId

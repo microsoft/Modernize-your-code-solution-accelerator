@@ -1,11 +1,11 @@
-@description('Named used for all resource naming.')
+@description('Required. Named used for all resource naming.')
 param resourcesName string
 
-@description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
+@description('Required. Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
 param logAnalyticsWorkSpaceResourceId string
 
 @minLength(3)
-@description('Azure region for all services.')
+@description('Required. Azure region for all services.')
 param location string
 
 @description('Optional. Tags to be applied to the resources.')
@@ -14,17 +14,13 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-@description('Admin username for the VM.')
+@description('Required. Admin username for the VM.')
 @secure()
-param vmAdminUsername string 
+param vmAdminUsername string
 
-@description('Admin password for the VM.')
+@description('Required. Admin password for the VM.')
 @secure()
-param vmAdminPassword string 
-
-
-
-
+param vmAdminPassword string
 
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
@@ -55,7 +51,7 @@ param vmAdminPassword string
 // - Document subnet usage and purpose in code comments.
 // - For AVM modules, ensure only one delegation per subnet and leave delegations empty if not required.
 
-module network 'network/main.bicep' =  {
+module network 'network/main.bicep' = {
   name: take('network-${resourcesName}-create', 64)
   params: {
     resourcesName: resourcesName
@@ -85,6 +81,32 @@ module network 'network/main.bicep' =  {
                 destinationAddressPrefixes: ['10.0.0.0/23']
               }
             }
+            {
+              name: 'AllowIntraSubnetTraffic'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 200
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefixes: ['10.0.0.0/23'] // From same subnet
+                destinationAddressPrefixes: ['10.0.0.0/23'] // To same subnet
+              }
+            }
+            {
+              name: 'AllowAzureLoadBalancer'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 300
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '*'
+                sourceAddressPrefix: 'AzureLoadBalancer'
+                destinationAddressPrefix: '10.0.0.0/23'
+              }
+            }
           ]
         }
         delegation: 'Microsoft.App/environments'
@@ -98,30 +120,30 @@ module network 'network/main.bicep' =  {
     ]
     bastionConfiguration: {
       name: 'bastion-${resourcesName}'
-      subnetAddressPrefixes: ['10.0.10.0/23']
+      subnetAddressPrefixes: ['10.0.10.0/26']
     }
     jumpboxConfiguration: {
       name: 'vm-jumpbox-${resourcesName}'
       size: 'Standard_D2s_v3'
       username: vmAdminUsername
       password: vmAdminPassword
-      subnet:  {
+      subnet: {
         name: 'jumpbox'
         addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
         networkSecurityGroup: {
           name: 'jumpbox-nsg'
           securityRules: [
             {
-              name: 'AllowJumpboxInbound'
+              name: 'AllowRdpFromBastion'
               properties: {
                 access: 'Allow'
                 direction: 'Inbound'
                 priority: 100
                 protocol: 'Tcp'
                 sourcePortRange: '*'
-                destinationPortRange: '22'
+                destinationPortRange: '3389'
                 sourceAddressPrefixes: [
-                  '10.0.7.0/24' // Azure Bastion subnet as an example here. You can adjust this as needed by adding more
+                  '10.0.10.0/26' // Azure Bastion subnet
                 ]
                 destinationAddressPrefixes: ['10.0.12.0/23']
               }
@@ -134,8 +156,20 @@ module network 'network/main.bicep' =  {
   }
 }
 
+@description('Name of the Virtual Network resource.')
 output vnetName string = network.outputs.vnetName
+
+@description('Resource ID of the Virtual Network.')
 output vnetResourceId string = network.outputs.vnetResourceId
 
+@description('Resource ID of the "web" subnet.')
 output subnetWebResourceId string = first(filter(network.outputs.subnets, s => s.name == 'web')).?resourceId ?? ''
+
+@description('Resource ID of the "peps" subnet for Private Endpoints.')
 output subnetPrivateEndpointsResourceId string = first(filter(network.outputs.subnets, s => s.name == 'peps')).?resourceId ?? ''
+
+@description('Resource ID of the Bastion Host.')
+output bastionResourceId string = network.outputs.bastionHostId
+
+@description('Resource ID of the Jumpbox VM.')
+output jumpboxResourceId string = network.outputs.jumpboxResourceId
