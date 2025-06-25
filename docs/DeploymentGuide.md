@@ -18,16 +18,15 @@ Here are some example regions where the services are available: East US, East US
 
 | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
 |---|---|
- 
+
 ### **Configurable Deployment Settings**  
 
 When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
 
 | **Setting** | **Description** |  **Default value** |
 |------------|----------------|  ------------|
-| **Azure Region** | The region where resources will be created. | East US| 
-| **Resource Prefix** | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | None |
-| **AI Location** | Location for all AI services resources. This location can be different from the resource group location | None |
+| **Azure Region** | The region where resources will be created. | None |
+| **SolutionName** | Text/String used for part of all resources created by this template. | None |
 | **Capacity** | Configure capacity for **gpt-4o**. |  5k |
 
 This accelerator can be configured to  use authentication. 
@@ -42,7 +41,29 @@ By default, the **GPT model capacity** in deployment is set to **5k tokens**.
 
 To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
 
-### Deployment Options
+### Deployment Options & Steps 
+### Sandbox or WAF Aligned Deployment Options
+
+The [`infra`](../infra) folder contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
+
+By default, the `azd up` command uses the [`main.bicepparam`](../infra/main.bicepparam) file to deploy the solution. This file is pre-configured for a **sandbox environment** — ideal for development and proof-of-concept scenarios, with minimal security and cost controls for rapid iteration.
+
+For **production deployments**, the repository also provides [`main.waf-aligned.bicepparam`](../infra/main.waf-aligned.bicepparam), which applies a [WAF-aligned](https://learn.microsoft.com/en-us/azure/well-architected/) configuration. This option enables additional Azure best practices for reliability, security, cost optimization, operational excellence, and performance efficiency, such as:
+
+- Enhanced network security (e.g., Network protection with private endpoints)
+- Stricter access controls and managed identities
+- Logging, monitoring, and diagnostics enabled by default
+- Resource tagging and cost management recommendations
+
+**How to choose your deployment configuration:**
+
+- Use the default [`main.bicepparam`](../infra/main.bicepparam) for a sandbox/dev environment.
+- For a WAF-aligned, production-ready deployment, copy the contents of [`main.waf-aligned.bicepparam`](../infra/main.waf-aligned.bicepparam) into `main.bicepparam` before running `azd up`.
+
+> [!TIP]
+> Always review and adjust parameter values (such as region, capacity, security settings and log analytics workspace configuration) to match your organization’s requirements before deploying. For production, ensure you have sufficient quota and follow the principle of least privilege for all identities and role assignments.
+
+
 Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
 
 <details>
@@ -114,23 +135,28 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 1. Login to Azure:
 
-    ```shell
-    azd auth login
-    ```
-
-    #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
-
-    ```sh
-    azd auth login --tenant-id <tenant-id>
+   ```shell
+   azd auth login
    ```
 
-2. Provision and deploy all the resources:
+   #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
+
+   ```sh
+   azd auth login --tenant-id <tenant-id>
+   ```
+
+2. Provide an `azd` environment name (like "cmsaapp")
+
+   ```sh
+   azd env new <cmsaapp>
+   ```
+
+3. Provision and deploy all the resources:
 
     ```shell
     azd up
     ```
 
-3. Provide an `azd` environment name (like "cmsaapp")
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
     * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
     * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.
