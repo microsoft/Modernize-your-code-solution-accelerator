@@ -4,7 +4,6 @@ the responses from the agents. It also reports in real-time to the client using 
 and updates the database with the results.
 """
 
-import asyncio
 import json
 import logging
 
@@ -69,7 +68,7 @@ async def convert_script(
         carry_response = None
         async for response in chat.invoke():
             # TEMPORARY: awaiting bug fix for rate limits
-            await asyncio.sleep(5)
+            #await asyncio.sleep(5)
             carry_response = response
             if response.role == AuthorRole.ASSISTANT.value:
                 # Our process can terminate with either of these as the last response
