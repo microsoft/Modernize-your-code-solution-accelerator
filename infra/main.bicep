@@ -2,6 +2,9 @@ metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
 
+@description('Set to true if you want to deploy WAF-aligned infrastructure.')
+param useWafAlignedArchitecture bool
+
 @minLength(3)
 @maxLength(16)
 @description('Required. A unique application/solution name for all resources in this deployment. This should be 3-16 characters long.')
@@ -29,19 +32,25 @@ param location string = resourceGroup().location
   'westus'
   'westus3'
 ])
-@metadata({ azd: { type: 'location' } })
+@metadata({
+  azd : {
+    type: 'location'
+    usageName : [
+      'OpenAI.GlobalStandard.gpt-4o, 150'
+    ]
+  }
+})
 @description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
-param azureAiServiceLocation string = location
+param azureAiServiceLocation string
 
-
-@description('Optional. AI model deployment token capacity. Defaults to 5K tokens per minute.')
-param capacity int = 5 // was 5 before = 5K
+@description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
+param capacity int = 150
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
-param enableMonitoring bool = false
+param enableMonitoring bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = false
+param enableScaling bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
@@ -50,7 +59,7 @@ param enableRedundancy bool = false
 param secondaryLocation string?
 
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
-param enablePrivateNetworking bool = false
+param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
