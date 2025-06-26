@@ -1,36 +1,3 @@
 name: modernize-your-code-solution-accelerator
 metadata:
     template: modernize-your-code-solution-accelerator@1.0
-parameters:
-  AzureAiServiceLocation:
-    type: string
-    default: japaneast
-  Prefix:
-    type: string
-    default: azdtemp
-  baseUrl:
-    type: string
-    default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
-deployment:
-  mode: Incremental
-  template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
-  parameters:
-    AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
-    Prefix: ${{ parameters.Prefix }}
-    baseUrl: ${{ parameters.baseUrl }}
-hooks:
-  preprovision:
-    posix:
-      shell: sh
-      run: >
-        chmod u+r+x ./scripts/validate_model_deployment_quota.sh; chmod u+r+x ./scripts/validate_model_quota.sh; ./scripts/validate_model_deployment_quota.sh --SubscriptionId "$AZURE_SUBSCRIPTION_ID" --Location "${AZURE_AISERVICE_LOCATION:-japaneast}" --ModelsParameter "aiModelDeployments"
-      interactive: false
-      continueOnError: false
-
-    windows:
-      shell: pwsh
-      run: >
-        $location = if ($env:AZURE_AISERVICE_LOCATION) { $env:AZURE_AISERVICE_LOCATION } else { "japaneast" };
-        ./scripts/validate_model_deployment_quota.ps1 -SubscriptionId $env:AZURE_SUBSCRIPTION_ID -Location $location -ModelsParameter "aiModelDeployments"
-      interactive: false
-      continueOnError: false
