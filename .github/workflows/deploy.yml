@@ -95,7 +95,7 @@ jobs:
             --template-file infra/main.bicep \
             --parameters \
                 Prefix="${{ env.SOLUTION_PREFIX }}" \
-                AzureAiServiceLocation="eastus" \
+                aiDeploymentsLocation="eastus" \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}"\
             --debug
