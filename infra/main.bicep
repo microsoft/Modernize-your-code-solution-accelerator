@@ -41,7 +41,7 @@ param location string = resourceGroup().location
   }
 })
 @description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
-param azureAiServiceLocation string
+param aiDeploymentsLocation string
 
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
 param capacity int = 150
@@ -219,7 +219,7 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
     name: 'ais-${resourcesName}'
-    location: azureAiServiceLocation
+    location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [modelDeployment]
