@@ -86,8 +86,6 @@ param gptModelVersion string = '2024-08-06'
 
 param existingLogAnalyticsWorkspaceId string = ''
 
-var useExisting = !empty(existingLogAnalyticsWorkspaceId)
-
 var allTags = union(
   {
     'azd-env-name': solutionName
@@ -150,8 +148,20 @@ module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.
     enableTelemetry: enableTelemetry
   }
 }
+// Extracts subscription, resource group, and workspace name from the resource ID when using an existing Log Analytics workspace
+var useExistingLogAnalytics = !empty(existingLogAnalyticsWorkspaceId)
 
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExisting) {
+var existingLawSubscription = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[2] : ''
+var existingLawResourceGroup = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[4] : ''
+var existingLawName = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[8] : ''
+
+resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' existing = if (useExistingLogAnalytics) {
+  name: existingLawName
+  scope: resourceGroup(existingLawSubscription, existingLawResourceGroup)
+}
+
+// Deploy new Log Analytics workspace only if required and not using existing
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
     name: 'log-${resourcesName}'
@@ -164,7 +174,10 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
   }
 }
 
-var logAnalyticsWorkspaceResourceId = useExisting ? existingLogAnalyticsWorkspaceId : logAnalyticsWorkspace.outputs.resourceId
+// Log Analytics workspace ID, customer ID, and shared key (existing or new) 
+var logAnalyticsWorkspaceResourceId = useExistingLogAnalytics ? existingLogAnalyticsWorkspaceId : logAnalyticsWorkspace.outputs.resourceId
+var LogAnalyticsPrimarySharedKey string = useExistingLogAnalytics? existingLogAnalyticsWorkspace.listKeys().primarySharedKey : logAnalyticsWorkspace.outputs.primarySharedKey
+var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorkspace.properties.customerId : logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
 
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
   name: take('app-insights-${resourcesName}-deployment', 64)
@@ -340,8 +353,8 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
       ? {
           destination: 'log-analytics'
           logAnalyticsConfiguration: {
-            customerId: logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
-            sharedKey: logAnalyticsWorkspace.outputs.primarySharedKey
+            customerId: LogAnalyticsWorkspaceId
+            sharedKey: LogAnalyticsPrimarySharedKey
           }
         }
       : {}
