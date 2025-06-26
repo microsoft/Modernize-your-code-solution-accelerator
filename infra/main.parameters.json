@@ -2,8 +2,38 @@
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "solutionName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
     "location": {
       "value": "${AZURE_LOCATION}"
+    },
+    "deploymentType": {
+      "value": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}"
+    },
+    "llmModel": {
+      "value": "${AZURE_ENV_MODEL_NAME}"
+    },
+    "capacity": {
+      "value": "${AZURE_ENV_MODEL_CAPACITY}"
+    },
+    "gptModelVersion": {
+      "value": "${AZURE_ENV_MODEL_VERSION}"
+    },
+    "imageVersion": {
+      "value": "${AZURE_ENV_IMAGETAG}"
+    },
+    "existingLogAnalyticsWorkspaceId": {
+      "value": "${AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID}"
+    },
+    "secondaryLocation": {
+      "value": "${AZURE_ENV_COSMOS_SECONDARY_LOCATION}"
+    },
+    "vmAdminUsername": {
+      "value": "${AZURE_ENV_JUMPBOX_ADMIN_USERNAME}"
+    },
+    "vmAdminPassword": {
+      "value": "${AZURE_ENV_JUMPBOX_ADMIN_PASSWORD}"
     },
     "backendExists": {
       "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
