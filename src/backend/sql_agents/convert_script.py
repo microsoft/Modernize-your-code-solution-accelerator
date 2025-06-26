@@ -1,4 +1,4 @@
-"""This module loops through each file in a batch and processes it using the SQL agents.More actions
+"""This module loops through each file in a batch and processes it using the SQL agents.
 It sets up a group chat for the agents, sends the source script to the chat, and processes
 the responses from the agents. It also reports in real-time to the client using websockets
 and updates the database with the results.
@@ -49,9 +49,9 @@ async def convert_script(
     #retry logic comms manager
     comms_manager = CommsManager(
         sql_agents.idx_agents,
-        max_retries=3,          # Retry up to 5 times for rate limits
-        initial_delay=0.2,      # Start with 1 second delay
-        backoff_factor=1.2,     # Double delay each retry
+        max_retries=5,          # Retry up to 5 times for rate limits
+        initial_delay=1.0,      # Start with 1 second delay
+        backoff_factor=2.0,     # Double delay each retry
     )
 
     # send websocket notification that file processing has started
@@ -355,3 +355,5 @@ async def validate_migration(
         agent_type=AgentType.ALL,
         author_role=AuthorRole.ASSISTANT,
     )
+
+    return True
