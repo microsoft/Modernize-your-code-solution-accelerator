@@ -42,7 +42,7 @@ This architecture implements [Azure Well-Architected Framework (WAF)](https://le
 | **Log Analytics + App Insights** | Centralized monitoring and diagnostics | Operational Excellence |
 
 ## Deployment Configuration
-- **Parameter File:** `infra/main.waf-aligned.bicepparam` - Controls all WAF features
+- **Configurable Parameters:** If user selects to deploy as WAF Aligned, Parameters like Monitoring, Scaling, VPN will get enabled.
 - **Network-first Design:** All components deployed within private network boundaries
 - **Enterprise-ready:** Production-grade security and monitoring enabled
 
