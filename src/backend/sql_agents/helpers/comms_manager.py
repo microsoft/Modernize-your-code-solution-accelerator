@@ -115,7 +115,7 @@ class CommsManager:
             return terminate
 
     def __init__(
-        self, 
+        self,
         agent_dict,
         exception_types: tuple = (Exception,),
         max_retries: int = 10,
@@ -124,7 +124,7 @@ class CommsManager:
         simple_truncation: int = None,
     ):
         """Initialize the CommsManager and agent_chat with the given agents.
-        
+
         Args:
             agent_dict: Dictionary of agents
             exception_types: Tuple of exception types that should trigger a retry
@@ -139,7 +139,7 @@ class CommsManager:
         self.backoff_factor = backoff_factor
         self.exception_types = exception_types
         self.simple_truncation = simple_truncation
-        
+
         # Initialize the group chat (maintaining original functionality)
         self.group_chat = AgentGroupChat(
             agents=agent_dict.values(),
@@ -168,12 +168,12 @@ class CommsManager:
                 # Grab a snapshot of the history of the group chat
                 # Using copy to avoid getting a reference to the original list
                 history_snap = copy.deepcopy(self.group_chat.history)
-                
+
                 self.logger.debug(
                     "History before invoke: %s",
                     [msg.name for msg in self.group_chat.history],
                 )
-                
+
                 # Get a fresh iterator from the function
                 async_iter = self.group_chat.invoke()
 
