@@ -4,7 +4,6 @@ the responses from the agents. It also reports in real-time to the client using 
 and updates the database with the results.
 """
 
-import asyncio
 import json
 import logging
 
@@ -45,8 +44,8 @@ async def convert_script(
     logger.info("Migrating query: %s\n", source_script)
 
     # Setup the group chat for the agents
-    chat = CommsManager(sql_agents.idx_agents).group_chat
-    #retry logic comms manager
+    # chat = CommsManager(sql_agents.idx_agents).group_chat
+    # retry logic comms manager
     comms_manager = CommsManager(
         sql_agents.idx_agents,
         max_retries=5,          # Retry up to 5 times for rate limits
@@ -216,7 +215,7 @@ async def convert_script(
                 #     ),
                 # )
                 # Safely parse response content to avoid crashing on malformed or incomplete JSON
-                #start
+                # start
                 try:
                     parsed_content = json.loads(response.content or "{}")
                 except json.JSONDecodeError:
@@ -240,7 +239,7 @@ async def convert_script(
                         FileResult.INFO,
                     ),
                 )
-                ##end
+                # end
                 await batch_service.create_file_log(
                     str(file.file_id),
                     description,
@@ -250,7 +249,7 @@ async def convert_script(
                     AuthorRole(response.role),
                 )
         except Exception as e:
-            #logger.error("Error during chat.invoke(): %s", str(e))
+            # logger.error("Error during chat.invoke(): %s", str(e))
             logger.error("Error during comms_manager.async_invoke(): %s", str(e))
             # Log the error to the batch service for tracking
             await batch_service.create_file_log(
