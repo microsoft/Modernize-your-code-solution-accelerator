@@ -22,6 +22,10 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 
+@description('Required. VM size for the Jumpbox VM.')
+param vmSize string
+
+
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
 // |-----------|---------------|-----------|----------------------------------------|
@@ -124,7 +128,7 @@ module network 'network/main.bicep' = {
     }
     jumpboxConfiguration: {
       name: 'vm-jumpbox-${resourcesName}'
-      size: 'Standard_D2s_v3'
+      size: vmSize
       username: vmAdminUsername
       password: vmAdminPassword
       subnet: {
