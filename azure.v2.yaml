@@ -1,3 +1,5 @@
+# for azd v2 users and they need to enable it using below azd command: 
+# azd up --azure-config azure.v2.yaml
 name: modernize-your-code-solution-accelerator
 metadata:
     template: modernize-your-code-solution-accelerator@1.0
