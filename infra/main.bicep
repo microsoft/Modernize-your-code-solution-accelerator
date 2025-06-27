@@ -71,6 +71,15 @@ param vmAdminUsername string?
 //param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
 
+@allowed([
+  'Standard_B2s'
+  'Standard_D2s_v3'
+  'Standard_D4s_v3'
+  'Standard_DS2_v2'
+])
+@description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true. Defaults to Standard_B2s.')
+param vmSize string? 
+
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
 
@@ -207,6 +216,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
     vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
     vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    vmSize: vmSize ?? 'Standard_B2s'
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry
