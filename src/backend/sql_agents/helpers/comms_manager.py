@@ -166,8 +166,8 @@ class CommsManager:
         while attempt < self.max_retries:
             try:
                 # Grab a snapshot of the history of the group chat
-                # Using copy to avoid getting a reference to the original list
-                history_snap = copy.deepcopy(self.group_chat.history)
+                # Using "SHALLOW" copy to avoid getting a reference to the original list
+                history_snap = copy.copy(self.group_chat.history)
 
                 self.logger.debug(
                     "History before invoke: %s",
