@@ -60,6 +60,9 @@ param projectDescription string = projectName
 @description('Optional. The resource ID of the Log Analytics workspace to use for diagnostic settings.')
 param logAnalyticsWorkspaceResourceId string?
 
+@description('Optional. Use this parameter to use an existing AI project resource ID')
+param azureExistingAIProjectResourceId string?
+
 import { deploymentType } from 'br/public:avm/res/cognitive-services/account:0.10.2'
 @description('Optional. Specifies the OpenAI deployments to create.')
 param deployments deploymentType[] = []
@@ -188,6 +191,7 @@ module aiProject 'project.bicep' = {
     roleAssignments: roleAssignments
     tags: tags
     enableTelemetry: enableTelemetry
+    azureExistingAIProjectResourceId: azureExistingAIProjectResourceId
   }
 }
 

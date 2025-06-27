@@ -95,6 +95,9 @@ param gptModelVersion string = '2024-08-06'
 
 param existingLogAnalyticsWorkspaceId string = ''
 
+@description('Use this parameter to use an existing AI project resource ID')
+param azureExistingAIProjectResourceId string = ''
+
 var allTags = union(
   {
     'azd-env-name': solutionName
@@ -225,6 +228,7 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
+    azureExistingAIProjectResourceId: azureExistingAIProjectResourceId
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId

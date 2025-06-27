@@ -20,6 +20,15 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
+@description('Optional. Use this parameter to use an existing AI project resource ID')
+param azureExistingAIProjectResourceId string?
+
+// Endpoint from existing AI Project Resource ID if provided
+var existingProjEndpoint = !empty(azureExistingAIProjectResourceId) ? 
+                            format('https://{0}.services.ai.azure.com/api/projects/{1}', 
+                            split(azureExistingAIProjectResourceId, '/')[8], split(azureExistingAIProjectResourceId, '/')
+                            [10]) : ''
+
 // using a few built-in roles here that makes sense for Foundry projects only
 var builtInRoleNames = {
   'Cognitive Services OpenAI Contributor': subscriptionResourceId(
@@ -55,7 +64,7 @@ resource cogServiceReference 'Microsoft.CognitiveServices/accounts@2024-10-01' e
   name: aiServicesName
 }
 
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = if (empty(azureExistingAIProjectResourceId)) {
   parent: cogServiceReference
   name: name
   tags: tags
@@ -89,7 +98,7 @@ output name string = aiProject.name
 output resourceId string = aiProject.id
 
 @description('API endpoint for the AI Foundry project.')
-output apiEndpoint string = aiProject.properties.endpoints['AI Foundry API']
+output apiEndpoint string = !empty(existingProjEndpoint) ? existingProjEndpoint : aiProject.properties.endpoints['AI Foundry API']
 
 @export()
 @description('Output type representing AI project information.')
