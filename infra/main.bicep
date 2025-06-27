@@ -61,6 +61,9 @@ param secondaryLocation string?
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
 param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
 
+@description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
+param vmSize string? 
+
 @description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
 //param vmAdminUsername string = take(newGuid(), 20)
@@ -70,15 +73,6 @@ param vmAdminUsername string?
 @secure()
 //param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
-
-@allowed([
-  'Standard_B2s'
-  'Standard_D2s_v3'
-  'Standard_D4s_v3'
-  'Standard_DS2_v2'
-])
-@description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true. Defaults to Standard_B2s.')
-param vmSize string? 
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
 param tags object = {}
@@ -209,6 +203,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
   }
 }
 
+
 module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   name: take('network-${resourcesName}-deployment', 64)
   params: {
@@ -216,7 +211,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
     vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
     vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
-    vmSize: vmSize ?? 'Standard_B2s'
+    vmSize: vmSize ??  'Standard_DS2_v2' // Default VM size 
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry

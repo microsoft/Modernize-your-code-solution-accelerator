@@ -1,0 +1,20 @@
+name: modernize-your-code-solution-accelerator
+metadata:
+    template: modernize-your-code-solution-accelerator@1.0
+parameters:
+  AzureAiServiceLocation:
+    type: string
+    default: japaneast
+  Prefix:
+    type: string
+    default: azdtemp
+  baseUrl:
+    type: string
+    default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
+infrastructure:
+  mode: Incremental
+  template: ./infra/main.bicep  # Path to the main.bicep file inside the 'infrastructure' folder
+  parameters:
+    AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
+    Prefix: ${{ parameters.Prefix }}
+    baseUrl: ${{ parameters.baseUrl }}
