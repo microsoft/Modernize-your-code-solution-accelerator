@@ -20,14 +20,16 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-@description('Optional. Use this parameter to use an existing AI project resource ID')
-param azureExistingAIProjectResourceId string?
+@description('Optional. Use this parameter to use an existing AI project resource ID from different resource group')
+param azureExistingAIProjectResourceId string = ''
 
-// Endpoint from existing AI Project Resource ID if provided
-var existingProjEndpoint = !empty(azureExistingAIProjectResourceId) ? 
-                            format('https://{0}.services.ai.azure.com/api/projects/{1}', 
-                            split(azureExistingAIProjectResourceId, '/')[8], split(azureExistingAIProjectResourceId, '/')
-                            [10]) : ''
+// Extract components from existing AI Project Resource ID if provided
+var useExistingProject = !empty(azureExistingAIProjectResourceId)
+var existingProjName = useExistingProject ? last(split(azureExistingAIProjectResourceId, '/')) : ''
+var existingCogServiceName = useExistingProject ? split(azureExistingAIProjectResourceId, '/')[8] : ''
+var existingRgName = useExistingProject ? split(azureExistingAIProjectResourceId, '/')[4] : ''
+var existingSubscriptionId = useExistingProject ? split(azureExistingAIProjectResourceId, '/')[2] : ''
+var existingProjEndpoint = useExistingProject ? format('https://{0}.services.ai.azure.com/api/projects/{0}', existingProjName) : ''
 
 // using a few built-in roles here that makes sense for Foundry projects only
 var builtInRoleNames = {
@@ -60,11 +62,13 @@ var formattedRoleAssignments = [
   })
 ]
 
-resource cogServiceReference 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+// Reference to cognitive service in current resource group for new projects
+resource cogServiceReference 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = if (!useExistingProject) {
   name: aiServicesName
 }
 
-resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = if (empty(azureExistingAIProjectResourceId)) {
+// Create new AI project only if not reusing existing one
+resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = if (!useExistingProject) {
   parent: cogServiceReference
   name: name
   tags: tags
@@ -78,9 +82,10 @@ resource aiProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-pre
   }
 }
 
-module aiProjectRoleAssignement 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = [
-  for (roleAssignment, i) in formattedRoleAssignments: {
-    name: 'avm.ptn.authorization.resource-role-assignment.${uniqueString(name, roleAssignment.roleDefinitionId, roleAssignment.principalId)}'
+// Role assignments for new project
+module newProjectRoleAssignments 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = [
+  for (roleAssignment, i) in (useExistingProject ? [] : formattedRoleAssignments): {
+    name: 'new-role-${i}-${take(uniqueString(name, roleAssignment.roleDefinitionId, roleAssignment.principalId), 8)}'
     params: {
       roleDefinitionId: roleAssignment.roleDefinitionId
       principalId: roleAssignment.principalId
@@ -91,14 +96,30 @@ module aiProjectRoleAssignement 'br/public:avm/ptn/authorization/resource-role-a
   }
 ]
 
+// Role assignments for existing project from different resource group
+// Deploy to the same subscription but different resource group where the AI project exists
+module existingProjectRoleAssignments 'br/public:avm/ptn/authorization/resource-role-assignment:0.1.2' = [
+  for (roleAssignment, i) in (useExistingProject ? formattedRoleAssignments : []): {
+    name: 'existing-role-${i}-${take(uniqueString(azureExistingAIProjectResourceId, roleAssignment.roleDefinitionId, roleAssignment.principalId), 8)}'
+    scope: resourceGroup(existingSubscriptionId, existingRgName)
+    params: {
+      roleDefinitionId: roleAssignment.roleDefinitionId
+      principalId: roleAssignment.principalId
+      principalType: 'ServicePrincipal'
+      resourceId: azureExistingAIProjectResourceId // Use the full resource ID directly
+      enableTelemetry: enableTelemetry
+    }
+  }
+]
+
 @description('Name of the AI Foundry project.')
-output name string = aiProject.name
+output name string = useExistingProject ? existingProjName : aiProject.name
 
 @description('Resource ID of the AI Foundry project.')
-output resourceId string = aiProject.id
+output resourceId string = useExistingProject ? azureExistingAIProjectResourceId : aiProject.id
 
 @description('API endpoint for the AI Foundry project.')
-output apiEndpoint string = !empty(existingProjEndpoint) ? existingProjEndpoint : aiProject.properties.endpoints['AI Foundry API']
+output apiEndpoint string = useExistingProject ? existingProjEndpoint : aiProject.properties.endpoints['AI Foundry API']
 
 @export()
 @description('Output type representing AI project information.')
