@@ -67,12 +67,14 @@ logging.getLogger("azure.monitor.opentelemetry.exporter.export._base").setLevel(
     logging.WARNING
 )
 
+
 def record_exception_to_trace(e):
     """Record exception to the current OpenTelemetry trace span."""
     span = trace.get_current_span()
     if span is not None:
         span.record_exception(e)
         span.set_status(Status(StatusCode.ERROR, str(e)))
+
 
 # start processing the batch
 @router.post("/start-processing")
@@ -424,7 +426,6 @@ async def get_batch_status(request: Request, batch_id: str):
         track_event_if_configured(
             "BatchStoryRetrieved", {"batch_id": batch_id, "user_id": user_id}
         )
-
         return batch_data
     except HTTPException as e:
         record_exception_to_trace(e)
