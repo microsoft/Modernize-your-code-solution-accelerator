@@ -135,8 +135,9 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
             --parameters \
-                Prefix="${{ env.SOLUTION_PREFIX }}" \
+                solutionName="${{ env.SOLUTION_PREFIX }}" \
                 aiDeploymentsLocation="eastus" \
+                useWafAlignedArchitecture=false \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}"\
             --debug
