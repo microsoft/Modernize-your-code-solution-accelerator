@@ -48,7 +48,7 @@ jobs:
           export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
           export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
           export GPT_MIN_CAPACITY="${{ env.GPT_MIN_CAPACITY }}"
-          export AZURE_REGIONS="${{ vars.AZURE_LOCATION }}"
+          export AZURE_REGIONS="${{ vars.AZURE_REGIONS }}"
           chmod +x scripts/checkquota.sh
           if ! scripts/checkquota.sh; then
             # If quota check fails due to insufficient quota, set the flag
