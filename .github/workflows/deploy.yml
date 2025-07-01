@@ -139,8 +139,7 @@ jobs:
                 aiDeploymentsLocation="eastus" \
                 useWafAlignedArchitecture=false \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
-                imageVersion="${IMAGE_TAG}"\
-            --debug
+                imageVersion="${IMAGE_TAG}"
 
       - name: Get Deployment Output and extract Values
         id: get_output
@@ -195,7 +194,6 @@ jobs:
       
           if [ -z "$log_analytics_workspace_name" ]; then
             echo "No Log Analytics workspace found in resource group ${{ env.RESOURCE_GROUP_NAME }}."
-            exit 1
           else
             echo "LOG_ANALYTICS_WORKSPACE_NAME=${log_analytics_workspace_name}" >> $GITHUB_ENV
             echo "Log Analytics workspace name: ${log_analytics_workspace_name}" 
@@ -248,22 +246,6 @@ jobs:
             echo "KEYVAULTS=$keyvault_array" >> $GITHUB_ENV
           fi
 
-      - name: Purge log analytics workspace
-        if: always()
-        id: log_analytics_workspace
-        run: |
-
-          set -e
-          # Purge Log Analytics Workspace
-          echo "Purging the Log Analytics Workspace..."
-          if ! az monitor log-analytics workspace delete --force --resource-group ${{ env.RESOURCE_GROUP_NAME }} --workspace-name ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }} --yes --verbose; then
-            echo "Failed to purge Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
-          else
-            echo "Purged the Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
-          fi
-
-          echo "Log analytics workspace resource purging completed successfully"    
-      
       - name: Delete Bicep Deployment
         if: always()
         run: |
@@ -280,6 +262,23 @@ jobs:
           else
             echo "Resource group does not exists."
           fi
+
+      - name: Purge log analytics workspace
+        if: always()
+        id: log_analytics_workspace
+        run: |
+
+          set -e
+          # Purge Log Analytics Workspace
+          echo "Purging the Log Analytics Workspace..."
+          if ! az monitor log-analytics workspace delete --force --resource-group ${{ env.RESOURCE_GROUP_NAME }} --workspace-name ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }} --yes --verbose; then
+            echo "Failed to purge Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
+          else
+            echo "Purged the Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
+          fi
+
+          echo "Log analytics workspace resource purging completed successfully"    
+      
 
       - name: Wait for resource deletion to complete
         if: always()
