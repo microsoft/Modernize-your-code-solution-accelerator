@@ -29,40 +29,12 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 
 ➡️ To ensure sufficient quota is available in your subscription, please follow **[Quota check instructions guide](../docs/quota_check.md)** before you deploy the solution.
 
+## Deployment Options & Steps
+
+Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
+
 | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
 |---|---|
- 
-### **Configurable Deployment Settings**  
-
-When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
-
-| **Setting**                       | **Description**                                                                                      | **Default value**         |
-|----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
-| **Azure Region**                 | The region where resources will be created.                                                         | East US                   |
-| **Resource Prefix**              | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | azdtemp                   |
-| **AI Location**                  | Location for all AI services resources. This location can be different from the resource group location. | japaneast                 |
-| **Capacity**                     | Configure capacity for **gpt-4o**.                                                                   | 200                        |
-| **Model Deployment Type**        | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                        | GlobalStandard             |
-| **Model Name**                   | Set the Model Name (allowed values: gpt-4o).                                                        | gpt-4o                     |
-| **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
-| **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
-| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
-
-
-This accelerator can be configured to  use authentication. 
-
-* To use authentication the installer must have the rights to create and register an application identity in their Azure environment.
-After installation is complete, follow the directions in the [App Authentication](../docs/AddAuthentication.md) document to enable authentication.
-* Note: If you enable authentication, all processing history and current processing will be performed for your specific user. Without authentication, all batch history from the tool will be visible to all users.
-
-### [Optional] Quota Recommendations  
-By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
-> **We recommend increasing the capacity to 200k tokens for optimal performance.** 
-
-To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
-
-### Deployment Options
-Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
 
 <details>
   <summary><b>Deploy in GitHub Codespaces</b></summary>
@@ -124,7 +96,54 @@ If you're not using one of the above options for opening the project, then you'l
 
 </details>
 
-### Deploying
+<br/>
+
+Consider the following settings during your deployment to modify specific settings:
+
+ <details>
+<Summary><b>Configurable Deployment Settings</b></Summary>
+
+When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
+
+| **Setting**                       | **Description**                                                                                      | **Default value**         |
+|----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
+| **Azure Region**                 | The region where resources will be created.                                                         | East US                   |
+| **Resource Prefix**              | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | azdtemp                   |
+| **AI Location**                  | Location for all AI services resources. This location can be different from the resource group location. | japaneast                 |
+| **Capacity**                     | Configure capacity for **gpt-4o**.                                                                   | 200                        |
+| **Model Deployment Type**        | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                        | GlobalStandard             |
+| **Model Name**                   | Set the Model Name (allowed values: gpt-4o).                                                        | gpt-4o                     |
+| **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
+| **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
+| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
+
+
+This accelerator can be configured to  use authentication. 
+
+* To use authentication the installer must have the rights to create and register an application identity in their Azure environment.
+After installation is complete, follow the directions in the [App Authentication](../docs/AddAuthentication.md) document to enable authentication.
+* Note: If you enable authentication, all processing history and current processing will be performed for your specific user. Without authentication, all batch history from the tool will be visible to all users.
+
+ </details>
+
+<details>
+<Summary><b> Quota Recommendations </b></Summary>  
+By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
+> **We recommend increasing the capacity to 200k tokens for optimal performance.** 
+
+To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
+
+</details>
+
+<details>
+
+  <summary><b>Reusing an Existing Log Analytics Workspace</b></summary>
+
+  Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)
+
+</details>
+
+### Deploying with AZD
 
 Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure following the following steps. 
 
