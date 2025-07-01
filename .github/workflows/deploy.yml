@@ -1,17 +1,21 @@
 name: Deploy-Test-Cleanup Pipeline
 
 on:
-    workflow_run:
-      workflows: ["Build Docker and Optional Push"]
-      types:
-        - completed
-      branches:
-        - main
-        - dev
-        - demo
-    schedule:
-      - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
-    workflow_dispatch:
+  push:
+    branches:
+      - psl-us-20013
+# on:
+#     workflow_run:
+#       workflows: ["Build Docker and Optional Push"]
+#       types:
+#         - completed
+#       branches:
+#         - main
+#         - dev
+#         - demo
+#     schedule:
+#       - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
+#     workflow_dispatch:
 
 env:
   GPT_MIN_CAPACITY: 200
@@ -35,6 +39,37 @@ jobs:
       - name: Login to Azure
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
+      - name: Run Quota Check
+        id: quota-check
+        run: |
+          chmod +x scripts/checkquota.sh
+          if ! scripts/checkquota.sh; then
+            # If quota check fails due to insufficient quota, set the flag
+            if grep -q "No region with sufficient quota found" scripts/checkquota.sh; then
+              echo "QUOTA_FAILED=true" >> $GITHUB_ENV
+            fi
+            exit 1  # Fail the pipeline if any other failure occurs
+          fi
+
+      - name: Send Notification on Quota Failure
+        if: env.QUOTA_FAILED == 'true'
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          EMAIL_BODY=$(cat <<EOF
+          {
+            "body": "<p>Dear Team,</p><p>The quota check has failed, and the pipeline cannot proceed.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a></p><p>Please take necessary action.</p><p>Best regards,<br>Your Automation Team</p>"
+          }
+          EOF
+          )
+
+          curl -X POST "${{ secrets.LOGIC_APP_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$EMAIL_BODY" || echo "Failed to send notification"
+
+      - name: Fail Pipeline if Quota Check Fails
+        if: env.QUOTA_FAILED == 'true'
+        run: exit 1
 
       - name: Install Bicep CLI
         run: az bicep install
@@ -362,6 +397,22 @@ jobs:
             fi
           done
           echo "Resource purging completed successfully"
+
+      - name: Send Notification on Failure
+        if: failure() || needs.deploy.result == 'failure'
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          EMAIL_BODY=$(cat <<EOF
+          {
+            "body": "<p>Dear Team,</p><p>We would like to inform you that the DocGen Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
+          }
+          EOF
+          )
+
+          curl -X POST "${{ secrets.LOGIC_APP_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "$EMAIL_BODY" || echo "Failed to send notification"
 
       - name: Logout from Azure
         if: always()
