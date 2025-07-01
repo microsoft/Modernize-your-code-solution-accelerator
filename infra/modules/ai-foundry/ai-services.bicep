@@ -296,7 +296,7 @@ resource cognitiveService 'Microsoft.CognitiveServices/accounts@2025-04-01-previ
         ]
       : null
     // true is not supported today
-    encryption: null // Customer managed key encryption is used, but the property is required.
+    encryption: null // Customer managed key encryption is not used, but the property is required.
     migrationToken: migrationToken
     restore: restore
     restrictOutboundNetworkAccess: restrictOutboundNetworkAccess
