@@ -48,7 +48,7 @@ You can run this solution using GitHub Codespaces. The button will open a web-ba
     [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator)
 2. Accept the default values on the create Codespaces page
 3. Open a terminal window if it is not already open
-4. Continue with the [deploying steps](#deploying)
+4. Continue with the [deploying steps](#deploying-with-azd)
 
 </details>
 
@@ -66,7 +66,7 @@ You can run this solution in VS Code Dev Containers, which will open the project
 
 
 3. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
-4. Continue with the [deploying steps](#deploying)
+4. Continue with the [deploying steps](#deploying-with-azd)
 
 </details>
 
@@ -92,7 +92,7 @@ If you're not using one of the above options for opening the project, then you'l
 
 3. Open the project folder in your terminal or editor.
 
-4. Continue with the [deploying steps](#deploying).
+4. Continue with the [deploying steps](#deploying-with-azd).
 
 </details>
 
