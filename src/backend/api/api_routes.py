@@ -422,7 +422,6 @@ async def get_batch_status(request: Request, batch_id: str):
                 "BatchNotFound", {"batch_id": batch_id, "user_id": user_id}
             )
             raise HTTPException(status_code=404, detail="Batch not found")
-        
         track_event_if_configured(
             "BatchStoryRetrieved", {"batch_id": batch_id, "user_id": user_id}
         )
