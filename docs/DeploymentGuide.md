@@ -155,7 +155,8 @@ After installation is complete, follow the directions in the [App Authentication
  </details>
 
 <details>
-<Summary><b> Quota Recommendations </b></Summary>  
+<Summary><b> Quota Recommendations </b></Summary> 
+  
 By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
 > **We recommend increasing the capacity to 200k tokens for optimal performance.** 
 
@@ -190,13 +191,18 @@ To change the azd parameters from the default values, follow the steps [here](..
     azd auth login --tenant-id <tenant-id>
    ```
 
-2. Provision and deploy all the resources:
+2. Provide an `azd` environment name (like "cmsaapp")
+
+   ```sh
+   azd env new <cmsaapp>
+   ```
+
+3. Provision and deploy all the resources:
 
     ```shell
     azd up
     ```
-
-3. Provide an `azd` environment name (like "cmsaapp")
+    
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
     * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
     * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.
