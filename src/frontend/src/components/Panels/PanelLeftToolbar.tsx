@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
 import { Body1Strong } from "@fluentui/react-components";
+import "./Panels.scss"; // Import for styling
 
 interface PanelLeftToolbarProps {
   panelIcon?: ReactNode;
@@ -15,44 +16,21 @@ const PanelLeftToolbar: React.FC<PanelLeftToolbarProps> = ({
   return (
     <div
       className="panelToolbar"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "16px",
-        boxSizing: "border-box",
-        height: "56px",
-      }}
     >
       {(panelIcon || panelTitle) && (
         <div
           className="panelTitle"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            flex: "1 1 auto",
-            overflow: "hidden", // Ensure title section is contained
-          }}
         >
           {panelIcon && (
             <div
-              style={{
-                flexShrink: 0, // Prevent the icon from shrinking
-                display: "flex",
-                alignItems: "center",
-              }}
+              className="panelIcon"
             >
               {panelIcon}
             </div>
           )}
           {panelTitle && (
             <Body1Strong
-              style={{
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
+              className="panelSecTitle"
             >
               {panelTitle}
             </Body1Strong>
@@ -61,11 +39,6 @@ const PanelLeftToolbar: React.FC<PanelLeftToolbarProps> = ({
       )}
       <div
         className="panelTools"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0",
-        }}
       >
         {children}
       </div>

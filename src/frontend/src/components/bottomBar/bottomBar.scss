@@ -1,0 +1,49 @@
+.cardContainer{
+    background-color: #fafafa !important;
+    padding: 1rem;
+    border-radius: 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index:1000;
+}
+
+.cardContainer2{
+    display: flex;
+    align-items: center;
+    width: 55%;
+    justify-content: space-between;
+    gap: 2rem;
+}
+
+.cardHeader{
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-grow: 1;
+}
+
+.cardLabel{
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem
+}
+
+.width_150{
+    width: 150px;
+}
+
+.buttonContainer{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.minWidth_120{
+    min-width: 120px;
+}
+
+.minWidth_80{
+    min-width: 80px;
+}

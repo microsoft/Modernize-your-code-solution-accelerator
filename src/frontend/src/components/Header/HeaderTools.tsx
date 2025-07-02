@@ -1,5 +1,6 @@
 import React from "react";
 import { Toolbar } from "@fluentui/react-components";
+import "./Header.scss"
 
 
 interface HeaderToolsProps {
@@ -11,13 +12,7 @@ const HeaderTools: React.FC<HeaderToolsProps> = ({ children }) => {
 
     return (
         <Toolbar
-            style={{
-                display: "flex",
-                flex: "0",
-                alignItems: "center",
-                flexDirection: "row-reverse",
-                padding: "4px 0",
-            }}
+            className="toolbar"
         >
             {children}
         </Toolbar>
