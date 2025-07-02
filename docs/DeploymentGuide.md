@@ -53,7 +53,7 @@ When prompted during `azd up`:
 
 - Select **`true`** to deploy a **WAF-aligned, production-ready environment**  
 - Select **`false`** to deploy a **lightweight sandbox/dev environment**
-- 
+  
 > [!TIP]
 > Always review and adjust parameter values (such as region, capacity, security settings and log analytics workspace configuration) to match your organization’s requirements before deploying. For production, ensure you have sufficient quota and follow the principle of least privilege for all identities and role assignments.
 
