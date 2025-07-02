@@ -29,6 +29,9 @@
     "secondaryLocation": {
       "value": "${AZURE_ENV_COSMOS_SECONDARY_LOCATION}"
     },
+    "vmSize": {
+      "value": "${AZURE_ENV_JUMPBOX_SIZE}"
+    },
     "vmAdminUsername": {
       "value": "${AZURE_ENV_JUMPBOX_ADMIN_USERNAME}"
     },
