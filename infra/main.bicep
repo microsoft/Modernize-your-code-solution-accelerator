@@ -227,8 +227,9 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
     kind: 'AIServices'
     deployments: [modelDeployment]
     projectName: 'proj-${resourcesName}'
+    projectDescription: 'aifp-${solutionUniqueToken}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    azureExistingAIProjectResourceId: azureExistingAIProjectResourceId
+    existingFoundryProjectResourceId: azureExistingAIProjectResourceId
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
@@ -311,9 +312,9 @@ module keyVault 'modules/keyVault.bicep' = {
       : null
     roleAssignments: [
       {
-        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? ''
+        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Reader'
+        roleDefinitionIdOrName: 'Key Vault Administrator'
       }
     ]
     tags: allTags
@@ -470,15 +471,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              value: aiServices.outputs.project.apiEndpoint // or equivalent
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint // or equivalent
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
-              value: aiServices.outputs.project.apiEndpoint
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiServices.outputs.project.name
+              value: aiServices.outputs.aiProjectInfo.name
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
@@ -490,7 +491,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AZURE_AI_AGENT_ENDPOINT'
-              value: aiServices.outputs.project.apiEndpoint
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint
             }
             {
               name: 'AZURE_CLIENT_ID'
