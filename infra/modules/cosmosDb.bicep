@@ -97,6 +97,8 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     privateEndpoints: privateNetworking != null
       ? [
           {
+            name: 'pep-${name}'
+            customNetworkInterfaceName: 'nic-${name}'
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
                 {
