@@ -260,7 +260,7 @@ resource cognitiveServiceExisting 'Microsoft.CognitiveServices/accounts@2025-04-
   scope: resourceGroup(existingCognitiveServiceDetails[2], existingCognitiveServiceDetails[4])
 }
 
-module cognigive_service_dependencies './dependencies.bicep' = if(!useExistingService) {
+module cognitive_service_dependencies './dependencies.bicep' = if(!useExistingService) {
   params: {
     projectName: projectName
     projectDescription: projectDescription
@@ -277,7 +277,7 @@ module cognigive_service_dependencies './dependencies.bicep' = if(!useExistingSe
   }
 }
 
-module existing_cognigive_service_dependencies './dependencies.bicep' = if(useExistingService) {
+module existing_cognitive_service_dependencies './dependencies.bicep' = if(useExistingService) {
   params: {
     name:  cognitiveServiceExisting.name 
     projectName: projectName
@@ -317,20 +317,20 @@ output endpoint string = useExistingService ? cognitiveServiceExisting.propertie
 output endpoints endpointType = useExistingService ? cognitiveServiceExisting.properties.endpoints : cognitiveService.properties.endpoints
 
 @description('The principal ID of the system assigned identity.')
-output systemAssignedMIPrincipalId string? = '' //cognitiveService.?identity.?principalId
+output systemAssignedMIPrincipalId string? = useExistingService ? cognitiveServiceExisting.identity.principalId : cognitiveService.?identity.?principalId
 
 @description('The location the resource was deployed into.')
-output location string = '' //cognitiveService.location
+output location string = useExistingService ? cognitiveServiceExisting.location : cognitiveService.location
 
 import { secretsOutputType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('A hashtable of references to the secrets exported to the provided Key Vault. The key of each reference is each secret\'s name.')
-output exportedSecrets secretsOutputType = {}//cognigive_service_dependencies.outputs.exportedSecrets
+output exportedSecrets secretsOutputType = useExistingService ? existing_cognitive_service_dependencies.outputs.exportedSecrets : cognitive_service_dependencies.outputs.exportedSecrets
 
 @description('The private endpoints of the congitive services account.')
-output privateEndpoints privateEndpointOutputType[] = [] //cognigive_service_dependencies.outputs.privateEndpoints
+output privateEndpoints privateEndpointOutputType[] = useExistingService ? existing_cognitive_service_dependencies.outputs.privateEndpoints : cognitive_service_dependencies.outputs.privateEndpoints
 
 import { aiProjectOutputType } from './project.bicep'
-output aiProjectInfo aiProjectOutputType = useExistingService ? existing_cognigive_service_dependencies.outputs.aiProjectInfo : cognigive_service_dependencies.outputs.aiProjectInfo
+output aiProjectInfo aiProjectOutputType = useExistingService ? existing_cognitive_service_dependencies.outputs.aiProjectInfo : cognitive_service_dependencies.outputs.aiProjectInfo
 
 // ================ //
 // Definitions      //
