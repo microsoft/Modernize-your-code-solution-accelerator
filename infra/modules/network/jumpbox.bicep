@@ -40,7 +40,7 @@ param enableTelemetry bool = true
 module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
   name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
   params: {
-    name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
+    name: '${subnet.?networkSecurityGroup.name}-${vnetName}'
     location: location
     securityRules: subnet.?networkSecurityGroup.securityRules
     tags: tags
@@ -76,7 +76,7 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     adminUsername: username
     adminPassword: password
     tags: tags
-    zone: 2
+    zone: 0
     imageReference: {
       offer: 'WindowsServer'
       publisher: 'MicrosoftWindowsServer'
@@ -86,13 +86,14 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     osType: 'Windows'
     osDisk: {
       managedDisk: {
+        name: 'osdisk-${vmName}'
         storageAccountType: 'Standard_LRS'
       }
     }
     encryptionAtHost: false // Some Azure subscriptions do not support encryption at host
     nicConfigurations: [
       {
-        name: '${vmName}-nic'
+        name: 'nic-${vmName}'
         ipConfigurations: [
           {
             name: 'ipconfig1'

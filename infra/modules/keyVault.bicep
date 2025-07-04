@@ -78,6 +78,8 @@ module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
     privateEndpoints: privateNetworking != null
       ? [
           {
+            name: 'pep-${name}'
+            customNetworkInterfaceName: 'nic-${name}'
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
                 {

@@ -78,7 +78,7 @@ module network 'network/main.bicep' = {
         name: 'web'
         addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
         networkSecurityGroup: {
-          name: 'web-nsg'
+          name: 'nsg-web'
           securityRules: [
             {
               name: 'AllowHttpsInbound'
@@ -131,7 +131,7 @@ module network 'network/main.bicep' = {
       }
     ]
     bastionConfiguration: {
-      name: 'bastion-${resourcesName}'
+      name: 'bas-${resourcesName}'
       subnetAddressPrefixes: ['10.0.10.0/26']
     }
     jumpboxConfiguration: {
@@ -143,7 +143,7 @@ module network 'network/main.bicep' = {
         name: 'jumpbox'
         addressPrefixes: ['10.0.12.0/23'] // /23 (10.0.12.0 - 10.0.13.255), 512 addresses
         networkSecurityGroup: {
-          name: 'jumpbox-nsg'
+          name: 'nsg-jumbox'
           securityRules: [
             {
               name: 'AllowRdpFromBastion'

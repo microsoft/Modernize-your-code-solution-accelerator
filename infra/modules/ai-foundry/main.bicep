@@ -155,8 +155,8 @@ module cognitiveService 'ai-services.bicep' = {
     privateEndpoints: privateNetworking != null
       ? [
           {
-            name:'pep-${name}-aiservices' // private endpoint name
-            customNetworkInterfaceName: 'nic-${name}-aiservices'
+            name:'pep-${name}' // private endpoint name
+            customNetworkInterfaceName: 'nic-${name}'
             subnetResourceId: privateNetworking.?subnetResourceId ?? ''
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [

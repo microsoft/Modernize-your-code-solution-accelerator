@@ -31,7 +31,7 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
   for (subnet, i) in subnets: if (!empty(subnet.?networkSecurityGroup)) {
     name: take('${name}-${subnet.?networkSecurityGroup.name}-networksecuritygroup', 64)
     params: {
-      name: '${name}-${subnet.?networkSecurityGroup.name}'
+      name: '${subnet.?networkSecurityGroup.name}-${name}'
       location: location
       securityRules: subnet.?networkSecurityGroup.securityRules
       tags: tags

@@ -103,6 +103,8 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     privateEndpoints: privateNetworking != null
       ? [
           {
+            name: 'pep-blob-${name}'
+            customNetworkInterfaceName: 'nic-blob-${name}'
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
                 {
@@ -114,6 +116,8 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
             subnetResourceId: privateNetworking.?subnetResourceId ?? ''
           }
           {
+            name: 'pep-file-${name}'
+            customNetworkInterfaceName: 'nic-file-${name}'
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
                 {

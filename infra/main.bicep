@@ -129,6 +129,8 @@ var modelDeployment = {
   raiPolicyName: 'Microsoft.Default'
 }
 
+var abbrs = loadJsonContent('./abbreviations.json')
+
 #disable-next-line no-deployments-resources
 resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableTelemetry) {
   name: take(
@@ -154,7 +156,7 @@ resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableT
 module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
   name: take('identity-app-${resourcesName}-deployment', 64)
   params: {
-    name: 'id-app-${resourcesName}'
+    name: '${abbrs.security.managedIdentity}${resourcesName}'
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry
@@ -176,7 +178,7 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
-    name: 'log-${resourcesName}'
+    name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcesName}'
     location: location
     skuName: 'PerGB2018'
     dataRetention: 30
@@ -194,7 +196,7 @@ var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorks
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
   name: take('app-insights-${resourcesName}-deployment', 64)
   params: {
-    name: 'appi-${resourcesName}'
+    name: '${abbrs.managementGovernance.applicationInsights}${resourcesName}'
     location: location
     workspaceResourceId: logAnalyticsWorkspaceResourceId
     diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
@@ -223,12 +225,12 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: 'ais-${resourcesName}'
+    name: '${abbrs.ai.aiFoundry}${resourcesName}'
     location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [modelDeployment]
-    projectName: 'proj-${resourcesName}'
+    projectName: '${abbrs.ai.aiFoundryProject}${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
@@ -265,7 +267,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('st${resourcesName}', 24)
+    name: take('${abbrs.storage.storageAccount}${resourcesName}', 24)
     location: location
     tags: allTags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
@@ -300,7 +302,7 @@ module keyVault 'modules/keyVault.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('kv-${resourcesName}', 24)
+    name: take('${abbrs.security.keyVault}${resourcesName}', 24)
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -327,7 +329,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('cosmos-${resourcesName}', 44)
+    name: take('${abbrs.databases.cosmosDBDatabase}${resourcesName}', 44)
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -344,7 +346,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   }
 }
 
-var containerAppsEnvironmentName = 'cae-${resourcesName}'
+var containerAppsEnvironmentName = '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('container-env-${resourcesName}-deployment', 64)
@@ -391,7 +393,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
-    name: take('ca-${resourcesName}backend', 32)
+    name: take('${abbrs.containers.containerApp}backend-${resourcesName}', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -556,7 +558,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('container-app-frontend-${resourcesName}-deployment', 64)
   params: {
-    name: take('ca-${resourcesName}frontend', 32)
+    name: take('${abbrs.containers.containerApp}frontend-${resourcesName}', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
