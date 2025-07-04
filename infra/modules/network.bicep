@@ -128,10 +128,6 @@ module network 'network/main.bicep' = {
         addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Disabled'
-        networkSecurityGroup: {
-          name: 'nsg-peps'
-          securityRules:[]
-        }
       }
     ]
     bastionConfiguration: {
