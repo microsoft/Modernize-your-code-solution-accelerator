@@ -36,7 +36,7 @@ param location string = resourceGroup().location
   azd : {
     type: 'location'
     usageName : [
-      'OpenAI.GlobalStandard.gpt-4o, 5'
+      'OpenAI.GlobalStandard.gpt-4o, 150'
     ]
   }
 })
@@ -44,7 +44,7 @@ param location string = resourceGroup().location
 param aiDeploymentsLocation string
 
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
-param capacity int = 5
+param capacity int = 150
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = useWafAlignedArchitecture? true : false
