@@ -181,14 +181,14 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 1. Login to Azure:
 
-    ```shell
-    azd auth login
-    ```
+   ```shell
+   azd auth login
+   ```
 
-    #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
+   #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
 
-    ```sh
-    azd auth login --tenant-id <tenant-id>
+   ```sh
+   azd auth login --tenant-id <tenant-id>
    ```
 
 2. Provide an `azd` environment name (like "cmsaapp")
@@ -202,7 +202,7 @@ To change the azd parameters from the default values, follow the steps [here](..
     ```shell
     azd up
     ```
-    
+  
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
     * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
     * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.

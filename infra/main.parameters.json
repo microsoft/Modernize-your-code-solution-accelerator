@@ -1,58 +1,91 @@
 {
-    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-    "contentVersion": "1.0.0.0",
-    "parameters": {
-      "location": {
-        "value": "${AZURE_LOCATION}"
-      },
-      "backendExists": {
-        "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
-      },
-      "backendDefinition": {
-        "value": {
-          "settings": [
-            {
-              "name": "",
-              "value": "${VAR}",
-              "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
-              "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR} to use the value of 'VAR' from the current environment."
-            },
-            {
-              "name": "",
-              "value": "${VAR_S}",
-              "secret": true,
-              "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
-              "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR_S} to use the value of 'VAR_S' from the current environment."
-            }
-          ]
-        }
-      },
-      "frontendExists": {
-        "value": "${SERVICE_FRONTEND_RESOURCE_EXISTS=false}"
-      },
-      "frontendDefinition": {
-        "value": {
-          "settings": [
-            {
-              "name": "",
-              "value": "${VAR}",
-              "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
-              "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR} to use the value of 'VAR' from the current environment."
-            },
-            {
-              "name": "",
-              "value": "${VAR_S}",
-              "secret": true,
-              "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
-              "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR_S} to use the value of 'VAR_S' from the current environment."
-            }
-          ]
-        }
-      },
-      "principalId": {
-        "value": "${AZURE_PRINCIPAL_ID}"
-      },
-      "aiModelDeployments": {
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "solutionName": {
+      "value": "${AZURE_ENV_NAME}"
+    },
+    "location": {
+      "value": "${AZURE_LOCATION}"
+    },
+    "deploymentType": {
+      "value": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}"
+    },
+    "llmModel": {
+      "value": "${AZURE_ENV_MODEL_NAME}"
+    },
+    "capacity": {
+      "value": "${AZURE_ENV_MODEL_CAPACITY}"
+    },
+    "gptModelVersion": {
+      "value": "${AZURE_ENV_MODEL_VERSION}"
+    },
+    "imageVersion": {
+      "value": "${AZURE_ENV_IMAGETAG}"
+    },
+    "existingLogAnalyticsWorkspaceId": {
+      "value": "${AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID}"
+    },
+    "secondaryLocation": {
+      "value": "${AZURE_ENV_COSMOS_SECONDARY_LOCATION}"
+    },
+    "vmSize": {
+      "value": "${AZURE_ENV_JUMPBOX_SIZE}"
+    },
+    "vmAdminUsername": {
+      "value": "${AZURE_ENV_JUMPBOX_ADMIN_USERNAME}"
+    },
+    "vmAdminPassword": {
+      "value": "${AZURE_ENV_JUMPBOX_ADMIN_PASSWORD}"
+    },
+    "backendExists": {
+      "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
+    },
+    "backendDefinition": {
+      "value": {
+        "settings": [
+          {
+            "name": "",
+            "value": "${VAR}",
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR} to use the value of 'VAR' from the current environment."
+          },
+          {
+            "name": "",
+            "value": "${VAR_S}",
+            "secret": true,
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR_S} to use the value of 'VAR_S' from the current environment."
+          }
+        ]
+      }
+    },
+    "frontendExists": {
+      "value": "${SERVICE_FRONTEND_RESOURCE_EXISTS=false}"
+    },
+    "frontendDefinition": {
+      "value": {
+        "settings": [
+          {
+            "name": "",
+            "value": "${VAR}",
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR} to use the value of 'VAR' from the current environment."
+          },
+          {
+            "name": "",
+            "value": "${VAR_S}",
+            "secret": true,
+            "_comment_name": "The name of the environment variable when running in Azure. If empty, ignored.",
+            "_comment_value": "The value to provide. This can be a fixed literal, or an expression like ${VAR_S} to use the value of 'VAR_S' from the current environment."
+          }
+        ]
+      }
+    },
+    "principalId": {
+      "value": "${AZURE_PRINCIPAL_ID}"
+    },
+    "aiModelDeployments": {
       "value": [
         {
           "name": "gpt-4o",
@@ -68,5 +101,5 @@
         }
       ]
     }
-    }
+  }
 }

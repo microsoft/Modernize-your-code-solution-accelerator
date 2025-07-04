@@ -1,11 +1,23 @@
-@minLength(3)
-@description('Prefix for all resources created by this template. This should be 3-20 characters long. If your provide a prefix longer than 20 characters, it will be truncated to 20 characters.')
-param Prefix string
-var abbrs = loadJsonContent('./abbreviations.json')
-var safePrefix = length(Prefix) > 20 ? substring(Prefix, 0, 20) : Prefix
+metadata name = 'Modernize Your Code Solution Accelerator'
+metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
+'''
 
-@description('Required. Location for all Resources except AI Foundry.')
-param solutionLocation string = resourceGroup().location
+@description('Set to true if you want to deploy WAF-aligned infrastructure.')
+param useWafAlignedArchitecture bool
+
+@minLength(3)
+@maxLength(16)
+@description('Required. A unique application/solution name for all resources in this deployment. This should be 3-16 characters long.')
+param solutionName string
+
+@maxLength(5)
+@description('Optional. A unique token for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name.')
+param solutionUniqueToken string = substring(uniqueString(subscription().id, resourceGroup().name, solutionName), 0, 5)
+
+@minLength(3)
+@metadata({ azd: { type: 'location' } })
+@description('Optional. Azure region for all services. Defaults to the resource group location.')
+param location string = resourceGroup().location
 
 @allowed([
   'australiaeast'
@@ -20,14 +32,53 @@ param solutionLocation string = resourceGroup().location
   'westus'
   'westus3'
 ])
-@description('Location for all Ai services resources. This location can be different from the resource group location.')
-param AzureAiServiceLocation string  // The location used for all deployed resources.  This location must be in the same region as the resource group.
+@metadata({
+  azd : {
+    type: 'location'
+    usageName : [
+      'OpenAI.GlobalStandard.gpt-4o, 150'
+    ]
+  }
+})
+@description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
+param aiDeploymentsLocation string
 
-@minValue(5)
-@description('Capacity of the GPT deployment:')
-param capacity int = 5
+@description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
+param capacity int = 150
 
-param existingLogAnalyticsWorkspaceId string = ''
+@description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
+param enableMonitoring bool = useWafAlignedArchitecture? true : false
+
+@description('Optional. Enable scaling for the container apps. Defaults to false.')
+param enableScaling bool = useWafAlignedArchitecture? true : false
+
+@description('Optional. Enable redundancy for applicable resources. Defaults to false.')
+param enableRedundancy bool = false
+
+@description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
+param secondaryLocation string?
+
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
+param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
+
+@description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
+param vmSize string? 
+
+@description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@secure()
+//param vmAdminUsername string = take(newGuid(), 20)
+param vmAdminUsername string?
+
+@description('Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@secure()
+//param vmAdminPassword string = newGuid()
+param vmAdminPassword string?
+
+@description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
+param tags object = {}
+
+@description('Optional. Enable/Disable usage telemetry for module.')
+param enableTelemetry bool = true
 
 @minLength(1)
 @description('GPT model deployment type:')
@@ -45,232 +96,480 @@ param imageVersion string = 'latest'
 @description('Version of the GPT model to deploy:')
 param gptModelVersion string = '2024-08-06'
 
+param existingLogAnalyticsWorkspaceId string = ''
 
-
-var uniqueId = toLower(uniqueString(subscription().id, safePrefix, resourceGroup().location))
-var UniquePrefix = 'cm${padLeft(take(uniqueId, 12), 12, '0')}'
-var ResourcePrefix = take('cm${safePrefix}${UniquePrefix}', 15)
-var cosmosdbDatabase  = 'cmsadb'
-var cosmosdbBatchContainer  = 'cmsabatch'
-var cosmosdbFileContainer  = 'cmsafile'
-var cosmosdbLogContainer  = 'cmsalog'
-var containerName  = 'appstorage'
-var storageSkuName = 'Standard_LRS'
-var storageContainerName = replace(replace(replace(replace('${ResourcePrefix}cast', '-', ''), '_', ''), '.', ''),'/', '')
-
-var aiFoundryName = '${abbrs.ai.aiFoundry}${ResourcePrefix}'
-var aiProjectDescription = 'AI foundary project for CPS template'
-var aiProjectName = '${abbrs.ai.aiFoundryProject}${ResourcePrefix}'
-var aiProjectFriendlyName = aiProjectName
-
-var aiModelDeployments = [
+var allTags = union(
   {
+    'azd-env-name': solutionName
+  },
+  tags
+)
+
+var resourcesName = toLower(trim(replace(
+  replace(
+    replace(replace(replace(replace('${solutionName}${solutionUniqueToken}', '-', ''), '_', ''), '.', ''), '/', ''),
+    ' ',
+    ''
+  ),
+  '*',
+  ''
+)))
+
+var modelDeployment = {
+  name: llmModel
+  model: {
     name: llmModel
-    model: llmModel
+    format: 'OpenAI'
     version: gptModelVersion
-    sku: {
-      name: deploymentType
-      capacity: capacity
-    }
-    raiPolicyName: 'Microsoft.Default'
   }
-]
-
-resource azureAiServices 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = {
-  name: aiFoundryName
-  location: AzureAiServiceLocation
   sku: {
-    name: 'S0'
+    name: deploymentType
+    capacity: capacity
   }
-  kind: 'AIServices'
-  identity: {
-    type: 'SystemAssigned'
-  }
+  raiPolicyName: 'Microsoft.Default'
+}
+
+#disable-next-line no-deployments-resources
+resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableTelemetry) {
+  name: take(
+    '46d3xbcp.ptn.sa-modernizeyourcode.${replace('-..--..-', '.', '-')}.${substring(uniqueString(deployment().name, location), 0, 4)}',
+    64
+  )
   properties: {
-    allowProjectManagement: true
-    customSubDomainName: aiFoundryName
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
+    mode: 'Incremental'
+    template: {
+      '$schema': 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+      contentVersion: '1.0.0.0'
+      resources: []
+      outputs: {
+        telemetry: {
+          type: 'String'
+          value: 'For more information, see https://aka.ms/avm/TelemetryInfo'
+        }
+      }
     }
-    publicNetworkAccess: 'Enabled'
-    disableLocalAuth: false
   }
 }
 
-resource aiFoundryProject 'Microsoft.CognitiveServices/accounts/projects@2025-04-01-preview' = {
-  parent: azureAiServices
-  name: aiProjectName
-  location: AzureAiServiceLocation
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    description: aiProjectDescription
-    displayName: aiProjectFriendlyName
-  }
-}
-
-@batchSize(1)
-resource azureAiServicesDeployments 'Microsoft.CognitiveServices/accounts/deployments@2023-05-01' = [for aiModeldeployment in aiModelDeployments: {
-  parent: azureAiServices //aiServices_m
-  name: aiModeldeployment.name
-  properties: {
-    model: {
-      format: 'OpenAI'
-      name: aiModeldeployment.model
-      version: aiModeldeployment.version
-    }
-    raiPolicyName: aiModeldeployment.raiPolicyName
-  }
-  sku:{
-    name: aiModeldeployment.sku.name
-    capacity: aiModeldeployment.sku.capacity
-  }
-}]
-
-
-
-//param storageAccountId string = 'storageAccountId'
-module managedIdentityModule 'deploy_managed_identity.bicep' = {
-  name: 'deploy_managed_identity'
+module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
+  name: take('identity-app-${resourcesName}-deployment', 64)
   params: {
-    miName:'${abbrs.security.managedIdentity}${ResourcePrefix}'
-    solutionName: ResourcePrefix
-    solutionLocation: solutionLocation 
+    name: 'id-app-${resourcesName}'
+    location: location
+    tags: allTags
+    enableTelemetry: enableTelemetry
   }
-  scope: resourceGroup(resourceGroup().name)
+}
+// Extracts subscription, resource group, and workspace name from the resource ID when using an existing Log Analytics workspace
+var useExistingLogAnalytics = !empty(existingLogAnalyticsWorkspaceId)
+
+var existingLawSubscription = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[2] : ''
+var existingLawResourceGroup = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[4] : ''
+var existingLawName = useExistingLogAnalytics ? split(existingLogAnalyticsWorkspaceId, '/')[8] : ''
+
+resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces@2020-08-01' existing = if (useExistingLogAnalytics) {
+  name: existingLawName
+  scope: resourceGroup(existingLawSubscription, existingLawResourceGroup)
 }
 
-
-// ==========Key Vault Module ========== //
-module kvault 'deploy_keyvault.bicep' = {
-  name: 'deploy_keyvault'
+// Deploy new Log Analytics workspace only if required and not using existing
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
+  name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
-    keyvaultName: '${abbrs.security.keyVault}${ResourcePrefix}'
-    solutionName: ResourcePrefix
-    solutionLocation: solutionLocation
-    managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
-  }
-  scope: resourceGroup(resourceGroup().name)
-}
-
-
-// ==========AI Foundry and related resources ========== //
-module azureAifoundry 'deploy_ai_foundry.bicep' = {
-  name: 'deploy_ai_foundry'
-  params: {
-    solutionName: ResourcePrefix
-    solutionLocation: AzureAiServiceLocation
-    aiFoundryName: aiFoundryName
-    keyVaultName: kvault.outputs.keyvaultName
-    gptModelName: llmModel
-    gptModelVersion: gptModelVersion
-    managedIdentityObjectId:managedIdentityModule.outputs.managedIdentityOutput.objectId
-    aiServicesEndpoint: azureAiServices.properties.endpoint
-    aiServicesKey: azureAiServices.listKeys().key1
-    aiServicesId: azureAiServices.id
-    existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
-    aureaiFoundryEndpoint: aiFoundryProject.properties.endpoints['AI Foundry API']
-  }
-  scope: resourceGroup(resourceGroup().name)
-}
-
-module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.9.1' = {
-  name: toLower('${ResourcePrefix}conAppsEnv')
-  params: {
-    logAnalyticsWorkspaceResourceId: azureAifoundry.outputs.logAnalyticsId
-    name: toLower('${ResourcePrefix}manenv')
-    location: solutionLocation
-    zoneRedundant: false
-    managedIdentities: managedIdentityModule
+    name: 'log-${resourcesName}'
+    location: location
+    skuName: 'PerGB2018'
+    dataRetention: 30
+    diagnosticSettings: [{ useThisWorkspace: true }]
+    tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
-module databaseAccount 'br/public:avm/res/document-db/database-account:0.9.0' = {
-  name: toLower('${abbrs.databases.cosmosDBDatabase}${ResourcePrefix}databaseAccount')
+// Log Analytics workspace ID, customer ID, and shared key (existing or new) 
+var logAnalyticsWorkspaceResourceId = useExistingLogAnalytics ? existingLogAnalyticsWorkspaceId : logAnalyticsWorkspace.outputs.resourceId
+var LogAnalyticsPrimarySharedKey string = useExistingLogAnalytics? existingLogAnalyticsWorkspace.listKeys().primarySharedKey : logAnalyticsWorkspace.outputs.primarySharedKey
+var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorkspace.properties.customerId : logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
+
+module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
+  name: take('app-insights-${resourcesName}-deployment', 64)
   params: {
-    // Required parameters
-    name: toLower('${abbrs.databases.cosmosDBDatabase}${ResourcePrefix}databaseAccount')
-    // Non-required parameters
-    enableAnalyticalStorage: true
-    location: solutionLocation
-    managedIdentities: {
-      systemAssigned: true
-      userAssignedResourceIds: [
-        managedIdentityModule.outputs.managedIdentityOutput.resourceId
-      ]
-    }
-    networkRestrictions: {
-      networkAclBypass: 'AzureServices'
-      publicNetworkAccess: 'Enabled'
-      ipRules: []  // Adding ipRules as an empty array
-      virtualNetworkRules: [] // Adding virtualNetworkRules as an empty array
-    }
-    disableKeyBasedMetadataWriteAccess: false
-    locations: [
+    name: 'appi-${resourcesName}'
+    location: location
+    workspaceResourceId: logAnalyticsWorkspaceResourceId
+    diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+
+module network 'modules/network.bicep' = if (enablePrivateNetworking) {
+  name: take('network-${resourcesName}-deployment', 64)
+  params: {
+    resourcesName: resourcesName
+    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
+    vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
+    vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    vmSize: vmSize ??  'Standard_DS2_v2' // Default VM size 
+    location: location
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+module aiServices 'modules/ai-foundry/main.bicep' = {
+  name: take('aiservices-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: 'ais-${resourcesName}'
+    location: aiDeploymentsLocation
+    sku: 'S0'
+    kind: 'AIServices'
+    deployments: [modelDeployment]
+    projectName: 'proj-${resourcesName}'
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
+    privateNetworking: enablePrivateNetworking
+      ? {
+          virtualNetworkResourceId: network.outputs.vnetResourceId
+          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+        }
+      : null
+    roleAssignments: [
       {
-        failoverPriority: 0
-        isZoneRedundant: false
-        locationName: solutionLocation
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+      }
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
+      }
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User
       }
     ]
-    sqlDatabases: [
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+var appStorageContainerName = 'appstorage'
+
+module storageAccount 'modules/storageAccount.bicep' = {
+  name: take('storage-account-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: take('st${resourcesName}', 24)
+    location: location
+    tags: allTags
+    skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
+    privateNetworking: enablePrivateNetworking
+      ? {
+          virtualNetworkResourceId: network.outputs.vnetResourceId
+          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+        }
+      : null
+    containers: [
       {
-        containers: [
+        name: appStorageContainerName
+        properties: {
+          publicAccess: 'None'
+        }
+      }
+    ]
+    roleAssignments: [
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
+      }
+    ]
+    enableTelemetry: enableTelemetry
+  }
+}
+
+module keyVault 'modules/keyVault.bicep' = {
+  name: take('keyvault-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: take('kv-${resourcesName}', 24)
+    location: location
+    sku: 'standard'
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
+    privateNetworking: enablePrivateNetworking
+      ? {
+          virtualNetworkResourceId: network.outputs.vnetResourceId
+          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+        }
+      : null
+    roleAssignments: [
+      {
+        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? ''
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'Key Vault Reader'
+      }
+    ]
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+module cosmosDb 'modules/cosmosDb.bicep' = {
+  name: take('cosmos-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: take('cosmos-${resourcesName}', 44)
+    location: location
+    dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
+    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
+    zoneRedundant: enableRedundancy
+    secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+    privateNetworking: enablePrivateNetworking
+      ? {
+          virtualNetworkResourceId: network.outputs.vnetResourceId
+          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+        }
+      : null
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+var containerAppsEnvironmentName = 'cae-${resourcesName}'
+
+module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
+  name: take('container-env-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  params: {
+    name: containerAppsEnvironmentName
+    infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentName}'
+    location: location
+    zoneRedundant: enableRedundancy && enablePrivateNetworking
+    publicNetworkAccess: 'Enabled' // public access required for frontend
+    infrastructureSubnetResourceId: enablePrivateNetworking ? network.outputs.subnetWebResourceId : null
+    managedIdentities: {
+      userAssignedResourceIds: [
+        appIdentity.outputs.resourceId
+      ]
+    }
+    appInsightsConnectionString: enableMonitoring ? applicationInsights.outputs.connectionString : null
+    appLogsConfiguration: enableMonitoring
+      ? {
+          destination: 'log-analytics'
+          logAnalyticsConfiguration: {
+            customerId: LogAnalyticsWorkspaceId
+            sharedKey: LogAnalyticsPrimarySharedKey
+          }
+        }
+      : {}
+    workloadProfiles: enablePrivateNetworking
+      ? [
+          // NOTE: workload profiles are required for private networking
           {
-          indexingPolicy: {
-            automatic: true
+            name: 'Consumption'
+            workloadProfileType: 'Consumption'
           }
-          name: cosmosdbBatchContainer
-          paths:[
-            '/batch_id'
-          ]
-        }
-        {
-          indexingPolicy: {
-            automatic: true
-          }
-          name: cosmosdbFileContainer
-          paths:[
-            '/file_id'
-          ]
-        }
-        {
-          indexingPolicy: {
-            automatic: true
-          }
-          name: cosmosdbLogContainer
-          paths:[
-            '/log_id'
-          ]
-        }
         ]
-        name: cosmosdbDatabase
-      }
-    ]
-  
+      : []
+    tags: allTags
+    enableTelemetry: enableTelemetry
   }
-
 }
 
-module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
-  name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}containerAppFrontend')
+module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
+  name: take('container-app-backend-${resourcesName}-deployment', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
+    name: take('ca-${resourcesName}backend', 32)
+    location: location
+    environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
-      systemAssigned: true
       userAssignedResourceIds: [
-        managedIdentityModule.outputs.managedIdentityOutput.resourceId
+        appIdentity.outputs.resourceId
       ]
     }
-    // Required parameters
+    containers: [
+      {
+        name: 'cmsabackend'
+        image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
+        env: concat(
+          [
+            {
+              name: 'COSMOSDB_ENDPOINT'
+              value: cosmosDb.outputs.endpoint
+            }
+            {
+              name: 'COSMOSDB_DATABASE'
+              value: cosmosDb.outputs.databaseName
+            }
+            {
+              name: 'COSMOSDB_BATCH_CONTAINER'
+              value: cosmosDb.outputs.containerNames.batch
+            }
+            {
+              name: 'COSMOSDB_FILE_CONTAINER'
+              value: cosmosDb.outputs.containerNames.file
+            }
+            {
+              name: 'COSMOSDB_LOG_CONTAINER'
+              value: cosmosDb.outputs.containerNames.log
+            }
+            {
+              name: 'AZURE_BLOB_ACCOUNT_NAME'
+              value: storageAccount.outputs.name
+            }
+            {
+              name: 'AZURE_BLOB_CONTAINER_NAME'
+              value: appStorageContainerName
+            }
+            {
+              name: 'AZURE_OPENAI_ENDPOINT'
+              value: 'https://${aiServices.outputs.name}.openai.azure.com/'
+            }
+            {
+              name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'PICKER_AGENT_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'FIXER_AGENT_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'SELECTION_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'TERMINATION_MODEL_DEPLOY'
+              value: modelDeployment.name
+            }
+            {
+              name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
+              value: modelDeployment.name
+            }
+            {
+              name: 'AI_PROJECT_ENDPOINT'
+              value: aiServices.outputs.project.apiEndpoint // or equivalent
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
+              value: aiServices.outputs.project.apiEndpoint
+            }
+            {
+              name: 'AZURE_AI_AGENT_PROJECT_NAME'
+              value: aiServices.outputs.project.name
+            }
+            {
+              name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
+              value: resourceGroup().name
+            }
+            {
+              name: 'AZURE_AI_AGENT_SUBSCRIPTION_ID'
+              value: subscription().subscriptionId
+            }
+            {
+              name: 'AZURE_AI_AGENT_ENDPOINT'
+              value: aiServices.outputs.project.apiEndpoint
+            }
+            {
+              name: 'AZURE_CLIENT_ID'
+              value: appIdentity.outputs.clientId // NOTE: This is the client ID of the managed identity, not the Entra application, and is needed for the App Service to access the Cosmos DB account.
+            }
+          ],
+          enableMonitoring
+            ? [
+                {
+                  name: 'APPLICATIONINSIGHTS_INSTRUMENTATION_KEY'
+                  value: applicationInsights.outputs.instrumentationKey
+                }
+                {
+                  name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+                  value: applicationInsights.outputs.connectionString
+                }
+              ]
+            : []
+        )
+        resources: {
+          cpu: 1
+          memory: '2.0Gi'
+        }
+        probes: enableMonitoring
+          ? [
+              {
+                httpGet: {
+                  path: '/health'
+                  port: 8000
+                }
+                initialDelaySeconds: 3
+                periodSeconds: 3
+                type: 'Liveness'
+              }
+            ]
+          : []
+      }
+    ]
+    ingressTargetPort: 8000
+    ingressExternal: true
+    scaleSettings: {
+      maxReplicas: enableScaling ? 3 : 1
+      minReplicas: 1
+      rules: enableScaling
+        ? [
+            {
+              name: 'http-scaler'
+              http: {
+                metadata: {
+                  concurrentRequests: 100
+                }
+              }
+            }
+          ]
+        : []
+    }
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
+module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
+  name: take('container-app-frontend-${resourcesName}-deployment', 64)
+  params: {
+    name: take('ca-${resourcesName}frontend', 32)
+    location: location
+    environmentResourceId: containerAppsEnvironment.outputs.resourceId
+    managedIdentities: {
+      userAssignedResourceIds: [
+        appIdentity.outputs.resourceId
+      ]
+    }
     containers: [
       {
         env: [
           {
             name: 'API_URL'
-            value: 'https://${containerAppBackend.properties.configuration.ingress.fqdn}'
+            value: 'https://${containerAppBackend.outputs.fqdn}'
           }
         ]
         image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
@@ -283,284 +582,27 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.13.0' = {
     ]
     ingressTargetPort: 3000
     ingressExternal: true
-    scaleMinReplicas: 1
-    scaleMaxReplicas: 1
-    environmentResourceId: containerAppsEnvironment.outputs.resourceId
-    name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Frontend')
-    // Non-required parameters
-    location: solutionLocation
-  }
-}
-
-
-resource containerAppBackend 'Microsoft.App/containerApps@2023-05-01' = {
-  name: toLower('${abbrs.containers.containerApp}${ResourcePrefix}Backend')
-  location: solutionLocation
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    managedEnvironmentId: containerAppsEnvironment.outputs.resourceId
-    configuration: {
-      ingress: {
-        external: true
-        targetPort: 8000
-      }
-    }
-    template: {
-      scale: {
-        minReplicas: 1
-        maxReplicas: 1
-      }
-      containers: [
-        {
-          name: 'cmsabackend'
-          image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
-          env: [
+    scaleSettings: {
+      maxReplicas: enableScaling ? 3 : 1
+      minReplicas: 1
+      rules: enableScaling
+        ? [
             {
-              name: 'COSMOSDB_ENDPOINT'
-              value: databaseAccount.outputs.endpoint
-            }
-            {
-              name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-              value: azureAifoundry.outputs.applicationInsightsConnectionString
-            }
-            {
-              name: 'COSMOSDB_DATABASE'
-              value: cosmosdbDatabase
-            }
-            {
-              name: 'COSMOSDB_BATCH_CONTAINER'
-              value: cosmosdbBatchContainer
-            }
-            {
-              name: 'COSMOSDB_FILE_CONTAINER'
-              value: cosmosdbFileContainer
-            }
-            {
-              name: 'COSMOSDB_LOG_CONTAINER'
-              value: cosmosdbLogContainer
-            }
-            {
-              name: 'AZURE_BLOB_ACCOUNT_NAME'
-              value: storageContianerApp.name
-            }
-            {
-              name: 'AZURE_BLOB_CONTAINER_NAME'
-              value: containerName
-            }
-            {
-              name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://${aiFoundryName}.openai.azure.com/'
-            }
-            {
-              name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'PICKER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'FIXER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'SELECTION_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'TERMINATION_MODEL_DEPLOY'
-              value: llmModel
-            }
-            {
-              name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
-              value: llmModel
-            }
-            {
-              name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiProjectName
-            }
-            {
-              name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
-              value: resourceGroup().name
-            }
-            {
-              name: 'AZURE_AI_AGENT_SUBSCRIPTION_ID'
-              value: subscription().subscriptionId
-            }
-            {
-              name: 'AI_PROJECT_ENDPOINT'
-              value: aiFoundryProject.properties.endpoints['AI Foundry API']
+              name: 'http-scaler'
+              http: {
+                metadata: {
+                  concurrentRequests: 100
+                }
+              }
             }
           ]
-          resources: {
-            cpu: 1
-            memory: '2.0Gi'
-          }
-        }
-      ]
+        : []
     }
-  }
-}
-resource storageContianerApp 'Microsoft.Storage/storageAccounts@2022-09-01' = {
-  name: storageContainerName
-  location: solutionLocation
-  sku: {
-    name: storageSkuName
-  }
-  kind: 'StorageV2'
-  identity: {
-    type: 'SystemAssigned'  // Enables Managed Identity
-  }
-  properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    allowCrossTenantReplication: false
-    allowSharedKeyAccess: false
-    encryption: {
-      keySource: 'Microsoft.Storage'
-      requireInfrastructureEncryption: false
-      services: {
-        blob: {
-          enabled: true
-          keyType: 'Account'
-        }
-        file: {
-          enabled: true
-          keyType: 'Account'
-        }
-        queue: {
-          enabled: true
-          keyType: 'Service'
-        }
-        table: {
-          enabled: true
-          keyType: 'Service'
-        }
-      }
-    }
-    isHnsEnabled: false
-    isNfsV3Enabled: false
-    keyPolicy: {
-      keyExpirationPeriodInDays: 7
-    }
-    largeFileSharesState: 'Disabled'
-    minimumTlsVersion: 'TLS1_2'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    supportsHttpsTrafficOnly: true
-  }
-}
-resource roleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.id, 'Storage Blob Data Contributor')
-  scope: storageContianerApp
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe') // Storage Blob Data Contributor
-    principalId: containerAppBackend.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-var openAiContributorRoleId = 'a001fd3d-188f-4b5d-821b-7da978bf7442'  // Fixed Role ID for OpenAI Contributor
-
-resource openAiRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.id, openAiContributorRoleId)
-  scope: azureAiServices
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiContributorRoleId) // OpenAI Service Contributor
-    principalId: containerAppBackend.identity.principalId
-    principalType: 'ServicePrincipal'
+    tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
-var containerNames = [
-  containerName
-]
-
-// Create a blob container resource for each container name.
-resource containers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-08-01' = [for containerName in containerNames: {
-  name: '${storageContainerName}/default/${containerName}'
-  properties: {
-    publicAccess: 'None'
-  }
-  dependsOn: [azureAifoundry]
-}]
-
-resource aiDeveloper 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '64702f94-c441-49e6-a78b-ef80e0188fee'
-}
-
-resource aiDeveloperAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.name, aiDeveloper.id)
-  scope: resourceGroup()
-  properties: {
-    roleDefinitionId: aiDeveloper.id
-    principalId: containerAppBackend.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-
-resource aiUser 'Microsoft.Authorization/roleDefinitions@2022-04-01' existing = {
-  name: '53ca6127-db72-4b80-b1b0-d745d6d5456d'
-}
-
-resource aiUserAccessProj 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.name, aiUser.id)
-  scope: resourceGroup()
-  properties: {
-    roleDefinitionId: aiUser.id
-    principalId: containerAppBackend.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource aiUserAccessFoundry 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(containerAppBackend.name, aiFoundryProject.id)
-  scope: resourceGroup()
-  properties: {
-    roleDefinitionId: aiUser.id
-    principalId: containerAppBackend.identity.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
-
-resource contributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2021-06-15' existing = {
-  name: '${databaseAccount.name}/00000000-0000-0000-0000-000000000002'
-}
-
-var cosmosAssignCli  = 'az cosmosdb sql role assignment create --resource-group "${resourceGroup().name}" --account-name "${databaseAccount.outputs.name}" --role-definition-id "${contributorRoleDefinition.id}" --scope "${databaseAccount.outputs.resourceId}" --principal-id "${containerAppBackend.identity.principalId}"'
-
-module deploymentScriptCLI 'br/public:avm/res/resources/deployment-script:0.5.1' = {
-  name: 'deploymentScriptCLI'
-  params: {
-    // Required parameters
-    kind: 'AzureCLI'
-    name: 'rdsmin001'
-    // Non-required parameters
-    azCliVersion: '2.69.0'
-    location: resourceGroup().location
-    managedIdentities: {
-      userAssignedResourceIds: [
-        managedIdentityModule.outputs.managedIdentityId
-      ]
-    }
-    scriptContent: cosmosAssignCli
-  }
-}
-
-output AZURE_AIFOUNDRY_NAME string = azureAiServices.name
+@description('The resource group the resources were deployed into.')
+output resourceGroupName string = resourceGroup().name
 output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
-output aiFoundryName string = aiFoundryName 
-output aiProjectName string = aiFoundryProject.name
-output projectEndpointString string = aiFoundryProject.properties.endpoints['AI Foundry API']
