@@ -15,7 +15,7 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_MODEL_NAME`                 | string  | `gpt-4o`         | Set the Model Name (allowed values: gpt-4o).                                                         |
 | `AZURE_ENV_MODEL_VERSION`              | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
 | `AZURE_ENV_MODEL_CAPACITY`             | integer | `200`            | Set the Model Capacity (choose a number based on available GPT model capacity in your subscription). |
-| `AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID` | string  | `<Existing Workspace Id>`     | Set this if you want to reuse an existing Log Analytics Workspace instead of creating a new one.     |
+| `AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID` | string  | Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)     | Set this if you want to reuse an existing Log Analytics Workspace instead of creating a new one.     |
 | `AZURE_ENV_IMAGETAG`                   | string  | `latest`         | Set the Image tag Like (allowed values: latest, dev, hotfix)    |
 | `AZURE_ENV_JUMPBOX_SIZE`                   | string  | `Standard_DS2_v2`         | Specifies the size of the Jumpbox Virtual Machine. Set a custom value if `enablePrivateNetworking` is `true`.    |
 ---
