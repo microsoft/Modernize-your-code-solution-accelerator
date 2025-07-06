@@ -1,0 +1,43 @@
+.pl_16{
+    padding-left: 16px;
+}
+
+.ml_8{
+    margin-left: 8px;
+}
+
+.infoText{
+    display: flex !important;
+    align-items: flex-start
+}
+
+.iconContainer{
+    flex-shrink: 0;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px;
+    margin-top: 3px;
+}
+
+.errorIcon{
+    color: var(--colorStatusDangerForeground1);
+    width: 16px;
+    height: 16px;
+}
+
+.warningIcon{
+    color: #B89500;
+    width: 16px;
+    height: 16px;
+}
+
+.infoIcon{
+    color: #007ACC;
+    width: 16px;
+    height: 16px;
+}
+
+.pl_24{
+    padding-left: 24px;
+}

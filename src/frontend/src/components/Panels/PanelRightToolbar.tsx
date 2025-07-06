@@ -1,6 +1,7 @@
 import React, { ReactNode } from "react";
 import { Body1Strong, Button } from "@fluentui/react-components";
 import { DismissRegular } from '@fluentui/react-icons';
+import "./Panels.scss"; // Import for styling
 
 interface PanelRightToolbarProps {
     panelTitle?: string | null;
@@ -20,44 +21,20 @@ const PanelRightToolbar: React.FC<PanelRightToolbarProps> = ({
     return (
         <div
             className="panelToolbar"
-            style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                padding: "16px",
-                boxSizing: "border-box",
-                height: "56px",
-                gap: "8px",
-            }}
         >
             <div
                 className="panelTitle"
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    flex: "1 1 auto",
-                    overflow: "hidden",
-                }}
             >
                 {panelIcon && (
                     <div
-                        style={{
-                            flexShrink: 0,
-                            display: "flex",
-                            alignItems: "center",
-                        }}
+                        className="panelIcon"
                     >
                         {panelIcon}
                     </div>
                 )}
                 {panelTitle && (
                     <Body1Strong
-                        style={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                        }}
+                        className="panelSecTitle"
                     >
                         {panelTitle}
                     </Body1Strong>
@@ -65,11 +42,6 @@ const PanelRightToolbar: React.FC<PanelRightToolbarProps> = ({
             </div>
             <div
                 className="panelTools"
-                style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0px",
-                }}
             >
                 {children}
                 <Button

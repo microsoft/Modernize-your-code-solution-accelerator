@@ -1,6 +1,6 @@
 import React, { useState, useEffect, ReactElement } from "react";
 import { Toolbar, ToggleButton, ToggleButtonProps } from "@fluentui/react-components";
-import eventBus from "../eventbus.js";
+import eventBus from "../common/eventbus.js";
 
 type PanelRightTogglesProps = {
   children: React.ReactNode;
@@ -37,7 +37,7 @@ const PanelRightToggles: React.FC<PanelRightTogglesProps> = ({ children }) => {
   };
 
   return (
-    <Toolbar style={{ padding: "4px 0", display: "flex", flexDirection: "row-reverse" }}>
+    <Toolbar className="toolbar2">
       {React.Children.map(children, (child, index) => {
         const panelType = panelTypes[index]; // Dynamically assign panelType based on index
         if (isToggleButton(child) && panelType) {
