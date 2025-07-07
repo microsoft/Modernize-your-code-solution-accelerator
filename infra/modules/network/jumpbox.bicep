@@ -85,8 +85,8 @@ module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
     }
     osType: 'Windows'
     osDisk: {
+      name: 'osdisk-${vmName}'
       managedDisk: {
-        name: 'osdisk-${vmName}'
         storageAccountType: 'Standard_LRS'
       }
     }
