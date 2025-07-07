@@ -205,6 +205,50 @@ resource cMKUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentiti
 
 var useExistingService = !empty(existingFoundryProjectResourceId)
 
+module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
+  name: take('${name}-cognitiveservices-pdns-deployment', 64)
+  params: {
+    name: 'privatelink.cognitiveservices.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
+    tags: tags
+  }
+}
+
+module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?openAIPrivateDnsZoneResourceId)) {
+  name: take('${name}-openai-pdns-deployment', 64)
+  params: {
+    name: 'privatelink.openai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
+    tags: tags
+  }
+}
+
+module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
+  name: take('${name}-ai-services-pdns-deployment', 64)
+  params: {
+    name: 'privatelink.services.ai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
+    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
+    tags: tags
+  }
+}
+
+var cogServicesPrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)
+      ? cognitiveServicesPrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?cogServicesPrivateDnsZoneResourceId)
+  : ''
+var openAIPrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?openAIPrivateDnsZoneResourceId)
+      ? openAiPrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?openAIPrivateDnsZoneResourceId)
+  : ''
+
+var aiServicesPrivateDnsZoneResourceId = privateNetworking != null
+  ? (empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)
+      ? aiServicesPrivateDnsZone.outputs.resourceId ?? ''
+      : privateNetworking.?aiServicesPrivateDnsZoneResourceId)
+  : ''
+
 resource cognitiveServiceNew 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = if(!useExistingService) {
   name: name
   kind: kind
@@ -215,8 +259,8 @@ resource cognitiveServiceNew 'Microsoft.CognitiveServices/accounts@2025-04-01-pr
     name: sku
   }
   properties: {
-    allowProjectManagement: allowProjectManagement // allows project management for Cognitive Services accounts in AI Foundry - FDP updates
-    customSubDomainName: customSubDomainName
+    allowProjectManagement: true // allows project management for Cognitive Services accounts in AI Foundry - FDP updates
+    customSubDomainName: name
     networkAcls: !empty(networkAcls ?? {})
       ? {
           defaultAction: networkAcls.?defaultAction
@@ -261,15 +305,43 @@ resource cognitiveServiceExisting 'Microsoft.CognitiveServices/accounts@2025-04-
 }
 
 module cognitive_service_dependencies './dependencies.bicep' = if(!useExistingService) {
+  name: take('${name}-cognitive-service-${cognitiveServiceNew.name}-dependencies', 64)
   params: {
     projectName: projectName
     projectDescription: projectDescription
     name:  cognitiveServiceNew.name 
     location: location
     deployments: deployments
-    diagnosticSettings: diagnosticSettings
+    diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
+      ? [
+          {
+            workspaceResourceId: logAnalyticsWorkspaceResourceId
+          }
+        ]
+      : []
     lock: lock
-    privateEndpoints: privateEndpoints
+    privateEndpoints:  privateNetworking != null
+      ? [
+          {
+            name:'pep-${name}-aiservices' // private endpoint name
+            customNetworkInterfaceName: 'nic-${name}-aiservices'
+            subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                {
+                  privateDnsZoneResourceId: cogServicesPrivateDnsZoneResourceId
+                }
+                {
+                  privateDnsZoneResourceId: openAIPrivateDnsZoneResourceId
+                }
+                {
+                  privateDnsZoneResourceId: aiServicesPrivateDnsZoneResourceId
+                }
+              ]
+            }
+          }
+        ]
+      : []
     roleAssignments: roleAssignments
     secretsExportConfiguration: secretsExportConfiguration
     sku: sku
@@ -278,6 +350,7 @@ module cognitive_service_dependencies './dependencies.bicep' = if(!useExistingSe
 }
 
 module existing_cognitive_service_dependencies './dependencies.bicep' = if(useExistingService) {
+  name: take('existing-${name}-cognitive-service-${cognitiveServiceExisting.name}-dependencies', 64)
   params: {
     name:  cognitiveServiceExisting.name 
     projectName: projectName
