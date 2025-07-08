@@ -10,7 +10,6 @@ By default this template will use the environment name as the prefix to prevent 
 | -------------------------------------- | ------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
 | `AZURE_ENV_NAME`                       | string  | `azdtemp`        | Used as a prefix for all resource names to ensure uniqueness across environments.                    |
 | `AZURE_LOCATION`                       | string  | `eastus2`      | Location of the Azure resources. Controls where the infrastructure will be deployed.                 |
-| `AZURE_AISERVICE_LOCATION`                       | string  | `japaneast`      | Set the Azure AI Service Location.                 |
 | `AZURE_ENV_MODEL_DEPLOYMENT_TYPE`      | string  | `GlobalStandard` | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                         |
 | `AZURE_ENV_MODEL_NAME`                 | string  | `gpt-4o`         | Set the Model Name (allowed values: gpt-4o).                                                         |
 | `AZURE_ENV_MODEL_VERSION`              | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
@@ -18,6 +17,9 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID` | string  | Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)     | Set this if you want to reuse an existing Log Analytics Workspace instead of creating a new one.     |
 | `AZURE_ENV_IMAGETAG`                   | string  | `latest`         | Set the Image tag Like (allowed values: latest, dev, hotfix)    |
 | `AZURE_ENV_JUMPBOX_SIZE`                   | string  | `Standard_DS2_v2`         | Specifies the size of the Jumpbox Virtual Machine. Set a custom value if `enablePrivateNetworking` is `true`.    |
+| `AZURE_ENV_JUMPBOX_ADMIN_USERNAME`     | string  | `JumpboxAdminUser`          | Specifies the administrator username for the Jumpbox Virtual Machine.      |
+| `AZURE_ENV_JUMPBOX_ADMIN_PASSWORD`     | string  | `JumpboxAdminP@ssw0rd1234!` | Specifies the administrator password for the Jumpbox Virtual Machine.      |
+| `AZURE_ENV_COSMOS_SECONDARY_LOCATION`  | string  | *(not set by default)*      | Specifies the secondary region for Cosmos DB. Required if `enableRedundancy` is `true`. |
 ---
 
 ## How to Set a Parameter
