@@ -30,7 +30,7 @@ param tags object = {}
 
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
-            
+
 // /****************************************************************************************************************************/
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /****************************************************************************************************************************/
@@ -55,7 +55,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
   name: '${resourcesName}-bastionHost'
   params: {
-    name: bastionConfiguration.?name ?? 'bastion-${resourcesName}'
+    name: bastionConfiguration.?name ?? 'bas-${resourcesName}'
     vnetId: virtualNetwork.outputs.resourceId
     vnetName: virtualNetwork.outputs.name
     location: location

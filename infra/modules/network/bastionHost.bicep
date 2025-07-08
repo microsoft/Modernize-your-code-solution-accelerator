@@ -62,6 +62,10 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
     ]
     tags: tags
     enableTelemetry: enableTelemetry
+    publicIPAddressObject: {
+      name: 'pip-${name}'
+      zones:[]
+    }
   }
 }
 
