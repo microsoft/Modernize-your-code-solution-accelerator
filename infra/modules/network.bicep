@@ -128,11 +128,75 @@ module network 'network/main.bicep' = {
         addressPrefixes: ['10.0.2.0/23'] // /23 (10.0.2.0 - 10.0.3.255), 512 addresses
         privateEndpointNetworkPolicies: 'Disabled'
         privateLinkServiceNetworkPolicies: 'Disabled'
+        networkSecurityGroup: {
+          name: 'nsg-peps'
+          securityRules: []
+        }
       }
     ]
     bastionConfiguration: {
       name: 'bas-${resourcesName}'
-      subnetAddressPrefixes: ['10.0.10.0/26']
+      subnet: {
+        name: 'AzureBastionSubnet'
+        addressPrefixes: ['10.0.10.0/26']
+        networkSecurityGroup: {
+          name: 'nsg-AzureBastionSubnet'
+          securityRules: [
+            {
+              name: 'AllowGatewayManager'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 2702
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: 'GatewayManager'
+                destinationAddressPrefix: '*'
+              }
+            }
+            {
+              name: 'AllowHttpsInBound'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 2703
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: 'Internet'
+                destinationAddressPrefix: '*'
+              }
+            }
+            {
+              name: 'AllowSshRdpOutbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Outbound'
+                priority: 100
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRanges: ['22', '3389']
+                sourceAddressPrefix: '*'
+                destinationAddressPrefix: 'VirtualNetwork'
+              }
+            }
+            {
+              name: 'AllowAzureCloudOutbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Outbound'
+                priority: 110
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: '*'
+                destinationAddressPrefix: 'AzureCloud'
+              }
+            }
+          ]
+        }
+      }
     }
     jumpboxConfiguration: {
       name: 'vm-jumpbox-${resourcesName}'
