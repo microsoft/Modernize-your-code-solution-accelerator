@@ -217,25 +217,38 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
 }
 
 module aiServices 'modules/ai-foundry/main.bicep' = {
-  name: take('aiservices-${resourcesName}-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  name: take('avm.res.cognitive-services.account.${resourcesName}', 64)
   params: {
     name: 'ais-${resourcesName}'
     location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
-    deployments: [modelDeployment]
-    projectName: 'proj-${resourcesName}'
-    projectDescription: 'aifp-${solutionUniqueToken}'
+    deployments: [ modelDeployment ]
+    projectName: 'aifp-${resourcesName}'
+    projectDescription: 'aifp-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    existingFoundryProjectResourceId: azureExistingAIProjectResourceId
     privateNetworking: enablePrivateNetworking
       ? {
           virtualNetworkResourceId: network.outputs.vnetResourceId
           subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
         }
       : null
+    existingFoundryProjectResourceId: azureExistingAIProjectResourceId
+    disableLocalAuth: true //Should be set to true for WAF aligned configuration
+    customSubDomainName: 'ais-${resourcesName}'
+    apiProperties: {
+      //staticsEnabled: false
+    }
+    allowProjectManagement: true
+    managedIdentities: {
+      systemAssigned: true
+    }
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+    privateEndpoints: []
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId

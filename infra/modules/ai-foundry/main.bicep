@@ -303,13 +303,12 @@ resource cognitiveServiceExisting 'Microsoft.CognitiveServices/accounts@2025-04-
   name: existingCognitiveServiceDetails[8]
   scope: resourceGroup(existingCognitiveServiceDetails[2], existingCognitiveServiceDetails[4])
 }
-
 module cognitive_service_dependencies './dependencies.bicep' = if(!useExistingService) {
   name: take('${name}-cognitive-service-${cognitiveServiceNew.name}-dependencies', 64)
   params: {
     projectName: projectName
     projectDescription: projectDescription
-    name:  cognitiveServiceNew.name 
+    name: cognitiveServiceNew.name 
     location: location
     deployments: deployments
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
