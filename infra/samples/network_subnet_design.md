@@ -36,7 +36,7 @@ This guide explains how to use the sample Bicep program `network-subnet-design.b
 3. **Deploy the Sample:**
    - Use Azure Developer CLI (`azd`) or Azure CLI to deploy the sample and validate your design.
 4. **Integrate into Solution:**
-   - Once validated, use the same approach to build your own `network.bicep` in `infra/modules/` for your solution. Test your solution with i`nfra/main.bicep`. 
+   - Once validated, use the same approach to build your own `network.bicep` in `infra/modules/` for your solution. Test your solution with `infra/main.bicep`. 
 
 ## Example Directory Structure
 
