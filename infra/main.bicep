@@ -96,6 +96,9 @@ param imageVersion string = 'latest'
 @description('Version of the GPT model to deploy:')
 param gptModelVersion string = '2024-08-06'
 
+@description('Use this parameter to use an existing AI project resource ID')
+param azureExistingAIProjectResourceId string = ''
+
 param existingLogAnalyticsWorkspaceId string = ''
 
 var allTags = union(
@@ -221,7 +224,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
 }
 
 module aiServices 'modules/ai-foundry/main.bicep' = {
-  name: take('aiservices-${resourcesName}-deployment', 64)
+  name: take('avm.res.cognitive-services.account.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
@@ -229,8 +232,9 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
     location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
-    deployments: [modelDeployment]
+    deployments: [ modelDeployment ]
     projectName: '${abbrs.ai.aiFoundryProject}${resourcesName}'
+    projectDescription: '${abbrs.ai.aiFoundryProject}${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
@@ -238,6 +242,22 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
           subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
         }
       : null
+    existingFoundryProjectResourceId: azureExistingAIProjectResourceId
+    disableLocalAuth: true //Should be set to true for WAF aligned configuration
+    customSubDomainName: 'ais-${resourcesName}'
+    apiProperties: {
+      //staticsEnabled: false
+    }
+    allowProjectManagement: true
+    managedIdentities: {
+      systemAssigned: true
+    }
+    publicNetworkAccess: 'Enabled'
+    networkAcls: {
+      bypass: 'AzureServices'
+      defaultAction: 'Allow'
+    }
+    privateEndpoints: []
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
@@ -314,9 +334,9 @@ module keyVault 'modules/keyVault.bicep' = {
       : null
     roleAssignments: [
       {
-        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? ''
+        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Reader'
+        roleDefinitionIdOrName: 'Key Vault Administrator'
       }
     ]
     tags: allTags
@@ -473,15 +493,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              value: aiServices.outputs.project.apiEndpoint // or equivalent
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint // or equivalent
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
-              value: aiServices.outputs.project.apiEndpoint
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiServices.outputs.project.name
+              value: aiServices.outputs.aiProjectInfo.name
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
@@ -493,7 +513,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
             }
             {
               name: 'AZURE_AI_AGENT_ENDPOINT'
-              value: aiServices.outputs.project.apiEndpoint
+              value: aiServices.outputs.aiProjectInfo.apiEndpoint
             }
             {
               name: 'AZURE_CLIENT_ID'
