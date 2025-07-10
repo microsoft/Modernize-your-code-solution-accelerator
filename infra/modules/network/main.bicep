@@ -60,7 +60,7 @@ module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
     vnetName: virtualNetwork.outputs.name
     location: location
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
-    subnetAddressPrefixes: bastionConfiguration.?subnetAddressPrefixes
+    subnet: bastionConfiguration.?subnet
     tags: tags
     enableTelemetry: enableTelemetry
   }
