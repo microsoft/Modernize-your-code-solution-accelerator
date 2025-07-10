@@ -8,9 +8,6 @@ param name string
 @description('Azure region to deploy resources.')
 param location string = resourceGroup().location
 
-@description('Conditional. List of address prefixes for the subnet. Leave empty to skip subnet creation.')
-param subnetAddressPrefixes string[]?
-
 @description('Resource ID of the Virtual Network where the Azure Bastion Host will be deployed.')
 param vnetId string
 
@@ -26,19 +23,38 @@ param tags object = {}
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-// 1. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
-// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
-module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnetAddressPrefixes)) {
-  name: take('bastionSubnet-${vnetName}', 64)
+import { subnetType } from 'virtualNetwork.bicep'
+@description('Optional. Subnet configuration for the Jumpbox VM.')
+param subnet subnetType?
+
+// 1. Create AzureBastionSubnet NSG 
+// using AVM Network Security Group module
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
+module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
+  name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
   params: {
-    virtualNetworkName: vnetName
-    name: 'AzureBastionSubnet' // this name required as is for Azure Bastion Host subnet
-    addressPrefixes: subnetAddressPrefixes
+    name: '${subnet.?networkSecurityGroup.name}-${vnetName}'
+    location: location
+    securityRules: subnet.?networkSecurityGroup.securityRules
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
-// 2. Create Azure Bastion Host in AzureBastionsubnetSubnet using AVM Bastion Host module
+// 2. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
+// https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
+module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnet)) {
+  name: take('bastionSubnet-${vnetName}', 64)
+  params: {
+    virtualNetworkName: vnetName
+    name: 'AzureBastionSubnet' // this name required as is for Azure Bastion Host subnet
+    addressPrefixes: subnet.?addressPrefixes
+    networkSecurityGroupResourceId: nsg.outputs.resourceId
+    enableTelemetry: enableTelemetry
+  }
+}
+
+// 3. Create Azure Bastion Host in AzureBastionsubnetSubnet using AVM Bastion Host module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/bastion-host
 
 module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
@@ -64,9 +80,12 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
     enableTelemetry: enableTelemetry
     publicIPAddressObject: {
       name: 'pip-${name}'
-      zones:[]
+      zones: []
     }
   }
+  dependsOn: [
+    bastionSubnet
+  ]
 }
 
 output resourceId string = bastionHost.outputs.resourceId
@@ -80,6 +99,6 @@ type bastionHostConfigurationType = {
   @description('The name of the Bastion Host resource.')
   name: string
 
-  @description('Optional. List of address prefixes for the subnet.')
-  subnetAddressPrefixes: string[]?
+  @description('Optional. Subnet configuration for the Jumpbox VM.')
+  subnet: subnetType?
 }
