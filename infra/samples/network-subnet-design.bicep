@@ -43,7 +43,67 @@ import { bastionHostConfigurationType } from '../modules/network/bastionHost.bic
 @description('Optional. Configuration for the Azure Bastion Host. Leave null to omit Bastion creation.')
 param bastionConfiguration bastionHostConfigurationType = {
   name: 'bastion-${resourcesName}'
-  subnetAddressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
+  subnet: {
+        name: 'AzureBastionSubnet'
+        addressPrefixes: ['10.0.10.0/23'] // /23 (10.0.10.0 - 10.0.11.255), 512 addresses
+        networkSecurityGroup: {
+          name: 'nsg-AzureBastionSubnet'
+          securityRules: [
+            {
+              name: 'AllowGatewayManager'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 2702
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: 'GatewayManager'
+                destinationAddressPrefix: '*'
+              }
+            }
+            {
+              name: 'AllowHttpsInBound'
+              properties: {
+                access: 'Allow'
+                direction: 'Inbound'
+                priority: 2703
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: 'Internet'
+                destinationAddressPrefix: '*'
+              }
+            }
+            {
+              name: 'AllowSshRdpOutbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Outbound'
+                priority: 100
+                protocol: '*'
+                sourcePortRange: '*'
+                destinationPortRanges: ['22', '3389']
+                sourceAddressPrefix: '*'
+                destinationAddressPrefix: 'VirtualNetwork'
+              }
+            }
+            {
+              name: 'AllowAzureCloudOutbound'
+              properties: {
+                access: 'Allow'
+                direction: 'Outbound'
+                priority: 110
+                protocol: 'Tcp'
+                sourcePortRange: '*'
+                destinationPortRange: '443'
+                sourceAddressPrefix: '*'
+                destinationAddressPrefix: 'AzureCloud'
+              }
+            }
+          ]
+        }
+      }
 }
 
 import { jumpBoxConfigurationType } from '../modules/network/jumpbox.bicep'
