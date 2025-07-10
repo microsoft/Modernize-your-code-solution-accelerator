@@ -60,9 +60,10 @@ param projectDescription string = projectName
 @description('Optional. The resource ID of the Log Analytics workspace to use for diagnostic settings.')
 param logAnalyticsWorkspaceResourceId string?
 
-import { deploymentType } from 'br/public:avm/res/cognitive-services/account:0.10.2'
+param existingFoundryProjectResourceId string = ''
+
 @description('Optional. Specifies the OpenAI deployments to create.')
-param deployments deploymentType[] = []
+param deployments deploymentType[]?
 
 import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
 @description('Optional. Array of role assignments to create.')
@@ -71,13 +72,133 @@ param roleAssignments roleAssignmentType[] = []
 @description('Optional. Values to establish private networking for the AI Services resource.')
 param privateNetworking aiServicesPrivateNetworkingType?
 
+import { diagnosticSettingFullType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. The diagnostic settings of the service.')
+param diagnosticSettings diagnosticSettingFullType[]?
+
+@description('Optional. Whether or not public network access is allowed for this resource. For security reasons it should be disabled. If not specified, it will be disabled by default if private endpoints are set and networkAcls are not set.')
+@allowed([
+  'Enabled'
+  'Disabled'
+])
+param publicNetworkAccess string?
+
+@description('Conditional. Subdomain name used for token-based authentication. Required if \'networkAcls\' or \'privateEndpoints\' are set.')
+param customSubDomainName string?
+
+@description('Optional. A collection of rules governing the accessibility from specific network locations.')
+param networkAcls object?
+
+import { privateEndpointSingleServiceType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible.')
+param privateEndpoints privateEndpointSingleServiceType[]?
+
+import { lockType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. The lock settings of the service.')
+param lock lockType?
+
 @description('Optional. Tags to be applied to the resources.')
 param tags object = {}
+
+@description('Optional. List of allowed FQDN.')
+param allowedFqdnList array?
+
+@description('Optional. The API properties for special APIs.')
+param apiProperties object?
+
+@description('Optional. Allow only Azure AD authentication. Should be enabled for security reasons.')
+param disableLocalAuth bool = true
+
+import { customerManagedKeyType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. The customer managed key definition.')
+param customerManagedKey customerManagedKeyType?
+
+@description('Optional. The flag to enable dynamic throttling.')
+param dynamicThrottlingEnabled bool = false
+
+@secure()
+@description('Optional. Resource migration token.')
+param migrationToken string?
+
+@description('Optional. Restore a soft-deleted cognitive service at deployment time. Will fail if no such soft-deleted resource exists.')
+param restore bool = false
+
+@description('Optional. Restrict outbound network access.')
+param restrictOutboundNetworkAccess bool = true
+
+@description('Optional. The storage accounts for this resource.')
+param userOwnedStorage array?
+
+import { managedIdentityAllType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('Optional. The managed identity definition for this resource.')
+param managedIdentities managedIdentityAllType?
 
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
+@description('Optional. Key vault reference and secret settings for the module\'s secrets export.')
+param secretsExportConfiguration secretsExportConfigurationType?
+
+@description('Optional. Enable/Disable project management feature for AI Foundry.')
+param allowProjectManagement bool?
+
+var formattedUserAssignedIdentities = reduce(
+  map((managedIdentities.?userAssignedResourceIds ?? []), (id) => { '${id}': {} }),
+  {},
+  (cur, next) => union(cur, next)
+) // Converts the flat array to an object like { '${id1}': {}, '${id2}': {} }
+
+var identity = !empty(managedIdentities)
+  ? {
+      type: (managedIdentities.?systemAssigned ?? false)
+        ? (!empty(managedIdentities.?userAssignedResourceIds ?? {}) ? 'SystemAssigned, UserAssigned' : 'SystemAssigned')
+        : (!empty(managedIdentities.?userAssignedResourceIds ?? {}) ? 'UserAssigned' : null)
+      userAssignedIdentities: !empty(formattedUserAssignedIdentities) ? formattedUserAssignedIdentities : null
+    }
+  : null
+  
+#disable-next-line no-deployments-resources
+resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableTelemetry) {
+  name: '46d3xbcp.res.cognitiveservices-account.${replace('-..--..-', '.', '-')}.${substring(uniqueString(deployment().name, location), 0, 4)}'
+  properties: {
+    mode: 'Incremental'
+    template: {
+      '$schema': 'https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#'
+      contentVersion: '1.0.0.0'
+      resources: []
+      outputs: {
+        telemetry: {
+          type: 'String'
+          value: 'For more information, see https://aka.ms/avm/TelemetryInfo'
+        }
+      }
+    }
+  }
+}
+
+resource cMKKeyVault 'Microsoft.KeyVault/vaults@2023-07-01' existing = if (!empty(customerManagedKey.?keyVaultResourceId)) {
+  name: last(split(customerManagedKey.?keyVaultResourceId!, '/'))
+  scope: resourceGroup(
+    split(customerManagedKey.?keyVaultResourceId!, '/')[2],
+    split(customerManagedKey.?keyVaultResourceId!, '/')[4]
+  )
+
+  resource cMKKey 'keys@2023-07-01' existing = if (!empty(customerManagedKey.?keyVaultResourceId) && !empty(customerManagedKey.?keyName)) {
+    name: customerManagedKey.?keyName!
+  }
+}
+
+resource cMKUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2025-01-31-preview' existing = if (!empty(customerManagedKey.?userAssignedIdentityResourceId)) {
+  name: last(split(customerManagedKey.?userAssignedIdentityResourceId!, '/'))
+  scope: resourceGroup(
+    split(customerManagedKey.?userAssignedIdentityResourceId!, '/')[2],
+    split(customerManagedKey.?userAssignedIdentityResourceId!, '/')[4]
+  )
+}
+
+var useExistingService = !empty(existingFoundryProjectResourceId)
+
+module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-cognitiveservices-pdns-deployment', 64)
   params: {
     name: 'privatelink.cognitiveservices.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -86,7 +207,7 @@ module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNe
   }
 }
 
-module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?openAIPrivateDnsZoneResourceId)) {
+module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?openAIPrivateDnsZoneResourceId)) {
   name: take('${name}-openai-pdns-deployment', 64)
   params: {
     name: 'privatelink.openai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -95,7 +216,7 @@ module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking !=
   }
 }
 
-module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
+module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-ai-services-pdns-deployment', 64)
   params: {
     name: 'privatelink.services.ai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -121,29 +242,68 @@ var aiServicesPrivateDnsZoneResourceId = privateNetworking != null
       : privateNetworking.?aiServicesPrivateDnsZoneResourceId)
   : ''
 
-module cognitiveService 'ai-services.bicep' = {
-  name: take('${name}-aiservices-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone, aiServicesPrivateDnsZone] // required due to optional flags that could change dependency
-  params: {
-    name: name
-    location: location
-    tags: tags
-    sku: sku
-    kind: kind
-    managedIdentities: {
-      systemAssigned: true
-    }
-    deployments: deployments
+resource cognitiveServiceNew 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' = if(!useExistingService) {
+  name: name
+  kind: kind
+  identity: identity
+  location: location
+  tags: tags
+  sku: {
+    name: sku
+  }
+  properties: {
+    allowProjectManagement: true // allows project management for Cognitive Services accounts in AI Foundry - FDP updates
     customSubDomainName: name
-    disableLocalAuth: false
-    publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
-    // rules to allow firewall and virtual network access
-    networkAcls: {
-      defaultAction: 'Allow'
-      virtualNetworkRules: []
-      ipRules: []
-    }
+    networkAcls: !empty(networkAcls ?? {})
+      ? {
+          defaultAction: networkAcls.?defaultAction
+          virtualNetworkRules: networkAcls.?virtualNetworkRules ?? []
+          ipRules: networkAcls.?ipRules ?? []
+        }
+      : null
+    publicNetworkAccess: publicNetworkAccess != null
+      ? publicNetworkAccess
+      : (!empty(networkAcls) ? 'Enabled' : 'Disabled')
+    allowedFqdnList: allowedFqdnList
+    apiProperties: apiProperties
+    disableLocalAuth: disableLocalAuth
+    encryption: !empty(customerManagedKey)
+      ? {
+          keySource: 'Microsoft.KeyVault'
+          keyVaultProperties: {
+            identityClientId: !empty(customerManagedKey.?userAssignedIdentityResourceId ?? '')
+              ? cMKUserAssignedIdentity.properties.clientId
+              : null
+            keyVaultUri: cMKKeyVault.properties.vaultUri
+            keyName: customerManagedKey!.keyName
+            keyVersion: !empty(customerManagedKey.?keyVersion ?? '')
+              ? customerManagedKey!.?keyVersion
+              : last(split(cMKKeyVault::cMKKey.properties.keyUriWithVersion, '/'))
+          }
+        }
+      : null
+    migrationToken: migrationToken
+    restore: restore
+    restrictOutboundNetworkAccess: restrictOutboundNetworkAccess
+    userOwnedStorage: userOwnedStorage
+    dynamicThrottlingEnabled: dynamicThrottlingEnabled
+  }
+}
+
+var existingCognitiveServiceDetails = split(existingFoundryProjectResourceId, '/')
+
+resource cognitiveServiceExisting 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = if(useExistingService) {
+  name: existingCognitiveServiceDetails[8]
+  scope: resourceGroup(existingCognitiveServiceDetails[2], existingCognitiveServiceDetails[4])
+}
+module cognitive_service_dependencies './dependencies.bicep' = if(!useExistingService) {
+  name: take('${name}-cognitive-service-${cognitiveServiceNew.name}-dependencies', 64)
+  params: {
+    projectName: projectName
+    projectDescription: projectDescription
+    name: cognitiveServiceNew.name 
+    location: location
+    deployments: deployments
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
       ? [
           {
@@ -151,12 +311,12 @@ module cognitiveService 'ai-services.bicep' = {
           }
         ]
       : []
-    roleAssignments: roleAssignments
-    privateEndpoints: privateNetworking != null
+    lock: lock
+    privateEndpoints:  privateNetworking != null
       ? [
           {
-            name:'pep-${name}' // private endpoint name
-            customNetworkInterfaceName: 'nic-${name}'
+            name:'pep-${name}-aiservices' // private endpoint name
+            customNetworkInterfaceName: 'nic-${name}-aiservices'
             subnetResourceId: privateNetworking.?subnetResourceId ?? ''
             privateDnsZoneGroup: {
               privateDnsZoneGroupConfigs: [
@@ -174,45 +334,138 @@ module cognitiveService 'ai-services.bicep' = {
           }
         ]
       : []
-  }
-}
-
-
-module aiProject 'project.bicep' = {
-  name: take('${name}-ai-project-${projectName}-deployment', 64)
-  params: {
-    name: projectName
-    desc: projectDescription
-    aiServicesName: cognitiveService.outputs.name
-    location: location
     roleAssignments: roleAssignments
+    secretsExportConfiguration: secretsExportConfiguration
+    sku: sku
     tags: tags
-    enableTelemetry: enableTelemetry
   }
 }
 
-@description('The resource group the resources were deployed into.')
-output resourceGroupName string = resourceGroup().name
-
-@description('Name of the Cognitive Services resource.')
-output name string = cognitiveService.outputs.name
-
-@description('Resource ID of the Cognitive Services resource.')
-output resourceId string = cognitiveService.outputs.resourceId
-
-@description('Principal ID of the system assigned managed identity for the Cognitive Services resource. This is only available if the resource has a system assigned managed identity.')
-output systemAssignedMIPrincipalId string? = cognitiveService.outputs.?systemAssignedMIPrincipalId
-
-@description('The endpoint of the Cognitive Services resource.')
-output endpoint string = cognitiveService.outputs.endpoint
-
-import { aiProjectOutputType } from 'project.bicep'
-@description('AI Foundry Project information.')
-output project aiProjectOutputType = {
-  name: aiProject.name
-  resourceId: aiProject.outputs.resourceId
-  apiEndpoint: aiProject.outputs.apiEndpoint
+module existing_cognitive_service_dependencies './dependencies.bicep' = if(useExistingService) {
+  name: take('existing-${name}-cognitive-service-${cognitiveServiceExisting.name}-dependencies', 64)
+  params: {
+    name:  cognitiveServiceExisting.name 
+    projectName: projectName
+    projectDescription: projectDescription
+    azureExistingAIProjectResourceId: existingFoundryProjectResourceId
+    location: location
+    deployments: deployments
+    diagnosticSettings: diagnosticSettings
+    lock: lock
+    privateEndpoints: privateEndpoints
+    roleAssignments: roleAssignments
+    secretsExportConfiguration: secretsExportConfiguration
+    sku: sku
+    tags: tags
+  }
+  scope: resourceGroup(existingCognitiveServiceDetails[2], existingCognitiveServiceDetails[4])
 }
+
+// module cognitiveService 'ai-services.bicep' = {
+//   name: take('${name}-aiservices-deployment', 64)
+//   #disable-next-line no-unnecessary-dependson
+//   dependsOn: [cognitiveServicesPrivateDnsZone, openAiPrivateDnsZone, aiServicesPrivateDnsZone] // required due to optional flags that could change dependency
+//   params: {
+//     name: name
+//     location: location
+//     tags: tags
+//     sku: sku
+//     kind: kind
+//     managedIdentities: {
+//       systemAssigned: true
+//     }
+//     deployments: deployments
+//     customSubDomainName: name
+//     disableLocalAuth: false
+//     publicNetworkAccess: privateNetworking != null ? 'Disabled' : 'Enabled'
+//     // rules to allow firewall and virtual network access
+//     networkAcls: {
+//       defaultAction: 'Allow'
+//       virtualNetworkRules: []
+//       ipRules: []
+//     }
+//     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
+//       ? [
+//           {
+//             workspaceResourceId: logAnalyticsWorkspaceResourceId
+//           }
+//         ]
+//       : []
+//     roleAssignments: roleAssignments
+//     privateEndpoints: privateNetworking != null
+//       ? [
+//           {
+//             name:'pep-${name}' // private endpoint name
+//             customNetworkInterfaceName: 'nic-${name}'
+//             subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+//             privateDnsZoneGroup: {
+//               privateDnsZoneGroupConfigs: [
+//                 {
+//                   privateDnsZoneResourceId: cogServicesPrivateDnsZoneResourceId
+//                 }
+//                 {
+//                   privateDnsZoneResourceId: openAIPrivateDnsZoneResourceId
+//                 }
+//                 {
+//                   privateDnsZoneResourceId: aiServicesPrivateDnsZoneResourceId
+//                 }
+//               ]
+//             }
+//           }
+//         ]
+//       : []
+//   }
+// }
+
+
+// module aiProject 'project.bicep' = {
+//   name: take('${name}-ai-project-${projectName}-deployment', 64)
+//   params: {
+//     name: projectName
+//     desc: projectDescription
+//     aiServicesName: cognitiveService.outputs.name
+//     location: location
+//     roleAssignments: roleAssignments
+//     tags: tags
+//     enableTelemetry: enableTelemetry
+//   }
+// }
+
+var cognitiveService = useExistingService ? cognitiveServiceExisting : cognitiveServiceNew
+
+@description('The name of the cognitive services account.')
+output name string = useExistingService ? cognitiveServiceExisting.name : cognitiveServiceNew.name
+
+@description('The resource ID of the cognitive services account.')
+output resourceId string = useExistingService ? cognitiveServiceExisting.id : cognitiveServiceNew.id
+
+@description('The resource group the cognitive services account was deployed into.')
+output subscriptionId string =  useExistingService ? existingCognitiveServiceDetails[2] : subscription().subscriptionId
+
+@description('The resource group the cognitive services account was deployed into.')
+output resourceGroupName string =  useExistingService ? existingCognitiveServiceDetails[4] : resourceGroup().name
+
+@description('The service endpoint of the cognitive services account.')
+output endpoint string = useExistingService ? cognitiveServiceExisting.properties.endpoint : cognitiveService.properties.endpoint
+
+@description('All endpoints available for the cognitive services account, types depends on the cognitive service kind.')
+output endpoints endpointType = useExistingService ? cognitiveServiceExisting.properties.endpoints : cognitiveService.properties.endpoints
+
+@description('The principal ID of the system assigned identity.')
+output systemAssignedMIPrincipalId string? = useExistingService ? cognitiveServiceExisting.identity.principalId : cognitiveService.?identity.?principalId
+
+@description('The location the resource was deployed into.')
+output location string = useExistingService ? cognitiveServiceExisting.location : cognitiveService.location
+
+import { secretsOutputType } from 'br/public:avm/utl/types/avm-common-types:0.5.1'
+@description('A hashtable of references to the secrets exported to the provided Key Vault. The key of each reference is each secret\'s name.')
+output exportedSecrets secretsOutputType = useExistingService ? existing_cognitive_service_dependencies.outputs.exportedSecrets : cognitive_service_dependencies.outputs.exportedSecrets
+
+@description('The private endpoints of the congitive services account.')
+output privateEndpoints privateEndpointOutputType[] = useExistingService ? existing_cognitive_service_dependencies.outputs.privateEndpoints : cognitive_service_dependencies.outputs.privateEndpoints
+
+import { aiProjectOutputType } from './project.bicep'
+output aiProjectInfo aiProjectOutputType = useExistingService ? existing_cognitive_service_dependencies.outputs.aiProjectInfo : cognitive_service_dependencies.outputs.aiProjectInfo
 
 @export()
 @description('A custom AVM-aligned type for a role assignment for AI Services and Project.')
@@ -228,6 +481,99 @@ type aiServicesRoleAssignmentType = {
 
   @description('Optional. The principal type of the assigned principal ID.')
   principalType: ('ServicePrincipal' | 'Group' | 'User' | 'ForeignGroup' | 'Device')?
+}
+// ================ //
+// Definitions      //
+// ================ //
+
+@export()
+@description('The type for the private endpoint output.')
+type privateEndpointOutputType = {
+  @description('The name of the private endpoint.')
+  name: string
+
+  @description('The resource ID of the private endpoint.')
+  resourceId: string
+
+  @description('The group Id for the private endpoint Group.')
+  groupId: string?
+
+  @description('The custom DNS configurations of the private endpoint.')
+  customDnsConfigs: {
+    @description('FQDN that resolves to private endpoint IP address.')
+    fqdn: string?
+
+    @description('A list of private IP addresses of the private endpoint.')
+    ipAddresses: string[]
+  }[]
+
+  @description('The IDs of the network interfaces associated with the private endpoint.')
+  networkInterfaceResourceIds: string[]
+}
+
+@export()
+@description('The type for a cognitive services account deployment.')
+type deploymentType = {
+  @description('Optional. Specify the name of cognitive service account deployment.')
+  name: string?
+
+  @description('Required. Properties of Cognitive Services account deployment model.')
+  model: {
+    @description('Required. The name of Cognitive Services account deployment model.')
+    name: string
+
+    @description('Required. The format of Cognitive Services account deployment model.')
+    format: string
+
+    @description('Required. The version of Cognitive Services account deployment model.')
+    version: string
+  }
+
+  @description('Optional. The resource model definition representing SKU.')
+  sku: {
+    @description('Required. The name of the resource model definition representing SKU.')
+    name: string
+
+    @description('Optional. The capacity of the resource model definition representing SKU.')
+    capacity: int?
+
+    @description('Optional. The tier of the resource model definition representing SKU.')
+    tier: string?
+
+    @description('Optional. The size of the resource model definition representing SKU.')
+    size: string?
+
+    @description('Optional. The family of the resource model definition representing SKU.')
+    family: string?
+  }?
+
+  @description('Optional. The name of RAI policy.')
+  raiPolicyName: string?
+
+  @description('Optional. The version upgrade option.')
+  versionUpgradeOption: string?
+}
+
+@export()
+@description('The type for a cognitive services account endpoint.')
+type endpointType = {
+  @description('Type of the endpoint.')
+  name: string?
+  @description('The endpoint URI.')
+  endpoint: string?
+}
+
+@export()
+@description('The type of the secrets exported to the provided Key Vault.')
+type secretsExportConfigurationType = {
+  @description('Required. The key vault name where to store the keys and connection strings generated by the modules.')
+  keyVaultResourceId: string
+
+  @description('Optional. The name for the accessKey1 secret to create.')
+  accessKey1Name: string?
+
+  @description('Optional. The name for the accessKey2 secret to create.')
+  accessKey2Name: string?
 }
 
 @export()
