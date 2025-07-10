@@ -20,6 +20,7 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_JUMPBOX_ADMIN_USERNAME`     | string  | `JumpboxAdminUser`          | Specifies the administrator username for the Jumpbox Virtual Machine.      |
 | `AZURE_ENV_JUMPBOX_ADMIN_PASSWORD`     | string  | `JumpboxAdminP@ssw0rd1234!` | Specifies the administrator password for the Jumpbox Virtual Machine.      |
 | `AZURE_ENV_COSMOS_SECONDARY_LOCATION`  | string  | *(not set by default)*      | Specifies the secondary region for Cosmos DB. Required if `enableRedundancy` is `true`. |
+| `AZURE_EXISTING_AI_PROJECT_RESOURCE_ID`  | string  | *(not set by default)*      | Specifies the existing AI Foundry Project Resource ID if it needs to be reused. |
 ---
 
 ## How to Set a Parameter
@@ -30,9 +31,14 @@ To customize any of the above values, run the following command **before** `azd 
 azd env set <PARAMETER_NAME> <VALUE>
 ```
 
-Set the Log Analytics Workspace Id if you need to reuse the existing workspace which is already existing
+Set the Log Analytics Workspace Id if you need to reuse the existing workspace
 ```shell
 azd env set AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID '/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.OperationalInsights/workspaces/<workspace-name>'
+```
+
+Set the Azure Existing AI Foundry Project Resource ID if you need to reuse the existing AI Foundry Project
+```shell
+azd env set AZURE_EXISTING_AI_PROJECT_RESOURCE_ID '/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<account-name>/projects/<project-name>'
 ```
 
 **Example:**
