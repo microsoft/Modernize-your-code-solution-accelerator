@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.36.177.2456",
-      "templateHash": "13482090516276483956"
+      "templateHash": "9967677186411813072"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -450,7 +450,7 @@
       "apiVersion": "2021-04-01",
       "name": "default",
       "properties": {
-        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('templateName', 'Code Mode')))]"
+        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('templateName', 'Code Modernization')))]"
       }
     },
     "avmTelemetry": {

@@ -140,7 +140,7 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   properties: {
     tags: {
       ...allTags
-      templateName: 'Code Mode'
+      templateName: 'Code Modernization'
     }
   }
 }
