@@ -1,6 +1,6 @@
 name: modernize-your-code-solution-accelerator
-# metadata:
-#     template: modernize-your-code-solution-accelerator@1.0
+metadata:
+    template: modernize-your-code-solution-accelerator@1.0
 
 requiredVersions:
   azd: '>1.17.1'
