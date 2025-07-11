@@ -134,6 +134,17 @@ var modelDeployment = {
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
+// ========== Resource Group Tag ========== //
+resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
+  name: 'default'
+  properties: {
+    tags: {
+      ...allTags
+      TemplateName: 'Code Modernization'
+    }
+  }
+}
+
 #disable-next-line no-deployments-resources
 resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableTelemetry) {
   name: take(
