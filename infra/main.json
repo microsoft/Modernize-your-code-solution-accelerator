@@ -450,7 +450,7 @@
       "apiVersion": "2021-04-01",
       "name": "default",
       "properties": {
-        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('templateName', 'Code Modernization')))]"
+        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('TemplateName', 'Code Modernization')))]"
       }
     },
     "avmTelemetry": {
