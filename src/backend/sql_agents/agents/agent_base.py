@@ -4,7 +4,7 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, List, Optional, TypeVar, Union
 
-from azure.ai.projects.models import (
+from azure.ai.agents.models import (
     ResponseFormatJsonSchema,
     ResponseFormatJsonSchemaType,
 )

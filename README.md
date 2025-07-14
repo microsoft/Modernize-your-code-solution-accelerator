@@ -8,7 +8,7 @@ The Modernize your code solution accelerator allows users to specify a group of 
 <br/>
 
 <div align="center">
-  
+
 [**SOLUTION OVERVIEW**](#solution-overview) \| [**QUICK DEPLOY**](#quick-deploy) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
 
 </div>
@@ -24,7 +24,10 @@ The solution leverages Azure AI Foundry, Azure OpenAI Service, Azure Container A
 |![image](./docs/images/read_me/solArchitecture.png)|
 |---|
 
+This architecture will be deployed with the 'sandbox' setting of our deployment process. Optionally you can deploy [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) architecture, described in [WAF-Aligned Solution Architecture](./docs/ArchitectureWAF.md), with the WAF-Aligned deployment option described in [Deployment Guide](./docs/DeploymentGuide.md).
+
 ### Agentic architecture
+
 |![image](./docs/images/read_me/agentArchitecture.png)|
 |---|
 
@@ -51,16 +54,16 @@ If you'd like to customize the solution accelerator, here are some common areas 
   <summary>Click to learn more about the key features this solution enables</summary>
 
   - **Code language modernization** <br/>
-  Modernizing outdated code ensures compatibility with current technologies, reduces reliance on legacy expertise, and keeps businesses competitive.
+    Modernizing outdated code ensures compatibility with current technologies, reduces reliance on legacy expertise, and keeps businesses competitive.
   
   - **Summary and review of new code** <br/>
-  Generating summaries and translating code files keeps humans in the loop, enhances their understanding, and facilitates timely interventions, ensuring the files are ready to export.
+    Generating summaries and translating code files keeps humans in the loop, enhances their understanding, and facilitates timely interventions, ensuring the files are ready to export.
 
   - **Business logic analysis** <br/>
-  Leveraging AI to decipher business logic from legacy code helps minimizes the risk of human error.
+    Leveraging AI to decipher business logic from legacy code helps minimizes the risk of human error.
 
   - **Efficient code transformation** <br/>
-  Streamlining the process of analyzing, converting, and iterative error testing reduces time and effort required to modernize the systems.
+    Streamlining the process of analyzing, converting, and iterative error testing reduces time and effort required to modernize the systems.
 
 </details>
 
@@ -77,7 +80,7 @@ Follow the quick deploy steps on the deployment guide to deploy this solution to
 
 | [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
 |---|---|
- 
+
 <br/>
 
 > ⚠️ **Important: Check Azure OpenAI Quota Availability**
@@ -141,19 +144,19 @@ The sample data used in this repository is synthetic and generated using Azure O
   <summary>Click to learn more about what value this solution provides</summary>
 
   - **Accelerated Migration** <br/>
-  Automate the translation of SQL queries, significantly reducing migration time and effort.
+    Automate the translation of SQL queries, significantly reducing migration time and effort.
 
   - **Error Reduction** <br/>
-  Multi-agent validation ensures accurate translations and maintains data integrity.
+    Multi-agent validation ensures accurate translations and maintains data integrity.
 
   - **Knowledge Preservation** <br/>
-  Captures and preserves business logic during the modernization process.
+    Captures and preserves business logic during the modernization process.
 
   - **Cost Efficiency** <br/>
-  Reduces reliance on specialized legacy system expertise and manual translation efforts.
+    Reduces reliance on specialized legacy system expertise and manual translation efforts.
 
   - **Standardization** <br/>
-  Ensures consistent query translation across the organization.
+    Ensures consistent query translation across the organization.
 
 </details>
 
@@ -184,7 +187,7 @@ Check out similar solution accelerators
 | Solution Accelerator | Description |
 |---|---|
 | [Documen Knowledge Mining](https://github.com/microsoft/Document-Knowledge-Mining-Solution-Accelerator) | Extract structured information from unstructured documents using AI |
-| [Multi Agent Custom Automation Engine Solution Acceleratorr](https://github.com/microsoft/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/tree/main) | An AI-driven orchestration system that manages a group of AI agents to accomplish tasks based on user input |
+| [Multi Agent Custom Automation Engine Solution Accelerator](https://github.com/microsoft/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/tree/main) | An AI-driven orchestration system that manages a group of AI agents to accomplish tasks based on user input |
 | [Conversation Knowledge Mining](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) | Enable organizations to derive insights from volumes of conversational data using generative AI |
 
 <br/>   

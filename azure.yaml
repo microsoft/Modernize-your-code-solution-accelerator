@@ -1,23 +1,24 @@
-environment:
-  name: modernize-your-code-solution-accelerator
-  location: eastus
 name: modernize-your-code-solution-accelerator
 metadata:
     template: modernize-your-code-solution-accelerator@1.0
+
+requiredVersions:
+  azd: '>1.17.1'
+
 parameters:
-  AiLocation:
+  AzureAiServiceLocation:
     type: string
     default: japaneast
-  ResourcePrefix:
+  Prefix:
     type: string
-    default: bs-azdtest
+    default: azdtemp
   baseUrl:
     type: string
     default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
 deployment:
   mode: Incremental
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
-  prameters:
-    AiLocation: ${{ parameters.AiLocation }}
-    ResourcePrefix: ${{ parameters.ResourcePrefix }}
+  parameters:
+    AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
+    Prefix: ${{ parameters.Prefix }}
     baseUrl: ${{ parameters.baseUrl }}
