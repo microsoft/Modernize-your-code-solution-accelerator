@@ -14,7 +14,7 @@ on:
     workflow_dispatch:
 
 env:
-  GPT_MIN_CAPACITY: 200
+  GPT_MIN_CAPACITY: 150
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
