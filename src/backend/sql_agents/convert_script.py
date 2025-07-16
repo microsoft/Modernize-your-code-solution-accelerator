@@ -44,8 +44,6 @@ async def convert_script(
     logger.info("Migrating query: %s\n", source_script)
 
     # Setup the group chat for the agents
-    # chat = CommsManager(sql_agents.idx_agents).group_chat
-    # retry logic comms manager
     comms_manager = CommsManager(
         sql_agents.idx_agents,
         max_retries=5,          # Retry up to 5 times for rate limits
@@ -76,8 +74,6 @@ async def convert_script(
         try:
 
             async for response in comms_manager.async_invoke():
-                # TEMPORARY: awaiting bug fix for rate limits
-                # await asyncio.sleep(5)
                 carry_response = response
                 if response.role == AuthorRole.ASSISTANT.value:
                     # Our process can terminate with either of these as the last response
@@ -202,20 +198,6 @@ async def convert_script(
                 }
 
                 logger.info(description)
-
-                # send status update to the client of type in progress with agent status
-                # send_status_update(
-                #     status=FileProcessUpdate(
-                #         file.batch_id,
-                #         file.file_id,
-                #         ProcessStatus.IN_PROGRESS,
-                #         AgentType(response.name),
-                #         json.loads(response.content)["summary"],
-                #         FileResult.INFO,
-                #     ),
-                # )
-                # Safely parse response content to avoid crashing on malformed or incomplete JSON
-                # start
                 try:
                     parsed_content = json.loads(response.content or "{}")
                 except json.JSONDecodeError:
@@ -249,7 +231,6 @@ async def convert_script(
                     AuthorRole(response.role),
                 )
         except Exception as e:
-            # logger.error("Error during chat.invoke(): %s", str(e))
             logger.error("Error during comms_manager.async_invoke(): %s", str(e))
             # Log the error to the batch service for tracking
             await batch_service.create_file_log(
@@ -271,7 +252,7 @@ async def convert_script(
                     FileResult.ERROR,
                 ),
             )
-            break  # Exit the while loop on critical error
+            break
 
         if comms_manager.group_chat.is_complete:
             is_complete = True
@@ -333,7 +314,6 @@ async def validate_migration(
         )
 
         logger.error("No migrated query returned. Migration failed.")
-        # Add needed error or log data to the file record here
         return False
 
     # send status update to the client of type completed / success
