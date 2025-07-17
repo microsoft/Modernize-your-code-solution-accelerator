@@ -156,117 +156,108 @@ class CommsManager:
 
     async def invoke_async(self):
         """Invoke the group chat with the given agents (original method maintained for compatibility)."""
-        try:
-            return self.group_chat.invoke()
-        finally:
-            # Ensure cleanup happens even if invoke fails
-            await self.cleanup()
+        return self.group_chat.invoke()
 
     async def async_invoke(self) -> AsyncIterable[ChatMessageContent]:
         """Invoke the group chat with retry logic and error handling."""
         attempt = 0
         current_delay = self.initial_delay
 
-        try:
-            while attempt < self.max_retries:
-                try:
-                    # Grab a snapshot of the history of the group chat
-                    # Using "SHALLOW" copy to avoid getting a reference to the original list
-                    history_snap = copy.copy(self.group_chat.history)
+        while attempt < self.max_retries:
+            try:
+                # Grab a snapshot of the history of the group chat
+                # Using "SHALLOW" copy to avoid getting a reference to the original list
+                history_snap = copy.copy(self.group_chat.history)
 
-                    self.logger.debug(
-                        "History before invoke: %s",
-                        [msg.name for msg in self.group_chat.history],
+                self.logger.debug(
+                    "History before invoke: %s",
+                    [msg.name for msg in self.group_chat.history],
+                )
+
+                # Get a fresh iterator from the function
+                async_iter = self.group_chat.invoke()
+
+                # If simple truncation is set, truncate the history
+                if (
+                    self.simple_truncation
+                    and len(self.group_chat.history) > self.simple_truncation
+                ):
+                    # Truncate the history to the last n messages
+                    self.group_chat.history = history_snap[-self.simple_truncation :]
+
+                # Yield each item from the iterator
+                async for item in async_iter:
+                    yield item
+
+                # If we get here without exception, we're done
+                break
+
+            except AgentInvokeException as aie:
+                attempt += 1
+                if attempt >= self.max_retries:
+                    self.logger.error(
+                        "Function invoke failed after %d attempts. Final error: %s. Consider increasing the models rate limit.",
+                        self.max_retries,
+                        str(aie),
                     )
+                    # Re-raise the last exception if all retries failed
+                    raise
 
-                    # Get a fresh iterator from the function
-                    async_iter = self.group_chat.invoke()
+                # Return history state for retry
+                self.group_chat.history = history_snap
 
-                    # If simple truncation is set, truncate the history
-                    if (
-                        self.simple_truncation
-                        and len(self.group_chat.history) > self.simple_truncation
-                    ):
-                        # Truncate the history to the last n messages
-                        self.group_chat.history = history_snap[-self.simple_truncation :]
-
-                    # Yield each item from the iterator
-                    async for item in async_iter:
-                        yield item
-
-                    # If we get here without exception, we're done
-                    break
-
-                except AgentInvokeException as aie:
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        self.logger.error(
-                            "Function invoke failed after %d attempts. Final error: %s. Consider increasing the models rate limit.",
-                            self.max_retries,
-                            str(aie),
-                        )
-                        # Re-raise the last exception if all retries failed
-                        raise
-
-                    # Return history state for retry
-                    self.group_chat.history = history_snap
-
-                    try:
-                        # Try to extract wait time from error message
-                        wait_time_match = re.search(self._EXTRACT_WAIT_TIME, str(aie))
-                        if wait_time_match:
-                            # If regex is found, set the delay to the value in seconds
-                            current_delay = int(wait_time_match.group(1))
-                        else:
-                            current_delay = self.initial_delay
-
-                        self.logger.warning(
-                            "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
-                            attempt,
-                            self.max_retries,
-                            str(aie),
-                            current_delay,
-                        )
-
-                        # Wait before retrying
-                        await asyncio.sleep(current_delay)
-
-                        if not wait_time_match:
-                            # Increase delay for next attempt using backoff factor
-                            current_delay *= self.backoff_factor
-
-                    except Exception as ex:
-                        self.logger.error(
-                            "Retry error: %s. Using default delay.",
-                            ex,
-                        )
+                try:
+                    # Try to extract wait time from error message
+                    wait_time_match = re.search(self._EXTRACT_WAIT_TIME, str(aie))
+                    if wait_time_match:
+                        # If regex is found, set the delay to the value in seconds
+                        current_delay = int(wait_time_match.group(1))
+                    else:
                         current_delay = self.initial_delay
 
-                except self.exception_types as e:
-                    attempt += 1
-                    if attempt >= self.max_retries:
-                        self.logger.error(
-                            "Function invoke failed after %d attempts. Final error: %s",
-                            self.max_retries,
-                            str(e),
-                        )
-                        raise
-
                     self.logger.warning(
-                        "Attempt %d/%d failed with %s: %s. Retrying in %.2f seconds...",
+                        "Attempt %d/%d for function invoke failed: %s. Retrying in %.2f seconds...",
                         attempt,
                         self.max_retries,
-                        type(e).__name__,
-                        str(e),
+                        str(aie),
                         current_delay,
                     )
 
+                    # Wait before retrying
                     await asyncio.sleep(current_delay)
-                    current_delay *= self.backoff_factor
 
-        finally:
-            # Ensure cleanup happens regardless of success or failure
-            await self.cleanup()
+                    if not wait_time_match:
+                        # Increase delay for next attempt using backoff factor
+                        current_delay *= self.backoff_factor
+
+                except Exception as ex:
+                    self.logger.error(
+                        "Retry error: %s. Using default delay.",
+                        ex,
+                    )
+                    current_delay = self.initial_delay
+
+            except self.exception_types as e:
+                attempt += 1
+                if attempt >= self.max_retries:
+                    self.logger.error(
+                        "Function invoke failed after %d attempts. Final error: %s",
+                        self.max_retries,
+                        str(e),
+                    )
+                    raise
+
+                self.logger.warning(
+                    "Attempt %d/%d failed with %s: %s. Retrying in %.2f seconds...",
+                    attempt,
+                    self.max_retries,
+                    type(e).__name__,
+                    str(e),
+                    current_delay,
+                )
+
+                await asyncio.sleep(current_delay)
+                current_delay *= self.backoff_factor
 
     async def cleanup(self):
         """Clean up all resources including internal threads."""
@@ -281,15 +272,6 @@ class CommsManager:
                 
         except Exception as e:
             self.logger.error("Error during cleanup: %s", str(e))
-            # Don't re-raise cleanup errors to avoid masking original exceptions
-
-    async def __aenter__(self):
-        """Context manager entry."""
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit with cleanup."""
-        await self.cleanup()
 
     def __del__(self):
         """Destructor to ensure cleanup if not explicitly called."""
