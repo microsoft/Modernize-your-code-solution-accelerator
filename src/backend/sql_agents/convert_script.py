@@ -44,24 +44,24 @@ async def convert_script(
     logger.info("Migrating query: %s\n", source_script)
 
     # Setup the group chat for the agents
-    comms_manager = CommsManager(
+    async with CommsManager(
         sql_agents.idx_agents,
-        max_retries=5,          # Retry up to 5 times for rate limits
-        initial_delay=1.0,      # Start with 1 second delay
-        backoff_factor=2.0,     # Double delay each retry
-    )
+        max_retries=5,
+        initial_delay=1.0,
+        backoff_factor=2.0,
+    ) as comms_manager:
 
     # send websocket notification that file processing has started
-    send_status_update(
-        status=FileProcessUpdate(
-            file.batch_id,
-            file.file_id,
-            ProcessStatus.IN_PROGRESS,
-            AgentType.ALL,
-            "File processing started",
-            file_result=FileResult.INFO,
-        ),
-    )
+        send_status_update(
+            status=FileProcessUpdate(
+                file.batch_id,
+                file.file_id,
+                ProcessStatus.IN_PROGRESS,
+                AgentType.ALL,
+                "File processing started",
+                file_result=FileResult.INFO,
+            ),
+        )
 
     # orchestrate the chat
     current_migration = "No migration"
