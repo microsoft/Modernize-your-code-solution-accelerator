@@ -275,6 +275,8 @@ async def convert_script(
     logger.info(
         "Analysis of source and migrated queries:\n%s", "semantic verifier response"
     )
+    # Delete the thread using CommsManager
+    # await comms_manager.close()
 
     return migrated_query
 

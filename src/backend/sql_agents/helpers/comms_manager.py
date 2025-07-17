@@ -258,3 +258,11 @@ class CommsManager:
 
                 await asyncio.sleep(current_delay)
                 current_delay *= self.backoff_factor
+
+    async def close(self):
+        """Clean up the thread after agent execution is complete."""
+        try:
+            await self.group_chat.delete()
+            self.logger.info("Deleted group chat thread successfully.")
+        except Exception as ex:
+            self.logger.warning("Failed to delete group chat thread: %s", str(ex))
