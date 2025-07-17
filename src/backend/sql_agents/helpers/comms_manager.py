@@ -264,12 +264,10 @@ class CommsManager:
         try:
             if self.group_chat is not None:
                 self.logger.debug("Cleaning up AgentGroupChat resources...")
-                
                 # Reset the group chat - this clears conversation state and deletes remote threads
                 await self.group_chat.reset()
-                
                 self.logger.debug("AgentGroupChat cleanup completed successfully")
-                
+
         except Exception as e:
             self.logger.error("Error during cleanup: %s", str(e))
 
