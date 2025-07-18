@@ -143,6 +143,7 @@ When you start the deployment, most parameters will have **default values**, but
 | **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
 | **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
 | **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
+| **Existing AI Foundry Project Resource ID** | To reuse an existing AI Foundry Project Resource ID instead of creating a new one.                     | `<Existing Project Resource Id>`               |
 | **Jumpbox Admin Username**         | Specifies the administrator username for the Jumpbox Virtual Machine.                             | `JumpboxAdminUser`         |
 | **Jumpbox Admin Password**         | Specifies the administrator password for the Jumpbox Virtual Machine.                             | `JumpboxAdminP@ssw0rd1234!` |
 | **Cosmos DB Secondary Location**   | Specifies the secondary region for Cosmos DB. Set this if redundancy (`enableRedundancy`) is enabled. | `<Secondary Region>`        |
@@ -171,6 +172,14 @@ To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
   <summary><b>Reusing an Existing Log Analytics Workspace</b></summary>
 
   Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)
+
+</details>
+
+<details>
+
+  <summary><b>Reusing an Existing Azure AI Foundry Project</b></summary>
+
+  Guide to get your [Existing Project ID](/docs/re-use-foundry-project.md)
 
 </details>
 
