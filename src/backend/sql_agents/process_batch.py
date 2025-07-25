@@ -7,10 +7,8 @@ It is the main entry point for the SQL migration process.
 import logging
 
 from api.status_updates import send_status_update
+from app import get_sql_agents, update_agent_config
 
-from azure.identity.aio import DefaultAzureCredential
-
-from common.config.config import app_config
 from common.models.api import (
     FileProcessUpdate,
     FileRecord,
@@ -23,14 +21,10 @@ from common.storage.blob_factory import BlobStorageFactory
 
 from fastapi import HTTPException
 
-
-from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
 
-from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.convert_script import convert_script
-from sql_agents.helpers.agents_manager import SqlAgents
 from sql_agents.helpers.models import AgentType
 from sql_agents.helpers.utils import is_text
 
@@ -57,22 +51,20 @@ async def process_batch_async(
     except Exception as exc:
         logger.error("Error updating batch status. %s", exc)
 
-    # Add client and auto cleanup
-    async with (
-        DefaultAzureCredential() as creds,
-        AzureAIAgent.create_client(credential=creds, endpoint=app_config.ai_project_endpoint) as client,
-    ):
+    # Get the global SQL agents instance
+    sql_agents = get_sql_agents()
+    if not sql_agents:
+        logger.error("SQL agents not initialized. Application may not have started properly.")
+        await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
+        return
 
-        # setup all agent settings and agents per batch
-        agent_config = AgentBaseConfig(
-            project_client=client, sql_from=convert_from, sql_to=convert_to
-        )
-        sql_agents = await SqlAgents.create(agent_config)
+    # Update agent configuration for this batch's conversion requirements
+    await update_agent_config(convert_from, convert_to)
 
-        # Walk through each file name and retrieve it from blob storage
-        # Send file to the agents for processing
-        # Send status update to the client of type in progress, completed, or failed
-        for file in batch_files:
+    # Walk through each file name and retrieve it from blob storage
+    # Send file to the agents for processing
+    # Send status update to the client of type in progress, completed, or failed
+    for file in batch_files:
             # Get the file from blob storage
             try:
                 file_record = FileRecord.fromdb(file)
@@ -145,16 +137,14 @@ async def process_batch_async(
                 # insert data base write to file record stating invalid file
                 await process_error(exc, file_record, batch_service)
 
-        # Cleanup the agents
-        await sql_agents.delete_agents()
-
-        try:
-            await batch_service.batch_files_final_update(batch_id)
-            await batch_service.update_batch(batch_id, ProcessStatus.COMPLETED)
-        except Exception as exc:
-            await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
-            logger.error("Error updating batch status. %s", exc)
-        logger.info("Batch processing complete.")
+    # Update batch status to completed or failed
+    try:
+        await batch_service.batch_files_final_update(batch_id)
+        await batch_service.update_batch(batch_id, ProcessStatus.COMPLETED)
+    except Exception as exc:
+        await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
+        logger.error("Error updating batch status. %s", exc)
+    logger.info("Batch processing complete.")
 
 
 async def process_error(
