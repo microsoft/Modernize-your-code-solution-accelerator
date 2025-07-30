@@ -61,6 +61,16 @@ class BatchService:
             storage = await BlobStorageFactory.get_storage()
             if file_record.translated_path not in ["", None]:
                 translated_content = await storage.get_file(file_record.translated_path)
+            else:
+                # If translated_path is empty, try to get translated content from logs
+                # Look for the final success log with the translated result
+                if logs:
+                    for log in logs:
+                        if (log.get("log_type") == "success" and 
+                            log.get("agent_type") == "agents" and 
+                            log.get("last_candidate")):
+                            translated_content = log["last_candidate"]
+                            break
         except IOError as e:
             self.logger.error(f"Error downloading file content: {str(e)}")
 
@@ -79,6 +89,16 @@ class BatchService:
             storage = await BlobStorageFactory.get_storage()
             if file["translated_path"] not in ["", None]:
                 translated_content = await storage.get_file(file["translated_path"])
+            else:
+                # If translated_path is empty, try to get translated content from logs
+                # Look for the final success log with the translated result
+                if "logs" in file and file["logs"]:
+                    for log in file["logs"]:
+                        if (log.get("log_type") == "success" and 
+                            log.get("agent_type") == "agents" and 
+                            log.get("last_candidate")):
+                            translated_content = log["last_candidate"]
+                            break
         except IOError as e:
             self.logger.error(f"Error downloading file content: {str(e)}")
 
@@ -126,7 +146,8 @@ class BatchService:
                 try:
                     logs = await self.database.get_file_logs(file["file_id"])
                     file["logs"] = logs
-                    if file["translated_path"]:
+                    # Try to get translated content for completed files
+                    if file.get("status") == "completed":
                         try:
                             translated_content = await self.get_file_translated(file)
                             file["translated_content"] = translated_content
