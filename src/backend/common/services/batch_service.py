@@ -66,9 +66,7 @@ class BatchService:
                 # Look for the final success log with the translated result
                 if logs:
                     for log in logs:
-                        if (log.get("log_type") == "success" and 
-                            log.get("agent_type") == "agents" and 
-                            log.get("last_candidate")):
+                        if (log.get("log_type") == "success" and log.get("agent_type") == "agents" and log.get("last_candidate")):
                             translated_content = log["last_candidate"]
                             break
         except IOError as e:
@@ -94,9 +92,7 @@ class BatchService:
                 # Look for the final success log with the translated result
                 if "logs" in file and file["logs"]:
                     for log in file["logs"]:
-                        if (log.get("log_type") == "success" and 
-                            log.get("agent_type") == "agents" and 
-                            log.get("last_candidate")):
+                        if (log.get("log_type") == "success" and log.get("agent_type") == "agents" and log.get("last_candidate")):
                             translated_content = log["last_candidate"]
                             break
         except IOError as e:
