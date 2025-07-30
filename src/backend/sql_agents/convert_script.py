@@ -51,232 +51,245 @@ async def convert_script(
         backoff_factor=2.0,     # Double delay each retry
     )
 
-    # send websocket notification that file processing has started
-    send_status_update(
-        status=FileProcessUpdate(
-            file.batch_id,
-            file.file_id,
-            ProcessStatus.IN_PROGRESS,
-            AgentType.ALL,
-            "File processing started",
-            file_result=FileResult.INFO,
-        ),
-    )
-
-    # orchestrate the chat
-    current_migration = "No migration"
-    is_complete: bool = False
-    while not is_complete:
-        await comms_manager.group_chat.add_chat_message(
-            ChatMessageContent(role=AuthorRole.USER, content=source_script)
+    try:
+        # send websocket notification that file processing has started
+        send_status_update(
+            status=FileProcessUpdate(
+                file.batch_id,
+                file.file_id,
+                ProcessStatus.IN_PROGRESS,
+                AgentType.ALL,
+                "File processing started",
+                file_result=FileResult.INFO,
+            ),
         )
-        carry_response = None
-        try:
 
-            async for response in comms_manager.async_invoke():
-                carry_response = response
-                if response.role == AuthorRole.ASSISTANT.value:
-                    # Our process can terminate with either of these as the last response
-                    # before syntax check
-                    match response.name:
-                        case AgentType.MIGRATOR.value:
-                            result = MigratorResponse.model_validate_json(
-                                response.content or ""
-                            )
-                            if result.input_error or result.rai_error:
-                                # If there is an error in input, we end the processing here.
-                                # We do not include this in termination to avoid forking the chat process.
-                                description = {
-                                    "role": response.role,
-                                    "name": response.name or "*",
-                                    "content": response.content,
-                                }
-                                await batch_service.create_file_log(
-                                    str(file.file_id),
-                                    description,
-                                    current_migration,
-                                    LogType.ERROR,
-                                    AgentType(response.name),
-                                    AuthorRole(response.role),
+        # orchestrate the chat
+        current_migration = "No migration"
+        is_complete: bool = False
+        while not is_complete:
+            await comms_manager.group_chat.add_chat_message(
+                ChatMessageContent(role=AuthorRole.USER, content=source_script)
+            )
+            carry_response = None
+            try:
+
+                async for response in comms_manager.async_invoke():
+                    carry_response = response
+                    if response.role == AuthorRole.ASSISTANT.value:
+                        # Our process can terminate with either of these as the last response
+                        # before syntax check
+                        match response.name:
+                            case AgentType.MIGRATOR.value:
+                                result = MigratorResponse.model_validate_json(
+                                    response.content or ""
                                 )
-                                current_migration = None
-                                break
-                        case AgentType.SYNTAX_CHECKER.value:
-                            result = SyntaxCheckerResponse.model_validate_json(
-                                response.content.lower() or ""
-                            )
-                            # If there are no syntax errors, we can move to the semantic verifier
-                            # We provide both scripts by injecting them into the chat history
-                            if result.syntax_errors == []:
-                                comms_manager.group_chat.history.add_message(
-                                    ChatMessageContent(
-                                        role=AuthorRole.USER,
-                                        name="candidate",
-                                        content=(
-                                            f"source_script: {source_script}, \n "
-                                            + f"migrated_script: {current_migration}"
+                                if result.input_error or result.rai_error:
+                                    # If there is an error in input, we end the processing here.
+                                    # We do not include this in termination to avoid forking the chat process.
+                                    description = {
+                                        "role": response.role,
+                                        "name": response.name or "*",
+                                        "content": response.content,
+                                    }
+                                    await batch_service.create_file_log(
+                                        str(file.file_id),
+                                        description,
+                                        current_migration,
+                                        LogType.ERROR,
+                                        AgentType(response.name),
+                                        AuthorRole(response.role),
+                                    )
+                                    current_migration = None
+                                    break
+                            case AgentType.SYNTAX_CHECKER.value:
+                                result = SyntaxCheckerResponse.model_validate_json(
+                                    response.content.lower() or ""
+                                )
+                                # If there are no syntax errors, we can move to the semantic verifier
+                                # We provide both scripts by injecting them into the chat history
+                                if result.syntax_errors == []:
+                                    comms_manager.group_chat.history.add_message(
+                                        ChatMessageContent(
+                                            role=AuthorRole.USER,
+                                            name="candidate",
+                                            content=(
+                                                f"source_script: {source_script}, \n "
+                                                + f"migrated_script: {current_migration}"
+                                            ),
+                                        )
+                                    )
+                            case AgentType.PICKER.value:
+                                result = PickerResponse.model_validate_json(
+                                    response.content or ""
+                                )
+                                current_migration = result.picked_query
+                            case AgentType.FIXER.value:
+                                result = FixerResponse.model_validate_json(
+                                    response.content or ""
+                                )
+                                current_migration = result.fixed_query
+                            case AgentType.SEMANTIC_VERIFIER.value:
+                                logger.info(
+                                    "Semantic verifier agent response: %s", response.content
+                                )
+                                result = SemanticVerifierResponse.model_validate_json(
+                                    response.content or ""
+                                )
+
+                                # If the semantic verifier agent returns a difference, we need to report it
+                                if len(result.differences) > 0:
+                                    description = {
+                                        "role": AuthorRole.ASSISTANT.value,
+                                        "name": AgentType.SEMANTIC_VERIFIER.value,
+                                        "content": "\n".join(result.differences),
+                                    }
+                                    logger.info(
+                                        "Semantic verification had issues. Pass with warnings."
+                                    )
+                                    # send status update to the client of type in progress with agent status
+                                    send_status_update(
+                                        status=FileProcessUpdate(
+                                            file.batch_id,
+                                            file.file_id,
+                                            ProcessStatus.COMPLETED,
+                                            AgentType.SEMANTIC_VERIFIER,
+                                            result.summary,
+                                            FileResult.WARNING,
                                         ),
                                     )
-                                )
-                        case AgentType.PICKER.value:
-                            result = PickerResponse.model_validate_json(
-                                response.content or ""
-                            )
-                            current_migration = result.picked_query
-                        case AgentType.FIXER.value:
-                            result = FixerResponse.model_validate_json(
-                                response.content or ""
-                            )
-                            current_migration = result.fixed_query
-                        case AgentType.SEMANTIC_VERIFIER.value:
-                            logger.info(
-                                "Semantic verifier agent response: %s", response.content
-                            )
-                            result = SemanticVerifierResponse.model_validate_json(
-                                response.content or ""
-                            )
-
-                            # If the semantic verifier agent returns a difference, we need to report it
-                            if len(result.differences) > 0:
-                                description = {
-                                    "role": AuthorRole.ASSISTANT.value,
-                                    "name": AgentType.SEMANTIC_VERIFIER.value,
-                                    "content": "\n".join(result.differences),
-                                }
-                                logger.info(
-                                    "Semantic verification had issues. Pass with warnings."
-                                )
-                                # send status update to the client of type in progress with agent status
-                                send_status_update(
-                                    status=FileProcessUpdate(
-                                        file.batch_id,
-                                        file.file_id,
-                                        ProcessStatus.COMPLETED,
+                                    await batch_service.create_file_log(
+                                        str(file.file_id),
+                                        description,
+                                        current_migration,
+                                        LogType.WARNING,
                                         AgentType.SEMANTIC_VERIFIER,
-                                        result.summary,
-                                        FileResult.WARNING,
-                                    ),
-                                )
-                                await batch_service.create_file_log(
-                                    str(file.file_id),
-                                    description,
-                                    current_migration,
-                                    LogType.WARNING,
-                                    AgentType.SEMANTIC_VERIFIER,
-                                    AuthorRole.ASSISTANT,
-                                )
+                                        AuthorRole.ASSISTANT,
+                                    )
 
-                            elif response == "":
-                                # If the semantic verifier agent returns an empty response
-                                logger.info(
-                                    "Semantic verification had no return value. Pass with warnings."
-                                )
-                                # send status update to the client of type in progress with agent status
-                                send_status_update(
-                                    status=FileProcessUpdate(
-                                        file.batch_id,
-                                        file.file_id,
-                                        ProcessStatus.COMPLETED,
-                                        AgentType.SEMANTIC_VERIFIER,
+                                elif response == "":
+                                    # If the semantic verifier agent returns an empty response
+                                    logger.info(
+                                        "Semantic verification had no return value. Pass with warnings."
+                                    )
+                                    # send status update to the client of type in progress with agent status
+                                    send_status_update(
+                                        status=FileProcessUpdate(
+                                            file.batch_id,
+                                            file.file_id,
+                                            ProcessStatus.COMPLETED,
+                                            AgentType.SEMANTIC_VERIFIER,
+                                            "No return value from semantic verifier agent.",
+                                            FileResult.WARNING,
+                                        ),
+                                    )
+                                    await batch_service.create_file_log(
+                                        str(file.file_id),
                                         "No return value from semantic verifier agent.",
-                                        FileResult.WARNING,
-                                    ),
-                                )
-                                await batch_service.create_file_log(
-                                    str(file.file_id),
-                                    "No return value from semantic verifier agent.",
-                                    current_migration,
-                                    LogType.WARNING,
-                                    AgentType.SEMANTIC_VERIFIER,
-                                    AuthorRole.ASSISTANT,
-                                )
+                                        current_migration,
+                                        LogType.WARNING,
+                                        AgentType.SEMANTIC_VERIFIER,
+                                        AuthorRole.ASSISTANT,
+                                    )
 
-                description = {
-                    "role": response.role,
-                    "name": response.name or "*",
-                    "content": response.content,
-                }
-
-                logger.info(description)
-                try:
-                    parsed_content = json.loads(response.content or "{}")
-                except json.JSONDecodeError:
-                    logger.warning("Invalid JSON from agent: %s", response.content)
-                    parsed_content = {
-                        "input_summary": "",
-                        "candidates": [],
-                        "summary": "",
-                        "input_error": "",
-                        "rai_error": "Invalid JSON from agent.",
+                    description = {
+                        "role": response.role,
+                        "name": response.name or "*",
+                        "content": response.content,
                     }
 
-                # Send status update using safe fallback values
+                    logger.info(description)
+                    try:
+                        parsed_content = json.loads(response.content or "{}")
+                    except json.JSONDecodeError:
+                        logger.warning("Invalid JSON from agent: %s", response.content)
+                        parsed_content = {
+                            "input_summary": "",
+                            "candidates": [],
+                            "summary": "",
+                            "input_error": "",
+                            "rai_error": "Invalid JSON from agent.",
+                        }
+
+                    # Send status update using safe fallback values
+                    send_status_update(
+                        status=FileProcessUpdate(
+                            file.batch_id,
+                            file.file_id,
+                            ProcessStatus.IN_PROGRESS,
+                            AgentType(response.name),
+                            parsed_content.get("summary", ""),
+                            FileResult.INFO,
+                        ),
+                    )
+                    # end
+                    await batch_service.create_file_log(
+                        str(file.file_id),
+                        description,
+                        current_migration,
+                        LogType.INFO,
+                        AgentType(response.name),
+                        AuthorRole(response.role),
+                    )
+            except Exception as e:
+                logger.error("Error during comms_manager.async_invoke(): %s", str(e))
+                # Log the error to the batch service for tracking
+                await batch_service.create_file_log(
+                    str(file.file_id),
+                    f"Critical error during agent communication: {str(e)}",
+                    current_migration,
+                    LogType.ERROR,
+                    AgentType.ALL,
+                    AuthorRole.ASSISTANT,
+                )
+                # Send error status update
                 send_status_update(
                     status=FileProcessUpdate(
                         file.batch_id,
                         file.file_id,
-                        ProcessStatus.IN_PROGRESS,
-                        AgentType(response.name),
-                        parsed_content.get("summary", ""),
-                        FileResult.INFO,
+                        ProcessStatus.COMPLETED,
+                        AgentType.ALL,
+                        f"Processing failed: {str(e)}",
+                        FileResult.ERROR,
                     ),
                 )
-                # end
-                await batch_service.create_file_log(
-                    str(file.file_id),
-                    description,
-                    current_migration,
-                    LogType.INFO,
-                    AgentType(response.name),
-                    AuthorRole(response.role),
-                )
-        except Exception as e:
-            logger.error("Error during comms_manager.async_invoke(): %s", str(e))
-            # Log the error to the batch service for tracking
-            await batch_service.create_file_log(
-                str(file.file_id),
-                f"Critical error during agent communication: {str(e)}",
-                current_migration,
-                LogType.ERROR,
-                AgentType.ALL,
-                AuthorRole.ASSISTANT,
-            )
-            # Send error status update
-            send_status_update(
-                status=FileProcessUpdate(
-                    file.batch_id,
-                    file.file_id,
-                    ProcessStatus.COMPLETED,
-                    AgentType.ALL,
-                    f"Processing failed: {str(e)}",
-                    FileResult.ERROR,
-                ),
-            )
+                break
+
+            if comms_manager.group_chat.is_complete:
+                is_complete = True
+
             break
 
-        if comms_manager.group_chat.is_complete:
-            is_complete = True
+        migrated_query = current_migration
 
-        break
+        # Handle the case where migration failed and current_migration is None
+        if current_migration is None:
+            logger.info("# Migration failed - no valid migration produced.")
+            return ""
 
-    migrated_query = current_migration
+        is_valid = await validate_migration(
+            migrated_query, carry_response, file, batch_service
+        )
 
-    is_valid = await validate_migration(
-        migrated_query, carry_response, file, batch_service
-    )
+        if not is_valid:
+            logger.info("# Migration failed.")
+            return ""
 
-    if not is_valid:
-        logger.info("# Migration failed.")
+        logger.info("# Migration complete.")
+        logger.info("Final query: %s\n", migrated_query)
+        logger.info(
+            "Analysis of source and migrated queries:\n%s", "semantic verifier response"
+        )
 
-        return ""
+        return migrated_query
 
-    logger.info("# Migration complete.")
-    logger.info("Final query: %s\n", migrated_query)
-    logger.info(
-        "Analysis of source and migrated queries:\n%s", "semantic verifier response"
-    )
-
-    return migrated_query
+    finally:
+        # Clean up threads and communication resources - guaranteed to run
+        try:
+            await comms_manager.cleanup()
+            logger.debug("Thread cleanup completed successfully for file %s", file.file_id)
+        except Exception as cleanup_exc:
+            logger.error("Error during thread cleanup for file %s: %s", file.file_id, cleanup_exc)
 
 
 async def validate_migration(
