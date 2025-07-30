@@ -142,20 +142,22 @@ class BatchService:
                 try:
                     logs = await self.database.get_file_logs(file["file_id"])
                     file["logs"] = logs
-                    # Try to get translated content for completed files
-                    if file.get("status") == "completed":
-                        try:
-                            translated_content = await self.get_file_translated(file)
-                            file["translated_content"] = translated_content
-                        except Exception as e:
-                            self.logger.error(
-                                f"Error retrieving translated content for file {file['file_id']}: {str(e)}"
-                            )
+                    # Try to get translated content for all files, but prioritize completed files
+                    try:
+                        translated_content = await self.get_file_translated(file)
+                        file["translated_content"] = translated_content
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error retrieving translated content for file {file['file_id']}: {str(e)}"
+                        )
+                        # Ensure translated_content field exists even if empty
+                        file["translated_content"] = ""
                 except Exception as e:
                     self.logger.error(
                         f"Error retrieving logs for file {file['file_id']}: {str(e)}"
                     )
                     file["logs"] = []  # Set empty logs on error
+                    file["translated_content"] = ""  # Ensure field exists
 
             return {
                 "files": files,
