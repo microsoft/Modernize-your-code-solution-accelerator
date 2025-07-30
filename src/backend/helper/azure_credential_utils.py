@@ -1,6 +1,7 @@
 import os
-from azure.identity import ManagedIdentityCredential, DefaultAzureCredential
-from azure.identity.aio import ManagedIdentityCredential as AioManagedIdentityCredential, DefaultAzureCredential as AioDefaultAzureCredential
+
+from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
+from azure.identity.aio import DefaultAzureCredential as AioDefaultAzureCredential, ManagedIdentityCredential as AioManagedIdentityCredential
 
 
 async def get_azure_credential_async(client_id=None):
