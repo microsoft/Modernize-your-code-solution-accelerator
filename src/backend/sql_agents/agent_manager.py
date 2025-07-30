@@ -28,7 +28,6 @@ def get_sql_agents() -> Optional[SqlAgents]:
 
 async def update_agent_config(convert_from: str, convert_to: str) -> None:
     """Update the global agent configuration for different SQL conversion types."""
-    global _sql_agents
     if _sql_agents and _sql_agents.agent_config:
         _sql_agents.agent_config.sql_from = convert_from
         _sql_agents.agent_config.sql_to = convert_to
