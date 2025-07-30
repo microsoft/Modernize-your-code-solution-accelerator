@@ -2,11 +2,12 @@ from typing import Any, BinaryIO, Dict, Optional
 
 from azure.storage.blob import BlobServiceClient
 
+from common.config.config import app_config
 from common.logger.app_logger import AppLogger
 from common.storage.blob_base import BlobStorageBase
+
 from helper.azure_credential_utils import get_azure_credential
 
-from common.config.config import app_config
 
 class AzureBlobStorage(BlobStorageBase):
     def __init__(self, account_name: str, container_name: Optional[str] = None):

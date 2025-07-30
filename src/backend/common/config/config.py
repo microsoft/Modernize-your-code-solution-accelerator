@@ -15,6 +15,7 @@ settings.json file in the .vscode folder should include the following:
 import os
 
 from azure.identity.aio import ClientSecretCredential
+
 from helper.azure_credential_utils import get_azure_credential
 
 

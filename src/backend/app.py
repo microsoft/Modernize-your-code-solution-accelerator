@@ -8,10 +8,10 @@ from common.logger.app_logger import AppLogger
 
 from dotenv import load_dotenv
 
-from helper.azure_credential_utils import get_azure_credential_async, get_azure_credential
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from helper.azure_credential_utils import get_azure_credential
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 
