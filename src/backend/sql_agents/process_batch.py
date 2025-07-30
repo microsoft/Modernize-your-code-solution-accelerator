@@ -7,7 +7,7 @@ It is the main entry point for the SQL migration process.
 import logging
 
 from api.status_updates import send_status_update
-from app import get_sql_agents, update_agent_config
+from sql_agents.agent_manager import get_sql_agents, update_agent_config
 
 from common.models.api import (
     FileProcessUpdate,

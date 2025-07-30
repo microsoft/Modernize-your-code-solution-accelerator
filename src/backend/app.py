@@ -17,6 +17,7 @@ from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylin
 
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.helpers.agents_manager import SqlAgents
+from sql_agents.agent_manager import set_sql_agents, clear_sql_agents
 
 import uvicorn
 # from agent_services.agents_routes import router as agents_router
@@ -30,22 +31,6 @@ logger = AppLogger("app")
 # Global variables for agents
 sql_agents: SqlAgents = None
 azure_client = None
-
-
-def get_sql_agents() -> SqlAgents:
-    """Get the global SQL agents instance."""
-    return sql_agents
-
-
-async def update_agent_config(convert_from: str, convert_to: str):
-    """Update the global agent configuration for different SQL conversion types."""
-    global sql_agents
-    if sql_agents and sql_agents.agent_config:
-        sql_agents.agent_config.sql_from = convert_from
-        sql_agents.agent_config.sql_to = convert_to
-        logger.logger.info(f"Updated agent configuration: {convert_from} -> {convert_to}")
-    else:
-        logger.logger.warning("SQL agents not initialized, cannot update configuration")
 
 
 @asynccontextmanager
@@ -73,6 +58,9 @@ async def lifespan(app: FastAPI):
         
         # Create SQL agents
         sql_agents = await SqlAgents.create(agent_config)
+        
+        # Set the global agents instance
+        set_sql_agents(sql_agents)
         logger.logger.info("SQL agents initialized successfully.")
         
     except Exception as exc:
@@ -84,9 +72,12 @@ async def lifespan(app: FastAPI):
     # Shutdown
     try:
         if sql_agents:
-            logger.logger.info("Cleaning up SQL agents...")
+            logger.logger.info("Application shutting down - cleaning up SQL agents...")
             await sql_agents.delete_agents()
             logger.logger.info("SQL agents cleaned up successfully.")
+            
+            # Clear the global agents instance
+            await clear_sql_agents()
         
         if azure_client:
             await azure_client.close()
