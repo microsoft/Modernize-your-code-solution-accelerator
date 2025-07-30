@@ -14,8 +14,8 @@ settings.json file in the .vscode folder should include the following:
 
 import os
 
-from azure.identity.aio import ClientSecretCredential, DefaultAzureCredential
-
+from azure.identity.aio import ClientSecretCredential
+from helper.azure_credential_utils import get_azure_credential
 
 class Config:
     """Configuration class for the application."""
@@ -49,7 +49,7 @@ class Config:
             "SYNTAX_CHECKER_AGENT_MODEL_DEPLOY"
         )
 
-        self.__azure_credentials = DefaultAzureCredential()
+        self.__azure_credentials =  get_azure_credential()
 
     def get_azure_credentials(self):
         """Retrieve Azure credentials, either from environment variables or managed identity."""

@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.36.177.2456",
-      "templateHash": "9967677186411813072"
+      "version": "0.36.1.42791",
+      "templateHash": "11546243246916575055"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -4031,11 +4031,11 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value))]",
+          "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId))]",
           "diagnosticSettings": {
             "value": [
               {
-                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]"
+                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId)]"
               }
             ]
           },
@@ -4753,7 +4753,7 @@
           "resourcesName": {
             "value": "[variables('resourcesName')]"
           },
-          "logAnalyticsWorkSpaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value))]",
+          "logAnalyticsWorkSpaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId))]",
           "vmAdminUsername": {
             "value": "[coalesce(parameters('vmAdminUsername'), 'JumpboxAdminUser')]"
           },
@@ -4779,8 +4779,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "17070629679271156682"
+              "version": "0.36.1.42791",
+              "templateHash": "2227276581875727271"
             }
           },
           "parameters": {
@@ -5057,8 +5057,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "10117915409222818461"
+                      "version": "0.36.1.42791",
+                      "templateHash": "5140187104010994463"
                     }
                   },
                   "definitions": {
@@ -5397,8 +5397,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "6056713917589230954"
+                              "version": "0.36.1.42791",
+                              "templateHash": "13530466638153345496"
                             }
                           },
                           "definitions": {
@@ -8018,8 +8018,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "16831488907503271264"
+                              "version": "0.36.1.42791",
+                              "templateHash": "426621942902360678"
                             }
                           },
                           "definitions": {
@@ -10684,8 +10684,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "4959660856295638020"
+                              "version": "0.36.1.42791",
+                              "templateHash": "15628722804719222738"
                             }
                           },
                           "definitions": {
@@ -20511,7 +20511,7 @@
           "projectDescription": {
             "value": "[format('{0}{1}', variables('abbrs').ai.aiFoundryProject, variables('resourcesName'))]"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('network').outputs.vnetResourceId.value, 'subnetResourceId', reference('network').outputs.subnetPrivateEndpointsResourceId.value)), createObject('value', null()))]",
           "existingFoundryProjectResourceId": {
             "value": "[parameters('azureExistingAIProjectResourceId')]"
@@ -20578,8 +20578,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "11399294166440815272"
+              "version": "0.36.1.42791",
+              "templateHash": "5089912971262384758"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -21893,8 +21893,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -22004,8 +22004,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -22115,8 +22115,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -22249,8 +22249,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11270933172961789567"
+                      "version": "0.36.1.42791",
+                      "templateHash": "4128376395637895528"
                     }
                   },
                   "definitions": {
@@ -24058,8 +24058,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "9150529619101779014"
+                              "version": "0.36.1.42791",
+                              "templateHash": "1200612323329026557"
                             }
                           },
                           "definitions": {
@@ -24212,8 +24212,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "18131656256983910282"
+                              "version": "0.36.1.42791",
+                              "templateHash": "125568697111155565"
                             }
                           },
                           "definitions": {
@@ -24433,8 +24433,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11270933172961789567"
+                      "version": "0.36.1.42791",
+                      "templateHash": "4128376395637895528"
                     }
                   },
                   "definitions": {
@@ -26242,8 +26242,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "9150529619101779014"
+                              "version": "0.36.1.42791",
+                              "templateHash": "1200612323329026557"
                             }
                           },
                           "definitions": {
@@ -26396,8 +26396,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "18131656256983910282"
+                              "version": "0.36.1.42791",
+                              "templateHash": "125568697111155565"
                             }
                           },
                           "definitions": {
@@ -26660,7 +26660,7 @@
             "value": "[variables('allTags')]"
           },
           "skuName": "[if(parameters('enableRedundancy'), createObject('value', 'Standard_GZRS'), createObject('value', 'Standard_LRS'))]",
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('network').outputs.vnetResourceId.value, 'subnetResourceId', reference('network').outputs.subnetPrivateEndpointsResourceId.value)), createObject('value', null()))]",
           "containers": {
             "value": [
@@ -26692,8 +26692,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "6558993818536161993"
+              "version": "0.36.1.42791",
+              "templateHash": "10310209600752577296"
             }
           },
           "definitions": {
@@ -26913,8 +26913,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -27024,8 +27024,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -32889,14 +32889,14 @@
               "metadata": {
                 "description": "Name of the Storage Account."
               },
-              "value": "[reference('storageAccount').outputs.name.value]"
+              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('{0}-sa-deployment', parameters('name')), 64)), '2022-09-01').name]"
             },
             "resourceId": {
               "type": "string",
               "metadata": {
                 "description": "Resource ID of the Storage Account."
               },
-              "value": "[reference('storageAccount').outputs.resourceId.value]"
+              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('{0}-sa-deployment', parameters('name')), 64)), '2022-09-01').resourceId]"
             }
           }
         }
@@ -32926,7 +32926,7 @@
           "sku": {
             "value": "standard"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('network').outputs.vnetResourceId.value, 'subnetResourceId', reference('network').outputs.subnetPrivateEndpointsResourceId.value)), createObject('value', null()))]",
           "roleAssignments": {
             "value": [
@@ -32951,8 +32951,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "5637162512351801321"
+              "version": "0.36.1.42791",
+              "templateHash": "11985852604005756484"
             }
           },
           "definitions": {
@@ -33316,8 +33316,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -36629,7 +36629,7 @@
           "dataAccessIdentityPrincipalId": {
             "value": "[reference('appIdentity').outputs.principalId.value]"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
           "zoneRedundant": {
             "value": "[parameters('enableRedundancy')]"
           },
@@ -36649,8 +36649,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "9062224490726814247"
+              "version": "0.36.1.42791",
+              "templateHash": "4264711281640310751"
             }
           },
           "definitions": {
@@ -36872,8 +36872,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.36.1.42791",
+                      "templateHash": "17330037200769804735"
                     }
                   },
                   "parameters": {
@@ -40837,21 +40837,21 @@
               "metadata": {
                 "description": "Name of the Cosmos DB Account resource."
               },
-              "value": "[reference('cosmosAccount').outputs.name.value]"
+              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('{0}-account-deployment', parameters('name')), 64)), '2022-09-01').name]"
             },
             "resourceId": {
               "type": "string",
               "metadata": {
                 "description": "Resource ID of the Cosmos DB Account."
               },
-              "value": "[reference('cosmosAccount').outputs.resourceId.value]"
+              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('{0}-account-deployment', parameters('name')), 64)), '2022-09-01').resourceId]"
             },
             "endpoint": {
               "type": "string",
               "metadata": {
                 "description": "Endpoint of the Cosmos DB Account."
               },
-              "value": "[reference('cosmosAccount').outputs.endpoint.value]"
+              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('{0}-account-deployment', parameters('name')), 64)), '2022-09-01').endpoint]"
             },
             "databaseName": {
               "type": "string",
@@ -40914,7 +40914,7 @@
             }
           },
           "appInsightsConnectionString": "[if(parameters('enableMonitoring'), createObject('value', reference('applicationInsights').outputs.connectionString.value), createObject('value', null()))]",
-          "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, reference('logAnalyticsWorkspace').outputs.logAnalyticsWorkspaceId.value), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2020-08-01').primarySharedKey, listOutputsWithSecureValues('logAnalyticsWorkspace', '2022-09-01').primarySharedKey)))), createObject('value', createObject()))]",
+          "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').logAnalyticsWorkspaceId), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2020-08-01').primarySharedKey, listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('log-analytics-{0}-deployment', variables('resourcesName')), 64)), '2022-09-01').primarySharedKey)))), createObject('value', createObject()))]",
           "workloadProfiles": "[if(parameters('enablePrivateNetworking'), createObject('value', createArray(createObject('name', 'Consumption', 'workloadProfileType', 'Consumption'))), createObject('value', createArray()))]",
           "tags": {
             "value": "[variables('allTags')]"
@@ -41832,7 +41832,7 @@
               {
                 "name": "cmsabackend",
                 "image": "[format('cmsacontainerreg.azurecr.io/cmsabackend:{0}', parameters('imageVersion'))]",
-                "env": "[concat(createArray(createObject('name', 'COSMOSDB_ENDPOINT', 'value', reference('cosmosDb').outputs.endpoint.value), createObject('name', 'COSMOSDB_DATABASE', 'value', reference('cosmosDb').outputs.databaseName.value), createObject('name', 'COSMOSDB_BATCH_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.batch), createObject('name', 'COSMOSDB_FILE_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.file), createObject('name', 'COSMOSDB_LOG_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.log), createObject('name', 'AZURE_BLOB_ACCOUNT_NAME', 'value', reference('storageAccount').outputs.name.value), createObject('name', 'AZURE_BLOB_CONTAINER_NAME', 'value', variables('appStorageContainerName')), createObject('name', 'AZURE_OPENAI_ENDPOINT', 'value', format('https://{0}.openai.azure.com/', reference('aiServices').outputs.name.value)), createObject('name', 'MIGRATOR_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'PICKER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'FIXER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SELECTION_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'TERMINATION_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', 'value', variables('modelDeployment').name), createObject('name', 'AI_PROJECT_ENDPOINT', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_AI_AGENT_PROJECT_NAME', 'value', reference('aiServices').outputs.aiProjectInfo.value.name), createObject('name', 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME', 'value', resourceGroup().name), createObject('name', 'AZURE_AI_AGENT_SUBSCRIPTION_ID', 'value', subscription().subscriptionId), createObject('name', 'AZURE_AI_AGENT_ENDPOINT', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_CLIENT_ID', 'value', reference('appIdentity').outputs.clientId.value)), if(parameters('enableMonitoring'), createArray(createObject('name', 'APPLICATIONINSIGHTS_INSTRUMENTATION_KEY', 'value', reference('applicationInsights').outputs.instrumentationKey.value), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference('applicationInsights').outputs.connectionString.value)), createArray()))]",
+                "env": "[concat(createArray(createObject('name', 'COSMOSDB_ENDPOINT', 'value', reference('cosmosDb').outputs.endpoint.value), createObject('name', 'COSMOSDB_DATABASE', 'value', reference('cosmosDb').outputs.databaseName.value), createObject('name', 'COSMOSDB_BATCH_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.batch), createObject('name', 'COSMOSDB_FILE_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.file), createObject('name', 'COSMOSDB_LOG_CONTAINER', 'value', reference('cosmosDb').outputs.containerNames.value.log), createObject('name', 'AZURE_BLOB_ACCOUNT_NAME', 'value', reference('storageAccount').outputs.name.value), createObject('name', 'AZURE_BLOB_CONTAINER_NAME', 'value', variables('appStorageContainerName')), createObject('name', 'AZURE_OPENAI_ENDPOINT', 'value', format('https://{0}.openai.azure.com/', reference('aiServices').outputs.name.value)), createObject('name', 'MIGRATOR_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'PICKER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'FIXER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'SELECTION_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'TERMINATION_MODEL_DEPLOY', 'value', variables('modelDeployment').name), createObject('name', 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', 'value', variables('modelDeployment').name), createObject('name', 'AI_PROJECT_ENDPOINT', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_AI_AGENT_PROJECT_NAME', 'value', reference('aiServices').outputs.aiProjectInfo.value.name), createObject('name', 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME', 'value', resourceGroup().name), createObject('name', 'AZURE_AI_AGENT_SUBSCRIPTION_ID', 'value', subscription().subscriptionId), createObject('name', 'AZURE_AI_AGENT_ENDPOINT', 'value', reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint), createObject('name', 'AZURE_CLIENT_ID', 'value', reference('appIdentity').outputs.clientId.value), createObject('name', 'APP_ENV', 'value', 'prod')), if(parameters('enableMonitoring'), createArray(createObject('name', 'APPLICATIONINSIGHTS_INSTRUMENTATION_KEY', 'value', reference('applicationInsights').outputs.instrumentationKey.value), createObject('name', 'APPLICATIONINSIGHTS_CONNECTION_STRING', 'value', reference('applicationInsights').outputs.connectionString.value)), createArray()))]",
                 "resources": {
                   "cpu": 1,
                   "memory": "2.0Gi"
@@ -43334,6 +43334,10 @@
                   {
                     "name": "API_URL",
                     "value": "[format('https://{0}', reference('containerAppBackend').outputs.fqdn.value)]"
+                  },
+                  {
+                    "name": "APP_ENV",
+                    "value": "prod"
                   }
                 ],
                 "image": "[format('cmsacontainerreg.azurecr.io/cmsafrontend:{0}', parameters('imageVersion'))]",

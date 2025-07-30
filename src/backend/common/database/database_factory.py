@@ -13,7 +13,7 @@ class DatabaseFactory:
 
     @staticmethod
     async def get_database():
-
+        
         config = Config()  # Create an instance of Config
 
         cosmos_db_client = CosmosDBClient(

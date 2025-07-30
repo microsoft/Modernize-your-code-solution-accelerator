@@ -530,6 +530,10 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
               name: 'AZURE_CLIENT_ID'
               value: appIdentity.outputs.clientId // NOTE: This is the client ID of the managed identity, not the Entra application, and is needed for the App Service to access the Cosmos DB account.
             }
+            {
+              name: 'APP_ENV'
+              value: 'prod'
+            }
           ],
           enableMonitoring
             ? [
@@ -603,6 +607,10 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
           {
             name: 'API_URL'
             value: 'https://${containerAppBackend.outputs.fqdn}'
+          }
+          {
+              name: 'APP_ENV'
+              value: 'prod'
           }
         ]
         image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
