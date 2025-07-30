@@ -7,7 +7,6 @@ It is the main entry point for the SQL migration process.
 import logging
 
 from api.status_updates import send_status_update
-from sql_agents.agent_manager import get_sql_agents, update_agent_config
 
 from common.models.api import (
     FileProcessUpdate,
@@ -24,6 +23,7 @@ from fastapi import HTTPException
 from semantic_kernel.contents import AuthorRole
 from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
 
+from sql_agents.agent_manager import get_sql_agents, update_agent_config
 from sql_agents.convert_script import convert_script
 from sql_agents.helpers.models import AgentType
 from sql_agents.helpers.utils import is_text
@@ -65,77 +65,77 @@ async def process_batch_async(
     # Send file to the agents for processing
     # Send status update to the client of type in progress, completed, or failed
     for file in batch_files:
-            # Get the file from blob storage
+        # Get the file from blob storage
+        try:
+            file_record = FileRecord.fromdb(file)
+            # Update the file status
             try:
-                file_record = FileRecord.fromdb(file)
-                # Update the file status
-                try:
-                    file_record.status = ProcessStatus.IN_PROGRESS
-                    await batch_service.update_file_record(file_record)
-                except Exception as exc:
-                    logger.error("Error updating file status. %s", exc)
-
-                sql_in_file = await storage.get_file(file_record.blob_path)
-
-                # split into base validation routine
-                # Check if the file is a valid text file <--
-                if not is_text(sql_in_file):
-                    logger.error("File is not a valid text file. Skipping.")
-                    # insert data base write to file record stating invalid file
-                    await batch_service.create_file_log(
-                        str(file_record.file_id),
-                        "File is not a valid text file. Skipping.",
-                        "",
-                        LogType.ERROR,
-                        AgentType.ALL,
-                        AuthorRole.ASSISTANT,
-                    )
-                    # send status update to the client of type failed
-                    send_status_update(
-                        status=FileProcessUpdate(
-                            file_record.batch_id,
-                            file_record.file_id,
-                            ProcessStatus.COMPLETED,
-                            file_result=FileResult.ERROR,
-                        ),
-                    )
-                    file_record.file_result = FileResult.ERROR
-                    file_record.status = ProcessStatus.COMPLETED
-                    file_record.error_count = 1
-                    await batch_service.update_file_record(file_record)
-                    continue
-                else:
-                    logger.info("sql_in_file: %s", sql_in_file)
-
-                # Convert the file
-                converted_query = await convert_script(
-                    sql_in_file,
-                    file_record,
-                    batch_service,
-                    sql_agents,
-                )
-                if converted_query:
-                    # Add RAI disclaimer to the converted query
-                    converted_query = add_rai_disclaimer(converted_query)
-                    await batch_service.create_candidate(
-                        file["file_id"], converted_query
-                    )
-                else:
-                    await batch_service.update_file_counts(file["file_id"])
-            except UnicodeDecodeError as ucde:
-                logger.error("Error decoding file: %s", file)
-                logger.error("Error decoding file. %s", ucde)
-                await process_error(ucde, file_record, batch_service)
-            except ServiceResponseException as sre:
-                logger.error(file)
-                logger.error("Error processing file. %s", sre)
-                # insert data base write to file record stating invalid file
-                await process_error(sre, file_record, batch_service)
+                file_record.status = ProcessStatus.IN_PROGRESS
+                await batch_service.update_file_record(file_record)
             except Exception as exc:
-                logger.error(file)
-                logger.error("Error processing file. %s", exc)
+                logger.error("Error updating file status. %s", exc)
+
+            sql_in_file = await storage.get_file(file_record.blob_path)
+
+            # split into base validation routine
+            # Check if the file is a valid text file <--
+            if not is_text(sql_in_file):
+                logger.error("File is not a valid text file. Skipping.")
                 # insert data base write to file record stating invalid file
-                await process_error(exc, file_record, batch_service)
+                await batch_service.create_file_log(
+                    str(file_record.file_id),
+                    "File is not a valid text file. Skipping.",
+                    "",
+                    LogType.ERROR,
+                    AgentType.ALL,
+                    AuthorRole.ASSISTANT,
+                )
+                # send status update to the client of type failed
+                send_status_update(
+                    status=FileProcessUpdate(
+                        file_record.batch_id,
+                        file_record.file_id,
+                        ProcessStatus.COMPLETED,
+                        file_result=FileResult.ERROR,
+                    ),
+                )
+                file_record.file_result = FileResult.ERROR
+                file_record.status = ProcessStatus.COMPLETED
+                file_record.error_count = 1
+                await batch_service.update_file_record(file_record)
+                continue
+            else:
+                logger.info("sql_in_file: %s", sql_in_file)
+
+            # Convert the file
+            converted_query = await convert_script(
+                sql_in_file,
+                file_record,
+                batch_service,
+                sql_agents,
+            )
+            if converted_query:
+                # Add RAI disclaimer to the converted query
+                converted_query = add_rai_disclaimer(converted_query)
+                await batch_service.create_candidate(
+                    file["file_id"], converted_query
+                )
+            else:
+                await batch_service.update_file_counts(file["file_id"])
+        except UnicodeDecodeError as ucde:
+            logger.error("Error decoding file: %s", file)
+            logger.error("Error decoding file. %s", ucde)
+            await process_error(ucde, file_record, batch_service)
+        except ServiceResponseException as sre:
+            logger.error(file)
+            logger.error("Error processing file. %s", sre)
+            # insert data base write to file record stating invalid file
+            await process_error(sre, file_record, batch_service)
+        except Exception as exc:
+            logger.error(file)
+            logger.error("Error processing file. %s", exc)
+            # insert data base write to file record stating invalid file
+            await process_error(exc, file_record, batch_service)
 
     # Update batch status to completed or failed
     try:

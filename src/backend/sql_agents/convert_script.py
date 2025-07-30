@@ -50,7 +50,7 @@ async def convert_script(
         initial_delay=1.0,      # Start with 1 second delay
         backoff_factor=2.0,     # Double delay each retry
     )
-    
+
     try:
         # send websocket notification that file processing has started
         send_status_update(
@@ -282,7 +282,7 @@ async def convert_script(
         )
 
         return migrated_query
-    
+
     finally:
         # Clean up threads and communication resources - guaranteed to run
         try:
