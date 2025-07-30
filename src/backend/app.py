@@ -3,8 +3,6 @@ from contextlib import asynccontextmanager
 
 from api.api_routes import router as backend_router
 
-from azure.identity.aio import DefaultAzureCredential
-
 from common.config.config import app_config
 from common.logger.app_logger import AppLogger
 
@@ -12,6 +10,8 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from helper.azure_credential_utils import get_azure_credential
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 
@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI):
         logger.logger.info("Initializing SQL agents...")
 
         # Create Azure credentials and client
-        creds = DefaultAzureCredential()
+        creds = get_azure_credential(app_config.azure_client_id)
         azure_client = AzureAIAgent.create_client(
             credential=creds,
             endpoint=app_config.ai_project_endpoint
