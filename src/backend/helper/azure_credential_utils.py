@@ -14,7 +14,6 @@ async def get_azure_credential_async(client_id=None):
     Returns:
         Credential object: Either AioDefaultAzureCredential or AioManagedIdentityCredential.
     """
-    print(os.getenv("APP_ENV"))
     if os.getenv("APP_ENV", "prod").lower() == 'dev':
         return AioDefaultAzureCredential()  # CodeQL [SM05139] Okay use of DefaultAzureCredential as it is only used in development
     else:
