@@ -1,11 +1,18 @@
-from unittest.mock import patch, MagicMock
-import pytest
-import sys
+from unittest.mock import MagicMock, patch
+
 import os
+import sys
+
+import pytest
+
+
+
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../backend")))
 import helper.azure_credential_utils as azure_credential_utils
+
+
 
 @pytest.fixture
 def mock_env_vars():
