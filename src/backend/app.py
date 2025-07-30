@@ -15,9 +15,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 
+from sql_agents.agent_manager import clear_sql_agents, set_sql_agents
 from sql_agents.agents.agent_config import AgentBaseConfig
 from sql_agents.helpers.agents_manager import SqlAgents
-from sql_agents.agent_manager import set_sql_agents, clear_sql_agents
 
 import uvicorn
 # from agent_services.agents_routes import router as agents_router
@@ -37,51 +37,51 @@ azure_client = None
 async def lifespan(app: FastAPI):
     """Manage application lifespan - startup and shutdown."""
     global sql_agents, azure_client
-    
+
     # Startup
     try:
         logger.logger.info("Initializing SQL agents...")
-        
+
         # Create Azure credentials and client
         creds = DefaultAzureCredential()
         azure_client = AzureAIAgent.create_client(
-            credential=creds, 
+            credential=creds,
             endpoint=app_config.ai_project_endpoint
         )
-        
+
         # Setup agent configuration with default conversion settings
         agent_config = AgentBaseConfig(
             project_client=azure_client,
             sql_from="informix",  # Default source dialect
             sql_to="tsql"         # Default target dialect
         )
-        
+
         # Create SQL agents
         sql_agents = await SqlAgents.create(agent_config)
-        
+
         # Set the global agents instance
         set_sql_agents(sql_agents)
         logger.logger.info("SQL agents initialized successfully.")
-        
+
     except Exception as exc:
         logger.logger.error("Failed to initialize SQL agents: %s", exc)
         # Don't raise the exception to allow the app to start even if agents fail
-    
+
     yield  # Application runs here
-    
+
     # Shutdown
     try:
         if sql_agents:
             logger.logger.info("Application shutting down - cleaning up SQL agents...")
             await sql_agents.delete_agents()
             logger.logger.info("SQL agents cleaned up successfully.")
-            
+
             # Clear the global agents instance
             await clear_sql_agents()
-        
+
         if azure_client:
             await azure_client.close()
-            
+
     except Exception as exc:
         logger.logger.error("Error during agent cleanup: %s", exc)
 
