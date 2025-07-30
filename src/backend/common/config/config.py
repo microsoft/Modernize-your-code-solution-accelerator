@@ -48,8 +48,8 @@ class Config:
         self.syntax_checker_agent_model_deploy = os.getenv(
             "SYNTAX_CHECKER_AGENT_MODEL_DEPLOY"
         )
-
-        self.__azure_credentials =  get_azure_credential()
+        print("using client id")
+        self.__azure_credentials =  get_azure_credential(self.azure_client_id)
 
     def get_azure_credentials(self):
         """Retrieve Azure credentials, either from environment variables or managed identity."""

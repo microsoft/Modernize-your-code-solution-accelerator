@@ -20,7 +20,7 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
-
+from common.config.config import Config
 from fastapi import HTTPException
 
 
@@ -57,9 +57,11 @@ async def process_batch_async(
     except Exception as exc:
         logger.error("Error updating batch status. %s", exc)
 
+    config = Config()
     # Add client and auto cleanup
+    print("changed the async to sync")
     async with (
-        await get_azure_credential_async() as creds,
+        await get_azure_credential_async(config.azure_client_id) as creds,
         AzureAIAgent.create_client(credential=creds, endpoint=app_config.ai_project_endpoint) as client,
     ):
 

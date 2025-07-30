@@ -2,7 +2,7 @@ from typing import Any, BinaryIO, Dict, Optional
 
 from helper.azure_credential_utils import get_azure_credential
 from azure.storage.blob import BlobServiceClient
-
+from common.config.config import Config
 from common.logger.app_logger import AppLogger
 from common.storage.blob_base import BlobStorageBase
 
@@ -11,11 +11,12 @@ class AzureBlobStorage(BlobStorageBase):
     def __init__(self, account_name: str, container_name: Optional[str] = None):
         self.logger = AppLogger("AzureBlobStorage")
         try:
+            config = Config()
             self.account_name = account_name
             self.container_name = container_name
             self.service_client = None
             self.container_client = None
-            credential = get_azure_credential()  # Using Managed Identity Authentication
+            credential = config.get_azure_credentials()  # Using Managed Identity Authentication
             self.service_client = BlobServiceClient(
                 account_url=f"https://{self.account_name}.blob.core.windows.net/",
                 credential=credential,
