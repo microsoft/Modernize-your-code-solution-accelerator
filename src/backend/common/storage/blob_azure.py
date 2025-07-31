@@ -1,10 +1,12 @@
 from typing import Any, BinaryIO, Dict, Optional
 
-from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
+from common.config.config import app_config
 from common.logger.app_logger import AppLogger
 from common.storage.blob_base import BlobStorageBase
+
+from helper.azure_credential_utils import get_azure_credential
 
 
 class AzureBlobStorage(BlobStorageBase):
@@ -15,7 +17,7 @@ class AzureBlobStorage(BlobStorageBase):
             self.container_name = container_name
             self.service_client = None
             self.container_client = None
-            credential = DefaultAzureCredential()  # Using Entra Authentication
+            credential = get_azure_credential(app_config.azure_client_id)  # Using Entra Authentication
             self.service_client = BlobServiceClient(
                 account_url=f"https://{self.account_name}.blob.core.windows.net/",
                 credential=credential,
