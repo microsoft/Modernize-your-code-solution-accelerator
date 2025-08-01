@@ -44,6 +44,12 @@
     "backendExists": {
       "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
     },
+    "tags": {
+      "value": {
+        "solutionName": "${AZURE_ENV_NAME}",
+        "location": "${AZURE_LOCATION}"
+      }
+    },
     "backendDefinition": {
       "value": {
         "settings": [

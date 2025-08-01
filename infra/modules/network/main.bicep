@@ -36,7 +36,7 @@ param enableTelemetry bool = true
 // /****************************************************************************************************************************/
 
 module virtualNetwork 'virtualNetwork.bicep' = {
-  name: '${resourcesName}-virtualNetwork'
+  name: take('module.virtual-network.${resourcesName}', 64)
   params: {
     name: 'vnet-${resourcesName}'
     addressPrefixes: addressPrefixes
@@ -53,7 +53,7 @@ module virtualNetwork 'virtualNetwork.bicep' = {
 // /****************************************************************************************************************************/
 
 module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
-  name: '${resourcesName}-bastionHost'
+  name: take('module.bastion-host.${resourcesName}', 64)
   params: {
     name: bastionConfiguration.?name ?? 'bas-${resourcesName}'
     vnetId: virtualNetwork.outputs.resourceId
@@ -71,7 +71,7 @@ module bastionHost 'bastionHost.bicep' = if (!empty(bastionConfiguration)) {
 // /****************************************************************************************************************************/
 
 module jumpbox 'jumpbox.bicep' = if (!empty(jumpboxConfiguration)) {
-  name: '${resourcesName}-jumpbox'
+  name: take('module.jumpbox.${resourcesName}', 64)
   params: {
     name: jumpboxConfiguration.?name ?? 'vm-jumpbox-${resourcesName}'
     vnetName: virtualNetwork.outputs.name

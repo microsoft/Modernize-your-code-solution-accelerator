@@ -55,7 +55,7 @@ var fileContainerName = 'cmsafile'
 var logContainerName = 'cmsalog'
 
 module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
-  name: take('${name}-account-deployment', 64)
+  name: take('avm.res.document-db.database-account.${name}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
   params: {

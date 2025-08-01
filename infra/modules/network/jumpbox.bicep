@@ -38,7 +38,7 @@ param enableTelemetry bool = true
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
 module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
-  name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
+  name: take('avm.res.network.network-security-group.${subnet.?networkSecurityGroup.name}', 64)
   params: {
     name: '${subnet.?networkSecurityGroup.name}-${vnetName}'
     location: location
@@ -52,7 +52,7 @@ module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty
 // using AVM Virtual Network Subnet module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
 module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnet)) {
-  name: subnet.?name ?? '${vnetName}-jumpbox-subnet'
+  name: take('avm.res.network.virtual-network.subnet.${subnet.?name}', 64)
   params: {
     virtualNetworkName: vnetName
     name: subnet.?name ?? ''
@@ -68,7 +68,7 @@ module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' =
 var vmName = take(name, 15) // Shorten VM name to 15 characters to avoid Azure limits
 
 module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
-  name: take('${vmName}-jumpbox', 64)
+  name: take('avm.res.compute.virtual-machine.${vmName}', 64)
   params: {
     name: vmName
     vmSize: size

@@ -2,13 +2,13 @@ metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
 
-@description('Set to true if you want to deploy WAF-aligned infrastructure.')
+@description('Required. Set to true if you want to deploy WAF-aligned infrastructure.')
 param useWafAlignedArchitecture bool
 
 @minLength(3)
 @maxLength(16)
 @description('Required. A unique application/solution name for all resources in this deployment. This should be 3-16 characters long.')
-param solutionName string
+param solutionName string = 'codemode'
 
 @maxLength(5)
 @description('Optional. A unique token for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name.')
@@ -16,8 +16,9 @@ param solutionUniqueToken string = substring(uniqueString(subscription().id, res
 
 @minLength(3)
 @metadata({ azd: { type: 'location' } })
-@description('Optional. Azure region for all services. Defaults to the resource group location.')
-param location string = resourceGroup().location
+@description('Optional. Azure region for all services. Defaults to the resource group location. Regions are restricted to guarantee compatibility with paired regions and replica locations for data redundancy and failover scenarios.')
+@allowed(['australiaeast','brazilsouth','canadacentral','centralindia','centralus','eastasia','eastus','eastus2','francecentral','germanywestcentral','japaneast','japanwest','koreacentral','northeurope','norwayeast','southafricanorth','southcentralus','southeastasia','swedencentral','switzerlandnorth','uaenorth','uksouth','westeurope','westus2','westus3'])
+param location string
 
 @allowed([
   'australiaeast'
@@ -53,7 +54,7 @@ param enableMonitoring bool = useWafAlignedArchitecture? true : false
 param enableScaling bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
-param enableRedundancy bool = false
+param enableRedundancy bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
@@ -74,8 +75,8 @@ param vmAdminUsername string?
 //param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
 
-@description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
-param tags object = {}
+@description('Optional. The tags to apply to all deployed Azure resources.')
+param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags = {}
 
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
@@ -101,13 +102,6 @@ param azureExistingAIProjectResourceId string = ''
 
 param existingLogAnalyticsWorkspaceId string = ''
 
-var allTags = union(
-  {
-    'azd-env-name': solutionName
-  },
-  tags
-)
-
 var resourcesName = toLower(trim(replace(
   replace(
     replace(replace(replace(replace('${solutionName}${solutionUniqueToken}', '-', ''), '_', ''), '.', ''), '/', ''),
@@ -132,14 +126,12 @@ var modelDeployment = {
   raiPolicyName: 'Microsoft.Default'
 }
 
-var abbrs = loadJsonContent('./abbreviations.json')
-
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   name: 'default'
   properties: {
     tags: {
-      ...allTags
+      ...tags
       TemplateName: 'Code Modernization'
     }
   }
@@ -167,12 +159,13 @@ resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableT
   }
 }
 
+var appIdentityName = 'id-${resourcesName}'
 module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
-  name: take('identity-app-${resourcesName}-deployment', 64)
+  name: take('avm.res.managed-identity.user-assigned-identity.${appIdentityName}', 64)
   params: {
-    name: '${abbrs.security.managedIdentity}${resourcesName}'
+    name: appIdentityName
     location: location
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
@@ -188,16 +181,17 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
   scope: resourceGroup(existingLawSubscription, existingLawResourceGroup)
 }
 
+var logAnalyticsWorkspaceResourceName = 'log-${resourcesName}'
 // Deploy new Log Analytics workspace only if required and not using existing
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
-  name: take('log-analytics-${resourcesName}-deployment', 64)
+  name: take('avm.res.operational-insights.workspace.${logAnalyticsWorkspaceResourceName}', 64)
   params: {
-    name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcesName}'
+    name: logAnalyticsWorkspaceResourceName
     location: location
     skuName: 'PerGB2018'
     dataRetention: 30
     diagnosticSettings: [{ useThisWorkspace: true }]
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
@@ -207,21 +201,21 @@ var logAnalyticsWorkspaceResourceId = useExistingLogAnalytics ? existingLogAnaly
 var LogAnalyticsPrimarySharedKey string = useExistingLogAnalytics? existingLogAnalyticsWorkspace.listKeys().primarySharedKey : logAnalyticsWorkspace.outputs.primarySharedKey
 var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorkspace.properties.customerId : logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
 
+var applicationInsightsResourceName = 'appi-${resourcesName}'
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
-  name: take('app-insights-${resourcesName}-deployment', 64)
+  name: take('avm.res.insights.component.${applicationInsightsResourceName}', 64)
   params: {
-    name: '${abbrs.managementGovernance.applicationInsights}${resourcesName}'
+    name: applicationInsightsResourceName
     location: location
     workspaceResourceId: logAnalyticsWorkspaceResourceId
     diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
-
 module network 'modules/network.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-deployment', 64)
+  name: take('module.network.${resourcesName}', 64)
   params: {
     resourcesName: resourcesName
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
@@ -229,23 +223,23 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
     vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
     vmSize: vmSize ??  'Standard_DS2_v2' // Default VM size 
     location: location
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
 module aiServices 'modules/ai-foundry/main.bicep' = {
-  name: take('avm.res.cognitive-services.account.${resourcesName}', 64)
+  name: take('modules.ai-foundry.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: '${abbrs.ai.aiFoundry}${resourcesName}'
+    name: 'aif-${resourcesName}'
     location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [ modelDeployment ]
-    projectName: '${abbrs.ai.aiFoundryProject}${resourcesName}'
-    projectDescription: '${abbrs.ai.aiFoundryProject}${resourcesName}'
+    projectName: 'aifp-${resourcesName}'
+    projectDescription: 'aifp-${resourcesName}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
@@ -286,7 +280,7 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
         roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User
       }
     ]
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
@@ -294,13 +288,13 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
 var appStorageContainerName = 'appstorage'
 
 module storageAccount 'modules/storageAccount.bicep' = {
-  name: take('storage-account-${resourcesName}-deployment', 64)
+  name: take('module.storageAccount.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.storage.storageAccount}${resourcesName}', 24)
+    name: take('st${resourcesName}', 24)
     location: location
-    tags: allTags
+    tags: tags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
@@ -329,11 +323,11 @@ module storageAccount 'modules/storageAccount.bicep' = {
 }
 
 module keyVault 'modules/keyVault.bicep' = {
-  name: take('keyvault-${resourcesName}-deployment', 64)
+  name: take('module.keyvault.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.security.keyVault}${resourcesName}', 24)
+    name: take('kv-${resourcesName}', 24)
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -350,17 +344,17 @@ module keyVault 'modules/keyVault.bicep' = {
         roleDefinitionIdOrName: 'Key Vault Administrator'
       }
     ]
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
 module cosmosDb 'modules/cosmosDb.bicep' = {
-  name: take('cosmos-${resourcesName}-deployment', 64)
+  name: take('module.cosmos.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.databases.cosmosDBDatabase}${resourcesName}', 44)
+    name: take('cosmos-${resourcesName}', 44)
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -372,15 +366,15 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
           subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
         }
       : null
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
-var containerAppsEnvironmentName = '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
+var containerAppsEnvironmentName = 'cae-${resourcesName}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
-  name: take('container-env-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.managed-environment.${containerAppsEnvironmentName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
@@ -414,17 +408,18 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
           }
         ]
       : []
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
+var containerAppBackendName = 'ca-${resourcesName}-backend'
 module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
-  name: take('container-app-backend-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.container-app.${containerAppBackendName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.containers.containerApp}backend-${resourcesName}', 32)
+    name: containerAppBackendName
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -585,15 +580,16 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
           ]
         : []
     }
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }
 
+var containerAppFrontendName = 'ca-${resourcesName}-frontend'
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
-  name: take('container-app-frontend-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.container-app.${containerAppFrontendName}', 64)
   params: {
-    name: take('${abbrs.containers.containerApp}frontend-${resourcesName}', 32)
+    name: containerAppFrontendName
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -639,7 +635,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
           ]
         : []
     }
-    tags: allTags
+    tags: tags
     enableTelemetry: enableTelemetry
   }
 }

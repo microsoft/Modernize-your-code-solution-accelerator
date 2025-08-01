@@ -48,7 +48,7 @@ var privateDnsZoneResourceId = privateNetworking != null
   : ''
 
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
-  name: take('${name}-kv-deployment', 64)
+  name: take('avm.res.key-vault.${name}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
   params: {
