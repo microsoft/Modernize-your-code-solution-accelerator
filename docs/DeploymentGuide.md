@@ -227,7 +227,7 @@ Additional Steps
 
 ## For local Debugging
 
-Make sure to set `APP_ENV` to `dev` in `.env` file.
+Make sure to set `APP_ENV` to `dev` in `src\backend\.env` file.
 
 ## Running the application
 
