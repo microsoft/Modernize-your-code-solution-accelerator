@@ -225,6 +225,10 @@ Additional Steps
    
     If you chose to enable authentication for the deployment, follow the steps in [App Authentication](../docs/AddAuthentication.md)
 
+## For local Debugging
+
+Make sure to set `APP_ENV` to `dev` in `.env` file.
+
 ## Running the application
 
 To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
