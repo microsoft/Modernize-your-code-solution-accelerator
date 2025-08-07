@@ -228,3 +228,7 @@ Additional Steps
 ## Running the application
 
 To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
+
+## For local Debugging
+
+To configure your environment, navigate to the `src\backend` folder to create a `.env` file based on the `.env.sample`, fill it using deployment output or the Azure Portal under "Deployments" in your resource group, and ensure APP_ENV is set to "**dev**".
