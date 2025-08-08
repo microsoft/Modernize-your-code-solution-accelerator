@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
-from azure.cosmos import PartitionKey, exceptions
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos.aio._database import DatabaseProxy
 from azure.cosmos.exceptions import (
