@@ -59,8 +59,8 @@ async def test_initialize_cosmos(cosmos_db_client, mocker):
     mock_file_container = mock.MagicMock()
     mock_log_container = mock.MagicMock()
 
-    # Use AsyncMock to mock asynchronous container creation
-    mock_database.create_container = AsyncMock(side_effect=[
+    # Mock get_container_client method (since _get_container uses this)
+    mock_database.get_container_client = mock.MagicMock(side_effect=[
         mock_batch_container,
         mock_file_container,
         mock_log_container
@@ -69,10 +69,10 @@ async def test_initialize_cosmos(cosmos_db_client, mocker):
     # Call the initialize_cosmos method
     await cosmos_db_client.initialize_cosmos()
 
-    # Assert that the containers were created or fetched successfully
-    mock_database.create_container.assert_any_call(id=batch_container, partition_key=mock.ANY)
-    mock_database.create_container.assert_any_call(id=file_container, partition_key=mock.ANY)
-    mock_database.create_container.assert_any_call(id=log_container, partition_key=mock.ANY)
+    # Assert that the containers were fetched successfully
+    mock_database.get_container_client.assert_any_call(batch_container)
+    mock_database.get_container_client.assert_any_call(file_container)
+    mock_database.get_container_client.assert_any_call(log_container)
 
     # Check the client and containers were set
     assert cosmos_db_client.client is not None
@@ -87,15 +87,15 @@ async def test_initialize_cosmos_with_error(cosmos_db_client, mocker):
     mock_client = mocker.patch.object(CosmosClient, 'get_database_client', return_value=mock.MagicMock())
     mock_database = mock_client.return_value
 
-    # Simulate a general exception during container creation
-    mock_database.create_container = AsyncMock(side_effect=Exception("Failed to create container"))
+    # Simulate a general exception during container access
+    mock_database.get_container_client = mock.MagicMock(side_effect=Exception("Failed to get container"))
 
     # Call the initialize_cosmos method and expect it to raise an error
     with pytest.raises(Exception) as exc_info:
         await cosmos_db_client.initialize_cosmos()
 
     # Assert that the exception message matches the expected message
-    assert str(exc_info.value) == "Failed to create container"
+    assert str(exc_info.value) == "Failed to get container"
 
 
 @pytest.mark.asyncio
@@ -104,16 +104,13 @@ async def test_initialize_cosmos_container_exists_error(cosmos_db_client, mocker
     mock_client = mocker.patch.object(CosmosClient, 'get_database_client', return_value=mock.MagicMock())
     mock_database = mock_client.return_value
 
-    # Simulating CosmosResourceExistsError for container creation
-    mock_database.create_container = AsyncMock(side_effect=CosmosResourceExistsError)
-
     # Use AsyncMock for asynchronous methods
     mock_batch_container = mock.MagicMock()
     mock_file_container = mock.MagicMock()
     mock_log_container = mock.MagicMock()
 
-    # Use AsyncMock to mock asynchronous container creation
-    mock_database.create_container = AsyncMock(side_effect=[
+    # Mock get_container_client method to return existing containers
+    mock_database.get_container_client = mock.MagicMock(side_effect=[
         mock_batch_container,
         mock_file_container,
         mock_log_container
@@ -122,10 +119,10 @@ async def test_initialize_cosmos_container_exists_error(cosmos_db_client, mocker
     # Call the initialize_cosmos method
     await cosmos_db_client.initialize_cosmos()
 
-    # Assert that the container creation method was called with the correct arguments
-    mock_database.create_container.assert_any_call(id='batch_container', partition_key=mock.ANY)
-    mock_database.create_container.assert_any_call(id='file_container', partition_key=mock.ANY)
-    mock_database.create_container.assert_any_call(id='log_container', partition_key=mock.ANY)
+    # Assert that the container access method was called with the correct arguments
+    mock_database.get_container_client.assert_any_call('batch_container')
+    mock_database.get_container_client.assert_any_call('file_container')
+    mock_database.get_container_client.assert_any_call('log_container')
 
     # Check that existing containers are returned (mocked containers)
     assert cosmos_db_client.batch_container == mock_batch_container
