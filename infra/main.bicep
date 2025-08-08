@@ -102,7 +102,7 @@ param azureExistingAIProjectResourceId string = ''
 
 param existingLogAnalyticsWorkspaceId string = ''
 
-var resourcesName = toLower(trim(replace(
+var solutionSuffix = toLower(trim(replace(
   replace(
     replace(replace(replace(replace('${solutionName}${solutionUniqueToken}', '-', ''), '_', ''), '.', ''), '/', ''),
     ' ',
@@ -159,7 +159,7 @@ resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableT
   }
 }
 
-var appIdentityName = 'id-${resourcesName}'
+var appIdentityName = 'id-${solutionSuffix}'
 module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
   name: take('avm.res.managed-identity.user-assigned-identity.${appIdentityName}', 64)
   params: {
@@ -181,9 +181,9 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
   scope: resourceGroup(existingLawSubscription, existingLawResourceGroup)
 }
 
-var logAnalyticsWorkspaceResourceName = 'log-${resourcesName}'
+var logAnalyticsWorkspaceResourceName = 'log-${solutionSuffix}'
 // Deploy new Log Analytics workspace only if required and not using existing
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if (enableMonitoring && !useExistingLogAnalytics) {
   name: take('avm.res.operational-insights.workspace.${logAnalyticsWorkspaceResourceName}', 64)
   params: {
     name: logAnalyticsWorkspaceResourceName
@@ -201,7 +201,7 @@ var logAnalyticsWorkspaceResourceId = useExistingLogAnalytics ? existingLogAnaly
 var LogAnalyticsPrimarySharedKey string = useExistingLogAnalytics? existingLogAnalyticsWorkspace.listKeys().primarySharedKey : logAnalyticsWorkspace.outputs.primarySharedKey
 var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorkspace.properties.customerId : logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
 
-var applicationInsightsResourceName = 'appi-${resourcesName}'
+var applicationInsightsResourceName = 'appi-${solutionSuffix}'
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
   name: take('avm.res.insights.component.${applicationInsightsResourceName}', 64)
   params: {
@@ -215,9 +215,9 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
 }
 
 module network 'modules/network.bicep' = if (enablePrivateNetworking) {
-  name: take('module.network.${resourcesName}', 64)
+  name: take('module.network.${solutionSuffix}', 64)
   params: {
-    resourcesName: resourcesName
+    resourcesName: solutionSuffix
     logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
     vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
     vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
@@ -228,18 +228,20 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   }
 }
 
+var aiFoundryAiServicesResourceName = 'aif-${solutionSuffix}'
+var aiFoundryAiServicesAiProjectResourceName = 'proj-${solutionSuffix}'
 module aiServices 'modules/ai-foundry/main.bicep' = {
-  name: take('modules.ai-foundry.${resourcesName}', 64)
+  name: take('modules.ai-foundry.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: 'aif-${resourcesName}'
+    name: aiFoundryAiServicesResourceName
     location: aiDeploymentsLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [ modelDeployment ]
-    projectName: 'aifp-${resourcesName}'
-    projectDescription: 'aifp-${resourcesName}'
+    projectName: aiFoundryAiServicesAiProjectResourceName
+    projectDescription: 'AI Foundry Project'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
@@ -249,7 +251,7 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
       : null
     existingFoundryProjectResourceId: azureExistingAIProjectResourceId
     disableLocalAuth: true //Should be set to true for WAF aligned configuration
-    customSubDomainName: 'ais-${resourcesName}'
+    customSubDomainName: aiFoundryAiServicesResourceName
     apiProperties: {
       //staticsEnabled: false
     }
@@ -286,13 +288,12 @@ module aiServices 'modules/ai-foundry/main.bicep' = {
 }
 
 var appStorageContainerName = 'appstorage'
-
 module storageAccount 'modules/storageAccount.bicep' = {
-  name: take('module.storageAccount.${resourcesName}', 64)
+  name: take('module.storageAccount.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('st${resourcesName}', 24)
+    name: 'st${solutionSuffix}'
     location: location
     tags: tags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
@@ -323,11 +324,11 @@ module storageAccount 'modules/storageAccount.bicep' = {
 }
 
 module keyVault 'modules/keyVault.bicep' = {
-  name: take('module.keyvault.${resourcesName}', 64)
+  name: take('module.keyvault.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('kv-${resourcesName}', 24)
+    name: 'kv-${solutionSuffix}'
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -350,11 +351,11 @@ module keyVault 'modules/keyVault.bicep' = {
 }
 
 module cosmosDb 'modules/cosmosDb.bicep' = {
-  name: take('module.cosmos.${resourcesName}', 64)
+  name: take('module.cosmos.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
   params: {
-    name: take('cosmos-${resourcesName}', 44)
+    name: 'cosmos-${solutionSuffix}'
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -371,8 +372,7 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   }
 }
 
-var containerAppsEnvironmentName = 'cae-${resourcesName}'
-
+var containerAppsEnvironmentName = 'cae-${solutionSuffix}'
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
   name: take('avm.res.app.managed-environment.${containerAppsEnvironmentName}', 64)
   #disable-next-line no-unnecessary-dependson
@@ -413,7 +413,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
   }
 }
 
-var containerAppBackendName = 'ca-${resourcesName}-backend'
+var containerAppBackendName = 'ca-${solutionSuffix}-backend'
 module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('avm.res.app.container-app.${containerAppBackendName}', 64)
   #disable-next-line no-unnecessary-dependson
@@ -585,7 +585,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
   }
 }
 
-var containerAppFrontendName = 'ca-${resourcesName}-frontend'
+var containerAppFrontendName = 'ca-${solutionSuffix}-frontend'
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
   name: take('avm.res.app.container-app.${containerAppFrontendName}', 64)
   params: {
