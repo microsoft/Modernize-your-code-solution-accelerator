@@ -228,3 +228,8 @@ Additional Steps
 ## Running the application
 
 To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
+
+## Environment configuration for local development & debugging
+> Set APP_ENV in your .env file to control Azure authentication. Use dev to enable to use Azure CLI credential, Prod to enable Managed Identity (for production). **Ensure you're logged in via az login when using dev in local**.
+
+To configure your environment, navigate to the `src\backend` folder to create a `.env` file based on the `.env.sample`, fill it using deployment output or the Azure Portal under "Deployments" in your resource group, and ensure APP_ENV is set to "**dev**".
