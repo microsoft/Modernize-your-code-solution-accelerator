@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
-from azure.cosmos import PartitionKey, exceptions
 from azure.cosmos.aio import CosmosClient
 from azure.cosmos.aio._database import DatabaseProxy
 from azure.cosmos.exceptions import (
@@ -49,32 +48,27 @@ class CosmosDBClient(DatabaseBase):
         try:
             self.client = CosmosClient(url=self.endpoint, credential=self.credential)
             database = self.client.get_database_client(self.database_name)
-
-            self.batch_container = await self._get_or_create_container(
-                database, self.batch_container_name, "/batch_id"
+            self.batch_container = await self._get_container(
+                database, self.batch_container_name
             )
-            self.file_container = await self._get_or_create_container(
-                database, self.file_container_name, "/file_id"
+            self.file_container = await self._get_container(
+                database, self.file_container_name
             )
-            self.log_container = await self._get_or_create_container(
-                database, self.log_container_name, "/log_id"
+            self.log_container = await self._get_container(
+                database, self.log_container_name
             )
         except Exception as e:
             self.logger.error("Failed to initialize Cosmos DB", error=str(e))
             raise
 
-    async def _get_or_create_container(
-        self, database: DatabaseProxy, container_name, partition_key
+    async def _get_container(
+        self, database: DatabaseProxy, container_name
     ):
         try:
-            return await database.create_container(
-                id=container_name, partition_key=PartitionKey(path=partition_key)
-            )
-        except exceptions.CosmosResourceExistsError:
             return database.get_container_client(container_name)
 
         except Exception as e:
-            self.logger.error("Failed to Get/Create cosmosdb container", error=str(e))
+            self.logger.error("Failed to Get cosmosdb container", error=str(e))
             raise
 
     async def create_batch(self, user_id: str, batch_id: UUID) -> BatchRecord:
