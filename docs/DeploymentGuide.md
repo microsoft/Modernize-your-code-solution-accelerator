@@ -232,4 +232,10 @@ To help you get started, sample Informix queries have been included in the data/
 ## Environment configuration for local development & debugging
 > Set APP_ENV in your .env file to control Azure authentication. Use dev to enable to use Azure CLI credential, Prod to enable Managed Identity (for production). **Ensure you're logged in via az login when using dev in local**.
 
-To configure your environment, navigate to the `src\backend` folder to create a `.env` file based on the `.env.sample`, fill it using deployment output or the Azure Portal under "Deployments" in your resource group, and ensure APP_ENV is set to "**dev**".
+1. Navigate to the `src\backend` folder.
+2. Create a `.env` file based on the `.env.sample` file.
+3. Fill in the `.env` file using the deployment output or by checking the Azure Portal under "Deployments" in your resource group.
+4. Alternatively, if resources were
+   provisioned using `azd provision` or `azd up`, a `.env` file is automatically generated in the `.azure/<env-name>/.env`
+   file. To get your `<env-name>` run `azd env list` to see which env is default.
+5. Ensure that `APP_ENV` is set to "**dev**" in your `.env` file.
