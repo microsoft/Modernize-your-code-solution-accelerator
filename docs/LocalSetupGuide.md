@@ -232,6 +232,7 @@ To debug the SQL agents system:
 1. **Enable debug logging** in your `.env` file:
    ```
    APP_LOGGING_LEVEL=DEBUG
+   APP_ENV=dev
    ```
 
 2. **Monitor agent interactions** through the application logs and WebSocket messages
