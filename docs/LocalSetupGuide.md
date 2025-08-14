@@ -310,6 +310,7 @@ Enable detailed logging by setting these environment variables in your `.env` fi
 
 ```
 APP_LOGGING_LEVEL=DEBUG
+APP_ENV=dev
 AZURE_OPENAI_API_VERSION=2024-08-01-preview
 ```
 
