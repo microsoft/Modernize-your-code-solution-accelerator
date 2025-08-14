@@ -140,7 +140,14 @@ cd src/backend
 cp .env.sample .env
 ```
 
-Fill in the `.env` file with values from your Azure deployment. You can find these in:
+Also create `.env` files based on the provided `.env.sample` files for frontend:
+
+```bash
+cd src/frontend
+cp .env.sample .env
+```
+
+Fill in the `.env` files with values from your Azure deployment. You can find these in:
 - Azure Portal under "Deployments" in your resource group
 - Output from the `azd up` command
 - Azure resources directly in the portal
