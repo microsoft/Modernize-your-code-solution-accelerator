@@ -52,6 +52,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const [batchId, setBatchId] = useState<string>(uuidv4());
   const [allUploadsComplete, setAllUploadsComplete] = useState(false);
   const [fileLimitExceeded, setFileLimitExceeded] = useState(false);
+  const [fileRejectionErrors, setFileRejectionErrors] = useState<string[]>([]);
   const [showFileLimitDialog, setShowFileLimitDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -187,8 +188,22 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         if (onFileUpload) onFileUpload(acceptedFiles);
       }
 
-      if (onFileReject && fileRejections.length > 0) {
-        onFileReject(fileRejections);
+      if (fileRejections.length > 0) {
+        // Build error messages for each rejection
+        const errors: string[] = [];
+        fileRejections.forEach(rejection => {
+          rejection.errors.forEach(err => {
+            if (err.code === "file-too-large") {
+              errors.push(`File '${rejection.file.name}' exceeds the 200MB size limit.`);
+            } else if (err.code === "file-invalid-type") {
+              errors.push(`File '${rejection.file.name}' is not a valid SQL file.`);
+            } else {
+              errors.push(`File '${rejection.file.name}': ${err.message}`);
+            }
+          });
+        });
+        setFileRejectionErrors(errors);
+        if (onFileReject) onFileReject(fileRejections);
       }
     },
     [onFileUpload, onFileReject, uploadingFiles.length]
@@ -521,6 +536,22 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
+        {/* Show file rejection errors for invalid type or size */}
+        {fileRejectionErrors.length > 0 && (
+          <MessageBar
+            messageBarType={MessageBarType.error}
+            isMultiline={true}
+            onDismiss={() => setFileRejectionErrors([])}
+            dismissButtonAriaLabel="Close"
+            styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4" } }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "left" }}>
+              {fileRejectionErrors.map((err, idx) => (
+                <span key={idx} style={{ marginBottom: "4px" }}>{err}</span>
+              ))}
+            </div>
+          </MessageBar>
+        )}
         {/* Show network error message bar if any file has error */}
         {uploadingFiles.some(f => f.status === 'error') && (
           <MessageBar
