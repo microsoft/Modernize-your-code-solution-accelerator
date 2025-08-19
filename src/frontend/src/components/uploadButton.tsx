@@ -521,12 +521,35 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
-        {allUploadsComplete && (
+        {/* Show network error message bar if any file has error */}
+        {uploadingFiles.some(f => f.status === 'error') && (
+          <MessageBar
+            messageBarType={MessageBarType.error}
+            isMultiline={false}
+            styles={{
+              root: { display: "flex", alignItems: "left", background: "#fff4f4" },
+              icon: { display: "none" },
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "left" }}>
+              <X
+                strokeWidth="2.5px"
+                color="#d83b01"
+                size="16px"
+                style={{ marginRight: "8px" }}
+              />
+              <span>Unable to connect to the server. Please try again later.</span>
+            </div>
+          </MessageBar>
+        )}
+
+        {/* Success message bar if all uploads complete and no errors */}
+        {allUploadsComplete && !uploadingFiles.some(f => f.status === 'error') && (
           <MessageBar
             messageBarType={MessageBarType.success}
             isMultiline={false}
             styles={{
-              root: { display: "flex", alignItems: "left" }, // Align the icon and text
+              root: { display: "flex", alignItems: "left" },
               icon: { display: "none" },
             }}
           >
@@ -534,7 +557,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
               <CircleCheck
                 strokeWidth="2.5px"
                 color="#37a04c"
-                size="16px" // Slightly larger for better balance
+                size="16px"
                 style={{ marginRight: "8px" }}
               />
               <span>All valid files uploaded successfully!</span>
@@ -584,6 +607,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 backgroundColor: 'white',
                 borderRadius: '4px',
                 border: '1px solid #eee',
+                position: 'relative'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', width: '24px' }}>
@@ -634,7 +658,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                     background: 'none',
                     cursor: 'pointer',
                     padding: '4px',
-                    color: '#666',
+                    color: file.status === 'error' ? '#d83b01' : '#666',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
