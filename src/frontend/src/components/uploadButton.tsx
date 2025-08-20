@@ -40,7 +40,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   onFileReject,
   onUploadStateChange,
   maxSize = 200 * 1024 * 1024,
-  acceptedFileTypes = { 'application/sql': ['.sql'] },
+  acceptedFileTypes = ['.sql'], // Accept only .sql files
   selectedCurrentLanguage,
   selectedTargetLanguage
 }) => {
@@ -194,9 +194,9 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         fileRejections.forEach(rejection => {
           rejection.errors.forEach(err => {
             if (err.code === "file-too-large") {
-              errors.push(`File '${rejection.file.name}' exceeds the 200MB size limit.`);
+              errors.push(`File '${rejection.file.name}' exceeds the 200MB size limit. Please upload a file smaller than 200MB.`);
             } else if (err.code === "file-invalid-type") {
-              errors.push(`File '${rejection.file.name}' is not a valid SQL file.`);
+              errors.push(`File '${rejection.file.name}' is not a valid SQL file. Only .sql files are allowed.`);
             } else {
               errors.push(`File '${rejection.file.name}': ${err.message}`);
             }
@@ -213,7 +213,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     onDrop,
     noClick: true,
     maxSize,
-    accept: acceptedFileTypes,
+    accept: acceptedFileTypes, // Only .sql files
     //maxFiles: MAX_FILES,
   };
 
