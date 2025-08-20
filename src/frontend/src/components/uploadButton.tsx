@@ -362,6 +362,22 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   return (
     <div style={{ width: '100%', minWidth: '720px', maxWidth: '800px', margin: '0 auto', marginTop: '0', padding: '16px', paddingBottom: '60px' }}>
+      {/* Show file rejection errors for invalid type or size at the very top */}
+      {fileRejectionErrors.length > 0 && (
+        <MessageBar
+          messageBarType={MessageBarType.error}
+          isMultiline={true}
+          onDismiss={() => setFileRejectionErrors([])}
+          dismissButtonAriaLabel="Close"
+          styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4", marginBottom: "16px" } }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "left" }}>
+            {fileRejectionErrors.map((err, idx) => (
+              <span key={idx} style={{ marginBottom: "4px" }}>{err}</span>
+            ))}
+          </div>
+        </MessageBar>
+      )}
       <ConfirmationDialog
         open={showCancelDialog}
         setOpen={setShowCancelDialog}
