@@ -82,24 +82,25 @@ param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags =
 param enableTelemetry bool = true
 
 @minLength(1)
-@description('GPT model deployment type:')
+@description('Optional. GPT model deployment type:')
 param deploymentType string = 'GlobalStandard'
 
 @minLength(1)
-@description('Name of the GPT model to deploy:')
+@description('Optional. Name of the GPT model to deploy:')
 param llmModel string = 'gpt-4o'
 
 @minLength(1)
-@description('Set the Image tag:')
+@description('Optional. Set the Image tag:')
 param imageVersion string = 'latest'
 
 @minLength(1)
-@description('Version of the GPT model to deploy:')
+@description('Optional. Version of the GPT model to deploy:')
 param gptModelVersion string = '2024-08-06'
 
-@description('Use this parameter to use an existing AI project resource ID')
+@description('Optional. Use this parameter to use an existing AI project resource ID')
 param azureExistingAIProjectResourceId string = ''
 
+@description('Optional. Resource ID of an existing Log Analytics workspace to use for monitoring and diagnostics. If not provided, a new Log Analytics workspace will be created.')
 param existingLogAnalyticsWorkspaceId string = ''
 
 var solutionSuffix = toLower(trim(replace(

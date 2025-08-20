@@ -27,12 +27,12 @@ param solutionName string = 'codemode'
 @description('Optional. A unique token for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name.')
 param solutionUniqueToken string = substring(uniqueString(subscription().id, resourceGroup().name, solutionName), 0, 5)
 
-@description('Username to access the Jumpbox VM.')
+@description('Required. Username to access the Jumpbox VM.')
 param username string
 
 @secure()
-@description('Password to access the Jumpbox VM.')
-param password string 
+@description('Required. Password to access the Jumpbox VM.')
+param password string
 
 @description('Optional. Tags to apply to the resources.')
 param tags object = {}

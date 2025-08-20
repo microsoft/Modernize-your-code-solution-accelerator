@@ -1,20 +1,20 @@
 @minLength(6)
 @maxLength(25)
-@description('Name used for naming all network resources.')
+@description('Required. Name used for naming all network resources.')
 param resourcesName string
 
 @minLength(3)
-@description('Azure region for all services.')
+@description('Required. Azure region for all services.')
 param location string
 
-@description('Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
+@description('Required. Resource ID of the Log Analytics Workspace for monitoring and diagnostics.')
 param logAnalyticsWorkSpaceResourceId string
 
-@description('Networking address prefix for the VNET.')
+@description('Required. Networking address prefix for the VNET.')
 param addressPrefixes array
 
 import { subnetType } from 'virtualNetwork.bicep'
-@description('Array of subnets to be created within the VNET.')
+@description('Required. Array of subnets to be created within the VNET.')
 param subnets subnetType[]   
 
 import { jumpBoxConfigurationType } from 'jumpbox.bicep'
