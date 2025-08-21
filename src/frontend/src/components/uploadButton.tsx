@@ -547,18 +547,23 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
         {/* Show file rejection errors for invalid type or size */}
-        {fileRejectionErrors.length > 0 && (
+         {fileRejectionErrors.length > 0 && (
             <MessageBar
               messageBarType={MessageBarType.error}
               isMultiline={true}
-              styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4", width: "inherit" } }}
+              styles={{
+                root: { display: "flex", flexDirection: "column", alignItems: "left", background: "#fff4f4" },
+                icon: { display: "none" },
+              }}
             >
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "left" }}>
-              {fileRejectionErrors.map((err, idx) => (
-                <span key={idx} style={{ marginBottom: "4px" }}>{err}</span>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <X strokeWidth="2.5px" color="#d83b01" size="16px" style={{ marginRight: "8px" }} />
+                <span>{fileRejectionErrors[0]}</span>
+              </div>
+              {fileRejectionErrors.slice(1).map((err, idx) => (
+                <div key={idx} style={{ marginLeft: "24px", marginTop: "2px" }}>{err}</div>
               ))}
-            </div>
-          </MessageBar>
+            </MessageBar>
         )}
         {/* Show network error message bar if any file has error */}
         {uploadingFiles.some(f => f.status === 'error') && (
