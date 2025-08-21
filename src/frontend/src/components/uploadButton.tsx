@@ -40,7 +40,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   onFileReject,
   onUploadStateChange,
   maxSize = 200 * 1024 * 1024,
-  acceptedFileTypes = ['.sql'], // Accept only .sql files
+  acceptedFileTypes = ['.sql'], // Accept only .sql files by extension
   selectedCurrentLanguage,
   selectedTargetLanguage
 }) => {
@@ -163,34 +163,42 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      // Manual extension check: only allow .sql files
+      const validFiles = acceptedFiles.filter(file => file.name.toLowerCase().endsWith('.sql'));
+      const invalidFiles = acceptedFiles.filter(file => !file.name.toLowerCase().endsWith('.sql'));
+
       // Check current files count and determine how many more can be added
       const remainingSlots = MAX_FILES - uploadingFiles.length;
 
+
+      if (validFiles.length > 0) {
+        setFileRejectionErrors([]); // Clear error notification when valid file is selected
+      }
+
       if (remainingSlots <= 0) {
-        // Already at max files, show dialog
         setShowFileLimitDialog(true);
         return;
       }
 
       // If more files are dropped than slots available
-      if (acceptedFiles.length > remainingSlots) {
-        // Take only the first `remainingSlots` files
-        const filesToUpload = acceptedFiles.slice(0, remainingSlots);
+      if (validFiles.length > remainingSlots) {
+        const filesToUpload = validFiles.slice(0, remainingSlots);
         filesToUpload.forEach(file => simulateFileUpload(file));
-
         if (onFileUpload) onFileUpload(filesToUpload);
-
-        // Show dialog about exceeding limit
         setShowFileLimitDialog(true);
       } else {
-        // Normal case, upload all files
-        acceptedFiles.forEach(file => simulateFileUpload(file));
-        if (onFileUpload) onFileUpload(acceptedFiles);
+        validFiles.forEach(file => simulateFileUpload(file));
+        if (onFileUpload) onFileUpload(validFiles);
       }
 
+      // Build error messages for invalid extension files
+      const errors: string[] = [];
+      invalidFiles.forEach(file => {
+        errors.push(`File '${file.name}' is not a valid SQL file. Only .sql files are allowed.`);
+      });
+
+      // Existing fileRejections (size/type)
       if (fileRejections.length > 0) {
-        // Build error messages for each rejection
-        const errors: string[] = [];
         fileRejections.forEach(rejection => {
           rejection.errors.forEach(err => {
             if (err.code === "file-too-large") {
@@ -202,8 +210,10 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             }
           });
         });
-        setFileRejectionErrors(errors);
         if (onFileReject) onFileReject(fileRejections);
+      }
+      if (errors.length > 0) {
+        setFileRejectionErrors(errors);
       }
     },
     [onFileUpload, onFileReject, uploadingFiles.length]
@@ -213,7 +223,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     onDrop,
     noClick: true,
     maxSize,
-    accept: acceptedFileTypes, // Only .sql files
+    accept: acceptedFileTypes, // Only .sql files regardless of mime type
     //maxFiles: MAX_FILES,
   };
 
@@ -362,22 +372,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   return (
     <div style={{ width: '100%', minWidth: '720px', maxWidth: '800px', margin: '0 auto', marginTop: '0', padding: '16px', paddingBottom: '60px' }}>
-      {/* Show file rejection errors for invalid type or size at the very top */}
-      {fileRejectionErrors.length > 0 && (
-        <MessageBar
-          messageBarType={MessageBarType.error}
-          isMultiline={true}
-          onDismiss={() => setFileRejectionErrors([])}
-          dismissButtonAriaLabel="Close"
-          styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4", marginBottom: "16px" } }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "left" }}>
-            {fileRejectionErrors.map((err, idx) => (
-              <span key={idx} style={{ marginBottom: "4px" }}>{err}</span>
-            ))}
-          </div>
-        </MessageBar>
-      )}
       <ConfirmationDialog
         open={showCancelDialog}
         setOpen={setShowCancelDialog}
@@ -554,13 +548,11 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
         {/* Show file rejection errors for invalid type or size */}
         {fileRejectionErrors.length > 0 && (
-          <MessageBar
-            messageBarType={MessageBarType.error}
-            isMultiline={true}
-            onDismiss={() => setFileRejectionErrors([])}
-            dismissButtonAriaLabel="Close"
-            styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4" } }}
-          >
+            <MessageBar
+              messageBarType={MessageBarType.error}
+              isMultiline={true}
+              styles={{ root: { display: "flex", alignItems: "left", background: "#fff4f4", width: "inherit" } }}
+            >
             <div style={{ display: "flex", flexDirection: "column", alignItems: "left" }}>
               {fileRejectionErrors.map((err, idx) => (
                 <span key={idx} style={{ marginBottom: "4px" }}>{err}</span>
