@@ -40,7 +40,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   onFileReject,
   onUploadStateChange,
   maxSize = 200 * 1024 * 1024,
-  acceptedFileTypes = ['.sql'], // Accept only .sql files by extension
+  acceptedFileTypes = { 'application/sql': ['.sql'] }, // Accept only .sql files by extension
   selectedCurrentLanguage,
   selectedTargetLanguage
 }) => {
@@ -255,18 +255,19 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   };
 
   const cancelAllUploads = useCallback(() => {
-    // Clear all upload intervals
-    dispatch(deleteBatch({ batchId, headers: null }));
+  // Clear all upload intervals
+  dispatch(deleteBatch({ batchId, headers: null }));
 
-    Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
-    setUploadIntervals({});
-    setUploadingFiles([]);
-    setUploadState('IDLE');
-    onUploadStateChange?.('IDLE');
-    setShowCancelDialog(false);
-    setShowLogoCancelDialog(false);
-    //setBatchId();
-    startNewBatch();
+  Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
+  setUploadIntervals({});
+  setUploadingFiles([]);
+  setUploadState('IDLE');
+  onUploadStateChange?.('IDLE');
+  setShowCancelDialog(false);
+  setShowLogoCancelDialog(false);
+  setFileRejectionErrors([]); // Clear error notification when cancel is clicked
+  //setBatchId();
+  startNewBatch();
   }, [uploadIntervals, onUploadStateChange]);
 
   useEffect(() => {
