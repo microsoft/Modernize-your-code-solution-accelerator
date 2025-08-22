@@ -23,6 +23,7 @@ app.add_middleware(
 BUILD_DIR = os.path.join(os.path.dirname(__file__), "dist")
 INDEX_HTML = os.path.join(BUILD_DIR, "index.html")
 
+
 # Serve static files from build directory
 app.mount(
     "/assets", StaticFiles(directory=os.path.join(BUILD_DIR, "assets")), name="assets"
@@ -57,11 +58,13 @@ async def get_config():
 
 @app.get("/{full_path:path}")
 async def serve_app(full_path: str):
-    # First check if file exists in build directory
-    file_path = os.path.join(BUILD_DIR, full_path)
-    if os.path.exists(file_path):
+    # Remediation: normalize and check containment before serving
+    file_path = os.path.normpath(os.path.join(BUILD_DIR, full_path))
+    # Block traversal and dotfiles
+    if not file_path.startswith(BUILD_DIR) or ".." in full_path or "/." in full_path or "\\." in full_path:
+        return FileResponse(INDEX_HTML)
+    if os.path.isfile(file_path):
         return FileResponse(file_path)
-    # Otherwise serve index.html for client-side routing
     return FileResponse(INDEX_HTML)
 
 
