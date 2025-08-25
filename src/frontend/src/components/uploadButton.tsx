@@ -1,4 +1,12 @@
 import React, { useCallback, useState, useEffect } from 'react';
+// Helper function to check for .sql extension
+const isSqlFile = (file: File): boolean => file.name.toLowerCase().endsWith('.sql');
+
+// MessageBar styles constant
+const messageBarErrorStyles = {
+  root: { display: "flex", flexDirection: "column", alignItems: "left", background: "#fff4f4" },
+  icon: { display: "none" },
+};
 import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
 import { CircleCheck, X } from 'lucide-react';
 import {
@@ -163,13 +171,12 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
-      // Manual extension check: only allow .sql files
-      const validFiles = acceptedFiles.filter(file => file.name.toLowerCase().endsWith('.sql'));
-      const invalidFiles = acceptedFiles.filter(file => !file.name.toLowerCase().endsWith('.sql'));
+      // Use helper for .sql extension check
+      const validFiles = acceptedFiles.filter(isSqlFile);
+      const invalidFiles = acceptedFiles.filter(file => !isSqlFile(file));
 
       // Check current files count and determine how many more can be added
       const remainingSlots = MAX_FILES - uploadingFiles.length;
-
 
       if (validFiles.length > 0) {
         setFileRejectionErrors([]); // Clear error notification when valid file is selected
@@ -191,26 +198,26 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         if (onFileUpload) onFileUpload(validFiles);
       }
 
-      // Build error messages for invalid extension files
-      const errors: string[] = [];
-      invalidFiles.forEach(file => {
-        errors.push(`File '${file.name}' is not a valid SQL file. Only .sql files are allowed.`);
-      });
-
-      // Existing fileRejections (size/type)
-      if (fileRejections.length > 0) {
-        fileRejections.forEach(rejection => {
-          rejection.errors.forEach(err => {
+      // Efficient error array construction
+      const errors: string[] = [
+        ...invalidFiles.map(file =>
+          `File '${file.name}' is not a valid SQL file. Only .sql files are allowed.`
+        ),
+        ...fileRejections.flatMap(rejection =>
+          rejection.errors.map(err => {
             if (err.code === "file-too-large") {
-              errors.push(`File '${rejection.file.name}' exceeds the 200MB size limit. Please upload a file smaller than 200MB.`);
+              return `File '${rejection.file.name}' exceeds the 200MB size limit. Please upload a file smaller than 200MB.`;
             } else if (err.code === "file-invalid-type") {
-              errors.push(`File '${rejection.file.name}' is not a valid SQL file. Only .sql files are allowed.`);
+              return `File '${rejection.file.name}' is not a valid SQL file. Only .sql files are allowed.`;
             } else {
-              errors.push(`File '${rejection.file.name}': ${err.message}`);
+              return `File '${rejection.file.name}': ${err.message}`;
             }
-          });
-        });
-        if (onFileReject) onFileReject(fileRejections);
+          })
+        )
+      ];
+
+      if (fileRejections.length > 0 && onFileReject) {
+        onFileReject(fileRejections);
       }
       if (errors.length > 0) {
         setFileRejectionErrors(errors);
@@ -552,10 +559,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             <MessageBar
               messageBarType={MessageBarType.error}
               isMultiline={true}
-              styles={{
-                root: { display: "flex", flexDirection: "column", alignItems: "left", background: "#fff4f4" },
-                icon: { display: "none" },
-              }}
+              styles={messageBarErrorStyles}
             >
               <div style={{ display: "flex", alignItems: "center" }}>
                 <X strokeWidth="2.5px" color="#d83b01" size="16px" style={{ marginRight: "8px" }} />
