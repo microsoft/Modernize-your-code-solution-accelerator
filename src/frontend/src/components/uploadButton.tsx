@@ -5,10 +5,7 @@ const messageBarErrorStyles = {
   icon: { display: "none" },
 };
 
-const messageBarNetworkErrorStyles = {
-  root: { display: "flex", alignItems: "left", background: "#fff4f4" },
-  icon: { display: "none" },
-};
+
 
 const messageBarSuccessStyles = {
   root: { display: "flex", alignItems: "left" },
@@ -590,7 +587,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           <MessageBar
             messageBarType={MessageBarType.error}
             isMultiline={false}
-            styles={messageBarNetworkErrorStyles}
+            styles={messageBarErrorStyles}
           >
             <div style={{ display: "flex", alignItems: "left" }}>
               <X
