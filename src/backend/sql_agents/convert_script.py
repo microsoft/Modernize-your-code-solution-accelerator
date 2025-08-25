@@ -120,9 +120,18 @@ async def convert_script(
                                         )
                                     )
                             case AgentType.PICKER.value:
-                                result = PickerResponse.model_validate_json(
-                                    response.content or ""
-                                )
+                                try:
+                                    result = PickerResponse.model_validate_json(
+                                        response.content or ""
+                                    )
+                                except Exception as picker_exc:
+                                    logger.error("Picker agent returned invalid response: %s", picker_exc)
+                                    # Fallback to a valid PickerResponse with default values
+                                    result = PickerResponse(
+                                        conclusion="No valid candidate could be selected. The agent did not return a proper response.",
+                                        picked_query="",
+                                        summary="Picker agent encountered an error and could not select a query."
+                                    )
                                 current_migration = result.picked_query
                             case AgentType.FIXER.value:
                                 result = FixerResponse.model_validate_json(
@@ -133,9 +142,18 @@ async def convert_script(
                                 logger.info(
                                     "Semantic verifier agent response: %s", response.content
                                 )
-                                result = SemanticVerifierResponse.model_validate_json(
-                                    response.content or ""
-                                )
+                                try:
+                                    result = SemanticVerifierResponse.model_validate_json(
+                                        response.content or ""
+                                    )
+                                except Exception as verifier_exc:
+                                    logger.error("Semantic Verifier agent returned invalid response: %s", verifier_exc)
+                                    # Fallback to a valid SemanticVerifierResponse with default values
+                                    result = SemanticVerifierResponse(
+                                        judgement="Semantic verifier agent failed to return a valid response.",
+                                        differences=[],
+                                        summary="No summary available."
+                                    )
 
                                 # If the semantic verifier agent returns a difference, we need to report it
                                 if len(result.differences) > 0:
