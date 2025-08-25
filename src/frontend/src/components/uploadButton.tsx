@@ -1,12 +1,27 @@
 import React, { useCallback, useState, useEffect } from 'react';
-// Helper function to check for .sql extension
-const isSqlFile = (file: File): boolean => file.name.toLowerCase().endsWith('.sql');
-
-// MessageBar styles constant
+// MessageBar styles constants
 const messageBarErrorStyles = {
   root: { display: "flex", flexDirection: "column", alignItems: "left", background: "#fff4f4" },
   icon: { display: "none" },
 };
+
+const messageBarNetworkErrorStyles = {
+  root: { display: "flex", alignItems: "left", background: "#fff4f4" },
+  icon: { display: "none" },
+};
+
+const messageBarSuccessStyles = {
+  root: { display: "flex", alignItems: "left" },
+  icon: { display: "none" },
+};
+
+const messageBarWarningStyles = {
+  root: { display: "flex", alignItems: "center" },
+};
+// Helper function to check for .sql extension
+const isSqlFile = (file: File): boolean => file.name.toLowerCase().endsWith('.sql');
+
+// ...existing code...
 import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
 import { CircleCheck, X } from 'lucide-react';
 import {
@@ -575,10 +590,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           <MessageBar
             messageBarType={MessageBarType.error}
             isMultiline={false}
-            styles={{
-              root: { display: "flex", alignItems: "left", background: "#fff4f4" },
-              icon: { display: "none" },
-            }}
+            styles={messageBarNetworkErrorStyles}
           >
             <div style={{ display: "flex", alignItems: "left" }}>
               <X
@@ -597,10 +609,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           <MessageBar
             messageBarType={MessageBarType.success}
             isMultiline={false}
-            styles={{
-              root: { display: "flex", alignItems: "left" },
-              icon: { display: "none" },
-            }}
+            styles={messageBarSuccessStyles}
           >
             <div style={{ display: "flex", alignItems: "left" }}>
               <CircleCheck
@@ -620,9 +629,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             isMultiline={false}
             onDismiss={() => setFileLimitExceeded(false)}
             dismissButtonAriaLabel="Close"
-            styles={{
-              root: { display: "flex", alignItems: "center" },
-            }}
+            styles={messageBarWarningStyles}
           >
             <X
               strokeWidth="2.5px"
