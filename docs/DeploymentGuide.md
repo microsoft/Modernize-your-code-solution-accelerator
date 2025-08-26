@@ -213,6 +213,9 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
 
+### 🛠️ Troubleshooting
+ If you encounter any issues during the deployment process, please refer [troubleshooting](../docs/TroubleShootingSteps.md) document for detailed steps and solutions.
+
 <h2>
 Additional Steps
 </h2>
