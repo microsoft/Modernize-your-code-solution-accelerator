@@ -1,4 +1,24 @@
 import React, { useCallback, useState, useEffect } from 'react';
+// MessageBar styles constants
+const messageBarErrorStyles = {
+  root: { display: "flex", flexDirection: "column", alignItems: "left", background: "#fff4f4" },
+  icon: { display: "none" },
+};
+
+
+
+const messageBarSuccessStyles = {
+  root: { display: "flex", alignItems: "left" },
+  icon: { display: "none" },
+};
+
+const messageBarWarningStyles = {
+  root: { display: "flex", alignItems: "center" },
+};
+// Helper function to check for .sql extension
+const isSqlFile = (file: File): boolean => file.name.toLowerCase().endsWith('.sql');
+
+// ...existing code...
 import { useDropzone, FileRejection, DropzoneOptions } from 'react-dropzone';
 import { CircleCheck, X } from 'lucide-react';
 import {
@@ -40,7 +60,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   onFileReject,
   onUploadStateChange,
   maxSize = 200 * 1024 * 1024,
-  acceptedFileTypes = { 'application/sql': ['.sql'] },
+  acceptedFileTypes = { 'application/sql': ['.sql'] }, // Accept only .sql files by extension
   selectedCurrentLanguage,
   selectedTargetLanguage
 }) => {
@@ -52,6 +72,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const [batchId, setBatchId] = useState<string>(uuidv4());
   const [allUploadsComplete, setAllUploadsComplete] = useState(false);
   const [fileLimitExceeded, setFileLimitExceeded] = useState(false);
+  const [fileRejectionErrors, setFileRejectionErrors] = useState<string[]>([]);
   const [showFileLimitDialog, setShowFileLimitDialog] = useState(false);
   const navigate = useNavigate();
 
@@ -162,33 +183,56 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
 
   const onDrop = useCallback(
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
+      // Use helper for .sql extension check
+      const validFiles = acceptedFiles.filter(isSqlFile);
+      const invalidFiles = acceptedFiles.filter(file => !isSqlFile(file));
+
       // Check current files count and determine how many more can be added
       const remainingSlots = MAX_FILES - uploadingFiles.length;
 
+      if (validFiles.length > 0) {
+        setFileRejectionErrors([]); // Clear error notification when valid file is selected
+      }
+
       if (remainingSlots <= 0) {
-        // Already at max files, show dialog
         setShowFileLimitDialog(true);
         return;
       }
 
       // If more files are dropped than slots available
-      if (acceptedFiles.length > remainingSlots) {
-        // Take only the first `remainingSlots` files
-        const filesToUpload = acceptedFiles.slice(0, remainingSlots);
+      if (validFiles.length > remainingSlots) {
+        const filesToUpload = validFiles.slice(0, remainingSlots);
         filesToUpload.forEach(file => simulateFileUpload(file));
-
         if (onFileUpload) onFileUpload(filesToUpload);
-
-        // Show dialog about exceeding limit
         setShowFileLimitDialog(true);
       } else {
-        // Normal case, upload all files
-        acceptedFiles.forEach(file => simulateFileUpload(file));
-        if (onFileUpload) onFileUpload(acceptedFiles);
+        validFiles.forEach(file => simulateFileUpload(file));
+        if (onFileUpload) onFileUpload(validFiles);
       }
 
-      if (onFileReject && fileRejections.length > 0) {
+      // Efficient error array construction
+      const errors: string[] = [
+        ...invalidFiles.map(file =>
+          `File '${file.name}' is not a valid SQL file. Only .sql files are allowed.`
+        ),
+        ...fileRejections.flatMap(rejection =>
+          rejection.errors.map(err => {
+            if (err.code === "file-too-large") {
+              return `File '${rejection.file.name}' exceeds the 200MB size limit. Please upload a file smaller than 200MB.`;
+            } else if (err.code === "file-invalid-type") {
+              return `File '${rejection.file.name}' is not a valid SQL file. Only .sql files are allowed.`;
+            } else {
+              return `File '${rejection.file.name}': ${err.message}`;
+            }
+          })
+        )
+      ];
+
+      if (fileRejections.length > 0 && onFileReject) {
         onFileReject(fileRejections);
+      }
+      if (errors.length > 0) {
+        setFileRejectionErrors(errors);
       }
     },
     [onFileUpload, onFileReject, uploadingFiles.length]
@@ -198,7 +242,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     onDrop,
     noClick: true,
     maxSize,
-    accept: acceptedFileTypes,
+    accept: acceptedFileTypes, // Only .sql files regardless of mime type
     //maxFiles: MAX_FILES,
   };
 
@@ -230,18 +274,19 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   };
 
   const cancelAllUploads = useCallback(() => {
-    // Clear all upload intervals
-    dispatch(deleteBatch({ batchId, headers: null }));
+  // Clear all upload intervals
+  dispatch(deleteBatch({ batchId, headers: null }));
 
-    Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
-    setUploadIntervals({});
-    setUploadingFiles([]);
-    setUploadState('IDLE');
-    onUploadStateChange?.('IDLE');
-    setShowCancelDialog(false);
-    setShowLogoCancelDialog(false);
-    //setBatchId();
-    startNewBatch();
+  Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
+  setUploadIntervals({});
+  setUploadingFiles([]);
+  setUploadState('IDLE');
+  onUploadStateChange?.('IDLE');
+  setShowCancelDialog(false);
+  setShowLogoCancelDialog(false);
+  setFileRejectionErrors([]); // Clear error notification when cancel is clicked
+  //setBatchId();
+  startNewBatch();
   }, [uploadIntervals, onUploadStateChange]);
 
   useEffect(() => {
@@ -521,15 +566,28 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
+        {/* Show file rejection errors for invalid type or size */}
+         {fileRejectionErrors.length > 0 && (
+            <MessageBar
+              messageBarType={MessageBarType.error}
+              isMultiline={true}
+              styles={messageBarErrorStyles}
+            >
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <X strokeWidth="2.5px" color="#d83b01" size="16px" style={{ marginRight: "8px" }} />
+                <span>{fileRejectionErrors[0]}</span>
+              </div>
+              {fileRejectionErrors.slice(1).map((err, idx) => (
+                <div key={idx} style={{ marginLeft: "24px", marginTop: "2px" }}>{err}</div>
+              ))}
+            </MessageBar>
+        )}
         {/* Show network error message bar if any file has error */}
         {uploadingFiles.some(f => f.status === 'error') && (
           <MessageBar
             messageBarType={MessageBarType.error}
             isMultiline={false}
-            styles={{
-              root: { display: "flex", alignItems: "left", background: "#fff4f4" },
-              icon: { display: "none" },
-            }}
+            styles={messageBarErrorStyles}
           >
             <div style={{ display: "flex", alignItems: "left" }}>
               <X
@@ -548,10 +606,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
           <MessageBar
             messageBarType={MessageBarType.success}
             isMultiline={false}
-            styles={{
-              root: { display: "flex", alignItems: "left" },
-              icon: { display: "none" },
-            }}
+            styles={messageBarSuccessStyles}
           >
             <div style={{ display: "flex", alignItems: "left" }}>
               <CircleCheck
@@ -571,9 +626,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
             isMultiline={false}
             onDismiss={() => setFileLimitExceeded(false)}
             dismissButtonAriaLabel="Close"
-            styles={{
-              root: { display: "flex", alignItems: "center" },
-            }}
+            styles={messageBarWarningStyles}
           >
             <X
               strokeWidth="2.5px"
