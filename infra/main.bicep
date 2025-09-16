@@ -145,7 +145,6 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
       ...allTags
       TemplateName: 'Code Modernization'
       CreatedBy: createdBy
-
     }
   }
 }
