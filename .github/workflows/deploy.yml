@@ -137,14 +137,6 @@ jobs:
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" 
-      - name: Assign Contributor role to Service Principal
-        if: always()
-        run: |
-          echo "Assigning Contributor role to SPN for RG: ${{ env.RESOURCE_GROUP_NAME }}"
-          az role assignment create \
-            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
-            --role "Contributor" \
-            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
 
       - name: Get Deployment Output and extract Values
         id: get_output
