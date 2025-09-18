@@ -165,14 +165,19 @@ jobs:
           echo "Fetching deployment output..."
           BICEP_OUTPUT=$(az deployment group show --name ${{ env.SOLUTION_PREFIX }}-deployment --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "properties.outputs" -o json)
           echo "Extracting deployment output..."
-          WEBAPP_URL=$(echo "$BICEP_OUTPUT" | jq -r '.WEB_APP_URL.value')
+          echo "Available output keys:" 
+          echo "$BICEP_OUTPUT" | jq -r 'keys | join(", ")'
+          # Case-insensitive lookup for WEB_APP_URL because deployment outputs returned inconsistent casing previously
+          WEBAPP_URL=$(echo "$BICEP_OUTPUT" | jq -r 'to_entries | map(select((.key|ascii_upcase)=="WEB_APP_URL")) | .[0].value.value // empty')
           if [ -z "$WEBAPP_URL" ] || [ "$WEBAPP_URL" = "null" ]; then
-            echo "WEB_APP_URL not found in deployment outputs" >&2
-            echo "Full outputs: $BICEP_OUTPUT" >&2
+            echo "WEB_APP_URL not found in deployment outputs (case-insensitive scan)" >&2
+            echo "Full outputs JSON follows for troubleshooting:" >&2
+            echo "$BICEP_OUTPUT" >&2
             exit 1
           fi
+          echo "Resolved WEBAPP_URL: $WEBAPP_URL"
           echo "WEBAPP_URL=$WEBAPP_URL" >> $GITHUB_OUTPUT
-          echo "Deployment output (truncated for log clarity):" 
+          echo "Deployment outputs (truncated):" 
           echo "$BICEP_OUTPUT" | head -c 2000
 
       - name: Logout from Azure
