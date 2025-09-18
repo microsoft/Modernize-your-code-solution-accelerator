@@ -4,6 +4,7 @@ on:
     push:
         branches:
             - main
+            - vee-pipeline-fixes
 permissions: 
   contents: read 
   id-token: write 
@@ -31,4 +32,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
       # Step 3: Print the result of the validation 
       - name: Print result 
-        run: cat ${{ steps.validation.outputs.resultFile }} 
+        run: cat ${{ steps.validation.outputs.resultFile }}
