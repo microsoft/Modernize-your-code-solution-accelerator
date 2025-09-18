@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     environment: validation
     name: Template validation
+    env:
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -37,28 +39,32 @@ jobs:
       - name: Ensure Bicep CLI installed
         run: |
           az bicep install || true
-          echo "Bicep version:"; az bicep version || echo "Bicep not available" >&2
-
-      - name: Azure Login (OIDC)
+      - name: Azure Login (Service Principal Client Secret)
+        if: ${{ env.AZURE_CLIENT_SECRET != '' }}
+        run: |
+          echo "Using service principal client secret authentication path." 
+          az login --service-principal \
+            -u ${{ secrets.AZURE_CLIENT_ID }} \
+            -p ${{ secrets.AZURE_CLIENT_SECRET }} \
+            --tenant ${{ secrets.AZURE_TENANT_ID }}
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            --tenant ${{ secrets.AZURE_TENANT_ID }}
+      - name: Azure Login (OIDC) (no client secret present)
+        if: ${{ env.AZURE_CLIENT_SECRET == '' }}
         uses: azure/login@v1
         with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            client-id: ${{ secrets.AZURE_CLIENT_ID }}
+            tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+            subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        continue-on-error: false
 
-      - name: Fallback Azure Login (Client Secret)
-        if: failure()
-        env:
-          HAS_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET != '' }}
+      - name: Auth Mode Announcement
         run: |
-          if [ "${HAS_CLIENT_SECRET}" != "true" ]; then
-            echo "OIDC login failed and no client secret available for fallback." >&2
-            exit 1
+          if [ -n "${{ secrets.AZURE_CLIENT_SECRET }}" ]; then
+            echo "Auth mode: client secret (SP). OIDC skipped."
+          else
+            echo "Auth mode: OIDC (no client secret set). Ensure federated credential exists for environment 'validation'."
           fi
-          echo "OIDC login failed; attempting client secret login fallback." >&2
-          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} || {
-            echo "Client secret fallback login also failed." >&2; exit 1; }
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} || true
 
       - name: Post-login diagnostics
         if: always()
