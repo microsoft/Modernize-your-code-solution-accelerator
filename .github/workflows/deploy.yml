@@ -24,7 +24,7 @@ jobs:
       SELECTED_AI_REGION: ${{ steps.deploy.outputs.selected_ai_region || env.VALID_REGION }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Azure CLI
         run: |
@@ -38,33 +38,19 @@ jobs:
       - name: Run Quota Check
         id: quota-check
         run: |
-          set -e
           export AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}
           export AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
-            export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
+          export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
           export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
           export GPT_MIN_CAPACITY="${{ env.GPT_MIN_CAPACITY }}"
           export AZURE_REGIONS="${{ vars.AZURE_REGIONS }}"
           chmod +x scripts/checkquota.sh
-          echo "Running quota script..."
-          # Capture stdout & stderr
-          if ! bash -c './scripts/checkquota.sh' | tee quota.out; then
-            echo "Quota script exited non-zero." >&2
-          fi
-          echo "--- Quota Script Output (truncated) ---"
-          head -100 quota.out || true
-          # Parse VALID_REGION if present
-          REGION_LINE=$(grep -E '^VALID_REGION=' quota.out || true)
-          if [ -n "$REGION_LINE" ]; then
-            echo "$REGION_LINE" >> $GITHUB_ENV
-            echo "Captured $REGION_LINE"
-          fi
-          if grep -qi 'No region with sufficient quota found' quota.out; then
-            echo "QUOTA_FAILED=true" >> $GITHUB_ENV
-            echo "Quota failure detected: no region with sufficient quota." >&2
-          fi
-          if ! grep -q '^VALID_REGION=' quota.out; then
-            echo "WARNING: VALID_REGION not found; will fallback later." >&2
+          if ! scripts/checkquota.sh; then
+            # If quota check fails due to insufficient quota, set the flag
+            if grep -q "No region with sufficient quota found" scripts/checkquota.sh; then
+              echo "QUOTA_FAILED=true" >> $GITHUB_ENV
+            fi
+            exit 1  # Fail the pipeline if any other failure occurs
           fi
 
       - name: Send Notification on Quota Failure
@@ -89,13 +75,7 @@ jobs:
       - name: Install Bicep CLI
         run: az bicep install
 
-      - name: Install jq
-        run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            sudo apt-get update -y
-            sudo apt-get install -y jq
-          fi
-          jq --version
+      # reverted: jq explicit installation step removed
 
       - name: Generate Resource Group Name
         id: generate_rg_name
@@ -168,35 +148,26 @@ jobs:
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" 
-      - name: Assign Contributor role to Service Principal (Idempotent)
+      - name: Assign Contributor role to Service Principal
         if: always()
         run: |
-          scope=/subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
-          echo "Ensuring Contributor role on scope: $scope"
-          existing=$(az role assignment list --assignee ${{ secrets.AZURE_CLIENT_ID }} --scope "$scope" --query '[0].id' -o tsv || true)
-          if [ -n "$existing" ]; then
-            echo "Role assignment already exists: $existing"
-          else
-            az role assignment create --assignee ${{ secrets.AZURE_CLIENT_ID }} --role "Contributor" --scope "$scope" || echo "Non-fatal: role assignment create failed (possibly permission or propagation delay)."
-          fi
+          echo "Assigning Contributor role to SPN for RG: ${{ env.RESOURCE_GROUP_NAME }}"
+          az role assignment create \
+            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
+            --role "Contributor" \
+            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
 
 
       - name: Get Deployment Output and extract Values
         id: get_output
         run: |
           set -e
-          echo "Fetching deployment outputs..."
+          echo "Fetching deployment output..."
           BICEP_OUTPUT=$(az deployment group show --name ${{ env.SOLUTION_PREFIX }}-deployment --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "properties.outputs" -o json)
-          echo "Raw outputs JSON length: $(echo "$BICEP_OUTPUT" | wc -c)"
-          # Correct output key is WEB_APP_URL (verified in infra/main.bicep)
-          WEBAPP_URL=$(echo "$BICEP_OUTPUT" | jq -r '.WEB_APP_URL.value // empty')
-          if [ -z "$WEBAPP_URL" ]; then
-            echo "::error::WEB_APP_URL output missing or empty. Full outputs below:" >&2
-            echo "$BICEP_OUTPUT" >&2
-            exit 1
-          fi
+          echo "Extracting deployment output..."
+          WEBAPP_URL=$(echo $BICEP_OUTPUT | jq -r '.weB_APP_URL.value')
           echo "WEBAPP_URL=$WEBAPP_URL" >> $GITHUB_OUTPUT
-          echo "Resolved WEB_APP_URL: $WEBAPP_URL"
+          echo "Deployment output: $BICEP_OUTPUT"
 
       - name: Logout from Azure
         if: always()
