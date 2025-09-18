@@ -120,6 +120,8 @@ jobs:
             IMAGE_TAG="dev"
           elif [[ "${{ env.BRANCH_NAME }}" == "demo" ]]; then
             IMAGE_TAG="demo"
+          elif [[ "${{ env.BRANCH_NAME }}" == "vee-pipeline-fixes" ]]; then
+            IMAGE_TAG="vee-pipeline-fixes"
           else
             IMAGE_TAG="latest"
           fi
@@ -194,7 +196,7 @@ jobs:
           echo "Fetching Log Analytics workspace from resource group ${{ env.RESOURCE_GROUP_NAME }}..."
           
           # Run the az monitor log-analytics workspace list command to get the workspace name
-          log_analytics_workspace_name=$(az monitor log-analytics workspace list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[0].name" -o tsv)
+          log_analytics_workspace_name=$(az monitor.log-analytics.workspace list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[0].name" -o tsv)
       
           if [ -z "$log_analytics_workspace_name" ]; then
             echo "No Log Analytics workspace found in resource group ${{ env.RESOURCE_GROUP_NAME }}."

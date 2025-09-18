@@ -59,6 +59,8 @@ jobs:
           echo "tagname=demo" >> $GITHUB_OUTPUT
         elif [[ "${{ github.ref_name }}" == "hotfix" ]]; then
           echo "tagname=hotfix" >> $GITHUB_OUTPUT
+        elif [[ "${{ github.ref_name }}" == "vee-pipeline-fixes" ]]; then
+          echo "tagname=vee-pipeline-fixes" >> $GITHUB_OUTPUT
         else
           echo "tagname=default" >> $GITHUB_OUTPUT
         fi
