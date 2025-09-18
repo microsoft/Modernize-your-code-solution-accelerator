@@ -21,13 +21,12 @@ jobs:
       - name: Pre-flight secret check
         id: secret_check
         run: |
+          # GitHub Actions expressions are evaluated before the shell loop runs, so we cannot
+          # index into secrets dynamically like secrets[format('{0}', var)]. Instead, check each explicitly.
           missing=0
-          for var in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [ -z "${{ secrets[format('{0}', var)] }}" ]; then
-              echo "::error::Required secret $var is missing." >&2
-              missing=1
-            fi
-          done
+          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then echo "::error::Required secret AZURE_CLIENT_ID is missing." >&2; missing=1; fi
+          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then echo "::error::Required secret AZURE_TENANT_ID is missing." >&2; missing=1; fi
+          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then echo "::error::Required secret AZURE_SUBSCRIPTION_ID is missing." >&2; missing=1; fi
           if [ "$missing" -eq 1 ]; then
             echo "Missing required secrets. Failing early." >&2
             exit 1
