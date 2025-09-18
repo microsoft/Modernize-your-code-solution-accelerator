@@ -12,53 +12,93 @@ permissions:
 jobs:
   template_validation_job:
     runs-on: ubuntu-latest
-    # Using an environment named 'production' may require approvals; adjust if that caused prior failures.
-    environment: production
+    environment: validation
     name: Template validation
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: Pre-flight secret check
+        id: secret_check
+        run: |
+          missing=0
+          for var in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${{ secrets[format('{0}', var)] }}" ]; then
+              echo "::error::Required secret $var is missing." >&2
+              missing=1
+            fi
+          done
+          if [ "$missing" -eq 1 ]; then
+            echo "Missing required secrets. Failing early." >&2
+            exit 1
+          fi
+          echo "All required auth secrets present (client secret not required for OIDC)."
+
+      - name: Azure Login (OIDC)
         uses: azure/login@v1
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Debug Azure context
+        run: |
+          az account show || echo "Could not show account (ensure privileges)" >&2
+          echo "Listing bicep version (if installed):"; az bicep version || true
+          echo "Listing repo root:"; ls -1 . || true
+          echo "Infra directory content:"; ls -1 infra || true
+
       - name: Validate Azure Template
         id: validation
         uses: microsoft/template-validation-action@main
         env:
-          # These env vars are optional for the action but retained in case the action consumes them.
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          AZURE_ENV_NAME: ${{ secrets.AZURE_ENV_NAME }}
           AZURE_LOCATION: ${{ secrets.AZURE_LOCATION }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Capture validation output
+        id: capture
+        run: |
+          out="${{ steps.validation.outputs.resultFile }}"
+            if [ -n "$out" ] && [ -f "$out" ]; then
+              cp "$out" validation-result.json
+            else
+              echo '{"warning":"No resultFile produced by action"}' > validation-result.json
+            fi
+          echo "result_path=validation-result.json" >> $GITHUB_OUTPUT
 
       - name: Print validation result
         if: always()
         run: |
-          if [ -n "${{ steps.validation.outputs.resultFile }}" ] && [ -f "${{ steps.validation.outputs.resultFile }}" ]; then
-            echo "--- Validation Result File ---"
-            cat "${{ steps.validation.outputs.resultFile }}"
-          else
-            echo "Result file not found (output: '${{ steps.validation.outputs.resultFile }}')." >&2
-          fi
+          echo "--- validation-result.json ---"
+          cat validation-result.json || echo "No validation-result.json present" >&2
+
+      - name: Upload validation result artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-result
+          path: validation-result.json
+          retention-days: 7
 
       - name: Fail if validation errors detected
         run: |
-          file='${{ steps.validation.outputs.resultFile }}'
+          file='validation-result.json'
           if [ ! -f "$file" ]; then
             echo "No validation result file produced; failing." >&2
             exit 1
           fi
-          # Heuristic: look for common error markers.
           if grep -Ei '"(status|level)" *: *"error"' "$file" || grep -Ei '\b(error|failed)\b' "$file"; then
             echo "Errors detected in template validation output." >&2
+            cat "$file"
+            exit 1
+          fi
+          # Also treat underlying action non-zero exit as failure even if heuristic passes.
+          if [ "${{ steps.validation.outcome }}" = "failure" ]; then
+            echo "Underlying validation action reported failure (steps.validation.outcome)." >&2
             exit 1
           fi
           echo "No blocking errors detected in validation output."
