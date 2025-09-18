@@ -1,35 +1,64 @@
-name: Azure Template Validation 
-on: 
-#  workflow_dispatch:
-    push:
-        branches:
-            - main
-            - vee-pipeline-fixes
+name: Azure Template Validation
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - vee-pipeline-fixes
 permissions: 
   contents: read 
   id-token: write 
   pull-requests: write 
-jobs: 
-  template_validation_job: 
-    runs-on: ubuntu-latest 
+jobs:
+  template_validation_job:
+    runs-on: ubuntu-latest
+    # Using an environment named 'production' may require approvals; adjust if that caused prior failures.
     environment: production
-    name: Template validation 
-    steps: 
-      # Step 1: Checkout the code from your repository 
-      - name: Checkout code 
-        uses: actions/checkout@v4 
-      # Step 2: Validate the Azure template using microsoft/template-validation-action 
-      - name: Validate Azure Template 
-        uses: microsoft/template-validation-action@Latest 
-        id: validation 
-        env: 
-          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }} 
-          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }} 
-          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
-          AZURE_ENV_NAME: ${{ secrets.AZURE_ENV_NAME }} 
-          AZURE_LOCATION: ${{ secrets.AZURE_LOCATION }} 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-      # Step 3: Print the result of the validation 
-      - name: Print result 
-        run: cat ${{ steps.validation.outputs.resultFile }}
+    name: Template validation
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Validate Azure Template
+        id: validation
+        uses: microsoft/template-validation-action@main
+        env:
+          # These env vars are optional for the action but retained in case the action consumes them.
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_ENV_NAME: ${{ secrets.AZURE_ENV_NAME }}
+          AZURE_LOCATION: ${{ secrets.AZURE_LOCATION }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print validation result
+        if: always()
+        run: |
+          if [ -n "${{ steps.validation.outputs.resultFile }}" ] && [ -f "${{ steps.validation.outputs.resultFile }}" ]; then
+            echo "--- Validation Result File ---"
+            cat "${{ steps.validation.outputs.resultFile }}"
+          else
+            echo "Result file not found (output: '${{ steps.validation.outputs.resultFile }}')." >&2
+          fi
+
+      - name: Fail if validation errors detected
+        run: |
+          file='${{ steps.validation.outputs.resultFile }}'
+          if [ ! -f "$file" ]; then
+            echo "No validation result file produced; failing." >&2
+            exit 1
+          fi
+          # Heuristic: look for common error markers.
+          if grep -Ei '"(status|level)" *: *"error"' "$file" || grep -Ei '\b(error|failed)\b' "$file"; then
+            echo "Errors detected in template validation output." >&2
+            exit 1
+          fi
+          echo "No blocking errors detected in validation output."
