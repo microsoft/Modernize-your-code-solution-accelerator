@@ -47,8 +47,14 @@ jobs:
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Fallback Azure Login (Client Secret)
-        if: failure() && secrets.AZURE_CLIENT_SECRET != ''
+        if: failure()
+        env:
+          HAS_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET != '' }}
         run: |
+          if [ "${HAS_CLIENT_SECRET}" != "true" ]; then
+            echo "OIDC login failed and no client secret available for fallback." >&2
+            exit 1
+          fi
           echo "OIDC login failed; attempting client secret login fallback." >&2
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} || {
             echo "Client secret fallback login also failed." >&2; exit 1; }
