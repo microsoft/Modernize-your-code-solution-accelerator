@@ -27,11 +27,17 @@ jobs:
           if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then echo "::error::Required secret AZURE_CLIENT_ID is missing." >&2; missing=1; fi
           if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then echo "::error::Required secret AZURE_TENANT_ID is missing." >&2; missing=1; fi
           if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then echo "::error::Required secret AZURE_SUBSCRIPTION_ID is missing." >&2; missing=1; fi
+          if [ -z "${{ secrets.AZURE_LOCATION }}" ]; then echo "::warning::AZURE_LOCATION not set; defaulting to eastus for validation context."; echo "AZURE_LOCATION=eastus" >> $GITHUB_ENV; else echo "AZURE_LOCATION=${{ secrets.AZURE_LOCATION }}" >> $GITHUB_ENV; fi
           if [ "$missing" -eq 1 ]; then
             echo "Missing required secrets. Failing early." >&2
             exit 1
           fi
           echo "All required auth secrets present (client secret not required for OIDC)."
+
+      - name: Ensure Bicep CLI installed
+        run: |
+          az bicep install || true
+          echo "Bicep version:"; az bicep version || echo "Bicep not available" >&2
 
       - name: Azure Login (OIDC)
         uses: azure/login@v1
@@ -43,9 +49,10 @@ jobs:
       - name: Debug Azure context
         run: |
           az account show || echo "Could not show account (ensure privileges)" >&2
-          echo "Listing bicep version (if installed):"; az bicep version || true
+          echo "Listing bicep version:"; az bicep version || true
           echo "Listing repo root:"; ls -1 . || true
           echo "Infra directory content:"; ls -1 infra || true
+          echo "Resolved AZURE_LOCATION: ${AZURE_LOCATION:-unset}" 
 
       - name: Validate Azure Template
         id: validation
