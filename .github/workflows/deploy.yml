@@ -165,9 +165,15 @@ jobs:
           echo "Fetching deployment output..."
           BICEP_OUTPUT=$(az deployment group show --name ${{ env.SOLUTION_PREFIX }}-deployment --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "properties.outputs" -o json)
           echo "Extracting deployment output..."
-          WEBAPP_URL=$(echo $BICEP_OUTPUT | jq -r '.weB_APP_URL.value')
+          WEBAPP_URL=$(echo "$BICEP_OUTPUT" | jq -r '.WEB_APP_URL.value')
+          if [ -z "$WEBAPP_URL" ] || [ "$WEBAPP_URL" = "null" ]; then
+            echo "WEB_APP_URL not found in deployment outputs" >&2
+            echo "Full outputs: $BICEP_OUTPUT" >&2
+            exit 1
+          fi
           echo "WEBAPP_URL=$WEBAPP_URL" >> $GITHUB_OUTPUT
-          echo "Deployment output: $BICEP_OUTPUT"
+          echo "Deployment output (truncated for log clarity):" 
+          echo "$BICEP_OUTPUT" | head -c 2000
 
       - name: Logout from Azure
         if: always()
@@ -213,10 +219,34 @@ jobs:
           if [ -n "$openai_resource_name" ]; then
             echo "OPENAI_RESOURCE_NAME=${openai_resource_name}" >> $GITHUB_ENV
           fi
-          keyvaults=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[?type=='Microsoft.KeyVault/vaults'].name" -o tsv || true)
-          if [ -n "$keyvaults" ]; then
-            keyvault_array="["; first=true; for kv in $keyvaults; do if [ "$first" = true ]; then keyvault_array="$keyvault_array\"$kv\""; first=false; else keyvault_array="$keyvault_array,\"$kv\""; fi; done; keyvault_array="$keyvault_array]"; echo "KEYVAULTS=$keyvault_array" >> $GITHUB_ENV; fi
           echo "Snapshot complete." 
+
+      - name: List KeyVaults and Store in Array
+        if: always()
+        id: list_keyvaults
+        run: |
+          set -e
+          echo "Listing all KeyVaults in the resource group ${RESOURCE_GROUP_NAME}..."
+          keyvaults=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[?type=='Microsoft.KeyVault/vaults'].name" -o tsv || true)
+          if [ -z "$keyvaults" ]; then
+            echo "No KeyVaults found in resource group ${RESOURCE_GROUP_NAME}."
+            echo "KEYVAULTS=[]" >> $GITHUB_ENV
+          else
+            echo "KeyVaults found: $keyvaults"
+            keyvault_array="["
+            first=true
+            for kv in $keyvaults; do
+              if [ "$first" = true ]; then
+                keyvault_array="$keyvault_array\"$kv\""
+                first=false
+              else
+                keyvault_array="$keyvault_array,\"$kv\""
+              fi
+            done
+            keyvault_array="$keyvault_array]"
+            echo "KEYVAULTS=$keyvault_array" >> $GITHUB_ENV
+          fi
+          echo "Stored KeyVault array in KEYVAULTS environment variable."
 
       - name: Delete Resource Group (primary deletion)
         if: always()
