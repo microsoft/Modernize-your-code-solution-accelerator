@@ -126,13 +126,17 @@ jobs:
             IMAGE_TAG="latest"
           fi
 
+          # Prefer quota-selected region if available
+          EFFECTIVE_AI_REGION="${VALID_REGION:-eastus}"
+          echo "Using AI Deployments Region: $EFFECTIVE_AI_REGION"
+
           az deployment group create \
             --name ${{ env.SOLUTION_PREFIX }}-deployment \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
             --parameters \
                 solutionName="${{ env.SOLUTION_PREFIX }}" \
-                aiDeploymentsLocation="eastus" \
+                aiDeploymentsLocation="$EFFECTIVE_AI_REGION" \
                 useWafAlignedArchitecture=false \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
@@ -356,7 +360,7 @@ jobs:
 
           # Purge OpenAI Resource
           echo "Purging the OpenAI Resource..."
-          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/northcentralus/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
+          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/${{ env.VALID_REGION || 'eastus' }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
             echo "Failed to purge openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
           else
             echo "Purged the openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
