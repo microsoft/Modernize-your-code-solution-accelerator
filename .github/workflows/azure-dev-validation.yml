@@ -46,6 +46,23 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Fallback Azure Login (Client Secret)
+        if: failure() && secrets.AZURE_CLIENT_SECRET != ''
+        run: |
+          echo "OIDC login failed; attempting client secret login fallback." >&2
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} || {
+            echo "Client secret fallback login also failed." >&2; exit 1; }
+          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} || true
+
+      - name: Post-login diagnostics
+        if: always()
+        run: |
+          echo "Login diagnostics:"
+          az account show || echo "Account show failed" >&2
+          echo "Listing subscriptions (top 5):"; az account list --query '[].{name:name,id:id}' -o table | head -n 7 || true
+          echo "Active tenant: ${{ secrets.AZURE_TENANT_ID }}"
+          echo "Client ID suffix: $(echo '${{ secrets.AZURE_CLIENT_ID }}' | tail -c 6)"
+
       - name: Debug Azure context
         run: |
           az account show || echo "Could not show account (ensure privileges)" >&2
