@@ -90,7 +90,7 @@ param llmModel string = 'gpt-4o'
 
 @minLength(1)
 @description('Set the Image tag:')
-param imageVersion string = 'latest'
+param imageVersion string = 'latest_2025-09-22_455'
 
 @minLength(1)
 @description('Version of the GPT model to deploy:')
