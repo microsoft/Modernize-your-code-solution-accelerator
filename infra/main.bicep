@@ -143,7 +143,8 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   properties: {
     tags: {
       ...allTags
-      TemplateName: enablePrivateNetworking ? 'Code Modernization - WAF' : 'Code Modernization'
+      TemplateName: 'Code Modernization'
+      Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
       CreatedBy: createdBy
     }
   }
