@@ -141,6 +141,7 @@ jobs:
                 imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" \
                 tags="{'SecurityControl':'Ignore','Purpose':'Deploying and Cleaning Up Resources for Validation','CreatedDate':'$current_date'}"
+
       - name: Assign Contributor role to Service Principal
         if: always()
         run: |
