@@ -135,7 +135,7 @@ jobs:
                 aiDeploymentsLocation="eastus" \
                 useWafAlignedArchitecture=false \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
-                imageVersion="${IMAGE_TAG}" \
+                imageVersion="${IMAGE_TAG}"\
                 createdBy="Pipeline" 
       - name: Assign Contributor role to Service Principal
         if: always()
