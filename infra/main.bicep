@@ -2,8 +2,6 @@ metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
 
-@description('Set to true if you want to deploy WAF-aligned infrastructure.')
-param useWafAlignedArchitecture bool
 
 @minLength(3)
 @maxLength(16)
@@ -47,10 +45,10 @@ param aiDeploymentsLocation string
 param capacity int = 150
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
-param enableMonitoring bool = useWafAlignedArchitecture? true : false
+param enableMonitoring bool = false 
 
 @description('Optional. Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = useWafAlignedArchitecture? true : false
+param enableScaling bool = false 
 
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
@@ -59,7 +57,7 @@ param enableRedundancy bool = false
 param secondaryLocation string?
 
 @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
-param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
+param enablePrivateNetworking bool = false 
 
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
 param vmSize string? 
@@ -90,7 +88,7 @@ param llmModel string = 'gpt-4o'
 
 @minLength(1)
 @description('Set the Image tag:')
-param imageVersion string = 'latest'
+param imageVersion string = 'latest_2025-09-22_455'
 
 @minLength(1)
 @description('Version of the GPT model to deploy:')
@@ -134,8 +132,9 @@ var modelDeployment = {
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
-@description('Optional created by user name')
-param createdBy string = empty(deployer().userPrincipalName) ? '' : split(deployer().userPrincipalName, '@')[0]
+@description('Tag, Created by user name')
+param createdBy string = contains(deployer(), 'userPrincipalName')? split(deployer().userPrincipalName, '@')[0]: deployer().objectId
+ 
 
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
