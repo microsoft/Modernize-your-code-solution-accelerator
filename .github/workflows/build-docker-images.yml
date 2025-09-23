@@ -7,14 +7,12 @@ on:
       - dev
       - demo
       - hotfix
-      - vee-pipeline-fixes
   pull_request:
     branches:
       - main
       - dev
       - demo
       - hotfix
-      - vee-pipeline-fixes
     types:
       - opened
       - ready_for_review
@@ -41,5 +39,5 @@ jobs:
       password_secret: ${{ matrix.password_secret }}
       app_name: ${{ matrix.app_name }}
       dockerfile: ${{ matrix.dockerfile }}
-      push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'hotfix' || github.ref_name == 'vee-pipeline-fixes' }}
+      push: ${{ github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'demo' || github.ref_name == 'hotfix' }}
     secrets: inherit
