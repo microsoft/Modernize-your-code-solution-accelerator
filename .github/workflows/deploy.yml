@@ -6,7 +6,9 @@ on:
       types:
         - completed
       branches:
-        - vee-pipeline-fixes
+        - main
+        - dev
+        - demo
     schedule:
       - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
     workflow_dispatch:
@@ -123,8 +125,6 @@ jobs:
             IMAGE_TAG="dev"
           elif [[ "${{ env.BRANCH_NAME }}" == "demo" ]]; then
             IMAGE_TAG="demo"
-          elif [[ "${{ env.BRANCH_NAME }}" == "vee-pipeline-fixes" ]]; then
-            IMAGE_TAG="vee-pipeline-fixes"
           else
             IMAGE_TAG="latest"
           fi
