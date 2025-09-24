@@ -2,8 +2,8 @@ metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
 
-@description('Set to true if you want to deploy WAF-aligned infrastructure.')
-param useWafAlignedArchitecture bool
+// @description('Set to true if you want to deploy WAF-aligned infrastructure.')
+// param useWafAlignedArchitecture bool
 
 @minLength(3)
 @maxLength(16)
@@ -46,11 +46,11 @@ param aiDeploymentsLocation string
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
 param capacity int = 150
 
-@description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
-param enableMonitoring bool = useWafAlignedArchitecture? true : false
+// @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
+// param enableMonitoring bool = useWafAlignedArchitecture? true : false
 
-@description('Optional. Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = useWafAlignedArchitecture? true : false
+// @description('Optional. Enable scaling for the container apps. Defaults to false.')
+// param enableScaling bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
@@ -58,8 +58,8 @@ param enableRedundancy bool = false
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
 
-@description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
-param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
+// @description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
+// param enablePrivateNetworking bool = useWafAlignedArchitecture? true : false
 
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
 param vmSize string? 
