@@ -52,28 +52,6 @@ docker push <acrloginserver>/<repo>:<tagname>
 
 ![alt text](./images/ContainerApp.png)
 
-**WebApp :**
-
-```bash
-az acr login --name <containerregname>
-docker build --no-cache -f docker/Frontend.Dockerfile -t <acrloginserver>/<repo>:<tagname> .
-docker push <acrloginserver>/<repo>:<tagname>
-```
-
-If you want to update image tag and image manually you can follow below steps:
-- Go to your App Service in the [Azure Portal](https://portal.azure.com/#home).
-- In the left menu, select Deployment → Deployment Center
-- Under Container settings, you can configure:
-
-    - Image Source → (e.g., Azure Container Registry / Docker Hub / Other).
-
-    - Image Name → e.g., myapp/backend.
-
-    - Tag → e.g., v1.2.3.
-
-![alt text](./images/AppServiceContainer.png)
-
-
 ## ✅ Verification
 
 Run the following command to verify that images were pushed successfully:
