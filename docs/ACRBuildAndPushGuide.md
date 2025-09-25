@@ -1,6 +1,6 @@
 # Azure Container Registry (ACR) – Build & Push Guide
 
-This guide provides step-by-step instructions to build and push Docker images for **WebApp** and **Backend** services into Azure Container Registry (ACR).
+This guide provides step-by-step instructions to build and push Docker images for **Backend** services into Azure Container Registry (ACR).
 
 ## 📋 Prerequisites
 Before starting, ensure you have:
