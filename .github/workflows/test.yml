@@ -17,7 +17,6 @@ on:
       - main
       - dev
       - demo
-      - vee-pipeline-fixes
 
 jobs:
 #   frontend_tests:
