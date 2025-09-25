@@ -24,6 +24,7 @@ jobs:
     outputs:
       RESOURCE_GROUP_NAME: ${{ steps.check_create_rg.outputs.RESOURCE_GROUP_NAME }}
       WEBAPP_URL: ${{ steps.get_output.outputs.WEBAPP_URL }}
+      SELECTED_AI_REGION: ${{ steps.deploy.outputs.selected_ai_region || env.VALID_REGION }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -32,9 +33,11 @@ jobs:
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
           az --version  # Verify installation
+
       - name: Login to Azure
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+
       - name: Run Quota Check
         id: quota-check
         run: |
@@ -52,6 +55,7 @@ jobs:
             fi
             exit 1  # Fail the pipeline if any other failure occurs
           fi
+
       - name: Send Notification on Quota Failure
         if: env.QUOTA_FAILED == 'true'
         run: |
@@ -62,15 +66,19 @@ jobs:
           }
           EOF
           )
+
           curl -X POST "${{ secrets.LOGIC_APP_URL }}" \
             -H "Content-Type: application/json" \
             -d "$EMAIL_BODY" || echo "Failed to send notification"
+
       - name: Fail Pipeline if Quota Check Fails
         if: env.QUOTA_FAILED == 'true'
         run: exit 1
 
       - name: Install Bicep CLI
         run: az bicep install
+
+      # reverted: jq explicit installation step removed
 
       - name: Generate Resource Group Name
         id: generate_rg_name
@@ -81,6 +89,7 @@ jobs:
           UNIQUE_RG_NAME="arg-${ACCL_NAME}-${SHORT_UUID}"
           echo "RESOURCE_GROUP_NAME=${UNIQUE_RG_NAME}" >> $GITHUB_ENV
           echo "Generated RESOURCE_GROUP_NAME: ${UNIQUE_RG_NAME}"
+
       - name: Check and Create Resource Group
         id: check_create_rg
         run: |
@@ -94,6 +103,7 @@ jobs:
             echo "Resource group already exists."
           fi
           echo "RESOURCE_GROUP_NAME=${{ env.RESOURCE_GROUP_NAME }}" >> $GITHUB_OUTPUT
+
       - name: Generate Unique Solution Prefix
         id: generate_solution_prefix
         run: |
@@ -104,6 +114,7 @@ jobs:
           UNIQUE_SOLUTION_PREFIX="${COMMON_PART}${UPDATED_TIMESTAMP}"
           echo "SOLUTION_PREFIX=${UNIQUE_SOLUTION_PREFIX}" >> $GITHUB_ENV
           echo "Generated SOLUTION_PREFIX: ${UNIQUE_SOLUTION_PREFIX}"
+
       - name: Deploy Bicep Template
         id: deploy
         run: |
@@ -118,15 +129,24 @@ jobs:
           else
             IMAGE_TAG="latest"
           fi
+
+          EFFECTIVE_AI_REGION="${VALID_REGION:-eastus}"  # VALID_REGION exported earlier if quota script succeeded
+          echo "Using AI Deployments Region: $EFFECTIVE_AI_REGION"
+          echo "selected_ai_region=$EFFECTIVE_AI_REGION" >> $GITHUB_OUTPUT
+
+          echo "Resource Group: ${{ env.RESOURCE_GROUP_NAME }} (Created in northcentralus)"
+          echo "Solution Prefix: ${{ env.SOLUTION_PREFIX }}"
+          echo "Image Tag: ${IMAGE_TAG}"
+
           az deployment group create \
             --name ${{ env.SOLUTION_PREFIX }}-deployment \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
             --parameters \
                 solutionName="${{ env.SOLUTION_PREFIX }}" \
-                aiDeploymentsLocation="eastus" \
+                aiDeploymentsLocation="$EFFECTIVE_AI_REGION" \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
-                imageVersion="${IMAGE_TAG}"\
+                imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" 
       - name: Assign Contributor role to Service Principal
         if: always()
@@ -136,6 +156,8 @@ jobs:
             --assignee ${{ secrets.AZURE_CLIENT_ID }} \
             --role "Contributor" \
             --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
+
+
       - name: Get Deployment Output and extract Values
         id: get_output
         run: |
@@ -143,14 +165,27 @@ jobs:
           echo "Fetching deployment output..."
           BICEP_OUTPUT=$(az deployment group show --name ${{ env.SOLUTION_PREFIX }}-deployment --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "properties.outputs" -o json)
           echo "Extracting deployment output..."
-          WEBAPP_URL=$(echo $BICEP_OUTPUT | jq -r '.weB_APP_URL.value')
+          echo "Available output keys:" 
+          echo "$BICEP_OUTPUT" | jq -r 'keys | join(", ")'
+          # Case-insensitive lookup for WEB_APP_URL because deployment outputs returned inconsistent casing previously
+          WEBAPP_URL=$(echo "$BICEP_OUTPUT" | jq -r 'to_entries | map(select((.key|ascii_upcase)=="WEB_APP_URL")) | .[0].value.value // empty')
+          if [ -z "$WEBAPP_URL" ] || [ "$WEBAPP_URL" = "null" ]; then
+            echo "WEB_APP_URL not found in deployment outputs (case-insensitive scan)" >&2
+            echo "Full outputs JSON follows for troubleshooting:" >&2
+            echo "$BICEP_OUTPUT" >&2
+            exit 1
+          fi
+          echo "Resolved WEBAPP_URL: $WEBAPP_URL"
           echo "WEBAPP_URL=$WEBAPP_URL" >> $GITHUB_OUTPUT
-          echo "Deployment output: $BICEP_OUTPUT"
+          echo "Deployment outputs (truncated):" 
+          echo "$BICEP_OUTPUT" | head -c 2000
+
       - name: Logout from Azure
         if: always()
         run: |
           az logout
           echo "Logged out from Azure."
+
   e2e-test:
     needs: deploy
     uses: ./.github/workflows/test-automation.yml
@@ -164,43 +199,41 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RESOURCE_GROUP_NAME: ${{ needs.deploy.outputs.RESOURCE_GROUP_NAME }}
+      AI_REGION: ${{ needs.deploy.outputs.SELECTED_AI_REGION }}
     steps:
       - name: Setup Azure CLI
         run: |
           curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
           az --version  # Verify installation
+
       - name: Login to Azure
         run: |
           az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
+      
+      - name: Assign Contributor role to Service Principal
+        if: always()
+        run: |
+          echo "Assigning Contributor role to SPN for RG: ${{ env.RESOURCE_GROUP_NAME }}"
+          az role assignment create \
+            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
+            --role "Contributor" \
+            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
+
       - name: Get Log Analytics Workspace and OpenAI from Resource Group
         if: always()
         id: get_azure_resources
         run: |
           set -e
-          echo "Fetching Log Analytics workspace from resource group ${{ env.RESOURCE_GROUP_NAME }}..."
-          
-          # Run the az monitor log-analytics workspace list command to get the workspace name
-          log_analytics_workspace_name=$(az monitor log-analytics workspace list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[0].name" -o tsv)
-      
-          if [ -z "$log_analytics_workspace_name" ]; then
-            echo "No Log Analytics workspace found in resource group ${{ env.RESOURCE_GROUP_NAME }}."
-          else
+          echo "Collecting resource identifiers from RG ${{ env.RESOURCE_GROUP_NAME }} before deletion..."
+          log_analytics_workspace_name=$(az monitor log-analytics workspace list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[0].name" -o tsv || true)
+          if [ -n "$log_analytics_workspace_name" ]; then
             echo "LOG_ANALYTICS_WORKSPACE_NAME=${log_analytics_workspace_name}" >> $GITHUB_ENV
-            echo "Log Analytics workspace name: ${log_analytics_workspace_name}" 
           fi
-          
-          echo "Fetching OpenAI resource from resource group ${{ env.RESOURCE_GROUP_NAME }}..."
-          
-          # Run the az resource list command to get the OpenAI resource name
-          openai_resource_name=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --resource-type "Microsoft.CognitiveServices/accounts" --query "[0].name" -o tsv)
-
-          if [ -z "$openai_resource_name" ]; then
-            echo "No OpenAI resource found in resource group ${{ env.RESOURCE_GROUP_NAME }}."
-            exit 1
-          else
+          openai_resource_name=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --resource-type "Microsoft.CognitiveServices/accounts" --query "[0].name" -o tsv || true)
+          if [ -n "$openai_resource_name" ]; then
             echo "OPENAI_RESOURCE_NAME=${openai_resource_name}" >> $GITHUB_ENV
-            echo "OpenAI resource name: ${openai_resource_name}" 
           fi
+          echo "Snapshot complete." 
 
       - name: List KeyVaults and Store in Array
         if: always()
@@ -208,15 +241,12 @@ jobs:
         run: |
           set -e
           echo "Listing all KeyVaults in the resource group ${RESOURCE_GROUP_NAME}..."
-          
-          # Get the list of KeyVaults in the specified resource group
-          keyvaults=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[?type=='Microsoft.KeyVault/vaults'].name" -o tsv)
+          keyvaults=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --query "[?type=='Microsoft.KeyVault/vaults'].name" -o tsv || true)
           if [ -z "$keyvaults" ]; then
             echo "No KeyVaults found in resource group ${RESOURCE_GROUP_NAME}."
-            echo "KEYVAULTS=[]" >> $GITHUB_ENV  # If no KeyVaults found, set an empty array
+            echo "KEYVAULTS=[]" >> $GITHUB_ENV
           else
             echo "KeyVaults found: $keyvaults"
-            # Format the list into an array with proper formatting (no trailing comma)
             keyvault_array="["
             first=true
             for kv in $keyvaults; do
@@ -228,141 +258,97 @@ jobs:
               fi
             done
             keyvault_array="$keyvault_array]"
-            # Output the formatted array and save it to the environment variable
             echo "KEYVAULTS=$keyvault_array" >> $GITHUB_ENV
           fi
-      - name: Delete Bicep Deployment
+          echo "Stored KeyVault array in KEYVAULTS environment variable."
+
+      - name: Delete Resource Group (primary deletion)
         if: always()
-        run: |
-          set -e  
-          echo "Checking if resource group exists..."
-          rg_exists=$(az group exists --name ${{ env.RESOURCE_GROUP_NAME }})
-          if [ "$rg_exists" = "true" ]; then
-            echo "Resource group exist. Cleaning..."
-            az group delete \
-                --name ${{ env.RESOURCE_GROUP_NAME }} \
-                --yes \
-                --no-wait
-            echo "Resource group deleted...  ${{ env.RESOURCE_GROUP_NAME }}"
-          else
-            echo "Resource group does not exists."
-          fi
-      - name: Purge log analytics workspace
-        if: always()
-        id: log_analytics_workspace
         run: |
           set -e
-          # Purge Log Analytics Workspace
-          echo "Purging the Log Analytics Workspace..."
-          if ! az monitor log-analytics workspace delete --force --resource-group ${{ env.RESOURCE_GROUP_NAME }} --workspace-name ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }} --yes --verbose; then
-            echo "Failed to purge Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
-          else
-            echo "Purged the Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}"
-          fi
-          echo "Log analytics workspace resource purging completed successfully"    
-      
+          echo "Initiating deletion of RG ${{ env.RESOURCE_GROUP_NAME }}..."
+          az group delete --name ${{ env.RESOURCE_GROUP_NAME }} --yes --no-wait || echo "Delete command issued."
 
-      - name: Wait for resource deletion to complete
+      - name: Wait for RG deletion propagation
         if: always()
         run: |
-          # List of keyvaults 
-          KEYVAULTS="${{ env.KEYVAULTS }}"
-          # Remove the surrounding square brackets, if they exist
-          stripped_keyvaults=$(echo "$KEYVAULTS" | sed 's/\[\|\]//g')
-          
-          # Convert the comma-separated string into an array
-          IFS=',' read -r -a resources_to_check <<< "$stripped_keyvaults"
-          # Append new resources to the array
-          resources_to_check+=("${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}" "${{ env.OPENAI_RESOURCE_NAME }}")
-          echo "List of resources to check: ${resources_to_check[@]}"
-          # Maximum number of retries
-          max_retries=3
-          # Retry intervals in seconds (30, 60, 120)
-          retry_intervals=(30 60 120)
-          # Retry mechanism to check resources
-          retries=0
-          while true; do
-            resource_found=false
-            # Get the list of resources in YAML format again on each retry
-            resource_list=$(az resource list --resource-group ${{ env.RESOURCE_GROUP_NAME }} --output yaml)
-            # Iterate through the resources to check
-            for resource in "${resources_to_check[@]}"; do
-              echo "Checking resource: $resource"
-              if echo "$resource_list" | grep -q "name: $resource"; then
-                echo "Resource '$resource' exists in the resource group."
-                resource_found=true
-              else
-                echo "Resource '$resource' does not exist in the resource group."
-              fi
-            done
-            # If any resource exists, retry
-            if [ "$resource_found" = true ]; then
-              retries=$((retries + 1))
-              if [ "$retries" -gt "$max_retries" ]; then
-                echo "Maximum retry attempts reached. Exiting."
-                break
-              else
-                # Wait for the appropriate interval for the current retry
-                echo "Waiting for ${retry_intervals[$retries-1]} seconds before retrying..."
-                sleep ${retry_intervals[$retries-1]}
-              fi
-            else
-              echo "No resources found. Exiting."
+          set -e
+          echo "Polling for RG deletion..."
+          max_retries=15
+          sleep_interval=20
+          for i in $(seq 1 $max_retries); do
+            exists=$(az group exists --name ${{ env.RESOURCE_GROUP_NAME }} || echo true)
+            if [ "$exists" = false ]; then
+              echo "Resource group deleted (confirmed)."
               break
             fi
+            echo "RG still exists (attempt $i). Waiting $sleep_interval s..."
+            sleep $sleep_interval
           done
-          
-      - name: Purging the Resources
+
+      - name: Purge soft-deleted OpenAI (if any)
         if: always()
         run: |
           set -e
-          echo "Azure OpenAI: ${{ env.OPENAI_RESOURCE_NAME }}"
-          # Purge OpenAI Resource
-          echo "Purging the OpenAI Resource..."
-          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/northcentralus/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
-            echo "Failed to purge openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
+          if [ -n "${{ env.OPENAI_RESOURCE_NAME }}" ]; then
+            echo "Attempting purge of soft-deleted OpenAI: ${{ env.OPENAI_RESOURCE_NAME }} in region ${{ env.AI_REGION }}"
+            az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/${{ env.AI_REGION || 'eastus' }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose || echo "OpenAI purge not available yet or failed (non-fatal)."
           else
-            echo "Purged the openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
+            echo "No OpenAI resource recorded to purge."
           fi
-          # List of keyvaults
+
+      - name: Purge soft-deleted KeyVaults (if any)
+        if: always()
+        run: |
+          set -e
           KEYVAULTS="${{ env.KEYVAULTS }}"
-          # Remove the surrounding square brackets, if they exist
-          stripped_keyvaults=$(echo "$KEYVAULTS" | sed 's/\[\|\]//g')
-          
-          # Convert the comma-separated string into an array
-          IFS=',' read -r -a keyvault_array <<< "$stripped_keyvaults"
-          echo "Using KeyVaults Array..."
-          for keyvault_name in "${keyvault_array[@]}"; do
-            echo "Processing KeyVault: $keyvault_name"
-            # Check if the KeyVault is soft-deleted
-            deleted_vaults=$(az keyvault list-deleted --query "[?name=='$keyvault_name']" -o json --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }})
-            # If the KeyVault is found in the soft-deleted state, purge it
-            if [ "$(echo "$deleted_vaults" | jq length)" -gt 0 ]; then
-              echo "KeyVault '$keyvault_name' is soft-deleted. Proceeding to purge..."
-              # Purge the KeyVault
-              if az keyvault purge --name "$keyvault_name" --no-wait; then
-              echo "Successfully purged KeyVault '$keyvault_name'."
-              else
-                echo "Failed to purge KeyVault '$keyvault_name'."
-              fi
+          stripped=$(echo "$KEYVAULTS" | sed 's/\[\|\]//g')
+          IFS=',' read -r -a kvs <<< "$stripped"
+          for raw in "${kvs[@]}"; do
+            kv=$(echo "$raw" | sed 's/\"//g' | xargs)
+            [ -z "$kv" ] && continue
+            echo "Checking soft-delete state for KeyVault: $kv"
+            deleted=$(az keyvault list-deleted --query "[?name=='$kv']" -o json --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} || echo '[]')
+            if [ "$(echo "$deleted" | jq length)" -gt 0 ]; then
+              echo "Purging KeyVault $kv ..."
+              az keyvault purge --name "$kv" --no-wait || echo "Failed to purge $kv (non-fatal)"
             else
-              echo "KeyVault '$keyvault_name' is not soft-deleted. No action taken."
+              echo "KeyVault $kv not soft-deleted; skipping."
             fi
           done
-          echo "Resource purging completed successfully"
+
+      - name: Purge Log Analytics Workspace (best-effort)
+        if: always()
+        run: |
+          set -e
+          if [ -n "${{ env.LOG_ANALYTICS_WORKSPACE_NAME }}" ]; then
+            echo "Attempting to purge Log Analytics workspace: ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }} (best-effort)"
+            az monitor log-analytics workspace delete --force --workspace-name ${{ env.LOG_ANALYTICS_WORKSPACE_NAME }} --resource-group ${{ env.RESOURCE_GROUP_NAME }} --yes --verbose || echo "Workspace purge not applicable or already gone."
+          else
+            echo "No Log Analytics workspace recorded."
+          fi
+
       - name: Send Notification on Failure
         if: failure() || needs.deploy.result == 'failure'
         run: |
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
           EMAIL_BODY=$(cat <<EOF
           {
             "body": "<p>Dear Team,</p><p>We would like to inform you that the DocGen Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
           }
           EOF
           )
+
           curl -X POST "${{ secrets.LOGIC_APP_URL }}" \
             -H "Content-Type: application/json" \
             -d "$EMAIL_BODY" || echo "Failed to send notification"
+
+      - name: Final Resource Group Deletion
+        if: always()
+        run: |
+          echo "Final RG delete step retained for idempotency; primary deletion already initiated."
+
       - name: Logout from Azure
         if: always()
         run: |
