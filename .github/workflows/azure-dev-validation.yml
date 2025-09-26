@@ -1,32 +1,27 @@
-name: Azure Template Validation
+name: Azure Template Validation 
 on: 
-  push:
-    branches:
-      - main
-      - vee-pipeline-fixes
-
+#  workflow_dispatch:
+    push:
+        branches:
+            - main
+            - vee-pipeline-fixes
 permissions: 
   contents: read 
   id-token: write 
   pull-requests: write 
-
 jobs: 
   template_validation_job: 
     runs-on: ubuntu-latest 
-    environment: production
+    environment: dev
     name: Template validation 
     steps: 
       # Step 1: Checkout the code from your repository 
       - name: Checkout code 
         uses: actions/checkout@v4 
-
       # Step 2: Validate the Azure template using microsoft/template-validation-action 
       - name: Validate Azure Template 
-        uses: microsoft/template-validation-action@Latest
+        uses: microsoft/template-validation-action@v0.3.5 
         id: validation 
-        with:
-          # disable auto test generation that breaks validation
-          validateTests: none 
         env: 
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }} 
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }} 
@@ -35,8 +30,6 @@ jobs:
           AZURE_ENV_NAME: ${{ secrets.AZURE_ENV_NAME }} 
           AZURE_LOCATION: ${{ secrets.AZURE_LOCATION }} 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
-
       # Step 3: Print the result of the validation 
       - name: Print result 
-        run: cat ${{ steps.validation.outputs.resultFile }}
- 
+        run: cat ${{ steps.validation.outputs.resultFile }} 

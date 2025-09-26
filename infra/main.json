@@ -12,12 +12,6 @@
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
   },
   "parameters": {
-    "useWafAlignedArchitecture": {
-      "type": "bool",
-      "metadata": {
-        "description": "Set to true if you want to deploy WAF-aligned infrastructure."
-      }
-    },
     "solutionName": {
       "type": "string",
       "minLength": 3,
@@ -77,20 +71,6 @@
         "description": "Optional. AI model deployment token capacity. Defaults to 150K tokens per minute."
       }
     },
-    "enableMonitoring": {
-      "type": "bool",
-      "defaultValue": "[if(parameters('useWafAlignedArchitecture'), true(), false())]",
-      "metadata": {
-        "description": "Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false."
-      }
-    },
-    "enableScaling": {
-      "type": "bool",
-      "defaultValue": "[if(parameters('useWafAlignedArchitecture'), true(), false())]",
-      "metadata": {
-        "description": "Optional. Enable scaling for the container apps. Defaults to false."
-      }
-    },
     "enableRedundancy": {
       "type": "bool",
       "defaultValue": false,
@@ -103,13 +83,6 @@
       "nullable": true,
       "metadata": {
         "description": "Optional. The secondary location for the Cosmos DB account if redundancy is enabled."
-      }
-    },
-    "enablePrivateNetworking": {
-      "type": "bool",
-      "defaultValue": "[if(parameters('useWafAlignedArchitecture'), true(), false())]",
-      "metadata": {
-        "description": "Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false."
       }
     },
     "vmSize": {
