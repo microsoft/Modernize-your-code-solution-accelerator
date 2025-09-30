@@ -6,10 +6,10 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "4708808767614470236"
+      "templateHash": "10857935115773987076"
     },
     "name": "Modernize Your Code Solution Accelerator",
-    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \n"
+    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
   },
   "parameters": {
     "solutionName": {
@@ -71,6 +71,20 @@
         "description": "Optional. AI model deployment token capacity. Defaults to 150K tokens per minute."
       }
     },
+    "enableMonitoring": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false."
+      }
+    },
+    "enableScaling": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Enable scaling for the container apps. Defaults to false."
+      }
+    },
     "enableRedundancy": {
       "type": "bool",
       "defaultValue": false,
@@ -83,6 +97,13 @@
       "nullable": true,
       "metadata": {
         "description": "Optional. The secondary location for the Cosmos DB account if redundancy is enabled."
+      }
+    },
+    "enablePrivateNetworking": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false."
       }
     },
     "vmSize": {
@@ -165,9 +186,9 @@
     },
     "createdBy": {
       "type": "string",
-      "defaultValue": "[if(empty(deployer().userPrincipalName), '', split(deployer().userPrincipalName, '@')[0])]",
+      "defaultValue": "[if(contains(deployer(), 'userPrincipalName'), split(deployer().userPrincipalName, '@')[0], deployer().objectId)]",
       "metadata": {
-        "description": "Optional created by user name"
+        "description": "Tag, Created by user name"
       }
     }
   },
@@ -430,7 +451,7 @@
       "apiVersion": "2021-04-01",
       "name": "default",
       "properties": {
-        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('TemplateName', 'Code Modernization', 'CreatedBy', parameters('createdBy'))))]"
+        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('TemplateName', 'Code Modernization', 'Type', if(parameters('enablePrivateNetworking'), 'WAF', 'Non-WAF'), 'CreatedBy', parameters('createdBy'))))]"
       }
     },
     "avmTelemetry": {
