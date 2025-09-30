@@ -72,6 +72,11 @@ jobs:
       - name: Fail Pipeline if Quota Check Fails
         if: env.QUOTA_FAILED == 'true'
         run: exit 1
+      
+      - name: Set Deployment Region
+        run: |
+          echo "Selected Region: $VALID_REGION"
+          echo "AZURE_LOCATION=$VALID_REGION" >> $GITHUB_ENV
 
       - name: Install Bicep CLI
         run: az bicep install
@@ -129,20 +134,13 @@ jobs:
           # Generate current timestamp in desired format: YYYY-MM-DDTHH:MM:SS.SSSSSSSZ
             current_date=$(date -u +"%Y-%m-%dT%H:%M:%S.%7NZ")
           
-          EFFECTIVE_AI_REGION="${{ env.VALID_REGION }}"
-          if [ -z "$EFFECTIVE_AI_REGION" ]; then
-            EFFECTIVE_AI_REGION="eastus"
-            echo "⚠️ WARNING: VALID_REGION not set, falling back to eastus"
-          fi
-          echo "✅ Using AI Deployments Region: $EFFECTIVE_AI_REGION"
-          
           az deployment group create \
             --name ${{ env.SOLUTION_PREFIX }}-deployment \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
             --parameters \
                 solutionName="${{ env.SOLUTION_PREFIX }}" \
-                aiDeploymentsLocation="$EFFECTIVE_AI_REGION" \
+                aiDeploymentsLocation='${{ env.AZURE_LOCATION }}' \
                 capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" \
