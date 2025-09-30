@@ -6,7 +6,6 @@ on:
       - main
       - dev
       - demo
-      - vee-pipeline-fixes
   pull_request:
     types:
       - opened
