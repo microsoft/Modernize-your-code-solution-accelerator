@@ -5,11 +5,11 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.36.177.2456",
-      "templateHash": "12716753818171697569"
+      "version": "0.37.4.10188",
+      "templateHash": "4708808767614470236"
     },
     "name": "Modernize Your Code Solution Accelerator",
-    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
+    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \n"
   },
   "parameters": {
     "solutionName": {
@@ -138,7 +138,7 @@
     },
     "imageVersion": {
       "type": "string",
-      "defaultValue": "latest",
+      "defaultValue": "latest_2025-09-22_455",
       "minLength": 1,
       "metadata": {
         "description": "Set the Image tag:"
@@ -162,6 +162,13 @@
     "existingLogAnalyticsWorkspaceId": {
       "type": "string",
       "defaultValue": ""
+    },
+    "createdBy": {
+      "type": "string",
+      "defaultValue": "[if(empty(deployer().userPrincipalName), '', split(deployer().userPrincipalName, '@')[0])]",
+      "metadata": {
+        "description": "Optional created by user name"
+      }
     }
   },
   "variables": {
@@ -423,7 +430,7 @@
       "apiVersion": "2021-04-01",
       "name": "default",
       "properties": {
-        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('TemplateName', 'Code Modernization')))]"
+        "tags": "[shallowMerge(createArray(variables('allTags'), createObject('TemplateName', 'Code Modernization', 'CreatedBy', parameters('createdBy'))))]"
       }
     },
     "avmTelemetry": {
@@ -4752,8 +4759,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "17070629679271156682"
+              "version": "0.37.4.10188",
+              "templateHash": "8046497849303973351"
             }
           },
           "parameters": {
@@ -5030,8 +5037,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "10117915409222818461"
+                      "version": "0.37.4.10188",
+                      "templateHash": "10645092392603021381"
                     }
                   },
                   "definitions": {
@@ -5370,8 +5377,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "6056713917589230954"
+                              "version": "0.37.4.10188",
+                              "templateHash": "1936468723755149871"
                             }
                           },
                           "definitions": {
@@ -7991,8 +7998,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "16831488907503271264"
+                              "version": "0.37.4.10188",
+                              "templateHash": "3082168335446205769"
                             }
                           },
                           "definitions": {
@@ -10657,8 +10664,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "4959660856295638020"
+                              "version": "0.37.4.10188",
+                              "templateHash": "40464970328764907"
                             }
                           },
                           "definitions": {
@@ -20551,8 +20558,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "11399294166440815272"
+              "version": "0.37.4.10188",
+              "templateHash": "10914722088267065272"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -21866,8 +21873,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -21977,8 +21984,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -22088,8 +22095,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -22222,8 +22229,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11270933172961789567"
+                      "version": "0.37.4.10188",
+                      "templateHash": "9510507771164523365"
                     }
                   },
                   "definitions": {
@@ -24031,8 +24038,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "9150529619101779014"
+                              "version": "0.37.4.10188",
+                              "templateHash": "2491273843075489892"
                             }
                           },
                           "definitions": {
@@ -24185,8 +24192,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "18131656256983910282"
+                              "version": "0.37.4.10188",
+                              "templateHash": "13991828250771551903"
                             }
                           },
                           "definitions": {
@@ -24406,8 +24413,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11270933172961789567"
+                      "version": "0.37.4.10188",
+                      "templateHash": "9510507771164523365"
                     }
                   },
                   "definitions": {
@@ -26215,8 +26222,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "9150529619101779014"
+                              "version": "0.37.4.10188",
+                              "templateHash": "2491273843075489892"
                             }
                           },
                           "definitions": {
@@ -26369,8 +26376,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.177.2456",
-                              "templateHash": "18131656256983910282"
+                              "version": "0.37.4.10188",
+                              "templateHash": "13991828250771551903"
                             }
                           },
                           "definitions": {
@@ -26665,8 +26672,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "6558993818536161993"
+              "version": "0.37.4.10188",
+              "templateHash": "10161123205071565555"
             }
           },
           "definitions": {
@@ -26886,8 +26893,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -26997,8 +27004,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -32924,8 +32931,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "5637162512351801321"
+              "version": "0.37.4.10188",
+              "templateHash": "12465019174954183633"
             }
           },
           "definitions": {
@@ -33289,8 +33296,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -36622,8 +36629,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.177.2456",
-              "templateHash": "9062224490726814247"
+              "version": "0.37.4.10188",
+              "templateHash": "14888974788316430208"
             }
           },
           "definitions": {
@@ -36845,8 +36852,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.177.2456",
-                      "templateHash": "11000727597406726019"
+                      "version": "0.37.4.10188",
+                      "templateHash": "7512268633167491994"
                     }
                   },
                   "parameters": {
@@ -44791,6 +44798,98 @@
     "WEB_APP_URL": {
       "type": "string",
       "value": "[format('https://{0}', reference('containerAppFrontend').outputs.fqdn.value)]"
+    },
+    "COSMOSDB_ENDPOINT": {
+      "type": "string",
+      "value": "[reference('cosmosDb').outputs.endpoint.value]"
+    },
+    "AZURE_BLOB_ACCOUNT_NAME": {
+      "type": "string",
+      "value": "[reference('storageAccount').outputs.name.value]"
+    },
+    "AZURE_BLOB_ENDPOINT": {
+      "type": "string",
+      "value": "[format('https://{0}.blob.core.windows.net/', reference('storageAccount').outputs.name.value)]"
+    },
+    "AZURE_OPENAI_ENDPOINT": {
+      "type": "string",
+      "value": "[format('https://{0}.openai.azure.com/', reference('aiServices').outputs.name.value)]"
+    },
+    "AZURE_AI_AGENT_PROJECT_NAME": {
+      "type": "string",
+      "value": "[reference('aiServices').outputs.aiProjectInfo.value.name]"
+    },
+    "AZURE_AI_AGENT_ENDPOINT": {
+      "type": "string",
+      "value": "[reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint]"
+    },
+    "AZURE_AI_AGENT_PROJECT_CONNECTION_STRING": {
+      "type": "string",
+      "value": "[reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint]"
+    },
+    "AZURE_AI_AGENT_RESOURCE_GROUP_NAME": {
+      "type": "string",
+      "value": "[resourceGroup().name]"
+    },
+    "AZURE_AI_AGENT_SUBSCRIPTION_ID": {
+      "type": "string",
+      "value": "[subscription().subscriptionId]"
+    },
+    "AI_PROJECT_ENDPOINT": {
+      "type": "string",
+      "value": "[reference('aiServices').outputs.aiProjectInfo.value.apiEndpoint]"
+    },
+    "AZURE_CLIENT_ID": {
+      "type": "string",
+      "value": "[reference('appIdentity').outputs.clientId.value]"
+    },
+    "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
+    },
+    "AZURE_BLOB_CONTAINER_NAME": {
+      "type": "string",
+      "value": "[variables('appStorageContainerName')]"
+    },
+    "COSMOSDB_DATABASE": {
+      "type": "string",
+      "value": "[reference('cosmosDb').outputs.databaseName.value]"
+    },
+    "COSMOSDB_BATCH_CONTAINER": {
+      "type": "string",
+      "value": "[reference('cosmosDb').outputs.containerNames.value.batch]"
+    },
+    "COSMOSDB_FILE_CONTAINER": {
+      "type": "string",
+      "value": "[reference('cosmosDb').outputs.containerNames.value.file]"
+    },
+    "COSMOSDB_LOG_CONTAINER": {
+      "type": "string",
+      "value": "[reference('cosmosDb').outputs.containerNames.value.log]"
+    },
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": {
+      "type": "string",
+      "value": "[if(parameters('enableMonitoring'), reference('applicationInsights').outputs.connectionString.value, '')]"
+    },
+    "MIGRATOR_AGENT_MODEL_DEPLOY": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
+    },
+    "PICKER_AGENT_MODEL_DEPLOY": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
+    },
+    "FIXER_AGENT_MODEL_DEPLOY": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
+    },
+    "SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
+    },
+    "SYNTAX_CHECKER_AGENT_MODEL_DEPLOY": {
+      "type": "string",
+      "value": "[variables('modelDeployment').name]"
     }
   }
 }
