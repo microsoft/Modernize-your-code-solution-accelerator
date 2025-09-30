@@ -9,6 +9,7 @@ on:
         - main
         - dev
         - demo
+        - vee-pipeline-fixes
     schedule:
       - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
     workflow_dispatch:
