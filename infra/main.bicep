@@ -2,6 +2,7 @@ metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
 
+
 @minLength(3)
 @maxLength(16)
 @description('Required. A unique application/solution name for all resources in this deployment. This should be 3-16 characters long.')
@@ -43,11 +44,20 @@ param aiDeploymentsLocation string
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
 param capacity int = 150
 
+@description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
+param enableMonitoring bool = false 
+
+@description('Optional. Enable scaling for the container apps. Defaults to false.')
+param enableScaling bool = false 
+
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
 
 @description('Optional. The secondary location for the Cosmos DB account if redundancy is enabled.')
 param secondaryLocation string?
+
+@description('Optional. Enable private networking for the resources. Set to true to enable private networking. Defaults to false.')
+param enablePrivateNetworking bool = false 
 
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
 param vmSize string? 
@@ -78,7 +88,7 @@ param llmModel string = 'gpt-4o'
 
 @minLength(1)
 @description('Set the Image tag:')
-param imageVersion string = 'latest'
+param imageVersion string = 'latest_2025-09-22_455'
 
 @minLength(1)
 @description('Version of the GPT model to deploy:')
@@ -122,8 +132,9 @@ var modelDeployment = {
 
 var abbrs = loadJsonContent('./abbreviations.json')
 
-@description('Optional created by user name')
-param createdBy string = empty(deployer().userPrincipalName) ? '' : split(deployer().userPrincipalName, '@')[0]
+@description('Tag, Created by user name')
+param createdBy string = contains(deployer(), 'userPrincipalName')? split(deployer().userPrincipalName, '@')[0]: deployer().objectId
+ 
 
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
@@ -132,6 +143,7 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
     tags: {
       ...allTags
       TemplateName: 'Code Modernization'
+      Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
       CreatedBy: createdBy
     }
   }
