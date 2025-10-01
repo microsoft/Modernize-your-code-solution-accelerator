@@ -17,6 +17,9 @@
     "capacity": {
       "value": "${AZURE_ENV_MODEL_CAPACITY}"
     },
+    "aiDeploymentLocation": {
+      "value": "${AZURE_AI_DEPLOYMENT_LOCATION}"
+    },
     "gptModelVersion": {
       "value": "${AZURE_ENV_MODEL_VERSION}"
     },
