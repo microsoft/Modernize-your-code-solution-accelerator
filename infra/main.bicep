@@ -39,7 +39,7 @@ param location string = resourceGroup().location
   }
 })
 @description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
-param aiDeploymentsLocation string
+param aiDeploymentsLocation string?
 
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
 param capacity int = 150
