@@ -98,7 +98,7 @@ If you're not using one of the above options for opening the project, then you'l
 
 1. Make sure the following tools are installed:
 
-    * [Azure Developer CLI (azd)](https://aka.ms/install-azd) <small>(v1.17.1+)</small> - version
+    * [Azure Developer CLI (azd)](https://aka.ms/install-azd) <small>(v1.18.0+)</small> - version
     * [Python 3.9+](https://www.python.org/downloads/)
     * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
     * [Git](https://git-scm.com/downloads)
@@ -195,6 +195,7 @@ To change the azd parameters from the default values, follow the steps [here](..
     ```shell
     azd up
     ```
+    > **Note:** This solution accelerator requires **Azure Developer CLI (azd) version 1.18.0 or higher**. Please ensure you have the latest version installed before proceeding with deployment. [Download azd here](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd).
   
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
     * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
