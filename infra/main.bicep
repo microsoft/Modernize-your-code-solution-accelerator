@@ -1,7 +1,7 @@
 metadata name = 'Modernize Your Code Solution Accelerator'
 metadata description = '''CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. 
 '''
-
+targetScope = 'resourceGroup'
 
 @minLength(3)
 @maxLength(16)
@@ -238,7 +238,7 @@ module network 'modules/network.bicep' = if (enablePrivateNetworking) {
   }
 }
 
-module aiServices 'modules/ai-foundry/main.bicep' = {
+module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
   name: take('avm.res.cognitive-services.account.${resourcesName}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
