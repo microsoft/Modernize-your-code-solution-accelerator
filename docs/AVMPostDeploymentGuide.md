@@ -1,5 +1,9 @@
 # AVM Post Deployment Guide
 
+> **📋 Note**: This guide is specifically for post-deployment steps after using the AVM template. For complete deployment from scratch, see the main [Deployment Guide](./DeploymentGuide.md).
+
+---
+
 This document provides guidance on post-deployment steps after deploying the Modernize your code solution accelerator from the [AVM (Azure Verified Modules) repository](https://github.com/Azure/bicep-registry-modules/tree/main/avm/ptn/sa/modernize-your-code).
 
 ## Pre-requisites
@@ -19,7 +23,3 @@ Ensure you have a **Deployed Infrastructure** - A successful Modernize your code
 ## Running the application
 
 To help you get started, sample Informix queries have been included in the `data/informix/functions` and `data/informix/simple` directories. You can choose to upload these files to test the application.
-
----
-
-> **📋 Note**: This guide is specifically for post-deployment steps after using the AVM template. For complete deployment from scratch, see the main [Deployment Guide](./DeploymentGuide.md).
