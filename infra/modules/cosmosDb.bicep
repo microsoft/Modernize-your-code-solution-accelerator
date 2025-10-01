@@ -90,7 +90,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     backupPolicyType: !empty(secondaryLocation) ? 'Periodic' : 'Continuous'
     backupStorageRedundancy: zoneRedundant ? 'Zone' : 'Local'
     disableKeyBasedMetadataWriteAccess: false
-    disableLocalAuthentication: privateNetworking != null
+    disableLocalAuthentication: true
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
       ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
       : []
