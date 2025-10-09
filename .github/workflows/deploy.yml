@@ -208,7 +208,7 @@ jobs:
           echo "Assigning Log Analytics Contributor role for Log Analytics workspace access at RG level..."
           az role assignment create \
             --assignee ${{ secrets.AZURE_CLIENT_ID }} \
-            --role "Log Analytics Contributor" \
+            --role "Log Analytics Reader" \
             --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }} || echo "Log Analytics Contributor role assignment failed (may already exist)"
           
           echo "Waiting for role assignment propagation..."
