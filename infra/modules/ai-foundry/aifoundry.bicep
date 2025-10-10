@@ -198,7 +198,7 @@ resource cMKUserAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentiti
 
 var useExistingService = !empty(existingFoundryProjectResourceId)
 
-module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
+module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (useExistingService && privateNetworking != null && empty(privateNetworking.?cogServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-cognitiveservices-pdns-deployment', 64)
   params: {
     name: 'privatelink.cognitiveservices.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -207,7 +207,7 @@ module cognitiveServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExist
   }
 }
 
-module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?openAIPrivateDnsZoneResourceId)) {
+module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (useExistingService && privateNetworking != null && empty(privateNetworking.?openAIPrivateDnsZoneResourceId)) {
   name: take('${name}-openai-pdns-deployment', 64)
   params: {
     name: 'privatelink.openai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -216,7 +216,7 @@ module openAiPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService 
   }
 }
 
-module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (!useExistingService && privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
+module aiServicesPrivateDnsZone '../privateDnsZone.bicep' = if (useExistingService && privateNetworking != null && empty(privateNetworking.?aiServicesPrivateDnsZoneResourceId)) {
   name: take('${name}-ai-services-pdns-deployment', 64)
   params: {
     name: 'privatelink.services.ai.${toLower(environment().name) == 'azureusgovernment' ? 'azure.us' : 'azure.com'}'
@@ -359,6 +359,42 @@ module existing_cognitive_service_dependencies './dependencies.bicep' = if(useEx
     tags: tags
   }
   scope: resourceGroup(existingCognitiveServiceDetails[2], existingCognitiveServiceDetails[4])
+}
+
+var shouldCreatePrivateEndpoint = useExistingService && privateNetworking != null
+module existingAiServicesPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = if (shouldCreatePrivateEndpoint) {
+  name: take('module.private-endpoint.${cognitiveServiceExisting.name}', 64)
+  params: {
+    name:'pep-${cognitiveServiceExisting.name}' // private endpoint name
+    customNetworkInterfaceName: 'nic-${cognitiveServiceExisting.name}'
+    subnetResourceId: privateNetworking.?subnetResourceId ?? ''
+    privateDnsZoneGroup: {
+      privateDnsZoneGroupConfigs: [
+        {
+          privateDnsZoneResourceId: cogServicesPrivateDnsZoneResourceId
+        }
+        {
+          privateDnsZoneResourceId: openAIPrivateDnsZoneResourceId
+        }
+        {
+          privateDnsZoneResourceId: aiServicesPrivateDnsZoneResourceId
+        }
+      ]
+    }
+    privateLinkServiceConnections: [
+      {
+        name: 'pep-${cognitiveServiceExisting.name}'
+        properties: {
+          groupIds: ['account']
+          privateLinkServiceId: cognitiveServiceExisting.id
+        }
+      }
+    ]
+    tags: tags
+  }
+  dependsOn: [
+    cognitiveServiceExisting
+  ]
 }
 
 // module cognitiveService 'ai-services.bicep' = {
