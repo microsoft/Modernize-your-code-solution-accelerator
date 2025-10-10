@@ -31,7 +31,7 @@ def login_logout():
 
 @pytest.hookimpl(tryfirst=True)
 def pytest_html_report_title(report):
-    report.title = "Automation_CodeGen"
+    report.title = "CodeMod_Smoke_test_Automation"
 
 
 # Add a column for descriptions
