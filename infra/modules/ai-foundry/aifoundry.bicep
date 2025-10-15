@@ -380,41 +380,6 @@ module existingAiServicesPrivateEndpoint './existing-aif-private-endpoint.bicep'
     cognitiveServiceExisting
   ]
 }
-// var shouldCreatePrivateEndpoint = useExistingService && privateNetworking != null
-// module existingAiServicesPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.11.0' = if (shouldCreatePrivateEndpoint) {
-//   name: take('module.private-endpoint.${cognitiveServiceExisting.name}', 64)
-//   params: {
-//     name:'pep-${cognitiveServiceExisting.name}' // private endpoint name
-//     customNetworkInterfaceName: 'nic-${cognitiveServiceExisting.name}'
-//     subnetResourceId: privateNetworking.?subnetResourceId ?? ''
-//     privateDnsZoneGroup: {
-//       privateDnsZoneGroupConfigs: [
-//         {
-//           privateDnsZoneResourceId: cogServicesPrivateDnsZoneResourceId
-//         }
-//         {
-//           privateDnsZoneResourceId: openAIPrivateDnsZoneResourceId
-//         }
-//         {
-//           privateDnsZoneResourceId: aiServicesPrivateDnsZoneResourceId
-//         }
-//       ]
-//     }
-//     privateLinkServiceConnections: [
-//       {
-//         name: 'pep-${cognitiveServiceExisting.name}'
-//         properties: {
-//           groupIds: ['account']
-//           privateLinkServiceId: cognitiveServiceExisting.id
-//         }
-//       }
-//     ]
-//     tags: tags
-//   }
-//   dependsOn: [
-//     cognitiveServiceExisting
-//   ]
-// }
 
 // module cognitiveService 'ai-services.bicep' = {
 //   name: take('${name}-aiservices-deployment', 64)
