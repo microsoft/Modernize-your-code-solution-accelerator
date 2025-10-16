@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^4.24.1",
+    "@azure/msal-react": "^3.0.20",
     "@fluentui/react": "^8.123.6",
     "@fluentui/react-components": "^9.70.0",
     "@fluentui/react-file-type-icons": "^8.13.3",
@@ -24,7 +26,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.544.0",
     "postcss": "^8.5.6",
-    "react": "^18.3.26",
+    "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-dropzone": "^14.3.8",
     "react-icons": "^5.5.0",
@@ -34,9 +36,7 @@
     "sql-formatter": "^15.6.9",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.11",
-    "uuid": "^13.0.0",
-    "@azure/msal-browser": "^4.24.1",
-    "@azure/msal-react": "^3.0.20"
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.36.0",
