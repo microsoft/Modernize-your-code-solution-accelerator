@@ -32,7 +32,7 @@ jobs:
           AZURE_AI_DEPLOYMENT_LOCATION : ${{ secrets.AZURE_AI_DEPLOYMENT_LOCATION }}
           AZURE_ENV_MODEL_CAPACITY : 1
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AZURE_DEV_COLLECT_TELEMETRY:: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
+          AZURE_DEV_COLLECT_TELEMETRY: ${{ vars.AZURE_DEV_COLLECT_TELEMETRY }}
       # Step 3: Print the result of the validation 
       - name: Print result 
         run: cat ${{ steps.validation.outputs.resultFile }} 
