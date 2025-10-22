@@ -2,7 +2,7 @@
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 /****************************************************************************************************************************/
 @description('Name of the virtual network.')
-param name string 
+param name string
 
 @description('Azure region to deploy resources.')
 param location string = resourceGroup().location
@@ -15,7 +15,7 @@ param subnets subnetType[] = [
   {
     name: 'web'
     addressPrefixes: ['10.0.0.0/23'] // /23 (10.0.0.0 - 10.0.1.255), 512 addresses
-    delegation: 'Microsoft.Web/serverFarms'
+    delegation: 'Microsoft.App/environments'
     networkSecurityGroup: {
       name: 'nsg-web'
       securityRules: [
@@ -41,8 +41,8 @@ param subnets subnetType[] = [
             protocol: '*'
             sourcePortRange: '*'
             destinationPortRange: '*'
-            sourceAddressPrefixes: ['10.0.0.0/23']
-            destinationAddressPrefixes: ['10.0.0.0/23']
+            sourceAddressPrefixes: ['10.0.0.0/23'] // From same subnet
+            destinationAddressPrefixes: ['10.0.0.0/23'] // To same subnet
           }
         }
         {
@@ -280,10 +280,18 @@ output subnets subnetOutputType[] = [
 ]
 
 // Dynamic outputs for individual subnets for backward compatibility
-output webSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'web') ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'web')] : ''
-output pepsSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'peps') ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'peps')] : ''
-output bastionSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'AzureBastionSubnet') ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'AzureBastionSubnet')] : ''
-output jumpboxSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'jumpbox') ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'jumpbox')] : ''
+output webSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'web')
+  ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'web')]
+  : ''
+output pepsSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'peps')
+  ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'peps')]
+  : ''
+output bastionSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'AzureBastionSubnet')
+  ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'AzureBastionSubnet')]
+  : ''
+output jumpboxSubnetResourceId string = contains(map(subnets, subnet => subnet.name), 'jumpbox')
+  ? virtualNetwork.outputs.subnetResourceIds[indexOf(map(subnets, subnet => subnet.name), 'jumpbox')]
+  : ''
 
 @export()
 @description('Custom type definition for subnet resource information as output')
@@ -307,8 +315,8 @@ type subnetType = {
   @description('Required. The Name of the subnet resource.')
   name: string
 
-  @description('Required. Prefixes for the subnet.')  // Required to ensure at least one prefix is provided
-  addressPrefixes: string[]   
+  @description('Required. Prefixes for the subnet.') // Required to ensure at least one prefix is provided
+  addressPrefixes: string[]
 
   @description('Optional. The delegation to enable on the subnet.')
   delegation: string?

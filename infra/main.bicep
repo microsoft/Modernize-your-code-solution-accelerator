@@ -245,7 +245,7 @@ var privateDnsZones = [
   'privatelink.documents.azure.com'
   'privatelink.vaultcore.azure.net'
   'privatelink.blob.${environment().suffixes.storage}'
-  'privatelink.queue.${environment().suffixes.storage}'
+  'privatelink.file.${environment().suffixes.storage}'
 ]
  
 // DNS Zone Index Constants
@@ -256,7 +256,7 @@ var dnsZoneIndex = {
   cosmosDB: 3
   keyVault: 4
   storageBlob: 5
-  storageQueue: 6
+  storageFile: 6
 }
 
 // ===================================================
@@ -267,7 +267,7 @@ var dnsZoneIndex = {
 @batchSize(5)
 module avmPrivateDnsZones 'br/public:avm/res/network/private-dns-zone:0.7.1' = [
   for (zone, i) in privateDnsZones: if (enablePrivateNetworking) {
-    name: 'avm.res.network.private-dns-zone.${split(zone, '.')[1]}.${solutionSuffix}'
+    name: take('avm.res.network.private-dns-zone.${split(zone, '.')[1]}.${solutionSuffix}', 64)
     params: {
       name: zone
       tags: allTags
@@ -403,7 +403,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
     managedIdentities: {
       systemAssigned: true
     }
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: 'Disabled'
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Allow'
@@ -448,7 +448,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
           virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
           subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
           blobPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageBlob]!.outputs.resourceId
-          filePrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageQueue]!.outputs.resourceId
+          filePrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageFile]!.outputs.resourceId
         }
       : null
     containers: [
