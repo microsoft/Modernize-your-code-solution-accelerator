@@ -42,7 +42,7 @@ param location string = resourceGroup().location
 param azureAiServiceLocation string
 
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
-param capacity int = 150
+param gptModelCapacity int = 150
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false 
@@ -80,11 +80,11 @@ param enableTelemetry bool = true
 
 @minLength(1)
 @description('Optional. GPT model deployment type. Defaults to GlobalStandard.')
-param deploymentType string = 'GlobalStandard'
+param gptModelDeploymentType string = 'GlobalStandard'
 
 @minLength(1)
 @description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
-param llmModel string = 'gpt-4o'
+param gptModelName string = 'gpt-4o'
 
 @minLength(1)
 @description('Optional. Set the Image tag. Defaults to latest_2025-09-22_455.')
@@ -118,15 +118,15 @@ var solutionSuffix = toLower(trim(replace(
 )))
 
 var modelDeployment = {
-  name: llmModel
+  name: gptModelName
   model: {
-    name: llmModel
+    name: gptModelName
     format: 'OpenAI'
     version: gptModelVersion
   }
   sku: {
-    name: deploymentType
-    capacity: capacity
+    name: gptModelDeploymentType
+    capacity: gptModelCapacity
   }
   raiPolicyName: 'Microsoft.Default'
 }
