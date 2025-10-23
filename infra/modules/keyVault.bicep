@@ -37,7 +37,7 @@ var privateDnsZoneResourceId = privateNetworking != null
   : ''
 
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
-  name: take('${name}-kv-deployment', 64)
+  name: take('avm.res.key-vault.vault.${name}', 64)
   params: {
     name: name
     location: location
