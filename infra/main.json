@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.37.4.10188",
-      "templateHash": "17110143098087170499"
+      "templateHash": "5944351688073580632"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -20222,7 +20222,7 @@
             "value": true
           },
           "customSubDomainName": {
-            "value": "[format('ais-{0}', variables('solutionSuffix'))]"
+            "value": "[format('aif-{0}', variables('solutionSuffix'))]"
           },
           "apiProperties": {
             "value": {}
@@ -20235,9 +20235,7 @@
               "systemAssigned": true
             }
           },
-          "publicNetworkAccess": {
-            "value": "Disabled"
-          },
+          "publicNetworkAccess": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Disabled'), createObject('value', 'Enabled'))]",
           "networkAcls": {
             "value": {
               "bypass": "AzureServices",
@@ -26005,9 +26003,9 @@
       },
       "dependsOn": [
         "appIdentity",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
@@ -26065,7 +26063,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "16825226845979775327"
+              "templateHash": "13246988107493308882"
             }
           },
           "definitions": {
@@ -26264,7 +26262,7 @@
             "storageAccount": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[take(format('{0}-sa-deployment', parameters('name')), 64)]",
+              "name": "[take(format('avm.res.storage.storage-account.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -32104,7 +32102,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "7990477316673113014"
+              "templateHash": "6889583698898903642"
             }
           },
           "definitions": {
@@ -32446,7 +32444,7 @@
             "keyvault": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[take(format('{0}-kv-deployment', parameters('name')), 64)]",
+              "name": "[take(format('avm.res.key-vault.vault.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"
@@ -35692,7 +35690,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.37.4.10188",
-              "templateHash": "10457945591968285605"
+              "templateHash": "1858982488128583687"
             }
           },
           "definitions": {
@@ -35890,7 +35888,7 @@
             "cosmosAccount": {
               "type": "Microsoft.Resources/deployments",
               "apiVersion": "2022-09-01",
-              "name": "[take(format('{0}-account-deployment', parameters('name')), 64)]",
+              "name": "[take(format('avm.res.document-db.database-account.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
                   "scope": "inner"

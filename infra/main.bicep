@@ -395,7 +395,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
       : null
     existingFoundryProjectResourceId: azureExistingAIProjectResourceId
     disableLocalAuth: true //Should be set to true for WAF aligned configuration
-    customSubDomainName: 'ais-${solutionSuffix}'
+    customSubDomainName: 'aif-${solutionSuffix}'
     apiProperties: {
       //staticsEnabled: false
     }
@@ -403,7 +403,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
     managedIdentities: {
       systemAssigned: true
     }
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Allow'
