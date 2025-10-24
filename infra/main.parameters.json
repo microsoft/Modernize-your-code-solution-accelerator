@@ -44,15 +44,6 @@
     "backendExists": {
       "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
     },
-    "enableMonitoring": {
-      "value": true
-    },
-    "enablePrivateNetworking": {
-      "value": true
-    },
-    "enableScaling": {
-      "value": true
-    },
     "backendDefinition": {
       "value": {
         "settings": [
