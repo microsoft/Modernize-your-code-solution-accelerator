@@ -173,7 +173,7 @@ param resourceSuffix string
 // 2 Pick a VM size that does support accelerated networking (the usual jump-box candidates):
 //     Standard_DS2_v2 (2 vCPU, 7 GiB RAM, Premium SSD) // The most broadly available (it’s a legacy SKU supported in virtually every region).
 //     Standard_D2s_v3 (2 vCPU, 8 GiB RAM, Premium SSD) //  next most common
-//     Standard_D2s_v4 (2 vCPU, 8 GiB RAM, Premium SSD)  // Newest, so fewer regions availabl
+//     Standard_D2s_v4 (2 vCPU, 8 GiB RAM, Premium SSD)  // Newest, so fewer regions available
 
 
 // Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
