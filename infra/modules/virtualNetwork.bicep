@@ -176,7 +176,7 @@ param resourceSuffix string
 //     Standard_D2s_v4 (2 vCPU, 8 GiB RAM, Premium SSD)  // Newest, so fewer regions available
 
 
-// Subnet Classless Inter-Doman Routing (CIDR)  Sizing Reference Table (Best Practices)
+// Subnet Classless Inter-Domain Routing (CIDR)  Sizing Reference Table (Best Practices)
 // | CIDR      | # of Addresses | # of /24s | Notes                                 |
 // |-----------|---------------|-----------|----------------------------------------|
 // | /24       | 256           | 1         | Smallest recommended for Azure subnets |
