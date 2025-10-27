@@ -32,25 +32,12 @@ param secrets secretType[]?
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module privateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
-  name: take('${name}-kv-pdns-deployment', 64)
-  params: {
-    name: 'privatelink.${toLower(environment().name) == 'azureusgovernment' ? 'vaultcore.usgovcloudapi.net' : 'vaultcore.azure.net'}'
-    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-    tags: tags
-  }
-}
-
 var privateDnsZoneResourceId = privateNetworking != null
-  ? (empty(privateNetworking.?privateDnsZoneResourceId)
-      ? privateDnsZone.outputs.resourceId ?? ''
-      : privateNetworking.?privateDnsZoneResourceId ?? '')
+  ? privateNetworking.?privateDnsZoneResourceId ?? ''
   : ''
 
 module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
-  name: take('${name}-kv-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
+  name: take('avm.res.key-vault.vault.${name}', 64)
   params: {
     name: name
     location: location

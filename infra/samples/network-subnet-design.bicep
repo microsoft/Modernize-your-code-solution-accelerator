@@ -325,7 +325,7 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /******************************************************************************************************************/
 
-module network '../modules/network/main.bicep' = {
+module network '../modules/network/network-resources.bicep' = {
   name: take('network-${resourcesName}-create', 64)
   params: {
     resourcesName: resourcesName

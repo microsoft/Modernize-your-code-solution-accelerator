@@ -38,11 +38,11 @@ param location string = resourceGroup().location
     ]
   }
 })
-@description('Optional. Location for all AI service resources. This location can be different from the resource group location.')
-param aiDeploymentsLocation string
+@description('Required. Location for all AI service resources. This location can be different from the resource group location.')
+param azureAiServiceLocation string
 
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
-param capacity int = 150
+param gptModelCapacity int = 150
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false 
@@ -79,24 +79,25 @@ param tags object = {}
 param enableTelemetry bool = true
 
 @minLength(1)
-@description('GPT model deployment type:')
-param deploymentType string = 'GlobalStandard'
+@description('Optional. GPT model deployment type. Defaults to GlobalStandard.')
+param gptModelDeploymentType string = 'GlobalStandard'
 
 @minLength(1)
-@description('Name of the GPT model to deploy:')
-param llmModel string = 'gpt-4o'
+@description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
+param gptModelName string = 'gpt-4o'
 
 @minLength(1)
-@description('Set the Image tag:')
+@description('Optional. Set the Image tag. Defaults to latest_2025-09-22_455.')
 param imageVersion string = 'latest_2025-09-22_455'
 
 @minLength(1)
-@description('Version of the GPT model to deploy:')
+@description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
 param gptModelVersion string = '2024-08-06'
 
-@description('Use this parameter to use an existing AI project resource ID')
+@description('Optional. Use this parameter to use an existing AI project resource ID. Defaults to empty string.')
 param azureExistingAIProjectResourceId string = ''
 
+@description('Optional. Use this parameter to use an existing Log Analytics workspace resource ID. Defaults to empty string.')
 param existingLogAnalyticsWorkspaceId string = ''
 
 var allTags = union(
@@ -106,7 +107,7 @@ var allTags = union(
   tags
 )
 
-var resourcesName = toLower(trim(replace(
+var solutionSuffix = toLower(trim(replace(
   replace(
     replace(replace(replace(replace('${solutionName}${solutionUniqueToken}', '-', ''), '_', ''), '.', ''), '/', ''),
     ' ',
@@ -117,22 +118,20 @@ var resourcesName = toLower(trim(replace(
 )))
 
 var modelDeployment = {
-  name: llmModel
+  name: gptModelName
   model: {
-    name: llmModel
+    name: gptModelName
     format: 'OpenAI'
     version: gptModelVersion
   }
   sku: {
-    name: deploymentType
-    capacity: capacity
+    name: gptModelDeploymentType
+    capacity: gptModelCapacity
   }
   raiPolicyName: 'Microsoft.Default'
 }
 
-var abbrs = loadJsonContent('./abbreviations.json')
-
-@description('Tag, Created by user name')
+@description('Optional. Tag, Created by user name. Defaults to user principal name or object ID.')
 param createdBy string = contains(deployer(), 'userPrincipalName')? split(deployer().userPrincipalName, '@')[0]: deployer().objectId
  
 
@@ -172,9 +171,9 @@ resource avmTelemetry 'Microsoft.Resources/deployments@2024-03-01' = if (enableT
 }
 
 module appIdentity 'br/public:avm/res/managed-identity/user-assigned-identity:0.4.1' = {
-  name: take('identity-app-${resourcesName}-deployment', 64)
+  name: take('avm.res.managed-identity.user-assigned-identity.${solutionSuffix}', 64)
   params: {
-    name: '${abbrs.security.managedIdentity}${resourcesName}'
+    name: 'id-${solutionSuffix}'
     location: location
     tags: allTags
     enableTelemetry: enableTelemetry
@@ -194,9 +193,9 @@ resource existingLogAnalyticsWorkspace 'Microsoft.OperationalInsights/workspaces
 
 // Deploy new Log Analytics workspace only if required and not using existing
 module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = if ((enableMonitoring || enablePrivateNetworking) && !useExistingLogAnalytics) {
-  name: take('log-analytics-${resourcesName}-deployment', 64)
+  name: take('avm.res.operational-insights.workspace.${solutionSuffix}', 64)
   params: {
-    name: '${abbrs.managementGovernance.logAnalyticsWorkspace}${resourcesName}'
+    name: 'log-${solutionSuffix}'
     location: location
     skuName: 'PerGB2018'
     dataRetention: 30
@@ -212,9 +211,9 @@ var LogAnalyticsPrimarySharedKey string = useExistingLogAnalytics? existingLogAn
 var LogAnalyticsWorkspaceId = useExistingLogAnalytics? existingLogAnalyticsWorkspace.properties.customerId : logAnalyticsWorkspace.outputs.logAnalyticsWorkspaceId
 
 module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (enableMonitoring) {
-  name: take('app-insights-${resourcesName}-deployment', 64)
+  name: take('avm.res.insights.component.${solutionSuffix}', 64)
   params: {
-    name: '${abbrs.managementGovernance.applicationInsights}${resourcesName}'
+    name: 'appi-${solutionSuffix}'
     location: location
     workspaceResourceId: logAnalyticsWorkspaceResourceId
     diagnosticSettings: [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
@@ -224,42 +223,179 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
 }
 
 
-module network 'modules/network.bicep' = if (enablePrivateNetworking) {
-  name: take('network-${resourcesName}-deployment', 64)
+// Virtual Network with NSGs and Subnets
+module virtualNetwork 'modules/virtualNetwork.bicep' = if (enablePrivateNetworking) {
+  name: take('module.virtualNetwork.${solutionSuffix}', 64)
   params: {
-    resourcesName: resourcesName
-    logAnalyticsWorkSpaceResourceId: logAnalyticsWorkspaceResourceId
-    vmAdminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
-    vmAdminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
-    vmSize: vmSize ??  'Standard_DS2_v2' // Default VM size 
+    name: 'vnet-${solutionSuffix}'
+    addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
     location: location
-    tags: allTags
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalyticsWorkspaceResourceId
+    resourceSuffix: solutionSuffix
+    enableTelemetry: enableTelemetry
+  }
+}
+
+// ========== Private DNS Zones ========== //
+var privateDnsZones = [
+  'privatelink.cognitiveservices.azure.com'
+  'privatelink.openai.azure.com'
+  'privatelink.services.ai.azure.com'
+  'privatelink.documents.azure.com'
+  'privatelink.vaultcore.azure.net'
+  'privatelink.blob.${environment().suffixes.storage}'
+  'privatelink.file.${environment().suffixes.storage}'
+]
+ 
+// DNS Zone Index Constants
+var dnsZoneIndex = {
+  cognitiveServices: 0
+  openAI: 1
+  aiServices: 2
+  cosmosDB: 3
+  keyVault: 4
+  storageBlob: 5
+  storageFile: 6
+}
+
+// ===================================================
+// DEPLOY PRIVATE DNS ZONES
+// - Deploys all zones if no existing Foundry project is used
+// - Excludes AI-related zones when using with an existing Foundry project
+// ===================================================
+@batchSize(5)
+module avmPrivateDnsZones 'br/public:avm/res/network/private-dns-zone:0.7.1' = [
+  for (zone, i) in privateDnsZones: if (enablePrivateNetworking) {
+    name: take('avm.res.network.private-dns-zone.${split(zone, '.')[1]}.${solutionSuffix}', 64)
+    params: {
+      name: zone
+      tags: allTags
+      enableTelemetry: enableTelemetry
+      virtualNetworkLinks: [
+        {
+          name: take('vnetlink-${virtualNetwork!.outputs.name}-${split(zone, '.')[1]}', 80)
+          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+        }
+      ]
+    }
+  }
+]
+
+// Azure Bastion Host
+var bastionHostName = 'bas-${solutionSuffix}'
+module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = if (enablePrivateNetworking) {
+  name: take('avm.res.network.bastion-host.${bastionHostName}', 64)
+  params: {
+    name: bastionHostName
+    skuName: 'Standard'
+    location: location
+    virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+    diagnosticSettings: [
+      {
+        name: 'bastionDiagnostics'
+        workspaceResourceId: logAnalyticsWorkspaceResourceId
+        logCategoriesAndGroups: [
+          {
+            categoryGroup: 'allLogs'
+            enabled: true
+          }
+        ]
+      }
+    ]
+    tags: tags
+    enableTelemetry: enableTelemetry
+    publicIPAddressObject: {
+      name: 'pip-${bastionHostName}'
+      zones: []
+    }
+  }
+}
+
+// Jumpbox Virtual Machine
+var jumpboxVmName = take('vm-jumpbox-${solutionSuffix}', 15)
+module jumpboxVM 'br/public:avm/res/compute/virtual-machine:0.15.0' = if (enablePrivateNetworking) {
+  name: take('avm.res.compute.virtual-machine.${jumpboxVmName}', 64)
+  params: {
+    name: take(jumpboxVmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
+    vmSize: vmSize ?? 'Standard_DS2_v2'
+    location: location
+    adminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
+    adminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    tags: tags
+    zone: 0
+    imageReference: {
+      offer: 'WindowsServer'
+      publisher: 'MicrosoftWindowsServer'
+      sku: '2019-datacenter'
+      version: 'latest'
+    }
+    osType: 'Windows'
+    osDisk: {
+      name: 'osdisk-${jumpboxVmName}'
+      managedDisk: {
+        storageAccountType: 'Standard_LRS'
+      }
+    }
+    encryptionAtHost: false // Some Azure subscriptions do not support encryption at host
+    nicConfigurations: [
+      {
+        name: 'nic-${jumpboxVmName}'
+        ipConfigurations: [
+          {
+            name: 'ipconfig1'
+            subnetResourceId: virtualNetwork!.outputs.jumpboxSubnetResourceId
+          }
+        ]
+        diagnosticSettings: [
+          {
+            name: 'jumpboxDiagnostics'
+            workspaceResourceId: logAnalyticsWorkspaceResourceId
+            logCategoriesAndGroups: [
+              {
+                categoryGroup: 'allLogs'
+                enabled: true
+              }
+            ]
+            metricCategories: [
+              {
+                category: 'AllMetrics'
+                enabled: true
+              }
+            ]
+          }
+        ]
+      }
+    ]
     enableTelemetry: enableTelemetry
   }
 }
 
 module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
-  name: take('avm.res.cognitive-services.account.${resourcesName}', 64)
+  name: take('module.aifoundry.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
-    name: '${abbrs.ai.aiFoundry}${resourcesName}'
-    location: aiDeploymentsLocation
+    name: 'aif-${solutionSuffix}'
+    location: azureAiServiceLocation
     sku: 'S0'
     kind: 'AIServices'
     deployments: [ modelDeployment ]
-    projectName: '${abbrs.ai.aiFoundryProject}${resourcesName}'
-    projectDescription: '${abbrs.ai.aiFoundryProject}${resourcesName}'
+    projectName: 'proj-${solutionSuffix}'
+    projectDescription: 'proj-${solutionSuffix}'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
-          virtualNetworkResourceId: network.outputs.vnetResourceId
-          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+          cogServicesPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.cognitiveServices]!.outputs.resourceId
+          openAIPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.openAI]!.outputs.resourceId
+          aiServicesPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.aiServices]!.outputs.resourceId
         }
       : null
     existingFoundryProjectResourceId: azureExistingAIProjectResourceId
     disableLocalAuth: true //Should be set to true for WAF aligned configuration
-    customSubDomainName: 'ais-${resourcesName}'
+    customSubDomainName: 'aif-${solutionSuffix}'
     apiProperties: {
       //staticsEnabled: false
     }
@@ -267,7 +403,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
     managedIdentities: {
       systemAssigned: true
     }
-    publicNetworkAccess: 'Enabled'
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     networkAcls: {
       bypass: 'AzureServices'
       defaultAction: 'Allow'
@@ -298,19 +434,21 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
 var appStorageContainerName = 'appstorage'
 
 module storageAccount 'modules/storageAccount.bicep' = {
-  name: take('storage-account-${resourcesName}-deployment', 64)
+  name: take('module.storageAccount.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.storage.storageAccount}${resourcesName}', 24)
+    name: take('st${solutionSuffix}', 24)
     location: location
     tags: allTags
     skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
-          virtualNetworkResourceId: network.outputs.vnetResourceId
-          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+          blobPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageBlob]!.outputs.resourceId
+          filePrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageFile]!.outputs.resourceId
         }
       : null
     containers: [
@@ -333,18 +471,19 @@ module storageAccount 'modules/storageAccount.bicep' = {
 }
 
 module keyVault 'modules/keyVault.bicep' = {
-  name: take('keyvault-${resourcesName}-deployment', 64)
+  name: take('module.keyVault.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.security.keyVault}${resourcesName}', 24)
+    name: take('kv-${solutionSuffix}', 24)
     location: location
     sku: 'standard'
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
     privateNetworking: enablePrivateNetworking
       ? {
-          virtualNetworkResourceId: network.outputs.vnetResourceId
-          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+          privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.keyVault]!.outputs.resourceId
         }
       : null
     roleAssignments: [
@@ -360,11 +499,11 @@ module keyVault 'modules/keyVault.bicep' = {
 }
 
 module cosmosDb 'modules/cosmosDb.bicep' = {
-  name: take('cosmos-${resourcesName}-deployment', 64)
+  name: take('module.cosmosDb.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.databases.cosmosDBDatabase}${resourcesName}', 44)
+    name: take('cosmos-${solutionSuffix}', 44)
     location: location
     dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
     logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
@@ -372,8 +511,9 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
     secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
     privateNetworking: enablePrivateNetworking
       ? {
-          virtualNetworkResourceId: network.outputs.vnetResourceId
-          subnetResourceId: network.outputs.subnetPrivateEndpointsResourceId
+          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
+          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+          privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.cosmosDB]!.outputs.resourceId
         }
       : null
     tags: allTags
@@ -381,19 +521,19 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   }
 }
 
-var containerAppsEnvironmentName = '${abbrs.containers.containerAppsEnvironment}${resourcesName}'
+var containerAppsEnvironmentName = 'cae-${solutionSuffix}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.2' = {
-  name: take('container-env-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.managed-environment.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [applicationInsights, logAnalyticsWorkspace, network] // required due to optional flags that could change dependency
+  dependsOn: [applicationInsights, logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
     name: containerAppsEnvironmentName
     infrastructureResourceGroupName: '${resourceGroup().name}-ME-${containerAppsEnvironmentName}'
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled' // public access required for frontend
-    infrastructureSubnetResourceId: enablePrivateNetworking ? network.outputs.subnetWebResourceId : null
+    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.webSubnetResourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId
@@ -424,11 +564,11 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.11.
 }
 
 module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
-  name: take('container-app-backend-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.container-app.backend.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [applicationInsights] // required due to optional flags that could change dependency
   params: {
-    name: take('${abbrs.containers.containerApp}backend-${resourcesName}', 32)
+    name: take('ca-backend-${solutionSuffix}', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
@@ -595,9 +735,9 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
 }
 
 module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
-  name: take('container-app-frontend-${resourcesName}-deployment', 64)
+  name: take('avm.res.app.container-app.frontend.${solutionSuffix}', 64)
   params: {
-    name: take('${abbrs.containers.containerApp}frontend-${resourcesName}', 32)
+    name: take('ca-frontend-${solutionSuffix}', 32)
     location: location
     environmentResourceId: containerAppsEnvironment.outputs.resourceId
     managedIdentities: {
