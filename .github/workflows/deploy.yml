@@ -43,7 +43,6 @@ jobs:
           export AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
           export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
           export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-          export GPT_MIN_CAPACITY="${{ env.GPT_MIN_CAPACITY }}"
           export AZURE_REGIONS="${{ vars.AZURE_REGIONS }}"
           chmod +x scripts/checkquota.sh
           if ! scripts/checkquota.sh; then
@@ -141,7 +140,6 @@ jobs:
             --parameters \
                 solutionName="${{ env.SOLUTION_PREFIX }}" \
                 azureAiServiceLocation='${{ env.AZURE_LOCATION }}' \
-                capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
                 createdBy="Pipeline" \
                 tags="{'SecurityControl':'Ignore','Purpose':'Deploying and Cleaning Up Resources for Validation','CreatedDate':'$current_date'}"
@@ -427,7 +425,7 @@ jobs:
 
           EMAIL_BODY=$(cat <<EOF
           {
-            "body": "<p>Dear Team,</p><p>We would like to inform you that the DocGen Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
+            "body": "<p>Dear Team,</p><p>We would like to inform you that the CodeMod Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
           }
           EOF
           )
