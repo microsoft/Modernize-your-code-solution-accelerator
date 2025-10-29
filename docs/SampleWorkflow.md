@@ -1,7 +1,7 @@
 
-# Sample Questions
+# Sample Workflow
 
-To help you get started, here are some **Sample Prompts** you can ask in the app:
+To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
 
 ## **Process**
 
