@@ -756,7 +756,7 @@ const ModernizationPage = () => {
       }
 
       // Update text with file count
-      setText(`${new Date().toLocaleDateString()} (${fileItems.length} files)`);
+      setText(`${new Date().toLocaleDateString()} (${fileItems.length} ${fileItems.length === 1 ? 'file' : 'files'})`);
     }
   }, [reduxFileList, batchId]);
 
@@ -818,6 +818,10 @@ const ModernizationPage = () => {
   
           return updated;
         });
+
+        // Navigate to batch view page when processing is complete
+        console.log("All files processed, navigating to batch view page");
+        navigate(`/batch-view/${batchId}`);
       }
     } catch (err) {
       console.error("Failed to update summary status:", err);
@@ -1218,6 +1222,7 @@ useEffect(() => {
                 </div>
 
               </Card>
+              {expandedSections.includes("errors") && renderErrorContent(batchSummary)}
 
             </div>
           </>
