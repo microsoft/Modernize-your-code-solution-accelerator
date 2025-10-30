@@ -174,6 +174,7 @@ const initialState: {
   batchId: string | null;
   fileId: string | null;
   message: string;
+  status: string | null;
   loading: boolean;
   error: string | null;
   uploadingFiles: boolean;
@@ -192,6 +193,7 @@ const initialState: {
   batchId: null,
   fileId: null,
   message: '',
+  status: null,
   loading: false,
   error: null,
   uploadingFiles: false,
@@ -207,6 +209,7 @@ export const batchSlice = createSlice({
       state.batchId = null;
       state.fileId = null
       state.message = '';
+      state.status = null;
       state.error = null;
     },
   },
@@ -288,7 +291,8 @@ export const batchSlice = createSlice({
         if (action.payload) {
           console.log("Action Payload", action.payload);
           state.batchId = action.payload.batch_id;
-          state.message = "Processing started successfully";
+          state.status = action.payload.status; // Store the actual status from backend
+          state.message = action.payload.message; // Store the actual message from backend
         } else {
           state.error = "Unexpected response: Payload is undefined.";
         }
