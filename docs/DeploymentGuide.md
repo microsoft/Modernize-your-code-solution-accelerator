@@ -72,7 +72,7 @@ You can run this solution using GitHub Codespaces. The button will open a web-ba
 </details>
 
 <details>
-  <summary><b>Deploy in VS Code</b></summary>
+  <summary><b>Deploy in VS Code Dev Containers</b></summary>
 
  ### VS Code Dev Containers
 
@@ -122,22 +122,7 @@ Consider the following settings during your deployment to modify specific settin
  <details>
 <Summary><b>Configurable Deployment Settings</b></Summary>
 
-When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
-
-| **Setting**                       | **Description**                                                                                      | **Default value**         |
-|----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
-| **Azure Region**                 | The region where resources will be created.                                                         | East US                   |
-| **Resource Prefix**              | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | azdtemp                   |
-| **Capacity**                     | Configure capacity for **gpt-4o**.                                                                   | 200                        |
-| **Model Deployment Type**        | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                        | GlobalStandard             |
-| **Model Name**                   | Set the Model Name (allowed values: gpt-4o).                                                        | gpt-4o                     |
-| **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
-| **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
-| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
-| **Jumpbox Admin Username**         | Specifies the administrator username for the Jumpbox Virtual Machine.                             | `JumpboxAdminUser`         |
-| **Jumpbox Admin Password**         | Specifies the administrator password for the Jumpbox Virtual Machine.                             | `JumpboxAdminP@ssw0rd1234!` |
-| **Cosmos DB Secondary Location**   | Specifies the secondary region for Cosmos DB. Set this if redundancy (`enableRedundancy`) is enabled. | `<Secondary Region>`        |
-
+When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md)
 
 This accelerator can be configured to  use authentication. 
 
