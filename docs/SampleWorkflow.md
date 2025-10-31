@@ -27,7 +27,7 @@ _Sample Qperation:_
 
 _Sample operation:_
 
-- Task: Once the files are translated, the button at the bottom left will be enabled to **Download all as .zip** file containing all the translated files.
+- Task: Once the files are translated, the **Download all as .zip** button at the bottom left will be enabled to download the translated files.
 
   ![Application](images/samplecodmod1.png)
   
