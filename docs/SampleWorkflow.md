@@ -17,7 +17,7 @@ _Sample Operations:_
 
 ### **Review**
 
-- The batch Processing page will get opened up and the translation process will be visible. One file at a time will be processed and others will be in queued state.
+- The batch Processing page will open and the translation process will be visible. One file at a time will be processed and others will be in queued state.
 - Once the batch Processing is done for any file, file is available to review.
 - Once the translation process is complete for a batch, it becomes available for review in the History panel (located at the top right).
   
