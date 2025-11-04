@@ -5,7 +5,7 @@ To help you get started, here’s a **sample process** you can follow in the app
 
 ## **Process**
 
-> Note: Download Sample Data – Folder from [here](../data/informix) contains sample Informix query files (simple and function) for download.
+> Note: Download Sample Data – The folder [here](../data/informix) contains sample Informix query files (simple and function) for download.
 
 ### **Upload**
 
