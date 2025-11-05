@@ -14,6 +14,7 @@ _Sample Operations:_
 - Select **q1_informix.sql** from _simple_ folder and **F1.sql** and **F2.sql** from _functions_ folder.
 - Click **Upload** button.
 - Click **Start Translating** Button to Process Files.
+  > _Note: Average translating time is 01 minute 12 seconds._ <br>
 
 ### **Review**
 
