@@ -190,6 +190,16 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
 
+### Deploy Your local changes
+
+To deploy your local changes rename the below files.
+
+Rename `azure.yaml` to `azure_original.yaml` and `azure_custom.yaml` to `azure.yaml`.
+
+Go to `infra` directory
+
+Rename `main.bicep` to `main_original.bicep` and `main_custom.bicep` to `main.bicep`. Continue with the [deploying steps](https://github.com/microsoft/Modernize-your-code-solution-accelerator/blob/ve-Local-readme/docs/DeploymentGuide.md#deploying-with-azd).
+
 ### 🛠️ Troubleshooting
  If you encounter any issues during the deployment process, please refer [troubleshooting](../docs/TroubleShootingSteps.md) document for detailed steps and solutions.
 
