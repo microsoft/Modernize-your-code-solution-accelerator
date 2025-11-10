@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18 AS build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm install
+RUN npm ci
 
 # Copy frontend source
 COPY . .
@@ -16,6 +16,8 @@ COPY . .
 RUN npm run build
 
 # Runtime stage
+# Note: Using Python runtime to serve frontend via uvicorn for integration with backend API
+# This allows unified deployment architecture for both frontend and backend services
 FROM python:3.11-slim
 
 WORKDIR /app

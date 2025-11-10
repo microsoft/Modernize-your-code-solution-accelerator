@@ -70,12 +70,10 @@ param vmSize string?
 
 @description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
-//param vmAdminUsername string = take(newGuid(), 20)
 param vmAdminUsername string?
 
 @description('Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
 @secure()
-//param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
@@ -93,8 +91,8 @@ param gptModelDeploymentType string = 'GlobalStandard'
 param gptModelName string = 'gpt-4o'
 
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest_2025-09-22_455.')
-param imageVersion string = 'latest_2025-09-22_455'
+@description('Optional. Set the Image tag. Defaults to latest.')
+param imageVersion string = 'latest'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
@@ -328,7 +326,9 @@ module jumpboxVM 'br/public:avm/res/compute/virtual-machine:0.15.0' = if (enable
     vmSize: vmSize ?? 'Standard_DS2_v2'
     location: location
     adminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
-    adminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    // WARNING: vmAdminPassword parameter is required when enablePrivateNetworking is true. 
+    // Do not use default credentials in production environments.
+    adminPassword: vmAdminPassword!
     tags: tags
     zone: 0
     imageReference: {
@@ -688,10 +688,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
               value: aiServices.outputs.aiProjectInfo.apiEndpoint // or equivalent
             }
             {
-              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code. 
-              value: aiServices.outputs.aiProjectInfo.apiEndpoint
-            }
-            {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
               value: aiServices.outputs.aiProjectInfo.name
             }
@@ -805,7 +801,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.17.0' = {
         image: !empty(frontendImageName) ? frontendImageName : 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
         resources: {
-          cpu: '1'
+          cpu: 1
           memory: '2.0Gi'
         }
       }
@@ -845,7 +841,6 @@ output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.properties.l
 output AZURE_OPENAI_ENDPOINT string = 'https://${aiServices.outputs.name}.openai.azure.com/'
 output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.aiProjectInfo.name
 output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
-output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.aiProjectInfo.apiEndpoint
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = resourceGroup().name
 output AZURE_AI_AGENT_SUBSCRIPTION_ID string = subscription().subscriptionId
 output AI_PROJECT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
