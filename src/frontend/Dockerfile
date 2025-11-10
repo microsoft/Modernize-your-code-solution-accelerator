@@ -17,11 +17,15 @@ RUN npm run build
 
 # Runtime stage
 # ARCHITECTURAL DECISION: Using Python/uvicorn instead of nginx for frontend serving
-# Reasons:
-# 1. Unified deployment model with backend (both use Python/uvicorn)
-# 2. Consistent container app configuration in Azure
-# 3. Simplified orchestration and monitoring
-# 4. frontend_server.py may handle API proxying or server-side logic
+# 
+# This approach provides:
+# 1. Unified deployment model - both frontend/backend use identical Python/uvicorn runtime
+# 2. Consistent Azure Container Apps configuration and resource management
+# 3. Simplified CI/CD pipeline with single container technology stack
+# 4. frontend_server.py enables API proxying, authentication, or future server-side features
+# 5. Reduced operational complexity - same monitoring, logging, and scaling patterns
+#
+# Trade-off: Larger container size vs operational simplicity benefits
 FROM python:3.11-slim
 
 WORKDIR /app
