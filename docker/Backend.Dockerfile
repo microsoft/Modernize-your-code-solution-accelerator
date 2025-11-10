@@ -7,13 +7,13 @@ apt-get install -y libicu-dev
 WORKDIR /app
 
 # Copy only requirements first to leverage Docker cache
-COPY src/backend/requirements.txt .
+COPY ../src/backend/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy backend code
-COPY src/backend/ .
+COPY ../src/backend/ .
 
 EXPOSE 8000
 

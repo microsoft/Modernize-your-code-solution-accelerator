@@ -17,14 +17,14 @@ services:
     language: python
     docker:
       path: ../../docker/Backend.Dockerfile
-      context: ../..
+      context: ../../docker
   frontend:
     project: ./src/frontend
     host: containerapp
     language: js
     docker:
       path: ../../docker/Frontend.Dockerfile
-      context: ../..
+      context: ../../docker
 
 infra:
   provider: bicep
