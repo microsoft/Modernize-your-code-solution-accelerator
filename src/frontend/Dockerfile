@@ -26,11 +26,12 @@ RUN npm run build
 # 5. Reduced operational complexity - same monitoring, logging, and scaling patterns
 #
 # Trade-off: Larger container size vs operational simplicity benefits
+# NOTE: This architecture choice addresses maintainability through unified deployment patterns
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Copy Python requirements and install
+# Copy Python requirements and install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
