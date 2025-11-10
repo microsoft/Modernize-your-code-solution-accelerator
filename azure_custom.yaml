@@ -15,10 +15,16 @@ services:
     project: ./src/backend
     host: containerapp
     language: python
+    docker:
+      path: ../../docker/Backend.Dockerfile
+      context: ../..
   frontend:
     project: ./src/frontend
     host: containerapp
     language: js
+    docker:
+      path: ../../docker/Frontend.Dockerfile
+      context: ../..
 
 infra:
   provider: bicep
