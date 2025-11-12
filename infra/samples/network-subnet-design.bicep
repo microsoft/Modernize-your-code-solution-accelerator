@@ -1,17 +1,17 @@
 // /******************************************************************************************************************/
 //  This is an example test program to create private networking resources independently with sample network design.
-//    It is an illustration of how to use the main.bicep in the infra/modules/network folder, with your own parameters.
+//    It is an illustration of how to use the network-resources.bicep in the infra/samples/network folder, with your own parameters.
 //    You can independently deploy this module to create a network with subnets, NSGs, Azure Bastion Host, and Jumpbox VM.
 //    Test them with this test program. Then integrate your design into the modules/network.bicep which is intended for 
 //    a specific network design. 
 //  
-//  All things in infra/modules/network are designed to be reusable and composable without the need to modify 
+//  All things in infra/samples/network are designed to be reusable and composable without the need to modify 
 //     any code in the network folder. 
 //
 //  Please review below modules to understand how things are wired together:
 //    infra/main.bicep
 //    infra/modules/network.bicep
-//    infra/moddules/network/main.bicep 
+//    infra/samples/network/network-resources.bicep 
 //  
 // /******************************************************************************************************************/
 
@@ -39,7 +39,7 @@ param vmAdminUsername string = 'JumpboxAdminUser'
 param vmAdminPassword string = 'JumpboxAdminP@ssw0rd1234!'
 
 
-import { bastionHostConfigurationType } from '../modules/network/bastionHost.bicep'
+import { bastionHostConfigurationType } from 'network/bastionHost.bicep'
 @description('Optional. Configuration for the Azure Bastion Host. Leave null to omit Bastion creation.')
 param bastionConfiguration bastionHostConfigurationType = {
   name: 'bastion-${resourcesName}'
@@ -106,7 +106,7 @@ param bastionConfiguration bastionHostConfigurationType = {
       }
 }
 
-import { jumpBoxConfigurationType } from '../modules/network/jumpbox.bicep'
+import { jumpBoxConfigurationType } from 'network/jumpbox.bicep'
 @description('Optional. Configuration for the Jumpbox VM. Leave null to omit Jumpbox creation.')
 param jumpboxConfiguration jumpBoxConfigurationType = {
   name: 'vm-jumpbox-${resourcesName}'
@@ -174,7 +174,7 @@ param addressPrefixes array = ['10.0.0.0/20'] // 4096 addresses (enough for 8 /2
 // - Document subnet usage and purpose in code comments.
 // - For AVM modules, ensure only one delegation per subnet and leave delegations empty if not required.
 
-import { subnetType } from '../modules/network/virtualNetwork.bicep'
+import { subnetType } from 'network/virtualNetwork.bicep'
 @description('Array of subnets to be created within the VNET.')
 param subnets subnetType[] = [
   {
@@ -325,7 +325,7 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
 // Networking - NSGs, VNET and Subnets. Each subnet has its own NSG
 // /******************************************************************************************************************/
 
-module network '../modules/network/network-resources.bicep' = {
+module network 'network/network-resources.bicep' = {
   name: take('network-${resourcesName}-create', 64)
   params: {
     resourcesName: resourcesName
