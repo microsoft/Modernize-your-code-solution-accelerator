@@ -13,7 +13,10 @@ The Modernize your code solution accelerator allows users to specify a group of 
 
 </div>
 <br/>
+<br/>
 
+ **Disclaimer:** With any AI solutions you create using these templates, you are responsible for assessing all associated risks and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
+<br/>
 
 <h2><img src="./docs/images/read_me/solution-overview.png" width="48" />
 Solution overview
