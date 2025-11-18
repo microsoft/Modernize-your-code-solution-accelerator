@@ -187,7 +187,7 @@ var formattedRoleAssignments = [
 
 var enableReferencedModulesTelemetry = false
 
-resource cognitiveService 'Microsoft.CognitiveServices/accounts@2025-04-01-preview' existing = {
+resource cognitiveService 'Microsoft.CognitiveServices/accounts@2025-07-01-preview' existing = {
   name: name
 }
 
@@ -251,7 +251,7 @@ resource cognitiveService_diagnosticSettings 'Microsoft.Insights/diagnosticSetti
   }
 ]
 
-module cognitiveService_privateEndpoints 'br/public:avm/res/network/private-endpoint:0.11.0' = [
+module cognitiveService_privateEndpoints 'br/public:avm/res/network/private-endpoint:0.11.1' = [
   for (privateEndpoint, index) in (privateEndpoints ?? []): {
     name: '${uniqueString(deployment().name, location)}-cognitiveService-PrivateEndpoint-${index}'
     scope: resourceGroup(
