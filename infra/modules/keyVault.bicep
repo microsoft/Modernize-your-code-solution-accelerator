@@ -25,7 +25,7 @@ import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.5
 @description('Optional. Array of role assignments to create.')
 param roleAssignments roleAssignmentType[]?
 
-import { secretType } from 'br/public:avm/res/key-vault/vault:0.12.1'
+import { secretType } from 'br/public:avm/res/key-vault/vault:0.13.3'
 @description('Optional. Array of secrets to create in the Key Vault.')
 param secrets secretType[]?
 
@@ -36,7 +36,7 @@ var privateDnsZoneResourceId = privateNetworking != null
   ? privateNetworking.?privateDnsZoneResourceId ?? ''
   : ''
 
-module keyvault 'br/public:avm/res/key-vault/vault:0.12.1' = {
+module keyvault 'br/public:avm/res/key-vault/vault:0.13.3' = {
   name: take('avm.res.key-vault.vault.${name}', 64)
   params: {
     name: name

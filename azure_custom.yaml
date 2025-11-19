@@ -17,12 +17,14 @@ services:
     language: python
     docker:
       path: Dockerfile
+      remoteBuild: true
   frontend:
     project: ./src/frontend
     host: containerapp
     language: js
     docker:
       path: Dockerfile
+      remoteBuild: true
 
 infra:
   provider: bicep
