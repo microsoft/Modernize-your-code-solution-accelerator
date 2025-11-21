@@ -188,7 +188,8 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the container app with "frontend" in the name, and get the app URL from `Application URI`.
 
-6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
+6. You can now delete the resources by running `azd down`, when you have finished trying out the application.
+   > **Note:** If you deployed with `enableRedundancy=true` and Log Analytics workspace replication is enabled, you must first disable replication before running `azd down` else resource group delete will fail. Follow the steps in [Handling Log Analytics Workspace Deletion with Replication Enabled](./LogAnalyticsReplicationDisable.md), wait until replication returns `false`, then run `azd down`.
 
 ### Deploy your local changes
 
