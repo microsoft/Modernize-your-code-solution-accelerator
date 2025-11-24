@@ -5,14 +5,14 @@ This guide explains how to use the sample Bicep program `network-subnet-design.b
 ## Purpose and Approach
 
 - **Sample File:** `infra/samples/network-subnet-design.bicep`
-- **Reusable Modules:** All code in `infra/modules/network` is designed to be reusable. You should not need to modify code in the modules folder.
+- **Reusable Modules:** All code in `infra/samples/network` is designed to be reusable. You should not need to modify code in the modules folder.
 - **Custom Network File:** For your own solution, create a `network.bicep` in `infra/modules/` that represents your specific network design, using the modules as building blocks.
 
 ## How to Use the Sample
 
 - The sample demonstrates how to deploy a virtual network, subnets, NSGs, Azure Bastion Host, and Jumpbox VM using parameters and reusable modules.
 - The sample is parameterized, so you can easily adjust subnet names, address spaces, NSG rules, and delegations.
-- You can design and validate your network design with  `infra/samples/network-subnet-design.bicep`, then integrate the code by updating `infra/modules/network.bicep` with your tested design. 
+- You can design and validate your network design with `infra/samples/network-subnet-design.bicep`, then integrate the code by creating `infra/modules/network.bicep` with your tested design (network-subnet-design.bicep). 
 
 ## Key Features in the Sample
 
@@ -35,17 +35,23 @@ This guide explains how to use the sample Bicep program `network-subnet-design.b
    - Adjust the subnet array, address prefixes, NSG rules, and other parameters to match your requirements.
 3. **Deploy the Sample:**
    - Use Azure Developer CLI (`azd`) or Azure CLI to deploy the sample and validate your design.
-4. **Integrate into Solution:**
-   - Once validated, use the same approach to build your own `network.bicep` in `infra/modules/` for your solution. Test your solution with `infra/main.bicep`. 
+4. **Integrate into Your Solution:**
+   - Once validated, create your own `network.bicep` in `infra/modules/` using the tested design (network-subnet-design.bicep).
+   - **Key Integration Steps:**
+     - Remove any standalone calls to `virtualNetwork.bicep`, `bastionHost`, and `jumpboxVM` modules from main.bicep file
+     - Replace them with a single call to `infra/modules/network.bicep` (netwly created network design bicep)
+   - This approach uses the tested, reusable modules without code duplication.
+   - Test your integrated solution with `infra/main.bicep`. 
 
 ## Example Directory Structure
 
 ```
 infra/
-  modules/
+  samples/
     network/
       ... (reusable modules)
-    network.bicep   # <-- your custom network design
+  modules/
+    network.bicep   # <--Create your own custom network design
   samples/
     network-subnet-design.bicep  # <-- reference
 ```

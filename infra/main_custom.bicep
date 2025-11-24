@@ -63,7 +63,7 @@ param gptModelCapacity int = 150
 param enableMonitoring bool = false 
 
 @description('Optional. Enable scaling for the container apps. Defaults to false.')
-param enableScaling bool = false 
+param enableScaling bool = false
 
 @description('Optional. Enable redundancy for applicable resources. Defaults to false.')
 param enableRedundancy bool = false
@@ -101,9 +101,14 @@ param gptModelDeploymentType string = 'GlobalStandard'
 @description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
 param gptModelName string = 'gpt-4o'
 
+@description('Optional. Container image name for backend service. Used by azd for container deployments.')
+param backendImageName string = ''
+@description('Optional. Container image name for frontend service. Used by azd for container deployments.')
+param frontendImageName string = ''
+
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
-param imageVersion string = 'latest_2025-11-10_599'
+@description('Optional. Set the Image tag. Defaults to latest')
+param imageVersion string = 'latest'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
@@ -546,7 +551,7 @@ module proximityPlacementGroup 'br/public:avm/res/compute/proximity-placement-gr
 }
 
 
-var virtualMachineResourceName = take('vm-${solutionSuffix}', 15)
+var virtualMachineResourceName = take('vm-jumpbox-${solutionSuffix}', 15)
 module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.20.0' = if (enablePrivateNetworking) {
   name: take('avm.res.compute.virtual-machine.${virtualMachineResourceName}', 64)
   params: {
@@ -747,6 +752,29 @@ module storageAccount 'modules/storageAccount.bicep' = {
   }
 }
 
+// Azure Container Registry for azd container deployments
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
+  name: take('acrreg${solutionSuffix}', 50)
+  location: location
+  sku: {
+    name: 'Basic'
+  }
+  properties: {
+    adminUserEnabled: false
+  }
+  tags: allTags
+}
+// ACR Pull role assignment for the managed identity
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid('acr-role-assignment', solutionSuffix)
+  scope: containerRegistry
+  properties: {
+    principalId: appIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
+  }
+}
+
 module keyVault 'modules/keyVault.bicep' = {
   name: take('module.keyVault.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
@@ -853,10 +881,16 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
         appIdentity.outputs.resourceId
       ]
     }
+    registries: [
+      {
+        server: containerRegistry.properties.loginServer
+        identity: appIdentity.outputs.resourceId
+      }
+    ]
     containers: [
       {
         name: 'cmsabackend'
-        image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
+        image: !empty(backendImageName) ? backendImageName : 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
         env: concat(
           [
             {
@@ -926,10 +960,6 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
             {
               name: 'AI_PROJECT_ENDPOINT'
               value: aiServices.outputs.aiProjectInfo.apiEndpoint // or equivalent
-            }
-            {
-              name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code.
-              value: aiServices.outputs.aiProjectInfo.apiEndpoint
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
@@ -1007,7 +1037,9 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
           ]
         : []
     }
-    tags: allTags
+    tags: union(allTags, {
+      'azd-service-name': 'backend'
+    })
     enableTelemetry: enableTelemetry
   }
 }
@@ -1023,6 +1055,12 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
         appIdentity.outputs.resourceId
       ]
     }
+    registries: [
+      {
+        server: containerRegistry.properties.loginServer
+        identity: appIdentity.outputs.resourceId
+      }
+    ]
     containers: [
       {
         env: [
@@ -1035,7 +1073,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
             value: 'prod'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
+        image: !empty(frontendImageName) ? frontendImageName : 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
         resources: {
           cpu: 1
@@ -1061,7 +1099,9 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
           ]
         : []
     }
-    tags: allTags
+    tags: union(allTags, {
+      'azd-service-name': 'frontend'
+    })
     enableTelemetry: enableTelemetry
   }
 }
@@ -1072,10 +1112,10 @@ output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
 output COSMOSDB_ENDPOINT string = cosmosDb.outputs.endpoint
 output AZURE_BLOB_ACCOUNT_NAME string = storageAccount.outputs.name
 output AZURE_BLOB_ENDPOINT string = 'https://${storageAccount.outputs.name}.blob.core.windows.net/'
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.properties.loginServer
 output AZURE_OPENAI_ENDPOINT string = 'https://${aiServices.outputs.name}.openai.azure.com/'
 output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.aiProjectInfo.name
 output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
-output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.aiProjectInfo.apiEndpoint
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = resourceGroup().name
 output AZURE_AI_AGENT_SUBSCRIPTION_ID string = subscription().subscriptionId
 output AI_PROJECT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
