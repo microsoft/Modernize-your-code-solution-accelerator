@@ -687,6 +687,10 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.17.0' = {
               name: 'AZURE_PACKAGE_LOGGING_LEVEL'
               value: 'WARNING'
             }
+            {
+              name: 'AZURE_LOGGING_PACKAGES'
+              value: ''
+            }
           ],
           enableMonitoring
             ? [
