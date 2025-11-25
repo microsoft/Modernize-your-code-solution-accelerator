@@ -1,6 +1,6 @@
+from azure.ai.agents.models import ListSortOrder
 from azure.ai.projects import AIProjectClient
 from azure.identity import DefaultAzureCredential
-from azure.ai.agents.models import ListSortOrder
 
 project = AIProjectClient(
     credential=DefaultAzureCredential(),
