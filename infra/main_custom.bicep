@@ -49,6 +49,7 @@ var replicaRegionPairs = {
   eastus: 'centralus'
   eastus2: 'centralus'
   japaneast: 'eastasia'
+  northcentralus: 'southcentralus'
   northeurope: 'westeurope'
   southeastasia: 'eastasia'
   uksouth: 'westeurope'
