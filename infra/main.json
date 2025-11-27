@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.36.1.42791",
-      "templateHash": "9153427119619446086"
+      "version": "0.39.26.7824",
+      "templateHash": "2370409474947563562"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -294,7 +294,7 @@
     },
     "appIdentity": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.managed-identity.user-assigned-identity.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -787,7 +787,7 @@
     "logAnalyticsWorkspace": {
       "condition": "[and(or(parameters('enableMonitoring'), parameters('enablePrivateNetworking')), not(variables('useExistingLogAnalytics')))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -3886,7 +3886,7 @@
     "applicationInsights": {
       "condition": "[parameters('enableMonitoring')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.insights.component.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -3900,11 +3900,11 @@
           "location": {
             "value": "[parameters('location')]"
           },
-          "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId))]",
+          "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value))]",
           "diagnosticSettings": {
             "value": [
               {
-                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)]"
+                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]"
               }
             ]
           },
@@ -4657,7 +4657,7 @@
     "virtualNetwork": {
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('module.virtualNetwork.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -4679,7 +4679,7 @@
           "tags": {
             "value": "[parameters('tags')]"
           },
-          "logAnalyticsWorkspaceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId))]",
+          "logAnalyticsWorkspaceId": "[if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value))]",
           "resourceSuffix": {
             "value": "[variables('solutionSuffix')]"
           },
@@ -4694,8 +4694,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.1.42791",
-              "templateHash": "12973931661005502917"
+              "version": "0.39.26.7824",
+              "templateHash": "2800010620686653519"
             }
           },
           "definitions": {
@@ -5088,7 +5088,7 @@
               },
               "condition": "[not(empty(tryGet(parameters('subnets')[copyIndex()], 'networkSecurityGroup')))]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('avm.res.network.network-security-group.{0}.{1}', tryGet(parameters('subnets')[copyIndex()], 'networkSecurityGroup', 'name'), parameters('resourceSuffix')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -5750,7 +5750,7 @@
             },
             "virtualNetwork": {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('avm.res.network.virtual-network.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -7508,7 +7508,7 @@
       },
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.network.private-dns-zone.{0}.{1}', split(variables('privateDnsZones')[copyIndex()], '.')[1], variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -10881,7 +10881,7 @@
     "bastionHost": {
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.network.bastion-host.{0}', variables('bastionHostName')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -10905,7 +10905,7 @@
             "value": [
               {
                 "name": "bastionDiagnostics",
-                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)]",
+                "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]",
                 "logCategoriesAndGroups": [
                   {
                     "categoryGroup": "allLogs",
@@ -12601,7 +12601,7 @@
     "maintenanceConfiguration": {
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.compute.virtual-machine.{0}', variables('maintenanceConfigurationResourceName')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -13024,7 +13024,7 @@
     "windowsVmDataCollectionRules": {
       "condition": "[and(parameters('enablePrivateNetworking'), parameters('enableMonitoring'))]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.insights.data-collection-rule.{0}', variables('dataCollectionRulesResourceName')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -13041,7 +13041,7 @@
           "enableTelemetry": {
             "value": "[parameters('enableTelemetry')]"
           },
-          "location": "[if(variables('useExistingLogAnalytics'), createObject('value', reference('existingLogAnalyticsWorkspace', '2020-08-01', 'full').location), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').location))]",
+          "location": "[if(variables('useExistingLogAnalytics'), createObject('value', reference('existingLogAnalyticsWorkspace', '2020-08-01', 'full').location), createObject('value', reference('logAnalyticsWorkspace').outputs.location.value))]",
           "dataCollectionRuleProperties": {
             "value": {
               "kind": "Windows",
@@ -13127,7 +13127,7 @@
               "destinations": {
                 "logAnalytics": [
                   {
-                    "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)]",
+                    "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]",
                     "name": "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
                   }
                 ]
@@ -14220,7 +14220,7 @@
     "proximityPlacementGroup": {
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.compute.proximity-placement-group.{0}', variables('proximityPlacementGroupResourceName')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -14584,7 +14584,7 @@
     "virtualMachine": {
       "condition": "[parameters('enablePrivateNetworking')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.compute.virtual-machine.{0}', variables('virtualMachineResourceName')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -14669,12 +14669,12 @@
                 "name": "[format('nic-{0}', variables('virtualMachineResourceName'))]",
                 "tags": "[parameters('tags')]",
                 "deleteOption": "Delete",
-                "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId))), null())]",
+                "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value))), null())]",
                 "ipConfigurations": [
                   {
                     "name": "[format('{0}-nic01-ipconfig01', variables('virtualMachineResourceName'))]",
                     "subnetResourceId": "[reference('virtualNetwork').outputs.jumpboxSubnetResourceId.value]",
-                    "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId))), null())]"
+                    "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value))), null())]"
                   }
                 ]
               }
@@ -14707,7 +14707,7 @@
               "tags": "[parameters('tags')]"
             }
           },
-          "extensionMonitoringAgentConfig": "[if(parameters('enableMonitoring'), createObject('value', createObject('dataCollectionRuleAssociations', createArray(createObject('dataCollectionRuleResourceId', reference('windowsVmDataCollectionRules').outputs.resourceId.value, 'name', format('send-{0}', if(variables('useExistingLogAnalytics'), variables('existingLawName'), listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').name)))), 'enabled', true(), 'tags', parameters('tags'))), createObject('value', null()))]",
+          "extensionMonitoringAgentConfig": "[if(parameters('enableMonitoring'), createObject('value', createObject('dataCollectionRuleAssociations', createArray(createObject('dataCollectionRuleResourceId', reference('windowsVmDataCollectionRules').outputs.resourceId.value, 'name', format('send-{0}', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value)))), 'enabled', true(), 'tags', parameters('tags'))), createObject('value', null()))]",
           "extensionNetworkWatcherAgentConfig": {
             "value": {
               "enabled": true,
@@ -23512,7 +23512,7 @@
     },
     "aiServices": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('module.aifoundry.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -23543,7 +23543,7 @@
           "projectDescription": {
             "value": "[format('proj-{0}', variables('solutionSuffix'))]"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('virtualNetwork').outputs.resourceId.value, 'subnetResourceId', reference('virtualNetwork').outputs.pepsSubnetResourceId.value, 'cogServicesPrivateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)).outputs.resourceId.value, 'openAIPrivateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)).outputs.resourceId.value, 'aiServicesPrivateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)).outputs.resourceId.value)), createObject('value', null()))]",
           "existingFoundryProjectResourceId": {
             "value": "[parameters('azureExistingAIProjectResourceId')]"
@@ -23608,8 +23608,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.1.42791",
-              "templateHash": "17303344612640898614"
+              "version": "0.39.26.7824",
+              "templateHash": "13240149286290962746"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -24901,7 +24901,7 @@
             "cognitive_service_dependencies": {
               "condition": "[not(variables('useExistingService'))]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('{0}-cognitive-service-{1}-dependencies', parameters('name'), parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -24949,8 +24949,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.1.42791",
-                      "templateHash": "8551934095181086421"
+                      "version": "0.39.26.7824",
+                      "templateHash": "13950096942977548927"
                     }
                   },
                   "definitions": {
@@ -25983,7 +25983,7 @@
                         "count": "[length(coalesce(parameters('privateEndpoints'), createArray()))]"
                       },
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[format('{0}-cognitiveService-PrivateEndpoint-{1}', uniqueString(deployment().name, parameters('location')), copyIndex())]",
                       "subscriptionId": "[split(coalesce(tryGet(coalesce(parameters('privateEndpoints'), createArray())[copyIndex()], 'resourceGroupResourceId'), resourceGroup().id), '/')[2]]",
                       "resourceGroup": "[split(coalesce(tryGet(coalesce(parameters('privateEndpoints'), createArray())[copyIndex()], 'resourceGroupResourceId'), resourceGroup().id), '/')[4]]",
@@ -26637,7 +26637,7 @@
                     "secretsExport": {
                       "condition": "[not(equals(parameters('secretsExportConfiguration'), null()))]",
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[format('{0}-secrets-kv', uniqueString(deployment().name, parameters('location')))]",
                       "subscriptionId": "[split(tryGet(parameters('secretsExportConfiguration'), 'keyVaultResourceId'), '/')[2]]",
                       "resourceGroup": "[split(tryGet(parameters('secretsExportConfiguration'), 'keyVaultResourceId'), '/')[4]]",
@@ -26661,8 +26661,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.1.42791",
-                              "templateHash": "17765711921999870839"
+                              "version": "0.39.26.7824",
+                              "templateHash": "12797226417049698978"
                             }
                           },
                           "definitions": {
@@ -26781,7 +26781,7 @@
                     "aiProject": {
                       "condition": "[or(not(empty(parameters('projectName'))), not(empty(parameters('azureExistingAIProjectResourceId'))))]",
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[take(format('{0}-ai-project-{1}-deployment', parameters('name'), parameters('projectName')), 64)]",
                       "properties": {
                         "expressionEvaluationOptions": {
@@ -26815,8 +26815,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.1.42791",
-                              "templateHash": "1458968020322306617"
+                              "version": "0.39.26.7824",
+                              "templateHash": "422299638943108486"
                             }
                           },
                           "definitions": {
@@ -26976,7 +26976,7 @@
             "existing_cognitive_service_dependencies": {
               "condition": "[variables('useExistingService')]",
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('existing-{0}-cognitive-service-{1}-dependencies', parameters('name'), variables('existingCognitiveServiceDetails')[8]), 64)]",
               "subscriptionId": "[variables('existingCognitiveServiceDetails')[2]]",
               "resourceGroup": "[variables('existingCognitiveServiceDetails')[4]]",
@@ -27033,8 +27033,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.36.1.42791",
-                      "templateHash": "8551934095181086421"
+                      "version": "0.39.26.7824",
+                      "templateHash": "13950096942977548927"
                     }
                   },
                   "definitions": {
@@ -28067,7 +28067,7 @@
                         "count": "[length(coalesce(parameters('privateEndpoints'), createArray()))]"
                       },
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[format('{0}-cognitiveService-PrivateEndpoint-{1}', uniqueString(deployment().name, parameters('location')), copyIndex())]",
                       "subscriptionId": "[split(coalesce(tryGet(coalesce(parameters('privateEndpoints'), createArray())[copyIndex()], 'resourceGroupResourceId'), resourceGroup().id), '/')[2]]",
                       "resourceGroup": "[split(coalesce(tryGet(coalesce(parameters('privateEndpoints'), createArray())[copyIndex()], 'resourceGroupResourceId'), resourceGroup().id), '/')[4]]",
@@ -28721,7 +28721,7 @@
                     "secretsExport": {
                       "condition": "[not(equals(parameters('secretsExportConfiguration'), null()))]",
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[format('{0}-secrets-kv', uniqueString(deployment().name, parameters('location')))]",
                       "subscriptionId": "[split(tryGet(parameters('secretsExportConfiguration'), 'keyVaultResourceId'), '/')[2]]",
                       "resourceGroup": "[split(tryGet(parameters('secretsExportConfiguration'), 'keyVaultResourceId'), '/')[4]]",
@@ -28745,8 +28745,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.1.42791",
-                              "templateHash": "17765711921999870839"
+                              "version": "0.39.26.7824",
+                              "templateHash": "12797226417049698978"
                             }
                           },
                           "definitions": {
@@ -28865,7 +28865,7 @@
                     "aiProject": {
                       "condition": "[or(not(empty(parameters('projectName'))), not(empty(parameters('azureExistingAIProjectResourceId'))))]",
                       "type": "Microsoft.Resources/deployments",
-                      "apiVersion": "2022-09-01",
+                      "apiVersion": "2025-04-01",
                       "name": "[take(format('{0}-ai-project-{1}-deployment', parameters('name'), parameters('projectName')), 64)]",
                       "properties": {
                         "expressionEvaluationOptions": {
@@ -28899,8 +28899,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.36.1.42791",
-                              "templateHash": "1458968020322306617"
+                              "version": "0.39.26.7824",
+                              "templateHash": "422299638943108486"
                             }
                           },
                           "definitions": {
@@ -29139,16 +29139,16 @@
       },
       "dependsOn": [
         "appIdentity",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
     },
     "storageAccount": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('module.storageAccount.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -29166,7 +29166,7 @@
             "value": "[variables('allTags')]"
           },
           "skuName": "[if(parameters('enableRedundancy'), createObject('value', 'Standard_GZRS'), createObject('value', 'Standard_LRS'))]",
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('virtualNetwork').outputs.resourceId.value, 'subnetResourceId', reference('virtualNetwork').outputs.pepsSubnetResourceId.value, 'blobPrivateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)).outputs.resourceId.value, 'filePrivateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)).outputs.resourceId.value)), createObject('value', null()))]",
           "containers": {
             "value": [
@@ -29198,8 +29198,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.1.42791",
-              "templateHash": "12142428864168064808"
+              "version": "0.39.26.7824",
+              "templateHash": "12528046637724897516"
             }
           },
           "definitions": {
@@ -29397,7 +29397,7 @@
           "resources": {
             "storageAccount": {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('avm.res.storage.storage-account.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -37379,14 +37379,14 @@
               "metadata": {
                 "description": "Name of the Storage Account."
               },
-              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.storage.storage-account.{0}', parameters('name')), 64)), '2022-09-01').name]"
+              "value": "[reference('storageAccount').outputs.name.value]"
             },
             "resourceId": {
               "type": "string",
               "metadata": {
                 "description": "Resource ID of the Storage Account."
               },
-              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.storage.storage-account.{0}', parameters('name')), 64)), '2022-09-01').resourceId]"
+              "value": "[reference('storageAccount').outputs.resourceId.value]"
             }
           }
         }
@@ -37401,7 +37401,7 @@
     },
     "keyVault": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('module.keyVault.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -37418,7 +37418,7 @@
           "sku": {
             "value": "standard"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
           "privateNetworking": "[if(parameters('enablePrivateNetworking'), createObject('value', createObject('virtualNetworkResourceId', reference('virtualNetwork').outputs.resourceId.value, 'subnetResourceId', reference('virtualNetwork').outputs.pepsSubnetResourceId.value, 'privateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').keyVault)).outputs.resourceId.value)), createObject('value', null()))]",
           "roleAssignments": {
             "value": [
@@ -37443,8 +37443,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.1.42791",
-              "templateHash": "17295683111294698468"
+              "version": "0.39.26.7824",
+              "templateHash": "18109506630393182768"
             }
           },
           "definitions": {
@@ -37785,7 +37785,7 @@
           "resources": {
             "keyvault": {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('avm.res.key-vault.vault.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -41269,7 +41269,7 @@
     },
     "cosmosDb": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('module.cosmosDb.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -41286,7 +41286,7 @@
           "dataAccessIdentityPrincipalId": {
             "value": "[reference('appIdentity').outputs.principalId.value]"
           },
-          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').resourceId)), createObject('value', ''))]",
+          "logAnalyticsWorkspaceResourceId": "[if(parameters('enableMonitoring'), if(variables('useExistingLogAnalytics'), createObject('value', parameters('existingLogAnalyticsWorkspaceId')), createObject('value', reference('logAnalyticsWorkspace').outputs.resourceId.value)), createObject('value', ''))]",
           "zoneRedundant": {
             "value": "[parameters('enableRedundancy')]"
           },
@@ -41306,8 +41306,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.36.1.42791",
-              "templateHash": "10618181529005306569"
+              "version": "0.39.26.7824",
+              "templateHash": "6879410075649987426"
             }
           },
           "definitions": {
@@ -41504,7 +41504,7 @@
             },
             "cosmosAccount": {
               "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-04-01",
               "name": "[take(format('avm.res.document-db.database-account.{0}', parameters('name')), 64)]",
               "properties": {
                 "expressionEvaluationOptions": {
@@ -47471,21 +47471,21 @@
               "metadata": {
                 "description": "Name of the Cosmos DB Account resource."
               },
-              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.document-db.database-account.{0}', parameters('name')), 64)), '2022-09-01').name]"
+              "value": "[reference('cosmosAccount').outputs.name.value]"
             },
             "resourceId": {
               "type": "string",
               "metadata": {
                 "description": "Resource ID of the Cosmos DB Account."
               },
-              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.document-db.database-account.{0}', parameters('name')), 64)), '2022-09-01').resourceId]"
+              "value": "[reference('cosmosAccount').outputs.resourceId.value]"
             },
             "endpoint": {
               "type": "string",
               "metadata": {
                 "description": "Endpoint of the Cosmos DB Account."
               },
-              "value": "[listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.document-db.database-account.{0}', parameters('name')), 64)), '2022-09-01').endpoint]"
+              "value": "[reference('cosmosAccount').outputs.endpoint.value]"
             },
             "databaseName": {
               "type": "string",
@@ -47517,7 +47517,7 @@
     },
     "containerAppsEnvironment": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.app.managed-environment.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -47549,7 +47549,7 @@
             }
           },
           "appInsightsConnectionString": "[if(parameters('enableMonitoring'), createObject('value', reference('applicationInsights').outputs.connectionString.value), createObject('value', null()))]",
-          "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').logAnalyticsWorkspaceId), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2020-08-01').primarySharedKey, listOutputsWithSecureValues(resourceId('Microsoft.Resources/deployments', take(format('avm.res.operational-insights.workspace.{0}', variables('solutionSuffix')), 64)), '2022-09-01').primarySharedKey)))), createObject('value', createObject()))]",
+          "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, reference('logAnalyticsWorkspace').outputs.logAnalyticsWorkspaceId.value), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2020-08-01').primarySharedKey, listOutputsWithSecureValues('logAnalyticsWorkspace', '2025-04-01').primarySharedKey)))), createObject('value', createObject()))]",
           "workloadProfiles": "[if(parameters('enablePrivateNetworking'), createObject('value', createArray(createObject('name', 'Consumption', 'workloadProfileType', 'Consumption'))), createObject('value', createArray()))]",
           "tags": {
             "value": "[variables('allTags')]"
@@ -48448,7 +48448,7 @@
     },
     "containerAppBackend": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.app.container-app.backend.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
@@ -50032,7 +50032,7 @@
     },
     "containerAppFrontend": {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2022-09-01",
+      "apiVersion": "2025-04-01",
       "name": "[take(format('avm.res.app.container-app.frontend.{0}', variables('solutionSuffix')), 64)]",
       "properties": {
         "expressionEvaluationOptions": {
