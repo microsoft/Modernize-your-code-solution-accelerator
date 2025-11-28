@@ -982,6 +982,18 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
               name: 'APP_ENV'
               value: 'prod'
             }
+            {
+              name: 'AZURE_BASIC_LOGGING_LEVEL'
+              value: 'INFO'
+            }
+            {
+              name: 'AZURE_PACKAGE_LOGGING_LEVEL'
+              value: 'WARNING'
+            }
+            {
+              name: 'AZURE_LOGGING_PACKAGES'
+              value: ''
+            }
           ],
           enableMonitoring
             ? [
