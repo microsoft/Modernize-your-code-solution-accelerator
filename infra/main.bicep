@@ -887,10 +887,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
               name: 'AZURE_BLOB_CONTAINER_NAME'
               value: appStorageContainerName
             }
-            {
-              name: 'AZURE_OPENAI_ENDPOINT'
-              value: 'https://${aiServices.outputs.name}.openai.azure.com/'
-            }
+
             {
               name: 'MIGRATOR_AGENT_MODEL_DEPLOY'
               value: modelDeployment.name
@@ -954,6 +951,18 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
             {
               name: 'APP_ENV'
               value: 'prod'
+            }
+            {
+              name: 'AZURE_BASIC_LOGGING_LEVEL'
+              value: 'INFO'
+            }
+            {
+              name: 'AZURE_PACKAGE_LOGGING_LEVEL'
+              value: 'WARNING'
+            }
+            {
+              name: 'AZURE_LOGGING_PACKAGES'
+              value: ''
             }
           ],
           enableMonitoring
@@ -1072,7 +1081,6 @@ output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
 output COSMOSDB_ENDPOINT string = cosmosDb.outputs.endpoint
 output AZURE_BLOB_ACCOUNT_NAME string = storageAccount.outputs.name
 output AZURE_BLOB_ENDPOINT string = 'https://${storageAccount.outputs.name}.blob.core.windows.net/'
-output AZURE_OPENAI_ENDPOINT string = 'https://${aiServices.outputs.name}.openai.azure.com/'
 output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.aiProjectInfo.name
 output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
 output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.aiProjectInfo.apiEndpoint
