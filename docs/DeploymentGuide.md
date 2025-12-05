@@ -1,259 +1,465 @@
-## **Deployment Guide**
+# Deployment Guide
 
-### **Pre-requisites**
+## Overview
 
-To deploy this solution accelerator, ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the necessary permissions to create **resource groups and resources**. Follow the steps in  [Azure Account Set Up](./AzureAccountSetUp.md) 
+This guide walks you through deploying the Modernize Your Code Solution Accelerator to Azure. The deployment process takes approximately 10-15 minutes for the default Development/Testing configuration and includes both infrastructure provisioning and application setup.
 
-Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available:  
+🆘 **Need Help?** If you encounter any issues during deployment, check our [Troubleshooting Guide](./TroubleShootingSteps.md) for solutions to common problems.
 
-- Azure AI Foundry 
-- Azure OpenAI Service  
-- GPT Model Capacity
+## Step 1: Prerequisites & Setup
 
-> ⚠️ **Region-Specific Deployment Constraints:**  
-> This application is currently supported only in the following Azure regions. Please ensure you select one of these regions during deployment to avoid failures:
->
-> - Australia East  
-> - East US    
-> - East US 2  
-> - France Central  
-> - Japan East  
-> - Norway East  
-> - South India  
-> - Sweden Central  
-> - UK South  
-> - West US 
-> - West US 3
+### 1.1 Azure Account Requirements
 
-### ⚠️ Important: Check Azure OpenAI Quota Availability  
+Ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the following permissions:
 
-➡️ To ensure sufficient quota is available in your subscription, please follow **[Quota check instructions guide](../docs/quota_check.md)** before you deploy the solution.
+| **Required Permission/Role** | **Scope** | **Purpose** |
+|------------------------------|-----------|-------------|
+| **Contributor** | Subscription level | Create and manage Azure resources |
+| **User Access Administrator** | Subscription level | Manage user access and role assignments |
+| **Role Based Access Control** | Subscription/Resource Group level | Configure RBAC permissions |
+| **App Registration Creation** | Azure Active Directory | Create and configure authentication |
 
-## Deployment Options & Steps
+**🔍 How to Check Your Permissions:**
 
-### Sandbox or WAF Aligned Deployment Options
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Navigate to **Subscriptions** (search for "subscriptions" in the top search bar)
+3. Click on your target subscription
+4. In the left menu, click **Access control (IAM)**
+5. Scroll down to see the table with your assigned roles - you should see:
+   - **Contributor** 
+   - **User Access Administrator**
+   - **Role Based Access Control Administrator** (or similar RBAC role)
 
-The [`infra`](../infra) folder of the Multi Agent Solution Accelerator contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
+**For App Registration permissions:**
+1. Go to **Microsoft Entra ID** → **Manage** → **App registrations**
+2. Try clicking **New registration** 
+3. If you can access this page, you have the required permissions
+4. Cancel without creating an app registration
 
-By default, the `azd up` command uses the [`main.parameters.json`](../infra/main.parameters.json) file to deploy the solution. This file is pre-configured for a **sandbox environment** — ideal for development and proof-of-concept scenarios, with minimal security and cost controls for rapid iteration.
+📖 **Detailed Setup:** Follow [Azure Account Set Up](./AzureAccountSetUp.md) for complete configuration.
 
-For **production deployments**, the repository also provides [`main.waf.parameters.json`](../infra/main.waf.parameters.json), which applies a [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) configuration. This option enables additional Azure best practices for reliability, security, cost optimization, operational excellence, and performance efficiency, such as:
+### 1.2 Check Service Availability & Quota
 
-**How to choose your deployment configuration:**
+⚠️ **CRITICAL:** Before proceeding, ensure your chosen region has all required services available:
 
-* Use the default `main.parameters.json` file for a **sandbox/dev environment**
-* For a **WAF-aligned, production-ready deployment**, copy the contents of `main.waf.parameters.json` into `main.parameters.json` before running `azd up`
+**Required Azure Services:**
+- [Azure AI Foundry](https://learn.microsoft.com/en-us/azure/ai-foundry/)
+- [Azure OpenAI Service](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
+- [Azure Blob Storage](https://learn.microsoft.com/en-us/azure/storage/blobs/)
+- [Azure Container Apps](https://learn.microsoft.com/en-us/azure/container-apps/)
+- [Azure Container Registry](https://learn.microsoft.com/en-us/azure/container-registry/)
+- [Azure App Configuration](https://learn.microsoft.com/en-us/azure/azure-app-configuration/)
+- [Azure Cosmos DB](https://learn.microsoft.com/en-us/azure/cosmos-db/)
+- [Azure Queue Storage](https://learn.microsoft.com/en-us/azure/storage/queues/)
+- [GPT Model Capacity](https://learn.microsoft.com/en-us/azure/ai-services/openai/)
 
+**Recommended Regions:** East US, East US2, Australia East, UK South, France Central, Japan East, Norway East, South India, Sweden Central, West US, West US 3
 
-> [!TIP]
-> Always review and adjust parameter values (such as region, capacity, security settings and log analytics workspace configuration) to match your organization’s requirements before deploying. For production, ensure you have sufficient quota and follow the principle of least privilege for all identities and role assignments.
+🔍 **Check Availability:** Use [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/) to verify service availability.
 
-### Deployment Steps 
+### 1.3 Quota Check (Optional)
 
-Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
+💡 **RECOMMENDED:** Check your Azure OpenAI quota availability before deployment for optimal planning.
 
-| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==) |
-|---|---|---|
+📖 **Follow:** [Quota Check Instructions](./quota_check.md) to ensure sufficient capacity.
+
+**Recommended Configuration:**
+- **Default:** 5k tokens
+- **Optimal:** 200k tokens (recommended for best performance)
+
+> **Note:** When you run `azd up`, the deployment will automatically show you regions with available quota, so this pre-check is optional but helpful for planning purposes. You can customize these settings later in [Step 3.3: Advanced Configuration](#33-advanced-configuration-optional).
+
+📖 **Adjust Quota:** Follow [Azure AI Model Quota Settings](./AzureGPTQuotaSettings.md) if needed.
+
+## Step 2: Choose Your Deployment Environment
+
+Select one of the following options to deploy the Modernize Your Code Solution Accelerator:
+
+### Environment Comparison
+
+| **Option** | **Best For** | **Prerequisites** | **Setup Time** |
+|------------|--------------|-------------------|----------------|
+| **GitHub Codespaces** | Quick deployment, no local setup required | GitHub account | ~3-5 minutes |
+| **VS Code Dev Containers** | Fast deployment with local tools | Docker Desktop, VS Code | ~5-10 minutes |
+| **VS Code Web** | Quick deployment, no local setup required | Azure account | ~2-4 minutes |
+| **Local Environment** | Enterprise environments, full control | All tools individually | ~15-30 minutes |
+
+**💡 Recommendation:** For fastest deployment, start with **GitHub Codespaces** - no local installation required.
+
+---
 
 <details>
-  <summary><b>Deploy in GitHub Codespaces</b></summary>
+<summary><b>Option A: GitHub Codespaces (Easiest)</b></summary>
 
-### GitHub Codespaces
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator)
 
-You can run this solution using GitHub Codespaces. The button will open a web-based VS Code instance in your browser:
-
-1. Open the solution accelerator (this may take several minutes):
-
-    [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator)
-2. Accept the default values on the create Codespaces page
-3. Open a terminal window if it is not already open
-4. Continue with the [deploying steps](#deploying-with-azd)
+1. Click the badge above (may take several minutes to load)
+2. Accept default values on the Codespaces creation page
+3. Wait for the environment to initialize (includes all deployment tools)
+4. Proceed to [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings)
 
 </details>
 
 <details>
-  <summary><b>Deploy in VS Code Dev Containers</b></summary>
+<summary><b>Option B: VS Code Dev Containers</b></summary>
 
- ### VS Code Dev Containers
+[![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator)
 
-You can run this solution in VS Code Dev Containers, which will open the project in your local VS Code using the [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers):
+**Prerequisites:**
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- [VS Code](https://code.visualstudio.com/) with [Dev Containers extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
-1. Start Docker Desktop (install it if not already installed)
-2. Open the project:
-
-    [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator)
-
-
-3. In the VS Code window that opens, once the project files show up (this may take several minutes), open a terminal window.
-4. Continue with the [deploying steps](#deploying-with-azd)
+**Steps:**
+1. Start Docker Desktop
+2. Click the badge above to open in Dev Containers
+3. Wait for the container to build and start (includes all deployment tools)
+4. Proceed to [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings)
 
 </details>
 
 <details>
-  <summary><b>Deploy in VS Code Web</b></summary>
+<summary><b>Option C: Visual Studio Code Web</b></summary>
 
- ### VS Code Web
-
-[![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==)
+ [![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==)
 
 1. Click the badge above (may take a few minutes to load)
 2. Sign in with your Azure account when prompted
 3. Select the subscription where you want to deploy the solution
 4. Wait for the environment to initialize (includes all deployment tools)
-5. Once the solution opens, the **AI Foundry terminal** will automatically start running the following command to install the required dependencies:
+5. When prompted in the VS Code Web terminal, choose one of the available options shown
 
-    ```shell
-    sh install.sh
-    ```
-    During this process, you’ll be prompted with the message:
-    ```
-    What would you like to do with these files?
-    - Overwrite with versions from template
-    - Keep my existing files unchanged
-    ```
-    Choose “**Overwrite with versions from template**” and provide a unique environment name when prompted.
-6. Continue with the [deploying steps](#deploying-with-azd)
+6. Proceed to [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings)
 
 </details>
 
 <details>
-  <summary><b>Deploy in your local environment</b></summary>
+<summary><b>Option D: Local Environment</b></summary>
 
- ### Local environment
+**Required Tools:**
+- [PowerShell 7.0+](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) 
+- [Azure Developer CLI (azd) 1.18.0+](https://aka.ms/install-azd)
+- [Python 3.9+](https://www.python.org/downloads/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Git](https://git-scm.com/downloads)
 
-If you're not using one of the above options for opening the project, then you'll need to:
-
-1. Make sure the following tools are installed:
-
-    * [Azure Developer CLI (azd)](https://aka.ms/install-azd) <small>(v1.18.0+)</small> - version
-    * [Python 3.9+](https://www.python.org/downloads/)
-    * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-    * [Git](https://git-scm.com/downloads)
-
-2. Download the project code:
-
-    ```shell
-    azd init -t microsoft/Modernize-your-Code-Solution-Accelerator/
-    ```
-
-3. Open the project folder in your terminal or editor.
-
-4. Continue with the [deploying steps](#deploying-with-azd).
-
-</details>
-
-<br/>
-
-Consider the following settings during your deployment to modify specific settings:
-
- <details>
-<Summary><b>Configurable Deployment Settings</b></Summary>
-
-When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md)
-
-This accelerator can be configured to  use authentication. 
-
-* To use authentication the installer must have the rights to create and register an application identity in their Azure environment.
-After installation is complete, follow the directions in the [App Authentication](../docs/AddAuthentication.md) document to enable authentication.
-* Note: If you enable authentication, all processing history and current processing will be performed for your specific user. Without authentication, all batch history from the tool will be visible to all users.
-
- </details>
-
-<details>
-<Summary><b> Quota Recommendations </b></Summary> 
-  
-By default, the **GPT model capacity** in deployment is set to **5k tokens**.  
-> **We recommend increasing the capacity to 200k tokens for optimal performance.** 
-
-To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
-
-</details>
-
-<details>
-
-  <summary><b>Reusing an Existing Log Analytics Workspace</b></summary>
-
-  Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)
-
-</details>
-
-### Deploying with AZD
-
-Once you've opened the project in [Codespaces](#github-codespaces) or in [Dev Containers](#vs-code-dev-containers) or [locally](#local-environment), you can deploy it to Azure following the following steps. 
-
-To change the azd parameters from the default values, follow the steps [here](../docs/CustomizingAzdParameters.md). 
-
-
-1. Login to Azure:
-
+**Setup Steps:**
+1. Install all required deployment tools listed above
+2. Clone the repository:
    ```shell
-   azd auth login
+   azd init -t microsoft/Modernize-your-Code-Solution-Accelerator/
    ```
+3. Open the project folder in your terminal
+4. Proceed to [Step 3: Configure Deployment Settings](#step-3-configure-deployment-settings)
 
-   #### Note: To authenticate with Azure Developer CLI (`azd`) to a specific tenant, use the previous command with your **Tenant ID**:
+**PowerShell Users:** If you encounter script execution issues, run:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
 
-   ```sh
-   azd auth login --tenant-id <tenant-id>
-   ```
+</details>
 
-2. Provide an `azd` environment name (like "cmsaapp")
+## Step 3: Configure Deployment Settings
 
-   ```sh
-   azd env new <cmsaapp>
-   ```
+Review the configuration options below. You can customize any settings that meet your needs, or leave them as defaults to proceed with a standard deployment.
 
-3. Provision and deploy all the resources:
+### 3.1 Choose Deployment Type (Optional)
 
-    ```shell
-    azd up
-    ```
-    > **Note:** This solution accelerator requires **Azure Developer CLI (azd) version 1.18.0 or higher**. Please ensure you have the latest version installed before proceeding with deployment. [Download azd here](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd).
-  
-4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
-    * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
-    * If you get an error or timeout with deployment, changing the location can help, as there may be availability constraints for the resources.
+| **Aspect** | **Development/Testing (Default)** | **Production** |
+|------------|-----------------------------------|----------------|
+| **Configuration File** | `main.parameters.json` (sandbox) | Copy `main.waf.parameters.json` to `main.parameters.json` |
+| **Security Controls** | Minimal (for rapid iteration) | Enhanced (production best practices) |
+| **Cost** | Lower costs | Cost optimized |
+| **Use Case** | POCs, development, testing | Production workloads |
+| **Framework** | Basic configuration | [Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/) |
+| **Features** | Core functionality | Reliability, security, operational excellence |
 
-5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the container app with "frontend" in the name, and get the app URL from `Application URI`.
+**To use production configuration:**
 
-6. You can now delete the resources by running `azd down`, when you have finished trying out the application.
-   > **Note:** If you deployed with `enableRedundancy=true` and Log Analytics workspace replication is enabled, you must first disable replication before running `azd down` else resource group delete will fail. Follow the steps in [Handling Log Analytics Workspace Deletion with Replication Enabled](./LogAnalyticsReplicationDisable.md), wait until replication returns `false`, then run `azd down`.
+Copy the contents from the production configuration file to your main parameters file:
 
-### Deploy your local changes
+1. Navigate to the `infra` folder in your project
+2. Open `main.waf.parameters.json` in a text editor (like Notepad, VS Code, etc.)
+3. Select all content (Ctrl+A) and copy it (Ctrl+C)
+4. Open `main.parameters.json` in the same text editor
+5. Select all existing content (Ctrl+A) and paste the copied content (Ctrl+V)
+6. Save the file (Ctrl+S)
 
-To deploy your local changes rename the below files.
+### 3.2 Set VM Credentials (Optional - Production Deployment Only)
 
-Rename `azure.yaml` to `azure_original.yaml` and `azure_custom.yaml` to `azure.yaml`.
+> **Note:** This section only applies if you selected **Production** deployment type in section 3.1. VMs are not deployed in the default Development/Testing configuration.
 
-Go to `infra` directory
+By default, random GUIDs are generated for VM credentials. To set custom credentials:
 
-Rename `main.bicep` to `main_original.bicep` and `main_custom.bicep` to `main.bicep`. Continue with the [deploying steps](https://github.com/microsoft/Modernize-your-code-solution-accelerator/blob/main/docs/DeploymentGuide.md#deploying-with-azd).
+```shell
+azd env set AZURE_ENV_VM_ADMIN_USERNAME <your-username>
+azd env set AZURE_ENV_VM_ADMIN_PASSWORD <your-password>
+```
 
-### 🛠️ Troubleshooting
- If you encounter any issues during the deployment process, please refer [troubleshooting](../docs/TroubleShootingSteps.md) document for detailed steps and solutions.
+### 3.3 Advanced Configuration (Optional)
 
-<h2>
-Additional Steps
-</h2>
+<details>
+<summary><b>Configurable Parameters</b></summary>
 
-1. **Deleting Resources After a Failed Deployment**
+You can customize various deployment settings before running `azd up`, including Azure regions, AI model configurations (deployment type, version, capacity), container registry settings, and resource names.
 
-     Follow steps in [Delete Resource Group](../docs/DeleteResourceGroup.md) If your deployment fails and you need to clean up the resources.
+📖 **Complete Guide:** See [Parameter Customization Guide](./CustomizingAzdParameters.md) for the full list of available parameters and their usage.
 
-1. **Add App Authentication**
-   
-    If you chose to enable authentication for the deployment, follow the steps in [App Authentication](../docs/AddAuthentication.md)
+</details>
 
-## Running the application
+<details>
+<summary><b>Reuse Existing Resources</b></summary>
 
-To help you get started, here's the [Sample Workflow](./SampleWorkflow.md) you can follow to try it out.
+To optimize costs and integrate with your existing Azure infrastructure, you can configure the solution to reuse compatible resources already deployed in your subscription.
 
-## Environment configuration for local development & debugging
+**Supported Resources for Reuse:**
+
+- **Log Analytics Workspace:** Integrate with your existing monitoring infrastructure by reusing an established Log Analytics workspace for centralized logging and monitoring. [Configuration Guide](./re-use-log-analytics.md)
+
+**Key Benefits:**
+- **Cost Optimization:** Eliminate duplicate resource charges
+- **Operational Consistency:** Maintain unified monitoring infrastructure
+- **Faster Deployment:** Skip resource creation for existing compatible services
+- **Simplified Management:** Reduce the number of resources to manage and monitor
+
+**Important Considerations:**
+- Ensure existing resources meet the solution's requirements and are in compatible regions
+- Review access permissions and configurations before reusing resources
+- Consider the impact on existing workloads when sharing resources
+
+</details>
+
+## Step 4: Deploy the Solution
+
+💡 **Before You Start:** If you encounter any issues during deployment, check our [Troubleshooting Guide](./TroubleShootingSteps.md) for common solutions.
+
+### 4.1 Authenticate with Azure
+
+```shell
+azd auth login
+```
+
+**For specific tenants:**
+```shell
+azd auth login --tenant-id <tenant-id>
+```
+
+> **Finding Tenant ID:** 
+> 1. Open the [Azure Portal](https://portal.azure.com/).
+> 2. Navigate to **Microsoft Entra ID** from the left-hand menu.
+> 3. Under the **Overview** section, locate the **Tenant ID** field. Copy the value displayed.
+
+### 4.2 Start Deployment
+
+```shell
+azd up
+```
+
+**During deployment, you'll be prompted for:**
+1. **Environment name** (e.g., "cmsaapp") - Must be 3-16 characters long, alphanumeric only
+2. **Azure subscription** selection
+3. **Azure region** - Select a region with available GPT model quota
+4. **Resource group** selection (create new or use existing)
+
+**Expected Duration:** 6-9 minutes for default configuration
+
+**⚠️ Deployment Issues:** If you encounter errors or timeouts, try a different region as there may be capacity constraints. For detailed error solutions, see our [Troubleshooting Guide](./TroubleShootingSteps.md).
+
+### 4.3 Get Application URL
+
+After successful deployment:
+1. Open [Azure Portal](https://portal.azure.com/)
+2. Navigate to your resource group
+3. Find the Container App with "frontend" in the name
+4. Copy the **Application URI**
+
+⚠️ **Important:** Complete [Post-Deployment Steps](#step-5-post-deployment-configuration) before accessing the application.
+
+## Step 5: Post-Deployment Configuration
+
+### 5.1 Configure Authentication (Required)
+
+**This step is mandatory for application access:**
+
+1. Follow [App Authentication Configuration](./AddAuthentication.md)
+2. Wait up to 10 minutes for authentication changes to take effect
+
+### 5.2 Verify Deployment
+
+1. Access your application using the URL from Step 4.3
+2. Confirm the application loads successfully
+3. Verify you can sign in with your authenticated account
+
+### 5.3 Test the Application
+
+Follow the detailed workflow to test the migration functionality:
+
+**Quick Test Steps:**
+1. Download sample SQL files from the [`/data/informix`](../data/informix) folder
+2. Upload the files to the application
+3. Click **Start Processing** to begin the migration
+4. Monitor the batch processing status
+5. Review the translated files and generated reports
+6. Download the results using the **Download all as .zip** button
+
+📖 **Detailed Instructions:** See the complete [Sample Workflow](./SampleWorkflow.md) guide for step-by-step testing procedures.
+
+## Step 6: Clean Up (Optional)
+
+### Remove All Resources
+```shell
+azd down
+```
+> **Note:** If you deployed with `enableRedundancy=true` and Log Analytics workspace replication is enabled, you must first disable replication before running `azd down` else resource group delete will fail. Follow the steps in [Handling Log Analytics Workspace Deletion with Replication Enabled](./LogAnalyticsReplicationDisable.md), wait until replication returns `false`, then run `azd down`.
+
+### Manual Cleanup (if needed)
+If deployment fails or you need to clean up manually:
+- Follow [Delete Resource Group Guide](./DeleteResourceGroup.md)
+
+## Managing Multiple Environments
+
+### Recover from Failed Deployment
+
+If your deployment failed or encountered errors, here are the steps to recover:
+
+<details>
+<summary><b>Recover from Failed Deployment</b></summary>
+
+**If your deployment failed or encountered errors:**
+
+1. **Try a different region:** Create a new environment and select a different Azure region during deployment
+2. **Clean up and retry:** Use `azd down` to remove failed resources, then `azd up` to redeploy
+3. **Check troubleshooting:** Review [Troubleshooting Guide](./TroubleShootingSteps.md) for specific error solutions
+4. **Fresh start:** Create a completely new environment with a different name
+
+**Example Recovery Workflow:**
+```shell
+# Remove failed deployment (optional)
+azd down
+
+# Create new environment (3-16 chars, alphanumeric only)
+azd env new cmsaretry
+
+# Deploy with different settings/region
+azd up
+```
+
+</details>
+
+### Creating a New Environment
+
+If you need to deploy to a different region, test different configurations, or create additional environments:
+
+<details>
+<summary><b>Create a New Environment</b></summary>
+
+**Create Environment Explicitly:**
+```shell
+# Create a new named environment (3-16 characters, alphanumeric only)
+azd env new <new-environment-name>
+
+# Select the new environment
+azd env select <new-environment-name>
+
+# Deploy to the new environment
+azd up
+```
+
+**Example:**
+```shell
+# Create a new environment for production (valid: 3-16 chars)
+azd env new cmsaprod
+
+# Switch to the new environment
+azd env select cmsaprod
+
+# Deploy with fresh settings
+azd up
+```
+
+> **Environment Name Requirements:**
+> - **Length:** 3-16 characters
+> - **Characters:** Alphanumeric only (letters and numbers)
+> - **Valid examples:** `cmsaapp`, `test123`, `myappdev`, `prod2024`
+> - **Invalid examples:** `co` (too short), `my-very-long-environment-name` (too long), `test_env` (underscore not allowed), `myapp-dev` (hyphen not allowed)
+
+</details>
+
+<details>
+<summary><b>Switch Between Environments</b></summary>
+
+**List Available Environments:**
+```shell
+azd env list
+```
+
+**Switch to Different Environment:**
+```shell
+azd env select <environment-name>
+```
+
+**View Current Environment:**
+```shell
+azd env get-values
+```
+
+</details>
+
+### Best Practices for Multiple Environments
+
+- **Use descriptive names:** `cmsadev`, `cmsaprod`, `cmsatest` (remember: 3-16 chars, alphanumeric only)
+- **Different regions:** Deploy to multiple regions for testing quota availability
+- **Separate configurations:** Each environment can have different parameter settings
+- **Clean up unused environments:** Use `azd down` to remove environments you no longer need
+
+## Next Steps
+
+Now that your deployment is complete and tested, explore these resources to enhance your experience:
+
+📚 **Learn More:**
+- [Customize Expert Agents](./CustomizeExpertAgents.md) - Tailor AI agents to your specific needs
+- [Local Development Setup](./LocalDevelopmentSetup.md) - Set up your local development environment
+
+## Need Help?
+
+- 🐛 **Issues:** Check [Troubleshooting Guide](./TroubleShootingSteps.md)
+- 💬 **Support:** Review [Support Guidelines](../SUPPORT.md)
+- 🔧 **Development:** See [Contributing Guide](../CONTRIBUTING.md)
+
+---
+
+## Advanced: Deploy Local Changes
+
+If you've made local modifications to the code and want to deploy them to Azure, follow these steps to swap the configuration files:
+
+> **Note:** To set up and run the application locally for development, see the [Local Development Setup Guide](./LocalDevelopmentSetup.md).
+
+### Step 1: Rename Azure Configuration Files
+
+**In the root directory:**
+1. Rename `azure.yaml` to `azure_custom2.yaml`
+2. Rename `azure_custom.yaml` to `azure.yaml`
+
+### Step 2: Rename Infrastructure Files
+
+**In the `infra` directory:**
+1. Rename `main.bicep` to `main_custom2.bicep`
+2. Rename `main_custom.bicep` to `main.bicep`
+
+### Step 3: Deploy Changes
+
+Run the deployment command:
+```shell
+azd up
+```
+
+> **Note:** These custom files are configured to deploy your local code changes instead of pulling from the GitHub repository.
+
+## Environment Configuration for Local Development & Debugging
+
 > Set APP_ENV in your .env file to control Azure authentication. Use dev to enable to use Azure CLI credential, Prod to enable Managed Identity (for production). **Ensure you're logged in via az login when using dev in local**.
 
 1. Navigate to the `src\backend` folder.
 2. Create a `.env` file based on the `.env.sample` file.
 3. Fill in the `.env` file using the deployment output or by checking the Azure Portal under "Deployments" in your resource group.
-4. Alternatively, if resources were
-   provisioned using `azd provision` or `azd up`, a `.env` file is automatically generated in the `.azure/<env-name>/.env`
-   file. To get your `<env-name>` run `azd env list` to see which env is default.
+4. Alternatively, if resources were provisioned using `azd provision` or `azd up`, a `.env` file is automatically generated in the `.azure/<env-name>/.env` file. To get your `<env-name>` run `azd env list` to see which env is default.
 5. Ensure that `APP_ENV` is set to "**dev**" in your `.env` file.
