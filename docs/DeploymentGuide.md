@@ -416,8 +416,8 @@ azd env get-values
 Now that your deployment is complete and tested, explore these resources to enhance your experience:
 
 📚 **Learn More:**
-- [Customize Expert Agents](./CustomizeExpertAgents.md) - Tailor AI agents to your specific needs
-- [Local Development Setup](./LocalDevelopmentSetup.md) - Set up your local development environment
+- [Customize Scenario](./CustomizingScenario.md) - Tailor the solution to your specific needs
+- [Local Setup Guide](./LocalSetupGuide.md) - Set up your local development environment
 
 ## Need Help?
 
@@ -431,7 +431,7 @@ Now that your deployment is complete and tested, explore these resources to enha
 
 If you've made local modifications to the code and want to deploy them to Azure, follow these steps to swap the configuration files:
 
-> **Note:** To set up and run the application locally for development, see the [Local Development Setup Guide](./LocalDevelopmentSetup.md).
+> **Note:** To set up and run the application locally for development, see the [Local Setup Guide](./LocalSetupGuide.md).
 
 ### Step 1: Rename Azure Configuration Files
 
