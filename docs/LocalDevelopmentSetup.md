@@ -134,50 +134,6 @@ cd Modernize-your-code-solution-accelerator
 
 ## Step 2: Development Tools Setup
 
-### Visual Studio Code (Recommended)
-
-#### Required Extensions
-
-Create `.vscode/extensions.json` in the workspace root:
-
-```json
-{
-    "recommendations": [
-        "ms-python.python",
-        "ms-python.pylint",
-        "ms-python.black-formatter",
-        "ms-python.isort",
-        "ms-vscode-remote.remote-wsl",
-        "ms-vscode-remote.remote-containers",
-        "redhat.vscode-yaml",
-        "ms-vscode.azure-account",
-        "ms-python.mypy-type-checker"
-    ]
-}
-```
-
-VS Code will prompt you to install these recommended extensions when you open the workspace.
-
-#### Settings Configuration
-
-Create `.vscode/settings.json`:
-
-```json
-{
-    "python.defaultInterpreterPath": "./.venv/bin/python",
-    "python.terminal.activateEnvironment": true,
-    "python.formatting.provider": "black",
-    "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
-    "python.testing.pytestEnabled": true,
-    "python.testing.unittestEnabled": false,
-    "files.associations": {
-        "*.yaml": "yaml",
-        "*.yml": "yaml"
-    }
-}
-```
-
 ### Development Container Setup (Optional)
 
 The solution contains a [development container](https://code.visualstudio.com/docs/remote/containers) with all required tooling pre-configured.
@@ -300,8 +256,6 @@ az role assignment create \
 #### Other Required Roles
 Depending on the features you use, you may also need:
 - **Storage Blob Data Contributor** - For Azure Storage operations
-- **Storage Queue Data Contributor** - For queue-based processing
-- **Azure AI Developer** - For Azure AI Foundry access
 
 **Note**: RBAC permission changes can take 5-10 minutes to propagate. If you encounter "Forbidden" errors after assigning roles, wait a few minutes and try again.
 
@@ -334,20 +288,33 @@ Edit the `.env` file with your Azure configuration. Find these values from:
 
 **Key configuration values:**
 ```bash
-# Azure App Configuration URL
-APP_CONFIGURATION_URL=https://[your-app-config-name].azconfig.io
-
-# Cosmos DB settings
-AZURE_COSMOS_ENDPOINT=https://[your-cosmos-account].documents.azure.com:443/
-AZURE_COSMOS_DATABASE=modernize-code
+# CosmosDB Configuration
+COSMOSDB_ENDPOINT= https://[your-cosmos-account].documents.azure.com:443/
+COSMOSDB_DATABASE= 
+COSMOSDB_BATCH_CONTAINER=
+COSMOSDB_FILE_CONTAINER=
+COSMOSDB_LOG_CONTAINER= 
 
 # Azure OpenAI settings
 AZURE_OPENAI_ENDPOINT=https://[your-openai-resource].openai.azure.com/
-AZURE_OPENAI_API_VERSION=2024-08-01-preview
 
-# Logging configuration
-APP_LOGGING_LEVEL=INFO
-APP_ENV=dev
+# Azure Blob Storage Configuration
+AZURE_BLOB_ENDPOINT=
+AZURE_BLOB_ACCOUNT_NAME= 
+AZURE_BLOB_CONTAINER_NAME= 
+
+# Azure AI Foundry Configuration
+AZURE_AI_AGENT_PROJECT_CONNECTION_STRING = ""
+AZURE_AI_AGENT_SUBSCRIPTION_ID = ""
+AZURE_AI_AGENT_RESOURCE_GROUP_NAME = ""
+AZURE_AI_AGENT_PROJECT_NAME = ""
+AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME = ""
+
+# Basic application logging (default: INFO level)
+AZURE_BASIC_LOGGING_LEVEL=INFO
+APP_ENV = "dev"
+# Azure package logging (default: WARNING level to suppress INFO)
+AZURE_PACKAGE_LOGGING_LEVEL=WARNING
 ```
 
 ### 4.3. Install Backend Dependencies
@@ -463,11 +430,7 @@ VITE_API_URL=http://localhost:8000/api
 >      - ✅ Check **ID tokens**
 >    - Click **Save**
 >
-> 3. **Scope Configuration:**
->    - Use `User.Read` for local development/testing
->    - For production, configure custom API scopes like `api://your-api-id/access_as_user`
->
-> 4. **Restart Required:**
+> 3. **Restart Required:**
 >    - After updating `.env`, **stop and restart** the frontend dev server
 >    - Vite caches environment variables at startup
 
