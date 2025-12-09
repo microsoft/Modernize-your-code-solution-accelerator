@@ -282,9 +282,11 @@ Copy-Item .env.sample .env  # Windows PowerShell
 ```
 
 Edit the `.env` file with your Azure configuration. Find these values from:
-- Azure Portal under "Deployments" in your resource group
-- Output from the `azd up` command
-- Azure resources directly in the portal
+
+Navigate to your resource group and select the resource with prefix `ca-backend-` to get the backend environment variables:
+
+For reference, see the image below:
+![backend_env_variables](./images/backend_env_variables.png)
 
 **Key configuration values:**
 ```bash
@@ -433,6 +435,11 @@ VITE_API_URL=http://localhost:8000/api
 > 3. **Restart Required:**
 >    - After updating `.env`, **stop and restart** the frontend dev server
 >    - Vite caches environment variables at startup
+> 
+> 4. Navigate to your resource group and select the resource with prefix `ca-frontend-` to get the frontend environment variables:
+>
+>     For reference, see the image below:
+>     ![frontend_env_variables](./images/frontend_env_variables.png)
 
 ### 5.4. Build the Frontend
 
