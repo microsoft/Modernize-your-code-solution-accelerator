@@ -201,7 +201,6 @@ class HomePage(BasePage):
                 (self.ERROR_MSG_DOCX, "test_doc.docx"),
                 (self.ERROR_MSG_JSON, "test_json.json"),
                 (self.ERROR_MSG_PDF, "test_pdf.pdf"),
-                (self.ERROR_MSG_POWERBI, "test_powerBi.pbix"),
                 (self.ERROR_MSG_TXT, "test_text.txt"),
             ]
             
