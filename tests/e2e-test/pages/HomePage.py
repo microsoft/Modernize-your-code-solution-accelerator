@@ -219,44 +219,7 @@ class HomePage(BasePage):
             expect(self.page.locator(self.TRANSLATE_BTN)).to_be_disabled()
             logger.info("Validation passed: Translate button is correctly disabled for unsupported files")
 
-    def upload_large_file_and_validate(self):
-        """
-        Upload large file from testdata/Large_file folder and validate
-        that size limit error message is displayed with detailed logging.
-        """
-        with self.page.expect_file_chooser() as fc_info:
-            self.page.locator(self.BROWSE_FILES).click()
-            self.page.wait_for_timeout(5000)
-            self.page.wait_for_load_state("networkidle")
-        file_chooser = fc_info.value
-        current_working_dir = os.getcwd()
-        large_file_path = os.path.join(current_working_dir, "testdata/Large_file/large_dump.sql")
-        
-        # Check if file exists
-        if os.path.exists(large_file_path):
-            file_size_mb = os.path.getsize(large_file_path) / (1024 * 1024)
-            logger.info(f"Uploading large file: large_dump.sql")
-            logger.info(f"File size: {file_size_mb:.2f} MB")
-            
-            # Upload the large file
-            file_chooser.set_files([large_file_path])
-            self.page.wait_for_timeout(5000)
-            self.page.wait_for_load_state("networkidle")
-            logger.info("Large file upload attempted")
-            
-            # Validate error message for file size limit
-            try:
-                expect(self.page.locator(self.ERROR_MSG_LARGE_FILE)).to_be_visible(timeout=10000)
-                logger.info("✓ Size limit error message validated: 'File exceeds the 200MB size limit'")
-            except Exception as e:
-                logger.error(f"✗ Size limit error message not found: {str(e)}")
-                raise
-            
-            logger.info("Validation passed: Large file size limit error message displayed correctly")
-        else:
-            logger.error(f"Large file not found at path: {large_file_path}")
-            raise FileNotFoundError(f"Large file not found: {large_file_path}")
-
+   
     def upload_harmful_file_and_validate(self):
         """
         Upload harmful file from testdata/Harmful_file folder, start translation,

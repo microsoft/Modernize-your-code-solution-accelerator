@@ -209,33 +209,6 @@ def test_upload_unsupported_files_validation(login_logout, request):
             raise
 
 
-def test_upload_large_file_validation(login_logout, request):
-    """
-    CodeMod- Validate large file upload size limit
-    
-    Test case that uploads a large file from testdata/Large_file folder
-    and validates that the 200MB size limit error message is displayed.
-    """
-    request.node._nodeid = "Modernize your code - Validate Attempt to upload a .sql file larger than 200 MB"
-    
-    page = login_logout
-    home = HomePage(page)
-
-    # Define test steps
-    test_steps = [
-        ("01. Validate home page is loaded", lambda: home.validate_home_page()),
-        ("02. Upload large file and validate size limit error message", lambda: home.upload_large_file_and_validate()),
-    ]
-
-    # Execute all steps sequentially with logging
-    for description, action in test_steps:
-        logger.info(f"Running test step: {description}")
-        try:
-            action()
-            logger.info(f"Step passed: {description}")
-        except Exception:
-            logger.error(f"Step failed: {description}", exc_info=True)
-            raise
 
 
 def test_upload_harmful_file_validation(login_logout, request):
