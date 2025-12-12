@@ -258,7 +258,7 @@ To help you get started, here's the [Sample Workflow](./SampleWorkflow.md) you c
    file. To get your `<env-name>` run `azd env list` to see which env is default.
 5. Ensure that `APP_ENV` is set to "**dev**" in your `.env` file.
 
-### Known Issues
+## Known Issues
 
 **Unable to update/add environment variables in Azure Container App**
 
