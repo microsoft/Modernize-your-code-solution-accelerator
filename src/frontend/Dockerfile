@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Runtime stage
-FROM python:3.11-slim
+FROM python:3.15-rc-alpine3.22
 
 WORKDIR /app
 
