@@ -1,19 +1,17 @@
 name: Deploy-Test-Cleanup Pipeline
 
 on:
-  push:
-    branches:
-      - main
-      - dev
-      - demo
-    paths:
-      - 'infra/**'
-      - 'scripts/**'
-      - 'azure.yaml'
-      - '.github/workflows/deploy.yml'
-  schedule:
-    - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
-  workflow_dispatch:
+    workflow_run:
+      workflows: ["Build Docker and Optional Push"]
+      types:
+        - completed
+      branches:
+        - main
+        - dev
+        - demo
+    schedule:
+      - cron: '0 5,17 * * *'  # Runs at 5:00 AM and 5:00 PM GMT
+    workflow_dispatch:
 
 env:
   GPT_MIN_CAPACITY: 150
@@ -27,7 +25,7 @@ jobs:
       WEBAPP_URL: ${{ steps.get_output.outputs.WEBAPP_URL }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v3
 
       - name: Setup Azure CLI
         run: |
@@ -45,6 +43,7 @@ jobs:
           export AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}
           export AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}
           export AZURE_SUBSCRIPTION_ID="${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+          export GPT_MIN_CAPACITY="${{ env.GPT_MIN_CAPACITY }}"
           export AZURE_REGIONS="${{ vars.AZURE_REGIONS }}"
           chmod +x scripts/checkquota.sh
           if ! scripts/checkquota.sh; then
@@ -73,11 +72,6 @@ jobs:
       - name: Fail Pipeline if Quota Check Fails
         if: env.QUOTA_FAILED == 'true'
         run: exit 1
-      
-      - name: Set Deployment Region
-        run: |
-          echo "Selected Region: $VALID_REGION"
-          echo "AZURE_LOCATION=$VALID_REGION" >> $GITHUB_ENV
 
       - name: Install Bicep CLI
         run: az bicep install
@@ -100,7 +94,7 @@ jobs:
           rg_exists=$(az group exists --name ${{ env.RESOURCE_GROUP_NAME }})
           if [ "$rg_exists" = "false" ]; then
             echo "Resource group does not exist. Creating..."
-            az group create --name ${{ env.RESOURCE_GROUP_NAME }} --location australiaeast || { echo "Error creating resource group"; exit 1; }
+            az group create --name ${{ env.RESOURCE_GROUP_NAME }} --location northcentralus || { echo "Error creating resource group"; exit 1; }
           else
             echo "Resource group already exists."
           fi
@@ -132,20 +126,17 @@ jobs:
             IMAGE_TAG="latest"
           fi
 
-          # Generate current timestamp in desired format: YYYY-MM-DDTHH:MM:SS.SSSSSSSZ
-            current_date=$(date -u +"%Y-%m-%dT%H:%M:%S.%7NZ")
-          
           az deployment group create \
             --name ${{ env.SOLUTION_PREFIX }}-deployment \
             --resource-group ${{ env.RESOURCE_GROUP_NAME }} \
             --template-file infra/main.bicep \
             --parameters \
                 solutionName="${{ env.SOLUTION_PREFIX }}" \
-                azureAiServiceLocation='${{ env.AZURE_LOCATION }}' \
+                aiDeploymentsLocation="eastus" \
+                useWafAlignedArchitecture=false \
+                capacity=${{ env.GPT_MIN_CAPACITY }} \
                 imageVersion="${IMAGE_TAG}" \
-                createdBy="Pipeline" \
-                tags="{'SecurityControl':'Ignore','Purpose':'Deploying and Cleaning Up Resources for Validation','CreatedDate':'$current_date'}"
-
+                createdBy="Pipeline" 
       - name: Assign Contributor role to Service Principal
         if: always()
         run: |
@@ -194,26 +185,7 @@ jobs:
 
       - name: Login to Azure
         run: |
-            az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
-            az account set --subscription "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
-          
-      - name: Assign Contributor role to Service Principal
-        if: always()
-        run: |
-          echo "Assigning Contributor role to SPN for RG: ${{ env.RESOURCE_GROUP_NAME }}"
-          az role assignment create \
-            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
-            --role "Contributor" \
-            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}
-          
-          echo "Assigning Log Analytics Contributor role for Log Analytics workspace access at RG level..."
-          az role assignment create \
-            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
-            --role "Log Analytics Reader" \
-            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP_NAME }} || echo "Log Analytics Contributor role assignment failed (may already exist)"
-          
-          echo "Waiting for role assignment propagation..."
-          sleep 30
+          az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }}
 
       - name: Get Log Analytics Workspace and OpenAI from Resource Group
         if: always()
@@ -384,7 +356,7 @@ jobs:
 
           # Purge OpenAI Resource
           echo "Purging the OpenAI Resource..."
-          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/australiaeast/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
+          if ! az resource delete --ids /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/providers/Microsoft.CognitiveServices/locations/northcentralus/resourceGroups/${{ env.RESOURCE_GROUP_NAME }}/deletedAccounts/${{ env.OPENAI_RESOURCE_NAME }} --verbose; then
             echo "Failed to purge openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
           else
             echo "Purged the openai resource: ${{ env.OPENAI_RESOURCE_NAME }}"
@@ -427,7 +399,7 @@ jobs:
 
           EMAIL_BODY=$(cat <<EOF
           {
-            "body": "<p>Dear Team,</p><p>We would like to inform you that the CodeMod Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
+            "body": "<p>Dear Team,</p><p>We would like to inform you that the DocGen Deployment Automation process has encountered an issue and has failed to complete successfully.</p><p><strong>Build URL:</strong> <a href=\"${RUN_URL}\">${RUN_URL}</a><br></p><p>Please investigate the matter at your earliest convenience.</p><p>Best regards,<br>Your Automation Team</p>"
           }
           EOF
           )
