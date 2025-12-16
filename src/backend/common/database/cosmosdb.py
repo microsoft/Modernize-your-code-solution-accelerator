@@ -352,10 +352,6 @@ class CosmosDBClient(DatabaseBase):
             batch["file_count"] = file_count
 
             await self.batch_container.replace_item(item=batch_id, body=batch)
-            # if isinstance(status, ProcessStatus):
-            #     self.logger.info(f"Updated batch {batch_id} to status {status.value}")
-            # else:
-            #     self.logger.info(f"Updated batch {batch_id} to status {status}")
 
             return batch
         except Exception as e:

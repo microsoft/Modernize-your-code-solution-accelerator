@@ -33,7 +33,7 @@ import PanelRight from "../components/Panels/PanelRight";
 import PanelRightToolbar from "../components/Panels/PanelRightToolbar";
 import BatchHistoryPanel from "../components/batchHistoryPanel";
 import ConfirmationDialog from "../commonComponents/ConfirmationDialog/confirmationDialogue";
-import { determineFileStatus, filesLogsBuilder, renderErrorSection, useStyles, renderFileError, filesErrorCounter, completedFiles, hasFiles, fileErrorCounter, BatchSummary, fileWarningCounter } from "../api/utils";
+import { determineFileStatus, filesLogsBuilder, renderErrorSection, useStyles, renderFileError, filesErrorCounter, completedFiles, hasFiles, fileErrorCounter, BatchSummary } from "../api/utils";
 export const History = bundleIcon(HistoryFilled, HistoryRegular);
 import { format } from "sql-formatter";
 
@@ -73,7 +73,6 @@ const BatchStoryPage = () => {
   const [selectedFileId, setSelectedFileId] = useState<string>("");
   const [expandedSections, setExpandedSections] = useState(["errors"]);
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(null);
-  const [selectedFileContent, setSelectedFileContent] = useState<string>("");
   const [selectedFileTranslatedContent, setSelectedFileTranslatedContent] = useState<string>("");
 
 
@@ -195,7 +194,6 @@ const BatchStoryPage = () => {
         const data = await response.json();
 
         if (data) {
-          setSelectedFileContent(data.content || "");
           setSelectedFileTranslatedContent(data.translated_content || "");
         }
 
@@ -208,40 +206,6 @@ const BatchStoryPage = () => {
 
     fetchFileContent();
   }, [selectedFileId]);
-
-
-  const renderWarningContent = () => {
-    if (!expandedSections.includes("warnings")) return null;
-
-    if (!batchSummary) return null;
-
-    // Group warnings by file
-    const warningFiles = files.filter(file => file.warningCount && file.warningCount > 0 && file.id !== "summary");
-
-    if (warningFiles.length === 0) {
-      return (
-        <div className={styles.errorItem}>
-          <Text>No warnings found.</Text>
-        </div>
-      );
-    }
-
-    return (
-      <div>
-        {warningFiles.map((file, fileIndex) => (
-          <div key={fileIndex} className={styles.errorItem}>
-            <div className={styles.errorTitle}>
-              <Text weight="semibold">{file.name} ({file.warningCount})</Text>
-              <Text className={styles.errorSource}>source</Text>
-            </div>
-            <div className={styles.errorDetails}>
-              <Text>Warning in file processing. See file for details.</Text>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   const renderContent = () => {
     // Define header content based on selected file

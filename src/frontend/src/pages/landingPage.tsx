@@ -33,7 +33,6 @@ export const LandingPage = (): JSX.Element => {
   const dispatch = useDispatch(); // Add dispatch hook
   const [selectedTargetLanguage, setSelectedTargetLanguage] = useState<string[]>(["T-SQL"]);
   const [selectedCurrentLanguage, setSelectedCurrentLanguage] = useState<string[]>(["Informix"]);
-  const batchHistoryRef = useRef<{ triggerDeleteAll: () => void } | null>(null);
   const isPanelOpen = useSelector((state: RootState) => state.historyPanel.isOpen);
   const navigate = useNavigate();
 

@@ -66,8 +66,7 @@ async def convert_script(
 
         # orchestrate the chat
         current_migration = "No migration"
-        is_complete: bool = False
-        while not is_complete:
+        while True:
             await comms_manager.group_chat.add_chat_message(
                 ChatMessageContent(role=AuthorRole.USER, content=source_script)
             )
@@ -274,10 +273,8 @@ async def convert_script(
                 break
 
             if comms_manager.group_chat.is_complete:
-                is_complete = True
-
-            break
-
+                break
+            
         migrated_query = current_migration
 
         # Handle the case where migration failed and current_migration is None
