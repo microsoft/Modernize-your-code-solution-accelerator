@@ -6,6 +6,12 @@ on:
       - main
       - dev
       - demo
+    paths:
+      - 'src/backend/**/*.py'
+      - 'src/tests/backend/**'
+      - '.github/workflows/test.yml'
+      - 'src/backend/requirements.txt'
+      - 'src/backend/pyproject.toml'
   pull_request:
     types:
       - opened
@@ -16,6 +22,12 @@ on:
       - main
       - dev
       - demo
+    paths:
+      - 'src/backend/**/*.py'
+      - 'src/tests/backend/**'
+      - '.github/workflows/test.yml'
+      - 'src/backend/requirements.txt'
+      - 'src/backend/pyproject.toml'
 
 jobs:
 #   frontend_tests:
@@ -23,7 +35,7 @@ jobs:
 
 #     steps:
 #       - name: Checkout code
-#         uses: actions/checkout@v3
+#         uses: actions/checkout@v5
 
 #       - name: Set up Node.js
 #         uses: actions/setup-node@v3
@@ -64,10 +76,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -75,7 +87,6 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r src/backend/requirements.txt
-          pip install -r src/frontend/requirements.txt
           pip install pytest-cov
           pip install pytest-asyncio
       - name: Set PYTHONPATH
