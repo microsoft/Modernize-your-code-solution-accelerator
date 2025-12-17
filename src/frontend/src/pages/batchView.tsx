@@ -349,7 +349,7 @@ const BatchStoryPage = () => {
     }
 
     // Show the summary page when summary is selected
-    if (selectedFile.id === "summary" && batchSummary) {
+    if (selectedFile.id === "summary") {
       // Check if there are no errors and all files are processed successfully
       const noErrors = (batchSummary.error_count === 0);
       const allFilesProcessed = (batchSummary.completed_files === batchSummary.total_files);
