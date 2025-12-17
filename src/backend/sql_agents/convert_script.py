@@ -274,7 +274,7 @@ async def convert_script(
 
             if comms_manager.group_chat.is_complete:
                 break
-            
+
         migrated_query = current_migration
 
         # Handle the case where migration failed and current_migration is None

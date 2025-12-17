@@ -33,6 +33,7 @@ def login_logout():
 def pytest_html_report_title(report):
     report.title = "Automation_CodeGen"
 
+
 log_streams = {}
 
 

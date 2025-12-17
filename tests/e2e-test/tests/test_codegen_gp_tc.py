@@ -7,6 +7,14 @@ import pytest
 
 logger = logging.getLogger(__name__)
 
+
+def _timed_translation(home):
+    start = time.time()
+    home.validate_translate()
+    end = time.time()
+    logger.info(f"Translation process for uploaded files took {end - start:.2f} seconds")
+
+
 # Define step-wise test actions for Golden Path
 golden_path_steps = [
     ("01. Validate home page is loaded", lambda home: home.validate_home_page()),
@@ -16,13 +24,6 @@ golden_path_steps = [
     ("05. Check batch history", lambda home: home.validate_batch_history()),
     ("06. Download all files and return home", lambda home: home.validate_download_files()),
 ]
-
-
-def _timed_translation(home):
-    start = time.time()
-    home.validate_translate()
-    end = time.time()
-    logger.info(f"Translation process for uploaded files took {end - start:.2f} seconds")
 
 
 @pytest.mark.parametrize("description, action", golden_path_steps, ids=[desc for desc, _ in golden_path_steps])
