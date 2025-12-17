@@ -124,7 +124,7 @@ If you're not using one of the above options for opening the project, then you'l
 2. Download the project code:
 
     ```shell
-    azd init -t microsoft/Modernize-your-Code-Solution-Accelerator/
+    azd init -t microsoft/Modernize-your-Code-Solution-Accelerator
     ```
 
 3. Open the project folder in your terminal or editor.
@@ -164,7 +164,7 @@ To adjust quota settings, follow these [steps](../docs/AzureGPTQuotaSettings.md)
 
   <summary><b>Reusing an Existing Log Analytics Workspace</b></summary>
 
-  Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)
+  Guide to get your [Existing Workspace ID](./re-use-log-analytics.md)
 
 </details>
 
@@ -217,7 +217,7 @@ Rename `azure.yaml` to `azure_original.yaml` and `azure_custom.yaml` to `azure.y
 
 Go to `infra` directory
 
-Rename `main.bicep` to `main_original.bicep` and `main_custom.bicep` to `main.bicep`. Continue with the [deploying steps](https://github.com/microsoft/Modernize-your-code-solution-accelerator/blob/main/docs/DeploymentGuide.md#deploying-with-azd).
+Rename `main.bicep` to `main_original.bicep` and `main_custom.bicep` to `main.bicep`. Continue with the [deploying steps](#deploying-with-azd).
 
 ### 🛠️ Troubleshooting
  If you encounter any issues during the deployment process, please refer [troubleshooting](../docs/TroubleShootingSteps.md) document for detailed steps and solutions.
