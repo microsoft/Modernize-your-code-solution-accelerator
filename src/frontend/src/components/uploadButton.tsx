@@ -68,7 +68,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const [uploadIntervals, setUploadIntervals] = useState<{ [key: string]: ReturnType<typeof setTimeout> }>({});
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showLogoCancelDialog, setShowLogoCancelDialog] = useState(false);
-  const [uploadState, setUploadState] = useState<'IDLE' | 'UPLOADING' | 'COMPLETED'>('IDLE');
   const [batchId, setBatchId] = useState<string>(uuidv4());
   const [allUploadsComplete, setAllUploadsComplete] = useState(false);
   const [fileLimitExceeded, setFileLimitExceeded] = useState(false);
@@ -98,7 +97,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       }
     }
 
-    setUploadState(newState);
     onUploadStateChange?.(newState);
   }, [uploadingFiles, onUploadStateChange]);
 
@@ -280,7 +278,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   Object.values(uploadIntervals).forEach(interval => clearInterval(interval));
   setUploadIntervals({});
   setUploadingFiles([]);
-  setUploadState('IDLE');
   onUploadStateChange?.('IDLE');
   setShowCancelDialog(false);
   setShowLogoCancelDialog(false);

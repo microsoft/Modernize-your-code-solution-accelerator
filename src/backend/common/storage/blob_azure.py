@@ -52,7 +52,7 @@ class AzureBlobStorage(BlobStorageBase):
             raise
         try:
             # Upload the file
-            upload_results = blob_client.upload_blob(  # noqa: F841
+            blob_client.upload_blob(
                 file_content,
                 content_type=content_type,
                 metadata=metadata,
