@@ -1,5 +1,13 @@
 name: Deploy-Test-Cleanup (v2) Linux
 on:
+  workflow_run:
+      workflows: ["Build Docker and Optional Push"]
+      types:
+        - completed
+      branches:
+        - main
+        - dev
+        - demo
   workflow_dispatch:
     inputs:
       azure_location:
