@@ -13,6 +13,10 @@ on:
       - 'docker/**'
       - '.github/workflows/build-docker-images.yml'
       - '.github/workflows/build-docker.yml'
+      - 'infra/**'
+      - 'scripts/**'
+      - 'azure.yaml'
+      - '.github/workflows/deploy.yml'
   pull_request:
     branches:
       - main
@@ -30,6 +34,10 @@ on:
       - 'docker/**'
       - '.github/workflows/build-docker-images.yml'
       - '.github/workflows/build-docker.yml'
+      - 'infra/**'
+      - 'scripts/**'
+      - 'azure.yaml'
+      - '.github/workflows/deploy.yml'
   merge_group:
   workflow_dispatch:
 
