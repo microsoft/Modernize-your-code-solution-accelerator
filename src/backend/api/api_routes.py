@@ -279,7 +279,6 @@ async def batch_status_updates(
             try:
                 await websocket.receive_text()
             except asyncio.TimeoutError:
-                # TimeoutError is ignored to keep the WebSocket connection open without receiving data
                 pass
 
     except WebSocketDisconnect:

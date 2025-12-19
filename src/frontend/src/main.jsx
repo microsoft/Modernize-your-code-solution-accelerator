@@ -50,7 +50,7 @@ const Main = () => {
     const baseURL = config.API_URL.replace(/\/api$/, ''); // Remove '/api' if it appears at the end
     console.log('Checking connection to:', baseURL);
     try {
-      await fetch(`${baseURL}/health`);
+      const response = await fetch(`${baseURL}/health`);
     } catch (error) {
       console.error('Error connecting to backend:', error);
     }

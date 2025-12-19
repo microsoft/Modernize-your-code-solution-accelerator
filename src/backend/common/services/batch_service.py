@@ -175,8 +175,6 @@ class BatchService:
 
             self.logger.info(f"Successfully deleted batch with ID: {batch_id}")
             return {"message": "Batch deleted successfully", "batch_id": str(batch_id)}
-        else:
-            return {"message": "Batch not found", "batch_id": str(batch_id)}
 
     async def delete_file(self, file_id: UUID, user_id: str):
         """Delete a file and its logs, and update batch file count."""
