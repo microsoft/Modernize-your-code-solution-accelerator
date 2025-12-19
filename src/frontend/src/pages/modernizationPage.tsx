@@ -477,13 +477,13 @@ const getPrintFileStatus = (status: string): string => {
 
 const ModernizationPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   // Redux state to listen for start processing completion
   const batchState = useSelector((state: any) => state.batch);
   
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(null);
-  const styles = useStyles();
+  const styles = useStyles()
   const [text, setText] = useState("");
   const [isPanelOpen, setIsPanelOpen] = React.useState(false); // Add state management
 
@@ -492,13 +492,16 @@ const ModernizationPage = () => {
 
   // State for the loading component
   const [showLoading, setShowLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState<string | null>(null);
   const [selectedFilebg, setSelectedFile] = useState<string | null>(null);
-  const [selectedFileId, setSelectedFileId] = React.useState<string>("");
+  const [selectedFileId, setSelectedFileId] = React.useState<string>("")
   const [fileId, setFileId] = React.useState<string>("");
-  const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
+  const [expandedSections, setExpandedSections] = React.useState<string[]>([])
+  const [progressPercentage, setProgressPercentage] = useState(0);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
+  const [selectedFileTranslatedContent, setSelectedFileTranslatedContent] = useState<string>("");
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
   const [pageLoadTime] = useState<number>(Date.now());
 
@@ -514,9 +517,11 @@ const ModernizationPage = () => {
         if (!selectedFile || !selectedFile.translatedCode) {
           setFileLoading(true);
           const newFileUpdate = await fetchFileFromAPI(selectedFile?.fileId || "");
+          setSelectedFileTranslatedContent(newFileUpdate.translatedContent);
           setFileLoading(false);
         } else {
 
+          setSelectedFileTranslatedContent(selectedFile.translatedCode);
         }
 
       } catch (err) {
@@ -794,6 +799,8 @@ const ModernizationPage = () => {
     }
   }, [batchId]);
 
+  const highestProgressRef = useRef(0);
+  const currentProcessingFileRef = useRef<string | null>(null);
 
 
   //new PT FR ends
@@ -1244,7 +1251,7 @@ useEffect(() => {
     }
 
     // Show the full summary page only when all files are completed and summary is selected
-    if (selectedFile?.id === "summary") {
+    if (allFilesCompleted && selectedFile?.id === "summary") {
       const completedCount = files.filter(file => file.status === "completed" && file.file_result !== "error" && file.id !== "summary").length;
       const totalCount = files.filter(file => file.id !== "summary").length;
       const errorCount = selectedFile.errorCount || 0;

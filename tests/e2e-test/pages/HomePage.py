@@ -19,7 +19,6 @@ class HomePage(BasePage):
     FILE_PROCESSED_MSG = "//span[normalize-space()='3 files processed successfully']"
 
     def __init__(self, page):
-        super().__init__(page)
         self.page = page
 
     def validate_home_page(self):
