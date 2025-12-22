@@ -492,16 +492,13 @@ const ModernizationPage = () => {
 
   // State for the loading component
   const [showLoading, setShowLoading] = useState(true);
-  const [loadingError, setLoadingError] = useState<string | null>(null);
   const [selectedFilebg, setSelectedFile] = useState<string | null>(null);
   const [selectedFileId, setSelectedFileId] = React.useState<string>("");
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
-  const [progressPercentage, setProgressPercentage] = useState(0);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
-  const [selectedFileTranslatedContent, setSelectedFileTranslatedContent] = useState<string>("");
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
   const [pageLoadTime] = useState<number>(Date.now());
 
@@ -517,11 +514,9 @@ const ModernizationPage = () => {
         if (!selectedFile || !selectedFile.translatedCode) {
           setFileLoading(true);
           const newFileUpdate = await fetchFileFromAPI(selectedFile?.fileId || "");
-          setSelectedFileTranslatedContent(newFileUpdate.translatedContent);
           setFileLoading(false);
         } else {
 
-          setSelectedFileTranslatedContent(selectedFile.translatedCode);
         }
 
       } catch (err) {
@@ -799,8 +794,6 @@ const ModernizationPage = () => {
     }
   }, [batchId]);
 
-  const highestProgressRef = useRef(0);
-  const currentProcessingFileRef = useRef<string | null>(null);
 
 
   //new PT FR ends

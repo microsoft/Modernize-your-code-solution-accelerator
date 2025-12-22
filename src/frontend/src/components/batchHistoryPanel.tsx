@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Card, Spinner, Tooltip } from "@fluentui/react-components";
 import { useNavigate } from "react-router-dom";
 import ConfirmationDialog from "../commonComponents/ConfirmationDialog/confirmationDialogue";
@@ -80,46 +80,6 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
       setLoading(false);
     }
   };
-
-  // Function to categorize batches
-  const categorizeBatches = () => {
-    const now = new Date();
-    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // Get start of "Today", "Past 7 days", and "Past 30 days" in LOCAL time
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const past7DaysStart = new Date(todayStart);
-    const past30DaysStart = new Date(todayStart);
-
-    past7DaysStart.setDate(todayStart.getDate() - 7);
-    past30DaysStart.setDate(todayStart.getDate() - 30);
-
-    const todayBatches: BatchHistoryItem[] = [];
-    const past7DaysBatches: BatchHistoryItem[] = [];
-    const past30DaysBatches: BatchHistoryItem[] = [];
-
-    batchHistory.forEach(batch => {
-      // Convert UTC timestamp to user's local date
-      const updatedAtUTC = new Date(batch.created_at);
-      const updatedAtLocal = new Date(updatedAtUTC.toLocaleString("en-US", { timeZone: userTimeZone }));
-
-      // Extract only the local **date** part for comparison
-      const updatedDate = new Date(updatedAtLocal.getFullYear(), updatedAtLocal.getMonth(), updatedAtLocal.getDate());
-
-      // Categorize based on **exact day comparison**
-      if (updatedDate.getTime() === todayStart.getTime()) {
-        todayBatches.push(batch);
-      } else if (updatedDate.getTime() >= past7DaysStart.getTime()) {
-        past7DaysBatches.push(batch);
-      } else if (updatedDate.getTime() >= past30DaysStart.getTime()) {
-        past30DaysBatches.push(batch);
-      }
-    });
-
-    return { todayBatches, past7DaysBatches, past30DaysBatches };
-  };
-
-  // const { todayBatches, past7DaysBatches, past30DaysBatches } = categorizeBatches();
 
   const deleteBatchFromHistory = (batchId: string) => {
     // Get the current URL path
