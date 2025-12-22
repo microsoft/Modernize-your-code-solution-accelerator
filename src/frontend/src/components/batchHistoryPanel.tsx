@@ -21,7 +21,7 @@ interface BatchHistoryItem {
   status: string;
 }
 const HistoryPanel: React.FC<HistoryPanelProps> = ({ isOpen, onClose }) => {
-  const headers = {}
+  const headers = {};
   const [batchHistory, setBatchHistory] = useState<BatchHistoryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

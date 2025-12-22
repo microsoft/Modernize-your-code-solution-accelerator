@@ -414,7 +414,7 @@ export const renderErrorSection = (batchSummary, expandedSections, setExpandedSe
 
 export const renderErrorContent = (batchSummary) => {
   // Group errors by file
-  const errorFiles = batchSummary.files.filter(file => file.error_count && file.error_count);
+  const errorFiles = batchSummary.files.filter(file => file.error_count);
   if (errorFiles.length === 0) {
     return (
       <div className={useStyles().errorItem}>

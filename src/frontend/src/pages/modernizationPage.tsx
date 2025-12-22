@@ -477,13 +477,13 @@ const getPrintFileStatus = (status: string): string => {
 
 const ModernizationPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   // Redux state to listen for start processing completion
   const batchState = useSelector((state: any) => state.batch);
   
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(null);
-  const styles = useStyles()
+  const styles = useStyles();
   const [text, setText] = useState("");
   const [isPanelOpen, setIsPanelOpen] = React.useState(false); // Add state management
 
@@ -494,9 +494,9 @@ const ModernizationPage = () => {
   const [showLoading, setShowLoading] = useState(true);
   const [loadingError, setLoadingError] = useState<string | null>(null);
   const [selectedFilebg, setSelectedFile] = useState<string | null>(null);
-  const [selectedFileId, setSelectedFileId] = React.useState<string>("")
+  const [selectedFileId, setSelectedFileId] = React.useState<string>("");
   const [fileId, setFileId] = React.useState<string>("");
-  const [expandedSections, setExpandedSections] = React.useState<string[]>([])
+  const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
   const [progressPercentage, setProgressPercentage] = useState(0);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
