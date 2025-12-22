@@ -12,7 +12,7 @@ golden_path_steps = [
     ("01. Validate home page is loaded", lambda home: home.validate_home_page()),
     ("02. Validate Upload of other than SQL files", lambda home: home.upload_unsupported_files()),
     ("03. Validate Upload input files for SQL only", lambda home: home.upload_files()),
-    ("04. Validate translation process for uploaded files", _timed_translation),
+    ("04. Validate translation process for uploaded files",lambda home: _timed_translation(home)),
     ("05. Check batch history", lambda home: home.validate_batch_history()),
     ("06. Download all files and return home", lambda home: home.validate_download_files()),
 ]
