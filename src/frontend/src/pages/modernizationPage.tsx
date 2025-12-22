@@ -1251,7 +1251,7 @@ useEffect(() => {
     }
 
     // Show the full summary page only when all files are completed and summary is selected
-    if (allFilesCompleted && selectedFile?.id === "summary") {
+    if (selectedFile?.id === "summary") {
       const completedCount = files.filter(file => file.status === "completed" && file.file_result !== "error" && file.id !== "summary").length;
       const totalCount = files.filter(file => file.id !== "summary").length;
       const errorCount = selectedFile.errorCount || 0;
