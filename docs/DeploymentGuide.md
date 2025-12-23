@@ -33,27 +33,18 @@ Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/g
 
 ### Sandbox or WAF Aligned Deployment Options
 
-The [`infra`](../infra) folder contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
+The [`infra`](../infra) folder of the Multi Agent Solution Accelerator contains the [`main.bicep`](../infra/main.bicep) Bicep script, which defines all Azure infrastructure components for this solution.
 
-When running `azd up`, you’ll now be prompted to choose between a **WAF-aligned configuration** and a **sandbox configuration** using a simple selection:
+By default, the `azd up` command uses the [`main.parameters.json`](../infra/main.parameters.json) file to deploy the solution. This file is pre-configured for a **sandbox environment** — ideal for development and proof-of-concept scenarios, with minimal security and cost controls for rapid iteration.
 
-- A **sandbox environment** — ideal for development and proof-of-concept scenarios, with minimal security and cost controls for rapid iteration.
-
-- A **production deployments environment**, which applies a [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) configuration. This option enables additional Azure best practices for reliability, security, cost optimization, operational excellence, and performance efficiency, such as:
-  - Enhanced network security (e.g., Network protection with private endpoints)
-  - Stricter access controls and managed identities
-  - Logging, monitoring, and diagnostics enabled by default
-  - Resource tagging and cost management recommendations
+For **production deployments**, the repository also provides [`main.waf.parameters.json`](../infra/main.waf.parameters.json), which applies a [Well-Architected Framework (WAF) aligned](https://learn.microsoft.com/en-us/azure/well-architected/) configuration. This option enables additional Azure best practices for reliability, security, cost optimization, operational excellence, and performance efficiency, such as:
 
 **How to choose your deployment configuration:**
 
-When prompted during `azd up`:
+* Use the default `main.parameters.json` file for a **sandbox/dev environment**
+* For a **WAF-aligned, production-ready deployment**, copy the contents of `main.waf.parameters.json` into `main.parameters.json` before running `azd up`
 
-![useWAFAlignedArchitecture](images/macae_waf_prompt.png)
 
-- Select **`true`** to deploy a **WAF-aligned, production-ready environment**  
-- Select **`false`** to deploy a **lightweight sandbox/dev environment**
-  
 > [!TIP]
 > Always review and adjust parameter values (such as region, capacity, security settings and log analytics workspace configuration) to match your organization’s requirements before deploying. For production, ensure you have sufficient quota and follow the principle of least privilege for all identities and role assignments.
 
@@ -61,8 +52,8 @@ When prompted during `azd up`:
 
 Pick from the options below to see step-by-step instructions for: GitHub Codespaces, VS Code Dev Containers, Local Environments, and Bicep deployments.
 
-| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) |
-|---|---|
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==) |
+|---|---|---|
 
 <details>
   <summary><b>Deploy in GitHub Codespaces</b></summary>
@@ -81,7 +72,7 @@ You can run this solution using GitHub Codespaces. The button will open a web-ba
 </details>
 
 <details>
-  <summary><b>Deploy in VS Code</b></summary>
+  <summary><b>Deploy in VS Code Dev Containers</b></summary>
 
  ### VS Code Dev Containers
 
@@ -99,6 +90,24 @@ You can run this solution in VS Code Dev Containers, which will open the project
 </details>
 
 <details>
+  <summary><b>Deploy in VS Code Web</b></summary>
+
+ ### VS Code Web
+
+[![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==)
+
+1. Click the badge above (may take a few minutes to load)
+2. Sign in with your Azure account when prompted
+3. Select the subscription where you want to deploy the solution
+4. Wait for the environment to initialize (includes all deployment tools)
+5. When prompted in the VS Code Web terminal, choose one of the available options shown below:
+
+   ![VS Code Initial Prompt](./images/vscodeweb_intialize.png)
+6. Continue with the [deploying steps](#deploying-with-azd)
+
+</details>
+
+<details>
   <summary><b>Deploy in your local environment</b></summary>
 
  ### Local environment
@@ -107,7 +116,7 @@ If you're not using one of the above options for opening the project, then you'l
 
 1. Make sure the following tools are installed:
 
-    * [Azure Developer CLI (azd)](https://aka.ms/install-azd) <small>(v1.17.1+)</small> - version
+    * [Azure Developer CLI (azd)](https://aka.ms/install-azd) <small>(v1.18.0+)</small> - version
     * [Python 3.9+](https://www.python.org/downloads/)
     * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
     * [Git](https://git-scm.com/downloads)
@@ -131,22 +140,7 @@ Consider the following settings during your deployment to modify specific settin
  <details>
 <Summary><b>Configurable Deployment Settings</b></Summary>
 
-When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md):  
-
-| **Setting**                       | **Description**                                                                                      | **Default value**         |
-|----------------------------------|------------------------------------------------------------------------------------------------------|----------------------------|
-| **Azure Region**                 | The region where resources will be created.                                                         | East US                   |
-| **Resource Prefix**              | Prefix for all resources created by this template. This prefix will be used to create unique names for all resources. The prefix must be unique within the resource group. | azdtemp                   |
-| **Capacity**                     | Configure capacity for **gpt-4o**.                                                                   | 200                        |
-| **Model Deployment Type**        | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                        | GlobalStandard             |
-| **Model Name**                   | Set the Model Name (allowed values: gpt-4o).                                                        | gpt-4o                     |
-| **Model Version**                | Set the Azure model version (allowed values: 2024-08-06).                                           | 2024-08-06                 |
-| **Image Tag**                    | Set the Image tag (allowed values: latest, dev, hotfix).                                            | latest                     |
-| **Existing Log analytics workspace** | To reuse the existing Log analytics workspace Id.                                                | `<Existing Workspace Id>` |
-| **Jumpbox Admin Username**         | Specifies the administrator username for the Jumpbox Virtual Machine.                             | `JumpboxAdminUser`         |
-| **Jumpbox Admin Password**         | Specifies the administrator password for the Jumpbox Virtual Machine.                             | `JumpboxAdminP@ssw0rd1234!` |
-| **Cosmos DB Secondary Location**   | Specifies the secondary region for Cosmos DB. Set this if redundancy (`enableRedundancy`) is enabled. | `<Secondary Region>`        |
-
+When you start the deployment, most parameters will have **default values**, but you can update the following settings by following the steps [here](../docs/CustomizingAzdParameters.md)
 
 This accelerator can be configured to  use authentication. 
 
@@ -204,6 +198,7 @@ To change the azd parameters from the default values, follow the steps [here](..
     ```shell
     azd up
     ```
+    > **Note:** This solution accelerator requires **Azure Developer CLI (azd) version 1.18.0 or higher**. Please ensure you have the latest version installed before proceeding with deployment. [Download azd here](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd).
   
 4. Select a subscription from your Azure account, and select a location which has quota for all the resources. 
     * This deployment will take *6-9 minutes* to provision the resources in your account and set up the solution with sample data. 
@@ -211,7 +206,18 @@ To change the azd parameters from the default values, follow the steps [here](..
 
 5. Once the deployment has completed successfully, open the [Azure Portal](https://portal.azure.com/), go to the deployed resource group, find the container app with "frontend" in the name, and get the app URL from `Application URI`.
 
-6. You can now delete the resources by running `azd down`, when you have finished trying out the application. 
+6. You can now delete the resources by running `azd down`, when you have finished trying out the application.
+   > **Note:** If you deployed with `enableRedundancy=true` and Log Analytics workspace replication is enabled, you must first disable replication before running `azd down` else resource group delete will fail. Follow the steps in [Handling Log Analytics Workspace Deletion with Replication Enabled](./LogAnalyticsReplicationDisable.md), wait until replication returns `false`, then run `azd down`.
+
+### Deploy your local changes
+
+To deploy your local changes rename the below files.
+
+Rename `azure.yaml` to `azure_original.yaml` and `azure_custom.yaml` to `azure.yaml`.
+
+Go to `infra` directory
+
+Rename `main.bicep` to `main_original.bicep` and `main_custom.bicep` to `main.bicep`. Continue with the [deploying steps](https://github.com/microsoft/Modernize-your-code-solution-accelerator/blob/main/docs/DeploymentGuide.md#deploying-with-azd).
 
 ### 🛠️ Troubleshooting
  If you encounter any issues during the deployment process, please refer [troubleshooting](../docs/TroubleShootingSteps.md) document for detailed steps and solutions.
@@ -230,7 +236,7 @@ Additional Steps
 
 ## Running the application
 
-To help you get started, sample Informix queries have been included in the data/informix/functions and data/informix/simple directories. You can choose to upload these files to test the application.
+To help you get started, here's the [Sample Workflow](./SampleWorkflow.md) you can follow to try it out.
 
 ## Environment configuration for local development & debugging
 > Set APP_ENV in your .env file to control Azure authentication. Use dev to enable to use Azure CLI credential, Prod to enable Managed Identity (for production). **Ensure you're logged in via az login when using dev in local**.

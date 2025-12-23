@@ -1,0 +1,31 @@
+name: modernize-your-code-solution-accelerator
+metadata:
+    template: modernize-your-code-solution-accelerator@1.0
+
+requiredVersions:
+  azd: '>= 1.18.0'
+
+parameters:
+  azureAiServiceLocation:
+    type: string
+    default: japaneast
+
+services:
+  backend:
+    project: ./src/backend
+    host: containerapp
+    language: python
+    docker:
+      path: Dockerfile
+      remoteBuild: true
+  frontend:
+    project: ./src/frontend
+    host: containerapp
+    language: js
+    docker:
+      path: Dockerfile
+      remoteBuild: true
+
+infra:
+  provider: bicep
+  path: infra

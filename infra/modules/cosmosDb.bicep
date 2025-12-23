@@ -30,19 +30,8 @@ param roleAssignments roleAssignmentType[]?
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module privateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?privateDnsZoneResourceId)) {
-  name: take('${name}-documents-pdns-deployment', 64)
-  params: {
-    name: 'privatelink.documents.azure.com'
-    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-    tags: tags
-  }
-}
-
 var privateDnsZoneResourceId = privateNetworking != null
-  ? (empty(privateNetworking.?privateDnsZoneResourceId)
-      ? privateDnsZone.outputs.resourceId ?? ''
-      : privateNetworking.?privateDnsZoneResourceId ?? '')
+  ? privateNetworking.?privateDnsZoneResourceId ?? ''
   : ''
 
 resource sqlContributorRoleDefinition 'Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions@2024-11-15' existing = {
@@ -54,10 +43,8 @@ var batchContainerName = 'cmsabatch'
 var fileContainerName = 'cmsafile'
 var logContainerName = 'cmsalog'
 
-module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
-  name: take('${name}-account-deployment', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [privateDnsZone] // required due to optional flags that could change dependency
+module cosmosAccount 'br/public:avm/res/document-db/database-account:0.18.0' = {
+  name: take('avm.res.document-db.database-account.${name}', 64)
   params: {
     name: name
     enableAnalyticalStorage: true
@@ -71,7 +58,6 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
       virtualNetworkRules: []
     }
     zoneRedundant: zoneRedundant
-    automaticFailover: !empty(secondaryLocation)
     failoverLocations: !empty(secondaryLocation)
       ? [
           {
@@ -90,7 +76,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
     backupPolicyType: !empty(secondaryLocation) ? 'Periodic' : 'Continuous'
     backupStorageRedundancy: zoneRedundant ? 'Zone' : 'Local'
     disableKeyBasedMetadataWriteAccess: false
-    disableLocalAuthentication: privateNetworking != null
+    disableLocalAuthentication: true
     diagnosticSettings: !empty(logAnalyticsWorkspaceResourceId)
       ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
       : []
@@ -145,7 +131,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.15.0' = {
         name: databaseName
       }
     ]
-    dataPlaneRoleAssignments: [
+    sqlRoleAssignments: [
       {
         principalId: dataAccessIdentityPrincipalId
         roleDefinitionId: sqlContributorRoleDefinition.id

@@ -8,20 +8,20 @@
     "location": {
       "value": "${AZURE_LOCATION}"
     },
-    "deploymentType": {
+    "gptModelDeploymentType": {
       "value": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}"
     },
-    "llmModel": {
+    "gptModelName": {
       "value": "${AZURE_ENV_MODEL_NAME}"
     },
-    "capacity": {
+    "gptModelCapacity": {
       "value": "${AZURE_ENV_MODEL_CAPACITY}"
     },
     "gptModelVersion": {
       "value": "${AZURE_ENV_MODEL_VERSION}"
     },
     "imageVersion": {
-      "value": "${AZURE_ENV_IMAGETAG}"
+      "value": "${AZURE_ENV_IMAGETAG=latest}"
     },
     "existingLogAnalyticsWorkspaceId": {
       "value": "${AZURE_ENV_LOG_ANALYTICS_WORKSPACE_ID}"

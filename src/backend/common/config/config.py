@@ -39,7 +39,6 @@ class Config:
         self.azure_service_bus_namespace = os.getenv("AZURE_SERVICE_BUS_NAMESPACE")
         self.azure_queue_name = os.getenv("AZURE_QUEUE_NAME")
 
-        self.azure_openai_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
         self.ai_project_endpoint = os.getenv("AI_PROJECT_ENDPOINT")
         self.migrator_agent_model_deploy = os.getenv("MIGRATOR_AGENT_MODEL_DEPLOY")
         self.picker_agent_model_deploy = os.getenv("PICKER_AGENT_MODEL_DEPLOY")
