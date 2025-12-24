@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Microsoft.SqlServer.TransactSql.ScriptDom;
 using Newtonsoft.Json;
 
@@ -42,18 +43,14 @@ namespace SqlParserApp
 
             IList<ParseError> errors = ParseSqlQuery(sqlQuery);
 
-            var errorList = new List<Dictionary<string, object>>();
-
-            foreach (var error in errors)
-            {
-                var errorDict = new Dictionary<string, object>
+            var errorList = errors
+                .Select(error => new Dictionary<string, object>
                 {
                     { "Line", error.Line },
                     { "Column", error.Column },
                     { "Error", error.Message }
-                };
-                errorList.Add(errorDict);
-            }
+                })
+                .ToList();
 
             string jsonOutput = JsonConvert.SerializeObject(errorList, Formatting.Indented);
             Console.WriteLine(jsonOutput);
