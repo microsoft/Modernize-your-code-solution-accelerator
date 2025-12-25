@@ -10,6 +10,7 @@ By default this template will use the environment name as the prefix to prevent 
 | -------------------------------------- | ------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
 | `AZURE_ENV_NAME`                       | string  | `azdtemp`        | Used as a prefix for all resource names to ensure uniqueness across environments.                    |
 | `AZURE_LOCATION`                       | string  | `<User selects during deployment>`      | Location of the Azure resources. Controls where the infrastructure will be deployed.                 |
+| `AZURE_ENV_AI_SERVICE_LOCATION`        | string  | `<User selects during deployment>`     | Location of the Azure resources. Controls where the Azure AI Services will be deployed. |
 | `AZURE_ENV_MODEL_DEPLOYMENT_TYPE`      | string  | `GlobalStandard` | Change the Model Deployment Type (allowed values: Standard, GlobalStandard).                         |
 | `AZURE_ENV_MODEL_NAME`                 | string  | `gpt-4o`         | Set the Model Name (allowed values: gpt-4o).                                                         |
 | `AZURE_ENV_MODEL_VERSION`              | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
@@ -21,6 +22,8 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_JUMPBOX_ADMIN_PASSWORD`     | string  | `JumpboxAdminP@ssw0rd1234!` | Specifies the administrator password for the Jumpbox Virtual Machine.      |
 | `AZURE_ENV_COSMOS_SECONDARY_LOCATION`  | string  | *(not set by default)*      | Specifies the secondary region for Cosmos DB. Required if `enableRedundancy` is `true`. |
 | `AZURE_EXISTING_AI_PROJECT_RESOURCE_ID`  | string  | *(not set by default)*      | Specifies the existing AI Foundry Project Resource ID if it needs to be reused. |
+| `AZURE_ENV_ACR_NAME`                              | string  | `cmsacontainerreg.azurecr.io`     | Specifies the Azure Container Registry name to use for container images. |
+
 ---
 
 ## How to Set a Parameter
