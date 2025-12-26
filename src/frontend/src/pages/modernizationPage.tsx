@@ -497,6 +497,7 @@ const ModernizationPage = () => {
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
+  const [progressPercentage, setProgressPercentage] = useState(0);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
