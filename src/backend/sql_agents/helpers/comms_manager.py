@@ -270,17 +270,3 @@ class CommsManager:
 
         except Exception as e:
             self.logger.error("Error during cleanup: %s", str(e))
-
-    def __del__(self):
-        """Destructor to ensure cleanup if not explicitly called."""
-        try:
-            # Only attempt cleanup if there's an active event loop
-            loop = asyncio.get_running_loop()
-            if loop and not loop.is_closed():
-                # Schedule cleanup as a task
-                loop.create_task(self.cleanup())
-        except RuntimeError:
-            # No event loop running, can't clean up asynchronously
-            self.logger.warning("No event loop available for cleanup in destructor")
-        except Exception as e:
-            self.logger.error("Error in destructor cleanup: %s", str(e))

@@ -28,7 +28,6 @@ def mock_blob_service():
 @pytest.fixture
 def blob_storage(mock_blob_service):
     """Fixture to initialize AzureBlobStorage with mocked dependencies"""
-    service_client, container_client, blob_client = mock_blob_service
     return AzureBlobStorage(account_name="test_account", container_name="test_container")
 
 
