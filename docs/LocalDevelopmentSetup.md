@@ -281,11 +281,9 @@ cp .env.sample .env  # Linux/macOS
 Copy-Item .env.sample .env  # Windows PowerShell
 ```
 
-Edit the `.env` file with your Azure configuration. Find these values from:
+Edit the `.env` file with your Azure configuration. Find these values by navigating to your resource group and selecting the resource with prefix `ca-backend-`.
 
-Navigate to your resource group and select the resource with prefix `ca-backend-` to get the backend environment variables:
-
-For reference, see the image below:
+In the resource's **Configuration** (Application settings) section, copy the environment variable values into your `.env` file. For reference, see the image below:
 ![backend_env_variables](./images/backend_env_variables.png)
 
 **Key configuration values:**
