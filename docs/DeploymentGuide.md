@@ -160,6 +160,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 ## Step 3: Configure Deployment Settings
 
+> ⚠️ **Critical: Redeployment Warning**  
+> If you have previously run `azd up` in this folder (i.e., a `.azure` folder exists), you must [create a fresh environment](#creating-a-new-environment) to avoid conflicts and deployment failures.
+
 Review the configuration options below. You can customize any settings that meet your needs, or leave them as defaults to proceed with a standard deployment.
 
 ### 3.1 Choose Deployment Type (Optional)
@@ -229,6 +232,9 @@ To optimize costs and integrate with your existing Azure infrastructure, you can
 </details>
 
 ## Step 4: Deploy the Solution
+
+> ⚠️ **Critical: Redeployment Warning**  
+> If you have previously run `azd up` in this folder (i.e., a `.azure` folder exists), you must [create a fresh environment](#creating-a-new-environment) to avoid conflicts and deployment failures.
 
 💡 **Before You Start:** If you encounter any issues during deployment, check our [Troubleshooting Guide](./TroubleShootingSteps.md) for common solutions.
 
@@ -323,6 +329,9 @@ If your deployment failed or encountered errors, here are the steps to recover:
 
 <details>
 <summary><b>Recover from Failed Deployment</b></summary>
+
+> ⚠️ **Critical: Redeployment Warning**  
+> If you have previously run `azd up` in this folder (i.e., a `.azure` folder exists), you must [create a fresh environment](#creating-a-new-environment) to avoid conflicts and deployment failures.
 
 **If your deployment failed or encountered errors:**
 
@@ -446,6 +455,9 @@ If you've made local modifications to the code and want to deploy them to Azure,
 2. Rename `main_custom.bicep` to `main.bicep`
 
 ### Step 3: Deploy Changes
+
+> ⚠️ **Critical: Redeployment Warning**  
+> If you have previously run `azd up` in this folder (i.e., a `.azure` folder exists), you must [create a fresh environment](#creating-a-new-environment) to avoid conflicts and deployment failures.
 
 Run the deployment command:
 ```shell
