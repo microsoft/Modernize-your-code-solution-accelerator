@@ -105,6 +105,9 @@ param gptModelName string = 'gpt-4o'
 @description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
 param imageVersion string = 'latest_2025-11-10_599'
 
+@description('Optional. Azure Container Registry name. Defaults to cmsacontainerreg.azurecr.io')
+param acrName string = 'cmsacontainerreg.azurecr.io'
+
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
 param gptModelVersion string = '2024-08-06'
@@ -856,7 +859,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
     containers: [
       {
         name: 'cmsabackend'
-        image: 'cmsacontainerreg.azurecr.io/cmsabackend:${imageVersion}'
+        image: '${acrName}/cmsabackend:${imageVersion}'
         env: concat(
           [
             {
@@ -1044,7 +1047,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
             value: 'prod'
           }
         ]
-        image: 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageVersion}'
+        image: '${acrName}/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
         resources: {
           cpu: 1
