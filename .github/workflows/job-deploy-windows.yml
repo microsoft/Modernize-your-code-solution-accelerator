@@ -297,6 +297,7 @@ jobs:
             --assignee ${{ secrets.AZURE_CLIENT_ID }} \
             --role "Contributor" \
             --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$INPUT_RESOURCE_GROUP_NAME
+
       - name: Generate Deployment Summary
         if: always()
         shell: bash
