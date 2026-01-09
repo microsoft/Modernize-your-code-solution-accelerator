@@ -1,5 +1,8 @@
 name: Test Automation Code Modernization - v2
 
+permissions:
+  contents: read
+  actions: read
 on:
     workflow_call:
         inputs:

@@ -1,4 +1,7 @@
 name: Deploy-Test-Cleanup (v2) Windows
+permissions:
+  contents: read
+  actions: read
 on:
   workflow_dispatch:
     inputs:
