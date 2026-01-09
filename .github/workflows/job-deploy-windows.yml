@@ -292,11 +292,11 @@ jobs:
           INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
         run: |
           az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          echo "Assigning Contributor role to SPN for RG: $env:INPUT_RESOURCE_GROUP_NAME"
+          echo "Assigning Contributor role to SPN for RG: $INPUT_RESOURCE_GROUP_NAME"
           az role assignment create \
             --assignee ${{ secrets.AZURE_CLIENT_ID }} \
             --role "Contributor" \
-            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env:INPUT_RESOURCE_GROUP_NAME }}
+            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$INPUT_RESOURCE_GROUP_NAME
       - name: Generate Deployment Summary
         if: always()
         shell: bash
@@ -323,10 +323,10 @@ jobs:
             CONFIG_TYPE="Non-WAF + EXP"
           fi
           echo "| **Configuration Type** | \`$CONFIG_TYPE\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Resource Group** | \`${{ env:INPUT_RESOURCE_GROUP_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Azure Region (Infrastructure)** | \`${{ env:INPUT_AZURE_LOCATION }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Azure OpenAI Region** | \`${{ env:INPUT_AZURE_ENV_OPENAI_LOCATION }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Docker Image Tag** | \`${{ env:INPUT_IMAGE_TAG }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Resource Group** | \`$INPUT_RESOURCE_GROUP_NAME\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Azure Region (Infrastructure)** | \`$INPUT_AZURE_LOCATION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Azure OpenAI Region** | \`$INPUT_AZURE_ENV_OPENAI_LOCATION\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Docker Image Tag** | \`$INPUT_IMAGE_TAG\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           if [ "$JOB_STATUS" == "success" ]; then
             echo "### ✅ Deployment Details" >> $GITHUB_STEP_SUMMARY
