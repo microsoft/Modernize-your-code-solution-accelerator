@@ -36,7 +36,6 @@ typing-extensions
 python-jose[cryptography]
 passlib[bcrypt]
 semantic-kernel[azure]==1.39.0
-openai==2.14.0
 sqlparse
 sqlglot
 unittest2

@@ -36,41 +36,16 @@ param containers array?
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-module blobPrivateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?blobPrivateDnsZoneResourceId)) {
-  name: take('${name}-blob-pdns-deployment', 64)
-  params: {
-    name: 'privatelink.blob.${environment().suffixes.storage}'
-    //location: location
-    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-    tags: tags
-  }
-}
-
-module filePrivateDnsZone 'privateDnsZone.bicep' = if (privateNetworking != null && empty(privateNetworking.?filePrivateDnsZoneResourceId)) {
-  name: take('${name}-file-pdns-deployment', 64)
-  params: {
-    name: 'privatelink.file.${environment().suffixes.storage}'
-    //location: location
-    virtualNetworkResourceId: privateNetworking.?virtualNetworkResourceId ?? ''
-    tags: tags
-  }
-}
-
 var blobPrivateDnsZoneResourceId = privateNetworking != null
-  ? (empty(privateNetworking.?blobPrivateDnsZoneResourceId)
-      ? blobPrivateDnsZone.outputs.resourceId ?? ''
-      : privateNetworking.?blobPrivateDnsZoneResourceId)
+  ? privateNetworking.?blobPrivateDnsZoneResourceId ?? ''
   : ''
 var filePrivateDnsZoneResourceId = privateNetworking != null
-  ? (empty(privateNetworking.?filePrivateDnsZoneResourceId)
-      ? filePrivateDnsZone.outputs.resourceId ?? ''
-      : privateNetworking.?filePrivateDnsZoneResourceId)
+  ? privateNetworking.?filePrivateDnsZoneResourceId ?? ''
   : ''
 
-module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
-  name: take('${name}-sa-deployment', 64)
+module storageAccount 'br/public:avm/res/storage/storage-account:0.28.0' = {
+  name: take('avm.res.storage.storage-account.${name}', 64)
   #disable-next-line no-unnecessary-dependson
-  dependsOn: [filePrivateDnsZone, blobPrivateDnsZone] // required due to optional flags that could change dependency
   params: {
     name: name
     location: location
@@ -133,6 +108,10 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.20.0' = {
     roleAssignments: roleAssignments
     blobServices: {
       containers: containers ?? []
+      deleteRetentionPolicyEnabled: true
+      deleteRetentionPolicyDays: 7
+      containerDeleteRetentionPolicyEnabled: true
+      containerDeleteRetentionPolicyDays: 7
     }
     enableTelemetry: enableTelemetry
   }

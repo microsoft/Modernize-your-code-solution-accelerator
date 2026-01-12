@@ -68,7 +68,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
   const [uploadIntervals, setUploadIntervals] = useState<{ [key: string]: ReturnType<typeof setTimeout> }>({});
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showLogoCancelDialog, setShowLogoCancelDialog] = useState(false);
-  const [uploadState, setUploadState] = useState<'IDLE' | 'UPLOADING' | 'COMPLETED'>('IDLE');
   const [batchId, setBatchId] = useState<string>(uuidv4());
   const [allUploadsComplete, setAllUploadsComplete] = useState(false);
   const [fileLimitExceeded, setFileLimitExceeded] = useState(false);
@@ -98,7 +97,6 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       }
     }
 
-    setUploadState(newState);
     onUploadStateChange?.(newState);
   }, [uploadingFiles, onUploadStateChange]);
 
@@ -339,16 +337,15 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         };
 
         if (uploadingFiles.length > 0) {
-          // First navigate to loading page before starting processing
+          // First navigate to modernization page to show progress
           navigate(`/batch-process/${batchId}`);
 
-          // Then dispatch the action and wait for it to complete
+          // Then dispatch the action
           try {
             dispatch(startProcessing(payload));
-            return batchId; // Return the batchId after processing completes
+            return batchId;
           } catch (error) {
             console.error('Processing failed:', error);
-            // Still return the batchId even if processing failed
             return batchId;
           }
         }

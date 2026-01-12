@@ -19,6 +19,7 @@ class HomePage(BasePage):
     FILE_PROCESSED_MSG = "//span[normalize-space()='3 files processed successfully']"
 
     def __init__(self, page):
+        super().__init__(page)
         self.page = page
 
     def validate_home_page(self):
@@ -55,7 +56,7 @@ class HomePage(BasePage):
     def validate_translate(self):
         self.page.locator(self.TRANSLATE_BTN).click()
         expect(self.page.locator(self.DOWNLOAD_FILES)).to_be_enabled(timeout=200000)
-        self.page.locator(self.SUMMARY).click()
+        self.page.locator(self.SUMMARY).nth(1).click()
         expect(self.page.locator(self.FILE_PROCESSED_MSG)).to_be_visible()
         self.page.wait_for_timeout(3000)
 
