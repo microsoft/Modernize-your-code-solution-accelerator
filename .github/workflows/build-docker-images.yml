@@ -1,5 +1,7 @@
 name: Build Docker and Optional Push
-
+permissions:
+  contents: read
+  actions: read
 on:
   push:
     branches:
