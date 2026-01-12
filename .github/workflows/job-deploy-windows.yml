@@ -231,7 +231,7 @@ jobs:
           Write-Host "Using Docker Image Tag: $env:INPUT_IMAGE_TAG"
 
           Write-Host "Creating environment..."
-          azd env new $env:INPUT_ENV_NAME --no-prompt
+          azd env new "$env:INPUT_ENV_NAME" --no-prompt
           Write-Host "Environment created: $env:INPUT_ENV_NAME"
 
           Write-Host "Setting default subscription..."
