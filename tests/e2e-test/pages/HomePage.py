@@ -1,6 +1,6 @@
+import logging
 import os
 import os.path
-import logging
 
 from base.base import BasePage
 
@@ -33,7 +33,7 @@ class HomePage(BasePage):
     CANCEL_UPLOAD_MSG = "//button[normalize-space()='Cancel upload']"
     DELETE_BATCH_BTN = "//button[contains(text(),'✕')]"
     DELETE_BATCH_HISTORY = "//button[normalize-space()='Delete']"
-    
+
     # Unsupported file validation messages
     ERROR_MSG_AUDIO = "//span[.=\"File 'test_audio.wav' is not a valid SQL file. Only .sql files are allowed.\"]"
     ERROR_MSG_DOCX = "//div[.=\"File 'test_doc.docx' is not a valid SQL file. Only .sql files are allowed.\"]"
@@ -42,13 +42,12 @@ class HomePage(BasePage):
     ERROR_MSG_PDF = "//div[text()=\"File 'test_pdf.pdf' is not a valid SQL file. Only .sql files are allowed.\"]"
     ERROR_MSG_POWERBI = "//div[text()=\"File 'test_powerBi.pbix' is not a valid SQL file. Only .sql files are allowed.\"]"
     ERROR_MSG_TXT = "//div[text()=\"File 'test_text.txt' is not a valid SQL file. Only .sql files are allowed.\"]"
-    
+
     # Large file validation message
     ERROR_MSG_LARGE_FILE = "//span[contains(text(),\"File 'large_dump.sql' exceeds the 200MB size limit. Please upload a file smaller than 200MB.\")]"
-    
+
     # Harmful file validation message
     ERROR_MSG_UNABLE_TO_PROCESS = "//span[normalize-space()='Unable to process the file']"
-
 
     def __init__(self, page):
         self.page = page
@@ -82,7 +81,7 @@ class HomePage(BasePage):
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
         testdata_dir = os.path.join(current_working_dir, "testdata/valid_files")
-        
+
         # Get all files from testdata/valid_files folder
         all_files = []
         if os.path.exists(testdata_dir) and os.path.isdir(testdata_dir):
@@ -91,7 +90,7 @@ class HomePage(BasePage):
                 # Only add if it's a file (not a directory)
                 if os.path.isfile(file_path):
                     all_files.append(file_path)
-        
+
         # Upload all discovered files
         if all_files:
             file_chooser.set_files(all_files)
@@ -126,12 +125,12 @@ class HomePage(BasePage):
         Remove the first three uploaded files and validate that 17 files remain.
         """
         remove_buttons = self.page.locator(self.REMOVE_FILE_BTN)
-        
+
         # Remove first three files
-        for i in range(3):
+        for _i in range(3):
             remove_buttons.first.click()
             self.page.wait_for_timeout(2000)
-        
+
         # Validate remaining files count is 17
         uploaded_files = self.page.locator(self.FILES_UPLOADED)
         actual_count = uploaded_files.count()
@@ -148,7 +147,6 @@ class HomePage(BasePage):
         self.page.locator(self.CANCEL_UPLOAD_MSG).click()
         self.page.wait_for_timeout(3000)
         expect(self.page.locator(self.TITLE_TEXT)).to_be_visible()
-
 
     def upload_unsupported_files(self):
         with self.page.expect_file_chooser() as fc_info:
@@ -175,7 +173,7 @@ class HomePage(BasePage):
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
         unsupported_dir = os.path.join(current_working_dir, "testdata/Unsupported_files")
-        
+
         # Get all files from testdata/Unsupported_files folder
         all_unsupported_files = []
         if os.path.exists(unsupported_dir) and os.path.isdir(unsupported_dir):
@@ -184,17 +182,17 @@ class HomePage(BasePage):
                 # Only add if it's a file (not a directory)
                 if os.path.isfile(file_path):
                     all_unsupported_files.append(file_path)
-        
+
         logger.info(f"Found {len(all_unsupported_files)} unsupported files to upload")
         logger.info(f"Unsupported files: {[os.path.basename(f) for f in all_unsupported_files]}")
-        
+
         # Upload all unsupported files
         if all_unsupported_files:
             file_chooser.set_files(all_unsupported_files)
             self.page.wait_for_timeout(5000)
             self.page.wait_for_load_state("networkidle")
             logger.info("All unsupported files uploaded")
-            
+
             # Validate error messages for each unsupported file type
             error_validations = [
                 (self.ERROR_MSG_AUDIO, "test_audio.wav"),
@@ -203,7 +201,7 @@ class HomePage(BasePage):
                 (self.ERROR_MSG_PDF, "test_pdf.pdf"),
                 (self.ERROR_MSG_TXT, "test_text.txt"),
             ]
-            
+
             logger.info("Validating error messages for unsupported files...")
             for error_locator, filename in error_validations:
                 try:
@@ -211,14 +209,13 @@ class HomePage(BasePage):
                     logger.info(f"✓ Error message validated for '{filename}'")
                 except Exception as e:
                     logger.warning(f"✗ Error message not found for '{filename}': {str(e)}")
-            
+
             # Validate that translate button is disabled
             is_disabled = self.page.locator(self.TRANSLATE_BTN).is_disabled()
             logger.info(f"Translate button disabled status: {is_disabled}")
             expect(self.page.locator(self.TRANSLATE_BTN)).to_be_disabled()
             logger.info("Validation passed: Translate button is correctly disabled for unsupported files")
 
-   
     def upload_harmful_file_and_validate(self):
         """
         Upload harmful file from testdata/Harmful_file folder, start translation,
@@ -231,7 +228,7 @@ class HomePage(BasePage):
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
         harmful_file_dir = os.path.join(current_working_dir, "testdata/Harmful_file")
-        
+
         # Get all files from testdata/Harmful_file folder
         harmful_files = []
         if os.path.exists(harmful_file_dir) and os.path.isdir(harmful_file_dir):
@@ -239,24 +236,24 @@ class HomePage(BasePage):
                 file_path = os.path.join(harmful_file_dir, filename)
                 if os.path.isfile(file_path):
                     harmful_files.append(file_path)
-        
+
         if harmful_files:
             logger.info(f"Found {len(harmful_files)} harmful file(s) to upload")
             logger.info(f"Harmful file(s): {[os.path.basename(f) for f in harmful_files]}")
-            
+
             # Upload harmful file(s)
             file_chooser.set_files(harmful_files)
             self.page.wait_for_timeout(5000)
             self.page.wait_for_load_state("networkidle")
             logger.info("Harmful file(s) uploaded successfully")
-            
+
             # Start translation
             logger.info("Clicking 'Start translating' button")
             self.page.locator(self.TRANSLATE_BTN).click()
             self.page.wait_for_timeout(10000)
             self.page.wait_for_load_state("networkidle")
             logger.info("Translation process started")
-            
+
             # Validate error message is visible
             try:
                 expect(self.page.locator(self.ERROR_MSG_UNABLE_TO_PROCESS)).to_be_visible(timeout=200000)
@@ -264,7 +261,7 @@ class HomePage(BasePage):
             except Exception as e:
                 logger.error(f"✗ Error message not found: {str(e)}")
                 raise
-            
+
             # Validate download button is disabled
             try:
                 is_disabled = self.page.locator(self.DOWNLOAD_FILES).is_disabled()
@@ -274,7 +271,7 @@ class HomePage(BasePage):
             except Exception as e:
                 logger.error(f"✗ Download button validation failed: {str(e)}")
                 raise
-            
+
             logger.info("Validation passed: Harmful file processing error handled correctly")
         else:
             logger.error(f"No harmful files found in directory: {harmful_file_dir}")
@@ -291,7 +288,7 @@ class HomePage(BasePage):
         self.page.locator(self.BATCH_HISTORY).click()
         self.page.wait_for_timeout(3000)
         batch_details = self.page.locator(self.BATCH_DETAILS)
-        for i in range(batch_details.count()):  
+        for i in range(batch_details.count()):
             expect(batch_details.nth(i)).to_be_visible()
         self.page.locator(self.CLOSE_BATCH_HISTORY).click()
 
@@ -304,7 +301,7 @@ class HomePage(BasePage):
         # Open batch history panel
         self.page.locator(self.BATCH_HISTORY).click()
         self.page.wait_for_timeout(3000)
-        
+
         # Get initial count of batch details
         batch_details = self.page.locator(self.BATCH_DETAILS)
         initial_count = batch_details.count()
@@ -312,17 +309,17 @@ class HomePage(BasePage):
         # Hover over the first batch detail to reveal delete button
         batch_details.first.hover()
         self.page.wait_for_timeout(1000)
-        
+
         # Click the delete button (✕) for the first batch
         delete_buttons = self.page.locator(self.DELETE_BATCH_BTN)
         delete_buttons.first.click()
         self.page.wait_for_timeout(1000)
         logger.info("Clicked delete button (✕) for the first batch history item")
-        
+
         self.page.locator(self.DELETE_BATCH_HISTORY).click()
         self.page.wait_for_timeout(4000)
         logger.info("Confirmed deletion by clicking 'Delete' button")
-        
+
         # Open batch history panel
         self.page.locator(self.VIEW_BATCH_HISTORY).click()
         self.page.wait_for_timeout(3000)
@@ -332,11 +329,11 @@ class HomePage(BasePage):
         expected_count = initial_count - 1
         logger.info(f"Batch history count after deletion: {new_count}")
         logger.info(f"Expected count: {expected_count}, Actual count: {new_count}")
-        
+
         # Validate the count is reduced by 1
         assert new_count == expected_count, f"Expected {expected_count} batch items after deletion, but found {new_count}"
         logger.info(f"Successfully deleted batch history. Count reduced from {initial_count} to {new_count}")
-        
+
         # Close batch history panel
         self.page.locator(self.CLOSE_BATCH_HISTORY).click()
 
@@ -359,4 +356,3 @@ class HomePage(BasePage):
         self.page.locator(self.LOGO_TITLE).click()
         self.page.wait_for_timeout(3000)
         expect(self.page.locator(self.TITLE_TEXT)).to_be_visible()
-
