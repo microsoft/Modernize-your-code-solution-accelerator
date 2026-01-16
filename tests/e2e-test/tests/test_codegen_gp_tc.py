@@ -19,11 +19,11 @@ def _timed_translation(home):
 def test_codegen_golden_path(login_logout, request):
     """
     CodeMod- Validate Golden path works as expected
-    
+
     Executes golden path test steps for Modernize Your Code Accelerator with detailed logging.
     """
     request.node._nodeid = "Modernize your code- Validate Golden path works as expected"
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -53,12 +53,12 @@ def test_codegen_golden_path(login_logout, request):
 def test_upload_all_files_and_navigate_home(login_logout, request):
     """
     CodeMod- Validate upload all files, verify count, and navigate to home page
-    
+
     Test case that uploads all files from testdata folder, validates the uploaded
     files count is 20, and navigates back to home page.
     """
     request.node._nodeid = "Modernize your code - Validate Files uploading and its limit."
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -80,15 +80,16 @@ def test_upload_all_files_and_navigate_home(login_logout, request):
             logger.error(f"Step failed: {description}", exc_info=True)
             raise
 
+
 def test_translate_and_download_files(login_logout, request):
     """
     Modernize your code - Translating the files and downloading files
-    
+
     Test case that executes the complete translation workflow: upload files,
     translate them, and download the results with detailed logging.
     """
     request.node._nodeid = "Modernize your code - Translating the files and downloading files"
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -114,16 +115,15 @@ def test_translate_and_download_files(login_logout, request):
             raise
 
 
-
 def test_upload_remove_files_and_cancel(login_logout, request):
     """
     CodeMod- Validate upload files, remove files, and cancel upload
-    
+
     Test case that uploads 20 files from testdata folder, removes the first three files,
     validates the remaining count is 17, and then cancels the upload process.
     """
     request.node._nodeid = "Modernize your code - Validate Single and Batch deletion of Files."
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -150,12 +150,12 @@ def test_upload_remove_files_and_cancel(login_logout, request):
 def test_delete_batch_history(login_logout, request):
     """
     CodeMod- Validate delete batch history functionality
-    
+
     Test case that executes the golden path flow (upload, translate, download) and then
     validates the deletion of the first batch history item.
     """
     request.node._nodeid = "Modernize your code - Validate Batch history panel."
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -184,12 +184,12 @@ def test_delete_batch_history(login_logout, request):
 def test_upload_unsupported_files_validation(login_logout, request):
     """
     CodeMod- Validate unsupported files upload and validation
-    
+
     Test case that uploads all unsupported files from testdata/Unsupported_files folder
     and validates that translate button is disabled with detailed logging.
     """
     request.node._nodeid = "Modernize your code - Validate Attempt to upload files with an unsupported extension"
-    
+
     page = login_logout
     home = HomePage(page)
 
@@ -210,17 +210,15 @@ def test_upload_unsupported_files_validation(login_logout, request):
             raise
 
 
-
-
 def test_upload_harmful_file_validation(login_logout, request):
     """
     CodeMod- Validate harmful file upload and processing error
-    
+
     Test case that uploads harmful file from testdata/Harmful_file folder,
     starts translation, and validates error message and disabled download button.
     """
     request.node._nodeid = "Modernize your code - Validate Attempt to upload malicious files"
-    
+
     page = login_logout
     home = HomePage(page)
 
