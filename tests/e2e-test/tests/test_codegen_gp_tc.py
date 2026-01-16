@@ -49,7 +49,6 @@ def test_codegen_golden_path(login_logout, request):
             raise
 
 
-
 def test_upload_all_files_and_navigate_home(login_logout, request):
     """
     CodeMod- Validate upload all files, verify count, and navigate to home page
