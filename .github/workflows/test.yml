@@ -1,11 +1,20 @@
 name: Test Workflow with Coverage - Code-Gen
-
+permissions:
+  contents: read
+  actions: read
 on:
   push:
     branches:
       - main
       - dev
       - demo
+    paths:
+      - 'src/backend/**/*.py'
+      - 'src/tests/backend/**'
+      - '.github/workflows/test.yml'
+      - 'src/backend/requirements.txt'
+      - 'src/frontend/requirements.txt'
+      - 'src/backend/pyproject.toml'
   pull_request:
     types:
       - opened
@@ -16,6 +25,13 @@ on:
       - main
       - dev
       - demo
+    paths:
+      - 'src/backend/**/*.py'
+      - 'src/tests/backend/**'
+      - '.github/workflows/test.yml'
+      - 'src/backend/requirements.txt'
+      - 'src/frontend/requirements.txt'
+      - 'src/backend/pyproject.toml'
 
 jobs:
 #   frontend_tests:
