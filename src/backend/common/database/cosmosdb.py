@@ -379,11 +379,11 @@ class CosmosDBClient(DatabaseBase):
             raise ValueError("Offset must be an integer.")
 
         # Base query to fetch batch history for the user
-        query = f"""
+        query = """
             SELECT * FROM c
             WHERE c.user_id = @user_id
             and c.status != 'ready_to_process'
-            ORDER BY c.updated_at {sort_order}
+            ORDER BY c.updated_at @sort_order
         """
 
         params = [{"name": "@user_id", "value": user_id}]
