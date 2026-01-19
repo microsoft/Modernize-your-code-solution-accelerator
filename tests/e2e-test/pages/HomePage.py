@@ -3,6 +3,7 @@ import os
 import os.path
 
 from base.base import BasePage
+from config.constants import URL
 
 from playwright.sync_api import expect
 
@@ -48,9 +49,19 @@ class HomePage(BasePage):
 
     # Harmful file validation message
     ERROR_MSG_UNABLE_TO_PROCESS = "//span[normalize-space()='Unable to process the file']"
+    HARMFUL_FILE_2 = "//span[.='harmful_content_2 2.sql']"
+
 
     def __init__(self, page):
         self.page = page
+
+    def navigate_to_base_url(self):
+        """
+        Navigate to the base URL and wait for page load.
+        """
+        self.page.goto(URL, wait_until="domcontentloaded")
+        self.page.wait_for_timeout(2000)
+        logger.info(f"Navigated to base URL: {URL}")
 
     def validate_home_page(self):
         expect(self.page.locator(self.TITLE_TEXT)).to_be_visible()
@@ -62,9 +73,9 @@ class HomePage(BasePage):
             self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        file_path1 = os.path.join(current_working_dir, "testdata/Valid_files/q1_informix.sql")
-        file_path2 = os.path.join(current_working_dir, "testdata/Valid_files/f1.sql")
-        file_path3 = os.path.join(current_working_dir, "testdata/Valid_files/f2.sql")
+        file_path1 = os.path.join(current_working_dir, "testdata/valid_files/q1_informix.sql")
+        file_path2 = os.path.join(current_working_dir, "testdata/valid_files/f1.sql")
+        file_path3 = os.path.join(current_working_dir, "testdata/valid_files/f2.sql")
         file_chooser.set_files([file_path1, file_path2, file_path3])
         self.page.wait_for_timeout(10000)
         self.page.wait_for_load_state("networkidle")
@@ -72,7 +83,7 @@ class HomePage(BasePage):
 
     def upload_all_files(self):
         """
-        Upload all files present in the testdata/Valid_files folder.
+        Upload all files present in the testdata/valid_files folder.
         """
         with self.page.expect_file_chooser() as fc_info:
             self.page.locator(self.BROWSE_FILES).click()
@@ -80,9 +91,9 @@ class HomePage(BasePage):
             self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        testdata_dir = os.path.join(current_working_dir, "testdata/Valid_files")
-
-        # Get all files from testdata/Valid_files folder
+        testdata_dir = os.path.join(current_working_dir, "testdata/valid_files")
+        
+        # Get all files from testdata/valid_files folder
         all_files = []
         if os.path.exists(testdata_dir) and os.path.isdir(testdata_dir):
             for filename in os.listdir(testdata_dir):
@@ -127,7 +138,7 @@ class HomePage(BasePage):
         remove_buttons = self.page.locator(self.REMOVE_FILE_BTN)
 
         # Remove first three files
-        for _i in range(3):
+        for i in range(3):
             remove_buttons.first.click()
             self.page.wait_for_timeout(2000)
 
@@ -253,7 +264,12 @@ class HomePage(BasePage):
             self.page.wait_for_timeout(10000)
             self.page.wait_for_load_state("networkidle")
             logger.info("Translation process started")
-
+            
+            # Click on harmful_content_2 2.sql file
+            self.page.locator(self.HARMFUL_FILE_2).click()
+            self.page.wait_for_timeout(2000)
+            logger.info("Clicked on harmful_content_2 2.sql file")
+            
             # Validate error message is visible
             try:
                 expect(self.page.locator(self.ERROR_MSG_UNABLE_TO_PROCESS)).to_be_visible(timeout=200000)
@@ -280,7 +296,7 @@ class HomePage(BasePage):
     def validate_translate(self):
         self.page.locator(self.TRANSLATE_BTN).click()
         expect(self.page.locator(self.DOWNLOAD_FILES)).to_be_enabled(timeout=200000)
-        self.page.locator(self.SUMMARY).click()
+        self.page.locator(self.SUMMARY).first.click()
         expect(self.page.locator(self.FILE_PROCESSED_MSG)).to_be_visible()
         self.page.wait_for_timeout(3000)
 

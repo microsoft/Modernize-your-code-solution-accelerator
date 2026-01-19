@@ -29,6 +29,7 @@ def test_codegen_golden_path(login_logout, request):
 
     # Define step-wise test actions for Golden Path
     golden_path_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Validate Upload of other than SQL files", lambda: home.upload_unsupported_files()),
         ("03. Validate Upload input files for SQL only", lambda: home.upload_files()),
@@ -63,6 +64,7 @@ def test_upload_all_files_and_navigate_home(login_logout, request):
 
     # Define test steps
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Upload all files from testdata folder", lambda: home.upload_all_files()),
         ("03. Validate uploaded files count equals 20", lambda: home.validate_uploaded_files_count()),
@@ -94,6 +96,7 @@ def test_translate_and_download_files(login_logout, request):
 
     # Define step-wise test actions for translation and download workflow
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Validate Upload of other than SQL files", lambda: home.upload_unsupported_files()),
         ("03. Validate Upload input files for SQL only", lambda: home.upload_files()),
@@ -128,6 +131,7 @@ def test_upload_remove_files_and_cancel(login_logout, request):
 
     # Define test steps
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Upload all files from testdata folder (20 files max)", lambda: home.upload_all_files()),
         ("03. Validate uploaded files count equals 20", lambda: home.validate_uploaded_files_count()),
@@ -160,6 +164,7 @@ def test_delete_batch_history(login_logout, request):
 
     # Define test steps (golden path without return home + delete batch history)
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Validate Upload of other than SQL files", lambda: home.upload_unsupported_files()),
         ("03. Validate Upload input files for SQL only", lambda: home.upload_files()),
@@ -194,6 +199,7 @@ def test_upload_unsupported_files_validation(login_logout, request):
 
     # Define test steps
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Upload all unsupported files and validate translate button is disabled", lambda: home.upload_all_unsupported_files_and_validate()),
     ]
@@ -223,6 +229,7 @@ def test_upload_harmful_file_validation(login_logout, request):
 
     # Define test steps
     test_steps = [
+        ("00. Navigate to base URL", lambda: home.navigate_to_base_url()),
         ("01. Validate home page is loaded", lambda: home.validate_home_page()),
         ("02. Upload harmful file, translate, and validate error handling", lambda: home.upload_harmful_file_and_validate()),
         ("03. Return to home page", lambda: home.return_to_home_page()),
