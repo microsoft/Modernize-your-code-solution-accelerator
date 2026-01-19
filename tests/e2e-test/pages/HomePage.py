@@ -3,6 +3,7 @@ import os.path
 import logging
 
 from base.base import BasePage
+from config.constants import URL
 
 from playwright.sync_api import expect
 
@@ -48,10 +49,19 @@ class HomePage(BasePage):
     
     # Harmful file validation message
     ERROR_MSG_UNABLE_TO_PROCESS = "//span[normalize-space()='Unable to process the file']"
+    HARMFUL_FILE_2 = "//span[.='harmful_content_2 2.sql']"
 
 
     def __init__(self, page):
         self.page = page
+
+    def navigate_to_base_url(self):
+        """
+        Navigate to the base URL and wait for page load.
+        """
+        self.page.goto(URL, wait_until="domcontentloaded")
+        self.page.wait_for_timeout(2000)
+        logger.info(f"Navigated to base URL: {URL}")
 
     def validate_home_page(self):
         expect(self.page.locator(self.TITLE_TEXT)).to_be_visible()
@@ -256,6 +266,11 @@ class HomePage(BasePage):
             self.page.wait_for_timeout(10000)
             self.page.wait_for_load_state("networkidle")
             logger.info("Translation process started")
+
+            # Click on harmful_content_2 2.sql file
+            self.page.locator(self.HARMFUL_FILE_2).click()
+            self.page.wait_for_timeout(2000)
+            logger.info("Clicked on harmful_content_2 2.sql file")
             
             # Validate error message is visible
             try:
@@ -283,7 +298,7 @@ class HomePage(BasePage):
     def validate_translate(self):
         self.page.locator(self.TRANSLATE_BTN).click()
         expect(self.page.locator(self.DOWNLOAD_FILES)).to_be_enabled(timeout=200000)
-        self.page.locator(self.SUMMARY).click()
+        self.page.locator(self.SUMMARY).first.click()
         expect(self.page.locator(self.FILE_PROCESSED_MSG)).to_be_visible()
         self.page.wait_for_timeout(3000)
 
