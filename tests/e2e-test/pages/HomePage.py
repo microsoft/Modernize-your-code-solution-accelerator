@@ -73,9 +73,9 @@ class HomePage(BasePage):
             self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        file_path1 = os.path.join(current_working_dir, "testdata/valid_files/q1_informix.sql")
-        file_path2 = os.path.join(current_working_dir, "testdata/valid_files/f1.sql")
-        file_path3 = os.path.join(current_working_dir, "testdata/valid_files/f2.sql")
+        file_path1 = os.path.join(current_working_dir, "testdata/Valid_files/q1_informix.sql")
+        file_path2 = os.path.join(current_working_dir, "testdata/Valid_files/f1.sql")
+        file_path3 = os.path.join(current_working_dir, "testdata/Valid_files/f2.sql")
         file_chooser.set_files([file_path1, file_path2, file_path3])
         self.page.wait_for_timeout(10000)
         self.page.wait_for_load_state("networkidle")
@@ -83,7 +83,7 @@ class HomePage(BasePage):
 
     def upload_all_files(self):
         """
-        Upload all files present in the testdata/valid_files folder.
+        Upload all files present in the testdata/Valid_files folder.
         """
         with self.page.expect_file_chooser() as fc_info:
             self.page.locator(self.BROWSE_FILES).click()
@@ -91,9 +91,9 @@ class HomePage(BasePage):
             self.page.wait_for_load_state("networkidle")
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
-        testdata_dir = os.path.join(current_working_dir, "testdata/valid_files")
+        testdata_dir = os.path.join(current_working_dir, "testdata/Valid_files")
 
-        # Get all files from testdata/valid_files folder
+        # Get all files from testdata/Valid_files folder
         all_files = []
         if os.path.exists(testdata_dir) and os.path.isdir(testdata_dir):
             for filename in os.listdir(testdata_dir):
