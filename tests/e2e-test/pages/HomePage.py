@@ -3,6 +3,7 @@ import os
 import os.path
 
 from base.base import BasePage
+
 from config.constants import URL
 
 from playwright.sync_api import expect
@@ -51,7 +52,6 @@ class HomePage(BasePage):
     ERROR_MSG_UNABLE_TO_PROCESS = "//span[normalize-space()='Unable to process the file']"
     HARMFUL_FILE_2 = "//span[.='harmful_content_2 2.sql']"
 
-
     def __init__(self, page):
         self.page = page
 
@@ -92,7 +92,7 @@ class HomePage(BasePage):
         file_chooser = fc_info.value
         current_working_dir = os.getcwd()
         testdata_dir = os.path.join(current_working_dir, "testdata/valid_files")
-        
+
         # Get all files from testdata/valid_files folder
         all_files = []
         if os.path.exists(testdata_dir) and os.path.isdir(testdata_dir):
@@ -138,7 +138,7 @@ class HomePage(BasePage):
         remove_buttons = self.page.locator(self.REMOVE_FILE_BTN)
 
         # Remove first three files
-        for i in range(3):
+        for _i in range(3):
             remove_buttons.first.click()
             self.page.wait_for_timeout(2000)
 
@@ -264,12 +264,12 @@ class HomePage(BasePage):
             self.page.wait_for_timeout(10000)
             self.page.wait_for_load_state("networkidle")
             logger.info("Translation process started")
-            
+
             # Click on harmful_content_2 2.sql file
             self.page.locator(self.HARMFUL_FILE_2).click()
             self.page.wait_for_timeout(2000)
             logger.info("Clicked on harmful_content_2 2.sql file")
-            
+
             # Validate error message is visible
             try:
                 expect(self.page.locator(self.ERROR_MSG_UNABLE_TO_PROCESS)).to_be_visible(timeout=200000)

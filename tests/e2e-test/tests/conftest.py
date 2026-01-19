@@ -86,25 +86,25 @@ def pytest_runtest_makereport(item, call):
                     test_name = item.name.replace(" ", "_").replace("/", "_")
                     screenshot_name = f"screenshot_{test_name}_{timestamp}.png"
                     screenshot_path = os.path.join(SCREENSHOTS_DIR, screenshot_name)
-                    
+
                     # Take screenshot
                     page.screenshot(path=screenshot_path)
-                    
+
                     # Add screenshot link to report
                     if not hasattr(report, 'extra'):
                         report.extra = []
-                    
+
                     # Add screenshot as a link in the Links column
                     # Use relative path from report.html location
                     relative_path = os.path.relpath(
                         screenshot_path,
                         os.path.dirname(os.path.abspath("report.html"))
                     )
-                    
+
                     # pytest-html expects this format for extras
                     from pytest_html import extras
                     report.extra.append(extras.url(relative_path, name='Screenshot'))
-                    
+
                     logging.info("Screenshot saved: %s", screenshot_path)
                 except Exception as exc:  # pylint: disable=broad-exception-caught
                     logging.error("Failed to capture screenshot: %s", str(exc))
