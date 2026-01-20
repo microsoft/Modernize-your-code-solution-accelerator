@@ -326,13 +326,19 @@ jobs:
         shell: bash
         env:
           INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         run: |
-          az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          if [[ -z "$AZURE_SUBSCRIPTION_ID" ]]; then
+            echo "❌ ERROR: AZURE_SUBSCRIPTION_ID secret is not set"
+            exit 1
+          fi
+          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
           echo "Assigning Contributor role to SPN for RG: $INPUT_RESOURCE_GROUP_NAME"
           az role assignment create \
-            --assignee ${{ secrets.AZURE_CLIENT_ID }} \
+            --assignee "$AZURE_CLIENT_ID" \
             --role "Contributor" \
-            --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$INPUT_RESOURCE_GROUP_NAME
+            --scope "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$INPUT_RESOURCE_GROUP_NAME"
 
       - name: Generate Deployment Summary
         if: always()
