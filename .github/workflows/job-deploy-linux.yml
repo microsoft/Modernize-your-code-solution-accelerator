@@ -314,7 +314,6 @@ jobs:
           echo "✅ WAF workaround applied successfully"
 
       - name: Assign Contributor role to Service Principal
-        if: always()
         env:
           INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
         run: |

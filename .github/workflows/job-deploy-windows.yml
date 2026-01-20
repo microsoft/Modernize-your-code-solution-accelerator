@@ -322,7 +322,7 @@ jobs:
           Write-Host "✅ WAF workaround applied successfully"
 
       - name: Assign Contributor role to Service Principal
-        if: always()
+        continue-on-error: true
         shell: bash
         env:
           INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
@@ -333,12 +333,12 @@ jobs:
             echo "❌ ERROR: AZURE_SUBSCRIPTION_ID secret is not set"
             exit 1
           fi
-          az account set --subscription "$AZURE_SUBSCRIPTION_ID"
+          
           echo "Assigning Contributor role to SPN for RG: $INPUT_RESOURCE_GROUP_NAME"
           az role assignment create \
             --assignee "$AZURE_CLIENT_ID" \
             --role "Contributor" \
-            --scope "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$INPUT_RESOURCE_GROUP_NAME"
+            --scope "/subscriptions/$AZURE_SUBSCRIPTION_ID/resourceGroups/$INPUT_RESOURCE_GROUP_NAME" || echo "⚠️ Role assignment failed (may already exist or insufficient permissions)"
 
       - name: Generate Deployment Summary
         if: always()
