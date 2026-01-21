@@ -322,6 +322,7 @@ jobs:
           Write-Host "✅ WAF workaround applied successfully"
 
       - name: Assign Contributor role to Service Principal
+        continue-on-error: true
         if: always()
         shell: bash
         env:
