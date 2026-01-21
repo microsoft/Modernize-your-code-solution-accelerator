@@ -40,17 +40,6 @@ def pytest_html_report_title(report):
     report.title = "CodeMod_Smoke_test_Automation"
 
 
-# Add a column for descriptions
-# def pytest_html_results_table_header(cells):
-#     cells.insert(1, html.th("Description"))
-
-
-# def pytest_html_results_table_row(report, cells):
-#     cells.insert(
-#         1, html.td(report.description if hasattr(report, "description") else "")
-#     )
-
-
 log_streams = {}
 
 
@@ -198,14 +187,3 @@ def rename_duration_column():
 
 # Register this function to run after everything is done
 atexit.register(rename_duration_column)
-
-
-# Add logs and docstring to report
-# @pytest.hookimpl(hookwrapper=True)
-# def pytest_runtest_makereport(item, call):
-#     outcome = yield
-#     report = outcome.get_result()
-#     report.description = str(item.function.__doc__)
-#     os.makedirs("logs", exist_ok=True)
-#     extra = getattr(report, "extra", [])
-#     report.extra = extra
