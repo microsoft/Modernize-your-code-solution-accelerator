@@ -43,9 +43,14 @@ logger = AppLogger("APIRoutes")
 instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 if instrumentation_key:
     # Configure Application Insights if the Instrumentation Key is found
-    configure_azure_monitor(connection_string=instrumentation_key)
+    configure_azure_monitor(
+        connection_string=instrumentation_key,
+        instrumentation_options={
+            "azure_sdk": {"enabled": False},  # Don't modify Azure SDK HTTP responses
+        }
+    )
     logging.info(
-        "Application Insights configured with the provided Instrumentation Key"
+        "Application Insights configured with Azure SDK instrumentation disabled"
     )
 else:
     # Log a warning if the Instrumentation Key is not found
