@@ -1,6 +1,5 @@
 import logging
 import os
-import os.path
 
 from base.base import BasePage
 
