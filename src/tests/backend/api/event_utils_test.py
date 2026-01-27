@@ -1,9 +1,7 @@
 """Tests for event_utils module."""
 
 import os
-from unittest.mock import patch, MagicMock
-
-import pytest
+from unittest.mock import patch
 
 from backend.api.event_utils import track_event_if_configured
 
@@ -16,7 +14,7 @@ class TestTrackEventIfConfigured:
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": "test-key"}):
             with patch("backend.api.event_utils.track_event") as mock_track:
                 track_event_if_configured("TestEvent", {"key": "value"})
-                
+
                 mock_track.assert_called_once_with("TestEvent", {"key": "value"})
 
     def test_track_event_without_instrumentation_key(self):
@@ -27,7 +25,7 @@ class TestTrackEventIfConfigured:
             with patch("backend.api.event_utils.track_event") as mock_track:
                 with patch("backend.api.event_utils.logging.warning") as mock_warning:
                     track_event_if_configured("TestEvent", {"key": "value"})
-                    
+
                     mock_track.assert_not_called()
                     mock_warning.assert_called_once()
 
@@ -36,7 +34,7 @@ class TestTrackEventIfConfigured:
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": "test-key"}):
             with patch("backend.api.event_utils.track_event") as mock_track:
                 track_event_if_configured("TestEvent", {})
-                
+
                 mock_track.assert_called_once_with("TestEvent", {})
 
     def test_track_event_with_complex_data(self):
@@ -49,7 +47,7 @@ class TestTrackEventIfConfigured:
                     "status": "completed",
                     "nested": {"key": "value"},
                 }
-                
+
                 track_event_if_configured("ComplexEvent", complex_data)
-                
+
                 mock_track.assert_called_once_with("ComplexEvent", complex_data)

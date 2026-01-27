@@ -1,29 +1,27 @@
 """Tests for API routes module."""
+# pylint: disable=redefined-outer-name,unused-argument
 
-import io
-import json
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-from fastapi import FastAPI, HTTPException
-from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
-
 from backend.api.api_routes import (
-    record_exception_to_trace,
-    router,
-    start_processing,
+    delete_all_details,
+    delete_batch_details,
+    delete_file_details,
     download_files,
     get_batch_status,
     get_batch_summary,
-    upload_file,
     get_file_details,
-    delete_batch_details,
-    delete_file_details,
-    delete_all_details,
     list_batch_history,
+    record_exception_to_trace,
+    router,
+    start_processing,
+    upload_file,
 )
+
+from fastapi import FastAPI, HTTPException
+
+import pytest
 
 
 @pytest.fixture
@@ -118,7 +116,7 @@ class TestStartProcessing:
         })
 
         result = await start_processing(mock_request)
-        
+
         assert result["batch_id"] == batch_id
         assert result["status"] == "Processing completed"
         mock_process_batch.assert_called_once()
@@ -154,7 +152,7 @@ class TestDownloadFiles:
         ]
 
         response = await download_files(batch_id)
-        
+
         assert response.media_type == "application/zip"
         assert "Content-Disposition" in response.headers
 
@@ -192,7 +190,7 @@ class TestGetBatchStatus:
         mock_batch_service.get_batch.return_value = {"batch_id": batch_id, "status": "completed"}
 
         result = await get_batch_status(mock_request, batch_id)
-        
+
         assert result["batch_id"] == batch_id
 
     @pytest.mark.asyncio
@@ -241,7 +239,7 @@ class TestGetBatchSummary:
         mock_batch_service.get_batch_summary.return_value = {"total_files": 5}
 
         result = await get_batch_summary(mock_request, batch_id)
-        
+
         assert result["total_files"] == 5
 
     @pytest.mark.asyncio
@@ -267,7 +265,7 @@ class TestUploadFile:
         mock_batch_service.upload_file_to_batch.return_value = {"file_id": "test-file-id"}
 
         result = await upload_file(mock_request, mock_file, batch_id)
-        
+
         assert result["file_id"] == "test-file-id"
 
     @pytest.mark.asyncio
@@ -307,7 +305,7 @@ class TestGetFileDetails:
         mock_batch_service.get_file_report.return_value = {"file_id": file_id}
 
         result = await get_file_details(mock_request, file_id)
-        
+
         assert result["file_id"] == file_id
 
     @pytest.mark.asyncio
@@ -342,7 +340,7 @@ class TestDeleteBatchDetails:
         mock_batch_service.delete_batch_and_files.return_value = True
 
         result = await delete_batch_details(mock_request, batch_id)
-        
+
         assert result["message"] == "Batch deleted successfully"
 
     @pytest.mark.asyncio
@@ -367,7 +365,7 @@ class TestDeleteFileDetails:
         mock_batch_service.delete_file.return_value = True
 
         result = await delete_file_details(mock_request, file_id)
-        
+
         assert result["message"] == "File deleted successfully"
 
     @pytest.mark.asyncio
@@ -391,7 +389,7 @@ class TestDeleteAllDetails:
         mock_batch_service.delete_all_from_storage_cosmos.return_value = True
 
         result = await delete_all_details(mock_request)
-        
+
         assert result["message"] == "All user data deleted successfully"
 
     @pytest.mark.asyncio
@@ -415,7 +413,7 @@ class TestListBatchHistory:
         mock_batch_service.get_batch_history.return_value = [{"batch_id": "test"}]
 
         result = await list_batch_history(mock_request)
-        
+
         assert len(result) == 1
 
     @pytest.mark.asyncio
@@ -424,8 +422,8 @@ class TestListBatchHistory:
         mock_request = MagicMock()
         mock_batch_service.get_batch_history.return_value = [{"batch_id": "test"}]
 
-        result = await list_batch_history(mock_request, offset=10, limit=5)
-        
+        await list_batch_history(mock_request, offset=10, limit=5)
+
         mock_batch_service.get_batch_history.assert_called_once()
 
     @pytest.mark.asyncio
@@ -435,5 +433,5 @@ class TestListBatchHistory:
         mock_batch_service.get_batch_history.return_value = None
 
         result = await list_batch_history(mock_request)
-        
+
         assert result.status_code == 404

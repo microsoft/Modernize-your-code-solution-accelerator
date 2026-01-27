@@ -1,16 +1,16 @@
 """Tests for sql_agents/agent_manager.py module."""
+# pylint: disable=too-few-public-methods
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from backend.sql_agents.agent_manager import (
-    set_sql_agents,
-    get_sql_agents,
-    update_agent_config,
     clear_sql_agents,
-    _sql_agents,
+    get_sql_agents,
+    set_sql_agents,
+    update_agent_config,
 )
+
+import pytest
 
 
 class TestSetSqlAgents:
@@ -19,9 +19,9 @@ class TestSetSqlAgents:
     def test_set_sql_agents(self):
         """Test setting the global SQL agents instance."""
         mock_agents = MagicMock()
-        
+
         set_sql_agents(mock_agents)
-        
+
         result = get_sql_agents()
         assert result == mock_agents
 
@@ -29,10 +29,10 @@ class TestSetSqlAgents:
         """Test that setting new agents replaces existing."""
         mock_agents1 = MagicMock()
         mock_agents2 = MagicMock()
-        
+
         set_sql_agents(mock_agents1)
         set_sql_agents(mock_agents2)
-        
+
         result = get_sql_agents()
         assert result == mock_agents2
 
@@ -44,9 +44,9 @@ class TestGetSqlAgents:
         """Test getting agents when they are set."""
         mock_agents = MagicMock()
         set_sql_agents(mock_agents)
-        
+
         result = get_sql_agents()
-        
+
         assert result == mock_agents
 
     def test_get_sql_agents_when_none(self):
@@ -67,14 +67,14 @@ class TestUpdateAgentConfig:
         mock_config = MagicMock()
         mock_config.sql_from = "informix"
         mock_config.sql_to = "tsql"
-        
+
         mock_agents = MagicMock()
         mock_agents.agent_config = mock_config
-        
+
         set_sql_agents(mock_agents)
-        
+
         await update_agent_config("mysql", "postgres")
-        
+
         assert mock_config.sql_from == "mysql"
         assert mock_config.sql_to == "postgres"
 
@@ -90,7 +90,7 @@ class TestUpdateAgentConfig:
         """Test updating config when agent_config is None."""
         mock_agents = MagicMock()
         mock_agents.agent_config = None
-        
+
         with patch("backend.sql_agents.agent_manager._sql_agents", mock_agents):
             # Should not raise an error
             await update_agent_config("mysql", "postgres")
@@ -104,9 +104,9 @@ class TestClearSqlAgents:
         """Test clearing the global SQL agents instance."""
         mock_agents = MagicMock()
         mock_agents.delete_agents = AsyncMock()
-        
+
         set_sql_agents(mock_agents)
-        
+
         await clear_sql_agents()
-        
+
         mock_agents.delete_agents.assert_called_once()

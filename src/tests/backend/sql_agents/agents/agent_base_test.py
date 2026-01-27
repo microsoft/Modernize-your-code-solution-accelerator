@@ -2,15 +2,15 @@
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-
 from backend.sql_agents.agents.agent_base import BaseSQLAgent
 from backend.sql_agents.helpers.models import AgentType
+
+import pytest
 
 
 class ConcreteAgent(BaseSQLAgent):
     """Concrete implementation of BaseSQLAgent for testing."""
-    
+
     @property
     def response_object(self):
         return MagicMock
@@ -30,7 +30,7 @@ class ConcreteAgent(BaseSQLAgent):
 
 class MinimalConcreteAgent(BaseSQLAgent):
     """Minimal concrete implementation of BaseSQLAgent for testing."""
-    
+
     @property
     def response_object(self):
         return MagicMock
@@ -42,13 +42,13 @@ class TestBaseSQLAgent:
     def test_init(self):
         """Test BaseSQLAgent initialization."""
         mock_config = MagicMock()
-        
+
         agent = ConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config,
             temperature=0.5
         )
-        
+
         assert agent.agent_type == AgentType.MIGRATOR
         assert agent.config == mock_config
         assert agent.temperature == 0.5
@@ -61,7 +61,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.response_object is not None
 
     def test_num_candidates_property(self):
@@ -71,7 +71,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.num_candidates == 3
 
     def test_num_candidates_default(self):
@@ -81,7 +81,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.num_candidates is None
 
     def test_deployment_name_property(self):
@@ -91,7 +91,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.deployment_name == "test-deployment"
 
     def test_deployment_name_default(self):
@@ -101,7 +101,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.deployment_name is None
 
     def test_plugins_property(self):
@@ -111,7 +111,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.plugins == ["plugin1", "plugin2"]
 
     def test_plugins_default(self):
@@ -121,7 +121,7 @@ class TestBaseSQLAgent:
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         assert agent.plugins is None
 
     def test_get_kernel_arguments(self):
@@ -129,14 +129,14 @@ class TestBaseSQLAgent:
         mock_config = MagicMock()
         mock_config.sql_from = "informix"
         mock_config.sql_to = "tsql"
-        
+
         agent = ConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         result = agent.get_kernel_arguments()
-        
+
         # Check that the arguments were set correctly
         assert result is not None
 
@@ -145,14 +145,14 @@ class TestBaseSQLAgent:
         mock_config = MagicMock()
         mock_config.sql_from = "informix"
         mock_config.sql_to = "tsql"
-        
+
         agent = MinimalConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         result = agent.get_kernel_arguments()
-        
+
         assert result is not None
 
     @pytest.mark.asyncio
@@ -161,12 +161,12 @@ class TestBaseSQLAgent:
         mock_config = MagicMock()
         mock_config.model_type = MagicMock()
         mock_config.model_type.get = MagicMock(return_value="gpt-4")
-        
+
         agent = ConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         with patch("sql_agents.agents.agent_base.get_prompt", side_effect=FileNotFoundError()):
             with pytest.raises(ValueError, match="Prompt file.*not found"):
                 await agent.setup()
@@ -175,34 +175,34 @@ class TestBaseSQLAgent:
     async def test_get_agent_when_already_initialized(self):
         """Test get_agent returns existing agent if initialized."""
         mock_config = MagicMock()
-        
+
         agent = ConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         mock_existing_agent = MagicMock()
         agent.agent = mock_existing_agent
-        
+
         result = await agent.get_agent()
-        
+
         assert result == mock_existing_agent
 
     @pytest.mark.asyncio
     async def test_execute(self):
         """Test execute method."""
         mock_config = MagicMock()
-        
+
         agent = ConcreteAgent(
             agent_type=AgentType.MIGRATOR,
             config=mock_config
         )
-        
+
         mock_azure_agent = MagicMock()
         mock_azure_agent.invoke = AsyncMock(return_value="test response")
         agent.agent = mock_azure_agent
-        
+
         result = await agent.execute("test input")
-        
+
         assert result == "test response"
         mock_azure_agent.invoke.assert_called_once_with("test input")

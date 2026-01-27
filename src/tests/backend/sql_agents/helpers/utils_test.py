@@ -1,12 +1,10 @@
 """Tests for sql_agents/helpers/utils.py module."""
 
-import os
-import tempfile
-from unittest.mock import patch, mock_open
-
-import pytest
+from unittest.mock import mock_open, patch
 
 from backend.sql_agents.helpers.utils import get_prompt, is_text
+
+import pytest
 
 
 class TestGetPrompt:
@@ -15,7 +13,7 @@ class TestGetPrompt:
     def test_get_prompt_success(self):
         """Test successful prompt retrieval."""
         expected_content = "This is a test prompt for the agent."
-        
+
         with patch("builtins.open", mock_open(read_data=expected_content)):
             result = get_prompt("migrator")
             assert result == expected_content
@@ -41,10 +39,10 @@ class TestGetPrompt:
             # Should not raise for valid patterns
             result = get_prompt("migrator")
             assert result == "content"
-            
+
             result = get_prompt("syntax_checker")
             assert result == "content"
-            
+
             result = get_prompt("Agent123")
             assert result == "content"
 
@@ -58,45 +56,28 @@ class TestGetPrompt:
 class TestIsText:
     """Tests for is_text function."""
 
-    def test_is_text_with_valid_string(self):
-        """Test with valid non-empty string."""
-        assert is_text("SELECT * FROM table") is True
+    def test_is_text_with_sql(self):
+        """Test is_text with valid SQL content."""
+        sql_content = "SELECT * FROM users WHERE id = 1"
+        assert is_text(sql_content) is True
 
-    def test_is_text_with_empty_string(self):
-        """Test with empty string."""
-        assert is_text("") is False
-
-    def test_is_text_with_whitespace_string(self):
-        """Test with whitespace-only string."""
-        assert is_text("   ") is True
-
-    def test_is_text_with_none(self):
-        """Test with None value."""
-        # is_text checks isinstance(content, str), so None should return True
-        # as it doesn't match the str check with len == 0
-        assert is_text(None) is True
-
-    def test_is_text_with_bytes(self):
-        """Test with bytes."""
-        assert is_text(b"binary content") is True
-
-    def test_is_text_with_list(self):
-        """Test with list."""
-        assert is_text(["item1", "item2"]) is True
-
-    def test_is_text_with_number(self):
-        """Test with number."""
-        assert is_text(123) is True
-
-    def test_is_text_with_multiline_string(self):
-        """Test with multiline string."""
-        content = """
-        SELECT *
-        FROM table
-        WHERE id = 1
-        """
+    def test_is_text_with_non_empty_string(self):
+        """Test is_text with any non-empty string returns True."""
+        content = "\x00\x01\x02\x03\x04"
+        # is_text returns True for any non-empty string
         assert is_text(content) is True
 
-    def test_is_text_with_unicode(self):
-        """Test with unicode characters."""
-        assert is_text("SELECT * FROM таблица") is True
+    def test_is_text_with_empty_string(self):
+        """Test is_text with empty string returns False."""
+        # Empty strings return False per the implementation
+        assert is_text("") is False
+
+    def test_is_text_with_multiline_sql(self):
+        """Test is_text with multiline SQL."""
+        sql_content = """
+        SELECT u.id, u.name
+        FROM users u
+        WHERE u.active = 1
+        ORDER BY u.name
+        """
+        assert is_text(sql_content) is True

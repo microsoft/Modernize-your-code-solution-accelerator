@@ -1,20 +1,20 @@
 """Tests for sql_agents/convert_script.py module."""
+# pylint: disable=too-few-public-methods,duplicate-code
 
 import uuid
 from unittest.mock import AsyncMock, MagicMock, patch
-
-import pytest
 
 from backend.sql_agents.convert_script import (
     convert_script,
     validate_migration,
 )
-from backend.common.models.api import FileRecord, ProcessStatus
+
+import pytest
 
 
 class MockChatMessageContent:
     """Mock for ChatMessageContent."""
-    
+
     def __init__(self, name="test", content="{}", role="assistant"):
         self.name = name
         self.content = content
@@ -30,12 +30,12 @@ class TestValidateMigration:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         carry_response = MockChatMessageContent()
-        
+
         with patch("backend.sql_agents.convert_script.send_status_update"):
             result = await validate_migration(
                 "SELECT * FROM test",
@@ -43,7 +43,7 @@ class TestValidateMigration:
                 file_record,
                 mock_batch_service
             )
-            
+
             assert result is True
             mock_batch_service.create_file_log.assert_called_once()
 
@@ -53,12 +53,12 @@ class TestValidateMigration:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         carry_response = MockChatMessageContent()
-        
+
         with patch("backend.sql_agents.convert_script.send_status_update"):
             result = await validate_migration(
                 "",
@@ -66,7 +66,7 @@ class TestValidateMigration:
                 file_record,
                 mock_batch_service
             )
-            
+
             assert result is False
 
     @pytest.mark.asyncio
@@ -75,12 +75,12 @@ class TestValidateMigration:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         carry_response = None
-        
+
         with patch("backend.sql_agents.convert_script.send_status_update"):
             result = await validate_migration(
                 None,
@@ -88,7 +88,7 @@ class TestValidateMigration:
                 file_record,
                 mock_batch_service
             )
-            
+
             assert result is False
 
     @pytest.mark.asyncio
@@ -97,10 +97,10 @@ class TestValidateMigration:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         with patch("backend.sql_agents.convert_script.send_status_update"):
             result = await validate_migration(
                 "",
@@ -108,7 +108,7 @@ class TestValidateMigration:
                 file_record,
                 mock_batch_service
             )
-            
+
             assert result is False
 
 
@@ -122,22 +122,22 @@ class TestConvertScript:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         mock_sql_agents = MagicMock()
         mock_sql_agents.idx_agents = {
             "migrator": MagicMock(),
             "picker": MagicMock(),
         }
-        
+
         mock_comms_manager = MagicMock()
         mock_comms_manager.group_chat = MagicMock()
         mock_comms_manager.group_chat.add_chat_message = AsyncMock()
         mock_comms_manager.group_chat.is_complete = True
         mock_comms_manager.cleanup = AsyncMock()
-        
+
         # Create async generator mock for async_invoke
         async def mock_async_invoke():
             yield MockChatMessageContent(
@@ -145,13 +145,13 @@ class TestConvertScript:
                 content='{"judgement": "pass", "differences": [], "summary": "OK"}',
                 role="assistant"
             )
-        
+
         mock_comms_manager.async_invoke = mock_async_invoke
-        
+
         with patch("backend.sql_agents.convert_script.CommsManager", return_value=mock_comms_manager):
             with patch("backend.sql_agents.convert_script.send_status_update"):
                 with patch("backend.sql_agents.convert_script.validate_migration", new_callable=AsyncMock, return_value=True):
-                    result = await convert_script(
+                    await convert_script(
                         source_script,
                         file_record,
                         mock_batch_service,
@@ -165,18 +165,18 @@ class TestConvertScript:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         mock_sql_agents = MagicMock()
         mock_sql_agents.idx_agents = {}
-        
+
         mock_comms_manager = MagicMock()
         mock_comms_manager.group_chat = MagicMock()
-        mock_comms_manager.group_chat.add_chat_message = AsyncMock(side_effect=Exception("Error"))
+        mock_comms_manager.group_chat.add_chat_message = AsyncMock(side_effect=RuntimeError("Error"))
         mock_comms_manager.cleanup = AsyncMock()
-        
+
         with patch("backend.sql_agents.convert_script.CommsManager", return_value=mock_comms_manager):
             with patch("backend.sql_agents.convert_script.send_status_update"):
                 try:
@@ -186,9 +186,9 @@ class TestConvertScript:
                         mock_batch_service,
                         mock_sql_agents
                     )
-                except:
+                except RuntimeError:
                     pass
-                
+
                 # Cleanup should be called even on exception
                 mock_comms_manager.cleanup.assert_called_once()
 
@@ -199,26 +199,28 @@ class TestConvertScript:
         file_record = MagicMock()
         file_record.file_id = str(uuid.uuid4())
         file_record.batch_id = str(uuid.uuid4())
-        
+
         mock_batch_service = MagicMock()
         mock_batch_service.create_file_log = AsyncMock()
-        
+
         mock_sql_agents = MagicMock()
         mock_sql_agents.idx_agents = {}
-        
+
         mock_comms_manager = MagicMock()
         mock_comms_manager.group_chat = MagicMock()
         mock_comms_manager.group_chat.add_chat_message = AsyncMock()
         mock_comms_manager.group_chat.is_complete = True
         mock_comms_manager.cleanup = AsyncMock()
-        
+
         # Create async generator that raises exception
         async def mock_async_invoke_error():
-            raise Exception("Invoke error")
-            yield  # Make it a generator
-        
+            # Yield first to make it a generator, then raise
+            if False:  # pylint: disable=using-constant-test
+                yield
+            raise RuntimeError("Invoke error")
+
         mock_comms_manager.async_invoke = mock_async_invoke_error
-        
+
         with patch("backend.sql_agents.convert_script.CommsManager", return_value=mock_comms_manager):
             with patch("backend.sql_agents.convert_script.send_status_update"):
                 result = await convert_script(
@@ -227,6 +229,6 @@ class TestConvertScript:
                     mock_batch_service,
                     mock_sql_agents
                 )
-                
+
                 # Should return "No migration" on error (this is the initial value)
                 assert result == "No migration"

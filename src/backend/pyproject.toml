@@ -46,3 +46,9 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+
+[tool.pylint."messages control"]
+# C0411 disabled because flake8-import-order requires application imports before
+# third-party imports, which conflicts with pylint's default order. Since flake8
+# is used in CI, we follow its convention.
+disable = ["C0411"]
