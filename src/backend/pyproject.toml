@@ -25,3 +25,24 @@ testpaths = ["tests"]  # Ensure this points to your test folder
 python_files = ["test_*.py", "*_test.py"]  # Recognize test files
 python_classes = ["Test*"]  # Recognize test classes
 python_functions = ["test_*"]  # Recognize test functions
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["backend"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/venv/*",
+]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
