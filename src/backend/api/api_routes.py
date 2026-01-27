@@ -46,11 +46,11 @@ if instrumentation_key:
     configure_azure_monitor(
         connection_string=instrumentation_key,
         instrumentation_options={
-            "azure_sdk": {"enabled": False},  # Don't modify Azure SDK HTTP responses
+            "azure_sdk": {"enabled": False},  
         }
     )
     logging.info(
-        "Application Insights configured with Azure SDK instrumentation disabled"
+        "Application Insights configured with the provided Instrumentation Key"
     )
 else:
     # Log a warning if the Instrumentation Key is not found
