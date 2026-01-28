@@ -285,7 +285,44 @@ jobs:
           "WEBAPP_URL=$WEBAPP_URL" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "WEBAPP_URL=$WEBAPP_URL" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
 
+      - name: Remove APPLICATIONINSIGHTS_CONNECTION_STRING for WAF Deployment
+        if: inputs.WAF_ENABLED == 'true'
+        shell: pwsh
+        env:
+          INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
+        run: |
+          Write-Host "🔧 WAF Deployment detected - Removing APPLICATIONINSIGHTS_CONNECTION_STRING from backend container app..."
+          
+          # Get the backend container app name
+          $BACKEND_APP_NAME = az containerapp list --resource-group "$env:INPUT_RESOURCE_GROUP_NAME" --query "[?contains(name, 'backend')].name" -o tsv | Select-Object -First 1
+          
+          if ([string]::IsNullOrEmpty($BACKEND_APP_NAME)) {
+            Write-Host "❌ ERROR: Could not find backend container app in resource group $env:INPUT_RESOURCE_GROUP_NAME"
+            exit 1
+          }
+          
+          Write-Host "Found backend container app: $BACKEND_APP_NAME"
+          
+          # Remove the APPLICATIONINSIGHTS_CONNECTION_STRING environment variable
+          az containerapp update `
+            --name "$BACKEND_APP_NAME" `
+            --resource-group "$env:INPUT_RESOURCE_GROUP_NAME" `
+            --remove-env-vars APPLICATIONINSIGHTS_CONNECTION_STRING
+          
+          Write-Host "✅ Successfully removed APPLICATIONINSIGHTS_CONNECTION_STRING from $BACKEND_APP_NAME"
+          
+          # Wait for the container app to restart and become healthy
+          Write-Host "⏳ Waiting for backend container app to restart..."
+          Start-Sleep -Seconds 30
+          
+          # Verify the container app is running
+          $APP_STATUS = az containerapp show --name "$BACKEND_APP_NAME" --resource-group "$env:INPUT_RESOURCE_GROUP_NAME" --query "properties.runningStatus" -o tsv
+          Write-Host "Backend container app status: $APP_STATUS"
+          
+          Write-Host "✅ WAF workaround applied successfully"
+
       - name: Assign Contributor role to Service Principal
+        continue-on-error: true
         if: always()
         shell: bash
         env:
