@@ -167,3 +167,6 @@ screenshots/
 report.html
 assets/
 .vscode/
+
+# Large SQL files (compress before committing)
+**/Large_File/*.sql

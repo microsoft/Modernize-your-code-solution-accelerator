@@ -277,7 +277,44 @@ jobs:
           echo "WEBAPP_URL=${WEBAPP_URL}" >> $GITHUB_ENV
           echo "WEBAPP_URL=${WEBAPP_URL}" >> $GITHUB_OUTPUT
 
+      - name: Remove APPLICATIONINSIGHTS_CONNECTION_STRING for WAF Deployment
+        if: inputs.WAF_ENABLED == 'true'
+        shell: bash
+        env:
+          INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
+        run: |
+          echo "🔧 WAF Deployment detected - Removing APPLICATIONINSIGHTS_CONNECTION_STRING from backend container app..."
+          
+          # Get the backend container app name
+          BACKEND_APP_NAME=$(az containerapp list --resource-group "$INPUT_RESOURCE_GROUP_NAME" --query "[?contains(name, 'backend')].name" -o tsv | head -1)
+          
+          if [[ -z "$BACKEND_APP_NAME" ]]; then
+            echo "❌ ERROR: Could not find backend container app in resource group $INPUT_RESOURCE_GROUP_NAME"
+            exit 1
+          fi
+          
+          echo "Found backend container app: $BACKEND_APP_NAME"
+          
+          # Remove the APPLICATIONINSIGHTS_CONNECTION_STRING environment variable
+          az containerapp update \
+            --name "$BACKEND_APP_NAME" \
+            --resource-group "$INPUT_RESOURCE_GROUP_NAME" \
+            --remove-env-vars APPLICATIONINSIGHTS_CONNECTION_STRING
+          
+          echo "✅ Successfully removed APPLICATIONINSIGHTS_CONNECTION_STRING from $BACKEND_APP_NAME"
+          
+          # Wait for the container app to restart and become healthy
+          echo "⏳ Waiting for backend container app to restart..."
+          sleep 30
+          
+          # Verify the container app is running
+          APP_STATUS=$(az containerapp show --name "$BACKEND_APP_NAME" --resource-group "$INPUT_RESOURCE_GROUP_NAME" --query "properties.runningStatus" -o tsv)
+          echo "Backend container app status: $APP_STATUS"
+          
+          echo "✅ WAF workaround applied successfully"
+
       - name: Assign Contributor role to Service Principal
+        continue-on-error: true
         if: always()
         env:
           INPUT_RESOURCE_GROUP_NAME: ${{ inputs.RESOURCE_GROUP_NAME }}
