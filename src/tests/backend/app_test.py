@@ -1,3 +1,6 @@
+# pylint: disable=redefined-outer-name
+"""Tests for the FastAPI application."""
+
 from backend.app import create_app
 
 from fastapi import FastAPI
