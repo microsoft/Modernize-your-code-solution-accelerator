@@ -514,10 +514,19 @@ const ModernizationPage = () => {
         const selectedFile = files.find((f) => f.id === selectedFileId);
         if (!selectedFile || !selectedFile.translatedCode) {
           setFileLoading(true);
-          await fetchFileFromAPI(selectedFile?.fileId || "");
+          const newFileUpdate = await fetchFileFromAPI(selectedFile?.fileId || "");
+          setFiles((prevFiles) =>
+            prevFiles.map((file) =>
+              file.fileId === selectedFile?.fileId
+                ? {
+                    ...file,
+                    code: newFileUpdate.content,
+                    translatedCode: newFileUpdate.translated_content,
+                  }
+                : file
+            )
+          );
           setFileLoading(false);
-        } else {
-
         }
 
       } catch (err) {
