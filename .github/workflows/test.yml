@@ -1,5 +1,7 @@
 name: Test Workflow with Coverage - Code-Gen
-
+permissions:
+  contents: read
+  actions: read
 on:
   push:
     branches:
@@ -110,7 +112,7 @@ jobs:
         if: env.skip_backend_tests == 'false'
         run: |
           cd src
-          pytest --cov=. --cov-report=term-missing --cov-report=xml
+          pytest tests/backend --cov=backend --cov-report=term-missing --cov-report=xml --cov-fail-under=80
 
 
 

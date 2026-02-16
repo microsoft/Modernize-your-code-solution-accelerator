@@ -1,3 +1,6 @@
+"""Tests for sql_agents/agents/agent_config.py module."""
+# pylint: disable=redefined-outer-name,import-outside-toplevel,invalid-name
+
 import importlib
 from unittest.mock import AsyncMock, patch
 
@@ -6,6 +9,7 @@ import pytest
 
 @pytest.fixture
 def mock_project_client():
+    """Create a mock AI project client."""
     return AsyncMock()
 
 
@@ -19,24 +23,25 @@ def mock_project_client():
     "TERMINATION_MODEL_DEPLOY": "termination-model",
 })
 def test_agent_model_type_mapping_and_instance(mock_project_client):
+    """Test agent model type mapping and instance creation."""
     # Re-import to re-evaluate class variable with patched env
-    from sql_agents.agents import agent_config
+    from backend.sql_agents.agents import agent_config
     importlib.reload(agent_config)
 
-    AgentType = agent_config.AgentType
-    AgentBaseConfig = agent_config.AgentBaseConfig
+    agent_type = agent_config.AgentType
+    agent_base_config = agent_config.AgentBaseConfig
 
     # Test model_type mapping
-    assert AgentBaseConfig.model_type[AgentType.MIGRATOR] == "migrator-model"
-    assert AgentBaseConfig.model_type[AgentType.PICKER] == "picker-model"
-    assert AgentBaseConfig.model_type[AgentType.FIXER] == "fixer-model"
-    assert AgentBaseConfig.model_type[AgentType.SEMANTIC_VERIFIER] == "semantic-verifier-model"
-    assert AgentBaseConfig.model_type[AgentType.SYNTAX_CHECKER] == "syntax-checker-model"
-    assert AgentBaseConfig.model_type[AgentType.SELECTION] == "selection-model"
-    assert AgentBaseConfig.model_type[AgentType.TERMINATION] == "termination-model"
+    assert agent_base_config.model_type[agent_type.MIGRATOR] == "migrator-model"
+    assert agent_base_config.model_type[agent_type.PICKER] == "picker-model"
+    assert agent_base_config.model_type[agent_type.FIXER] == "fixer-model"
+    assert agent_base_config.model_type[agent_type.SEMANTIC_VERIFIER] == "semantic-verifier-model"
+    assert agent_base_config.model_type[agent_type.SYNTAX_CHECKER] == "syntax-checker-model"
+    assert agent_base_config.model_type[agent_type.SELECTION] == "selection-model"
+    assert agent_base_config.model_type[agent_type.TERMINATION] == "termination-model"
 
     # Test __init__ stores params correctly
-    config = AgentBaseConfig(mock_project_client, sql_from="sql1", sql_to="sql2")
+    config = agent_base_config(mock_project_client, sql_from="sql1", sql_to="sql2")
     assert config.ai_project_client == mock_project_client
     assert config.sql_from == "sql1"
     assert config.sql_to == "sql2"
