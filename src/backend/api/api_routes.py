@@ -14,7 +14,8 @@ from api.event_utils import track_event_if_configured
 from api.status_updates import app_connection_manager, close_connection
 
 # Third-party
-from azure.monitor.opentelemetry import configure_azure_monitor
+# Azure Monitor OpenTelemetry integration is currently causing issues with OpenAI calls in process_batch_async, needs further investigation, commenting out for now
+# from azure.monitor.opentelemetry import configure_azure_monitor
 
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
