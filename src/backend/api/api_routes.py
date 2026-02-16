@@ -43,7 +43,8 @@ logger = AppLogger("APIRoutes")
 instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
 if instrumentation_key:
     # Configure Application Insights if the Instrumentation Key is found
-    configure_azure_monitor(connection_string=instrumentation_key)
+    # commenting below line as configure_azure_monitor is causing issues with OpenAI calls in process_batch_async, needs further investigation
+    # configure_azure_monitor(connection_string=instrumentation_key)
     logging.info(
         "Application Insights configured with the provided Instrumentation Key"
     )
