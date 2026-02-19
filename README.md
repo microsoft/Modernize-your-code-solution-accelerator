@@ -197,7 +197,7 @@ Check out similar solution accelerators
 
 <br/>   
 
-💡 Want to get familiar with Microsoft's AI and Data Engineering best practices? Check out our playbooks to learn more
+💡 Want to get familiar with Microsoft's AI Engineering best practices? Check out our playbook to learn more
 
 | Playbook | Description |
 |:---|:---|
