@@ -197,6 +197,14 @@ Check out similar solution accelerators
 
 <br/>   
 
+💡 Want to get familiar with Microsoft's AI Engineering best practices? Check out our playbook to learn more
+
+| Playbook | Description |
+|:---|:---|
+| [AI&nbsp;playbook](https://learn.microsoft.com/en-us/ai/playbook/) | The Artificial Intelligence (AI) Playbook provides enterprise software engineers with solutions, capabilities, and code developed to solve real-world AI problems. |
+
+<br/>
+
 ## Provide feedback
 
 Have questions, find a bug, or want to request a feature? [Submit a new issue](https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator/issues) on this repo and we'll connect.
