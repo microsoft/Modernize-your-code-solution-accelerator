@@ -120,6 +120,8 @@ param azureExistingAIProjectResourceId string = ''
 @description('Optional. Use this parameter to use an existing Log Analytics workspace resource ID. Defaults to empty string.')
 param existingLogAnalyticsWorkspaceId string = ''
 
+var existingTags = resourceGroup().tags ?? {}
+
 var allTags = union(
   {
     'azd-env-name': solutionName
@@ -154,20 +156,21 @@ var modelDeployment = {
 @description('Optional. Tag, Created by user name. Defaults to user principal name or object ID.')
 param createdBy string = contains(deployer(), 'userPrincipalName')? split(deployer().userPrincipalName, '@')[0]: deployer().objectId
  
+var resourceGroupTagsValue = union(
+  existingTags,
+  allTags,
+  {
+    TemplateName: 'Code Modernization'
+    Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
+    CreatedBy: createdBy
+  }
+)
 
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   name: 'default'
   properties: {
-    tags: union(
-      resourceGroup().tags ?? {},
-      allTags,
-      {
-        TemplateName: 'Code Modernization'
-        Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
-        CreatedBy: createdBy
-      }
-    )
+    tags: resourceGroupTagsValue
   }
 }
 

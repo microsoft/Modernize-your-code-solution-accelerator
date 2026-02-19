@@ -118,6 +118,8 @@ param azureExistingAIProjectResourceId string = ''
 @description('Optional. Use this parameter to use an existing Log Analytics workspace resource ID. Defaults to empty string.')
 param existingLogAnalyticsWorkspaceId string = ''
 
+var existingTags = resourceGroup().tags ?? {}
+
 var allTags = union(
   {
     'azd-env-name': solutionName
@@ -158,7 +160,7 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2021-04-01' = {
   name: 'default'
   properties: {
     tags: union(
-      resourceGroup().tags ?? {},
+      existingTags,
       allTags,
       {
         TemplateName: 'Code Modernization'
