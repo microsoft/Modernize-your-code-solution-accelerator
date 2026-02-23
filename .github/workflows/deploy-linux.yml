@@ -2,6 +2,7 @@ name: Deploy-Test-Cleanup (v2) Linux
 permissions:
   contents: read
   actions: read
+  id-token: write
 on:
   workflow_run:
       workflows: ["Build Docker and Optional Push"]
