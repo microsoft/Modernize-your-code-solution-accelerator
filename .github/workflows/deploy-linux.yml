@@ -1,4 +1,4 @@
-name: Deploy-Test-Cleanup (v2) Linux
+name: Deploy-Test-Cleanup (v2)
 permissions:
   contents: read
   actions: read
@@ -14,6 +14,14 @@ on:
         - demo
   workflow_dispatch:
     inputs:
+      runner_os:
+        description: 'Deployment Environment'
+        required: false
+        type: choice
+        options:
+          - 'codespace'
+          - 'Local'
+        default: 'codespace'
       azure_location:
         description: 'Azure Location For Deployment'
         required: false
@@ -86,6 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       validation_passed: ${{ steps.validate.outputs.passed }}
+      runner_os: ${{ steps.validate.outputs.runner_os }}
       azure_location: ${{ steps.validate.outputs.azure_location }}
       resource_group_name: ${{ steps.validate.outputs.resource_group_name }}
       waf_enabled: ${{ steps.validate.outputs.waf_enabled }}
@@ -101,6 +110,7 @@ jobs:
         id: validate
         shell: bash
         env:
+          INPUT_RUNNER_OS: ${{ github.event.inputs.runner_os }}
           INPUT_AZURE_LOCATION: ${{ github.event.inputs.azure_location }}
           INPUT_RESOURCE_GROUP_NAME: ${{ github.event.inputs.resource_group_name }}
           INPUT_WAF_ENABLED: ${{ github.event.inputs.waf_enabled }}
@@ -114,6 +124,20 @@ jobs:
         run: |
           echo "🔍 Validating workflow input parameters..."
           VALIDATION_FAILED=false
+          
+          # Validate runner_os (Deployment Environment)
+          RUNNER_INPUT="${INPUT_RUNNER_OS:-codespace}"
+          if [[ "$RUNNER_INPUT" == "codespace" ]]; then
+            RUNNER_OS="ubuntu-latest"
+            echo "✅ runner_os: '$RUNNER_INPUT' → ubuntu-latest"
+          elif [[ "$RUNNER_INPUT" == "Local" ]]; then
+            RUNNER_OS="windows-latest"
+            echo "✅ runner_os: '$RUNNER_INPUT' → windows-latest"
+          else
+            echo "❌ ERROR: runner_os must be 'codespace' or 'Local', got: '$RUNNER_INPUT'"
+            VALIDATION_FAILED=true
+            RUNNER_OS="ubuntu-latest"
+          fi
           
           # Validate azure_location (Azure region format)
           LOCATION="${INPUT_AZURE_LOCATION:-australiaeast}"
@@ -237,6 +261,7 @@ jobs:
           
           # Output validated values
           echo "passed=true" >> $GITHUB_OUTPUT
+          echo "runner_os=$RUNNER_OS" >> $GITHUB_OUTPUT
           echo "azure_location=$LOCATION" >> $GITHUB_OUTPUT
           echo "resource_group_name=$INPUT_RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
           echo "waf_enabled=$WAF_ENABLED" >> $GITHUB_OUTPUT
@@ -253,7 +278,7 @@ jobs:
     if: needs.validate-inputs.outputs.validation_passed == 'true'
     uses: ./.github/workflows/deploy-orchestrator.yml
     with:
-      runner_os: ubuntu-latest
+      runner_os: ${{ needs.validate-inputs.outputs.runner_os || 'ubuntu-latest' }}
       azure_location: ${{ needs.validate-inputs.outputs.azure_location || 'australiaeast' }}
       resource_group_name: ${{ needs.validate-inputs.outputs.resource_group_name || '' }}
       waf_enabled: ${{ needs.validate-inputs.outputs.waf_enabled == 'true' }}
