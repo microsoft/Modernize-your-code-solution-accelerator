@@ -1,0 +1,1 @@
+CREATE TYPE phone_number FROM VARCHAR(20) NOT NULL;

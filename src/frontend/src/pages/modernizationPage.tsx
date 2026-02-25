@@ -31,7 +31,7 @@ import { Light as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vs } from "react-syntax-highlighter/dist/esm/styles/hljs"
 import sql from "react-syntax-highlighter/dist/cjs/languages/hljs/sql"
 import { useNavigate, useParams } from "react-router-dom"
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { getApiUrl, headerBuilder } from '../api/config';
 import BatchHistoryPanel from "../components/batchHistoryPanel"
 import PanelRight from "../components/Panels/PanelRight";
@@ -515,9 +515,18 @@ const ModernizationPage = () => {
         if (!selectedFile || !selectedFile.translatedCode) {
           setFileLoading(true);
           const newFileUpdate = await fetchFileFromAPI(selectedFile?.fileId || "");
+          setFiles((prevFiles) =>
+            prevFiles.map((file) =>
+              file.fileId === selectedFile?.fileId
+                ? {
+                    ...file,
+                    code: newFileUpdate.content,
+                    translatedCode: newFileUpdate.translated_content,
+                  }
+                : file
+            )
+          );
           setFileLoading(false);
-        } else {
-
         }
 
       } catch (err) {
