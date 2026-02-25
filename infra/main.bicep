@@ -230,8 +230,8 @@ module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0
         }
       : null
     // WAF aligned configuration for Private Networking
-    publicNetworkAccessForIngestion: enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    publicNetworkAccessForQuery: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    publicNetworkAccessForIngestion: 'Enabled'
+    publicNetworkAccessForQuery: 'Enabled'
     dataSources: enablePrivateNetworking
       ? [
           {
@@ -287,7 +287,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.7.0' = if (en
     retentionInDays: 365
     kind: 'web'
     disableIpMasking: false
-    disableLocalAuth: true
+    disableLocalAuth: false
     flowType: 'Bluefield'
   }
 }
