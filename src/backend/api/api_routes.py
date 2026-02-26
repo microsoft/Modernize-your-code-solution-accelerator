@@ -47,7 +47,7 @@ if instrumentation_key:
     configure_azure_monitor(
         connection_string=instrumentation_key,
         instrumentation_options={
-            "azure_sdk": {"enabled": False}, 
+            "azure_sdk": {"enabled": False},
         }
     )
     logging.info(
