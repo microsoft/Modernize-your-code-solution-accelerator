@@ -387,6 +387,17 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
     }
   }, [fileLimitExceeded]);
 
+  // Auto-hide file rejection errors after 10 seconds
+  useEffect(() => {
+    if (fileRejectionErrors.length > 0) {
+      const timer = setTimeout(() => {
+        setFileRejectionErrors([]);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [fileRejectionErrors]);
+
   return (
     <div style={{ width: '100%', minWidth: '720px', maxWidth: '800px', margin: '0 auto', marginTop: '0', padding: '16px', paddingBottom: '60px' }}>
       <ConfirmationDialog
@@ -565,9 +576,12 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
         {/* Show file rejection errors for invalid type or size */}
          {fileRejectionErrors.length > 0 && (
+          <div style={{ width: uploadingFiles.some(f => f.status === 'completed') ? '837px' : '880px' }}>
             <MessageBar
               messageBarType={MessageBarType.error}
               isMultiline={true}
+              onDismiss={() => setFileRejectionErrors([])}
+              dismissButtonAriaLabel="Close"
               styles={messageBarErrorStyles}
             >
               <div style={{ display: "flex", alignItems: "center" }}>
@@ -578,6 +592,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 <div key={idx} style={{ marginLeft: "24px", marginTop: "2px" }}>{err}</div>
               ))}
             </MessageBar>
+          </div>
         )}
         {/* Show network error message bar if any file has error */}
         {uploadingFiles.some(f => f.status === 'error') && (
