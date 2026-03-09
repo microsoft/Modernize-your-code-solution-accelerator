@@ -573,9 +573,10 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
         )}
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '880px', paddingBottom: 10, borderRadius: '4px', }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '13px', width: '837px', paddingBottom: 10, borderRadius: '4px', }}>
         {/* Show file rejection errors for invalid type or size */}
          {fileRejectionErrors.length > 0 && (
+          <div style={{ width: uploadingFiles.some(f => f.status === 'completed') ? '837px' : '880px' }}>
             <MessageBar
               messageBarType={MessageBarType.error}
               isMultiline={true}
@@ -591,6 +592,7 @@ const FileUploadZone: React.FC<FileUploadZoneProps> = ({
                 <div key={idx} style={{ marginLeft: "24px", marginTop: "2px" }}>{err}</div>
               ))}
             </MessageBar>
+          </div>
         )}
         {/* Show network error message bar if any file has error */}
         {uploadingFiles.some(f => f.status === 'error') && (
