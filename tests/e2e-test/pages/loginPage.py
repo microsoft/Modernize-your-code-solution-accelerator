@@ -11,7 +11,7 @@ class LoginPage(BasePage):
     PERMISSION_ACCEPT_BUTTON = "//input[@type='submit']"
 
     def __init__(self, page):
-        self.page = page
+        super().__init__(page)
 
     def authenticate(self, username, password):
         # login with username and password in web url
