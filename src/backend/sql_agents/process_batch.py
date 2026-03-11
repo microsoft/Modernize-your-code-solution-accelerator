@@ -17,7 +17,7 @@ from common.models.api import (
 )
 from common.services.batch_service import BatchService
 from common.storage.blob_factory import BlobStorageFactory
-from common.telemetry import trace_context, add_span_attributes
+from common.telemetry import trace_context
 
 from fastapi import HTTPException
 
@@ -40,8 +40,8 @@ async def process_batch_async(
     """Central batch processing function to process each file in the batch"""
     # Add telemetry span for the entire batch processing operation
     async with trace_context("process_batch", {
-        "batch_id": batch_id, 
-        "convert_from": convert_from, 
+        "batch_id": batch_id,
+        "convert_from": convert_from,
         "convert_to": convert_to
     }):
         logger.info("Processing batch: %s", batch_id)
