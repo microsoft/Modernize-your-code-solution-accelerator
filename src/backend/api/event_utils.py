@@ -4,7 +4,7 @@ import os
 
 # Third-party
 from applicationinsights import TelemetryClient
-from applicationinsights.channel import SynchronousSender, SynchronousQueue, TelemetryChannel
+from applicationinsights.channel import SynchronousQueue, SynchronousSender, TelemetryChannel
 
 from dotenv import load_dotenv
 
