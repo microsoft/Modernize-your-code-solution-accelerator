@@ -1013,7 +1013,7 @@ useEffect(() => {
     };
   }, [handleWebSocketMessage]);
 
-  // Set a timeout for initial loading - if no progress after 30 seconds, show error
+  // Set a timeout for initial loading - if still loading after 30 seconds, show a warning message
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
       if (showLoading) {
