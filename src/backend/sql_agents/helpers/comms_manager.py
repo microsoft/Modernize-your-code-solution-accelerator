@@ -79,8 +79,6 @@ class CommsManager:
                         ),
                         None,
                     )
-            # No matching case found, so explicitly return None
-            return None
 
     # class for termination strategy
     class ApprovalTerminationStrategy(TerminationStrategy):
