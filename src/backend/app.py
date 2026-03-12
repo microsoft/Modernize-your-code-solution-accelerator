@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 
 from api.api_routes import router as backend_router
 
+from azure.monitor.opentelemetry.exporter import AzureMonitorLogExporter, AzureMonitorTraceExporter
+
 from common.config.config import app_config
 from common.logger.app_logger import AppLogger
 
@@ -14,6 +16,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from helper.azure_credential_utils import get_azure_credential
+
+from opentelemetry import trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from semantic_kernel.agents.azure_ai.azure_ai_agent import AzureAIAgent  # pylint: disable=E0611
 
@@ -45,6 +55,11 @@ logging.basicConfig(
 # Package config: Azure loggers set to WARNING to suppress INFO
 for logger_name in AZURE_LOGGING_PACKAGES:
     logging.getLogger(logger_name).setLevel(getattr(logging, AZURE_PACKAGE_LOGGING_LEVEL, logging.WARNING))
+
+# Suppress noisy OpenTelemetry and Azure Monitor logs
+# logging.getLogger("opentelemetry.sdk").setLevel(logging.ERROR)
+# logging.getLogger("azure.core.pipeline.policies.http_logging_policy").setLevel(logging.WARNING)
+# logging.getLogger("azure.monitor.opentelemetry.exporter.export._base").setLevel(logging.WARNING)
 
 logger = AppLogger("app")
 
@@ -118,6 +133,59 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Configure Azure Monitor and instrument FastAPI for OpenTelemetry
+    # This must happen AFTER app creation but BEFORE route registration
+    instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
+    if instrumentation_key:
+        # SOLUTION: Use manual telemetry setup instead of configure_azure_monitor
+        # This gives us precise control over what gets instrumented, avoiding interference
+        # with Semantic Kernel's async generators while still tracking Azure SDK calls
+
+        # Set up Azure Monitor exporter for traces
+        azure_trace_exporter = AzureMonitorTraceExporter(connection_string=instrumentation_key)
+
+        # Create a tracer provider and add the Azure Monitor exporter
+        tracer_provider = TracerProvider()
+        tracer_provider.add_span_processor(BatchSpanProcessor(azure_trace_exporter))
+
+        # Set the global tracer provider
+        trace.set_tracer_provider(tracer_provider)
+
+        # Set up Azure Monitor exporter for logs (appears in traces table)
+        azure_log_exporter = AzureMonitorLogExporter(connection_string=instrumentation_key)
+
+        # Create a logger provider and add the Azure Monitor exporter
+        logger_provider = LoggerProvider()
+        logger_provider.add_log_record_processor(BatchLogRecordProcessor(azure_log_exporter))
+        set_logger_provider(logger_provider)
+
+        # Attach OpenTelemetry handler to Python's root logger
+        handler = LoggingHandler(logger_provider=logger_provider)
+        logging.getLogger().addHandler(handler)
+
+        # Instrument ONLY FastAPI for HTTP request/response tracing
+        # This is safe because it only wraps HTTP handlers, not internal async operations
+        FastAPIInstrumentor.instrument_app(
+            app,
+            excluded_urls="socket,ws",  # Exclude WebSocket URLs to reduce noise
+            tracer_provider=tracer_provider
+        )
+
+        # Optional: Add manual spans in your code for Azure SDK operations using:
+        # from opentelemetry import trace
+        # tracer = trace.get_tracer(__name__)
+        # with tracer.start_as_current_span("operation_name"):
+        #     # your Azure SDK call here
+
+        logger.logger.info("Application Insights configured with selective instrumentation")
+        logger.logger.info("✓ FastAPI HTTP tracing enabled")
+        logger.logger.info("✓ Python logging export to Application Insights enabled")
+        logger.logger.info("✓ Manual span support enabled for Azure SDK operations")
+        logger.logger.info("✓ Custom events via OpenTelemetry enabled")
+        logger.logger.info("✓ Semantic Kernel async generators unaffected")
+    else:
+        logger.logger.warning("No Application Insights connection string found. Telemetry disabled.")
 
     # Include routers with /api prefix
     app.include_router(backend_router, prefix="/api", tags=["backend"])

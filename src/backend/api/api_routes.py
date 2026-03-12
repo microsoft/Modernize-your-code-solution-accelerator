@@ -3,8 +3,6 @@
 # Standard library
 import asyncio
 import io
-import logging
-import os
 import zipfile
 from typing import Optional
 
@@ -14,9 +12,6 @@ from api.event_utils import track_event_if_configured
 from api.status_updates import app_connection_manager, close_connection
 
 # Third-party
-# Azure Monitor OpenTelemetry integration is currently causing issues with OpenAI calls in process_batch_async, needs further investigation, commenting out for now
-# from azure.monitor.opentelemetry import configure_azure_monitor
-
 from common.logger.app_logger import AppLogger
 from common.services.batch_service import BatchService
 
@@ -39,21 +34,6 @@ from sql_agents.process_batch import process_batch_async
 
 router = APIRouter()
 logger = AppLogger("APIRoutes")
-
-# Check if the Application Insights Instrumentation Key is set in the environment variables
-instrumentation_key = os.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING")
-if instrumentation_key:
-    # Configure Application Insights if the Instrumentation Key is found
-    # commenting below line as configure_azure_monitor is causing issues with OpenAI calls in process_batch_async, needs further investigation
-    # configure_azure_monitor(connection_string=instrumentation_key)
-    logging.info(
-        "Application Insights configured with the provided Instrumentation Key"
-    )
-else:
-    # Log a warning if the Instrumentation Key is not found
-    logging.warning(
-        "No Application Insights Instrumentation Key found. Skipping configuration"
-    )
 
 
 def record_exception_to_trace(e):
