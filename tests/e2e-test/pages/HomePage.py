@@ -52,7 +52,7 @@ class HomePage(BasePage):
     HARMFUL_FILE_2 = "//span[.='harmful_content_2 2.sql']"
 
     def __init__(self, page):
-        self.page = page
+        super().__init__(page)
 
     def navigate_to_base_url(self):
         """

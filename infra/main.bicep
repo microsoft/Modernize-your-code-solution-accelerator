@@ -291,8 +291,25 @@ module applicationInsights 'br/public:avm/res/insights/component:0.7.0' = if (en
     retentionInDays: 365
     kind: 'web'
     disableIpMasking: false
-    disableLocalAuth: true
     flowType: 'Bluefield'
+    // WAF aligned configuration for Private Networking - block public ingestion/query
+    publicNetworkAccessForIngestion: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    publicNetworkAccessForQuery: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+  }
+}
+
+// ========== Data Collection Endpoint (DCE) ========== //
+// Required for Azure Monitor Private Link - provides private ingestion and configuration endpoints
+// Per: https://learn.microsoft.com/en-us/azure/azure-monitor/fundamentals/private-link-configure
+module dataCollectionEndpoint 'br/public:avm/res/insights/data-collection-endpoint:0.5.0' = if (enablePrivateNetworking && enableMonitoring) {
+  name: take('avm.res.insights.data-collection-endpoint.${solutionSuffix}', 64)
+  params: {
+    name: 'dce-${solutionSuffix}'
+    location: location
+    kind: 'Windows'
+    publicNetworkAccess: 'Disabled'
+    tags: allTags
+    enableTelemetry: enableTelemetry
   }
 }
 
@@ -320,6 +337,10 @@ var privateDnsZones = [
   'privatelink.vaultcore.azure.net'
   'privatelink.blob.${environment().suffixes.storage}'
   'privatelink.file.${environment().suffixes.storage}'
+  'privatelink.monitor.azure.com'                       // Azure Monitor global endpoints (App Insights, DCE)
+  'privatelink.oms.opinsights.azure.com'                 // Log Analytics OMS endpoints
+  'privatelink.ods.opinsights.azure.com'                 // Log Analytics ODS ingestion endpoints
+  'privatelink.agentsvc.azure-automation.net'             // Agent service automation endpoints
 ]
 
 // DNS Zone Index Constants
@@ -331,6 +352,10 @@ var dnsZoneIndex = {
   keyVault: 4
   storageBlob: 5
   storageFile: 6
+  monitor: 7
+  oms: 8
+  ods: 9
+  agentSvc: 10
 }
 
 // ===================================================
@@ -355,6 +380,76 @@ module avmPrivateDnsZones 'br/public:avm/res/network/private-dns-zone:0.8.0' = [
     }
   }
 ]
+
+// ========== Azure Monitor Private Link Scope (AMPLS) ========== //
+// Step 1: Create AMPLS
+// Step 2: Connect Azure Monitor resources (LAW, Application Insights, DCE) to the AMPLS
+// Step 3: Connect AMPLS to a private endpoint with required DNS zones
+// Per: https://learn.microsoft.com/en-us/azure/azure-monitor/fundamentals/private-link-configure
+module azureMonitorPrivateLinkScope 'br/public:avm/res/insights/private-link-scope:0.6.0' = if (enablePrivateNetworking) {
+  name: take('avm.res.insights.private-link-scope.${solutionSuffix}', 64)
+  #disable-next-line no-unnecessary-dependson
+  dependsOn: [logAnalyticsWorkspace, applicationInsights, dataCollectionEndpoint, virtualNetwork]
+  params: {
+    name: 'ampls-${solutionSuffix}'
+    location: 'global'
+    // Access mode: PrivateOnly ensures all ingestion and queries go through private link
+    accessModeSettings: {
+      ingestionAccessMode: 'PrivateOnly'
+      queryAccessMode: 'PrivateOnly'
+    }
+    // Step 2: Connect Azure Monitor resources to the AMPLS as scoped resources
+    scopedResources: concat([
+        {
+          name: 'scoped-law'
+          linkedResourceId: logAnalyticsWorkspaceResourceId
+        }
+      ], enableMonitoring ? [
+        {
+          name: 'scoped-appi'
+          linkedResourceId: applicationInsights!.outputs.resourceId
+        }
+        {
+          name: 'scoped-dce'
+          linkedResourceId: dataCollectionEndpoint!.outputs.resourceId
+        }
+      ] : [])
+    // Step 3: Connect AMPLS to a private endpoint
+    // The private endpoint requires 5 DNS zones per documentation:
+    // - privatelink.monitor.azure.com (App Insights + DCE global endpoints)
+    // - privatelink.oms.opinsights.azure.com (Log Analytics OMS)
+    // - privatelink.ods.opinsights.azure.com (Log Analytics ODS ingestion)
+    // - privatelink.agentsvc.azure-automation.net (Agent service automation)
+    // - privatelink.blob.core.windows.net (Agent solution packs storage)
+    privateEndpoints: [
+      {
+        name: 'pep-ampls-${solutionSuffix}'
+        subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+        privateDnsZoneGroup: {
+          privateDnsZoneGroupConfigs: [
+            {
+              privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.monitor]!.outputs.resourceId
+            }
+            {
+              privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.oms]!.outputs.resourceId
+            }
+            {
+              privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.ods]!.outputs.resourceId
+            }
+            {
+              privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.agentSvc]!.outputs.resourceId
+            }
+            {
+              privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageBlob]!.outputs.resourceId
+            }
+          ]
+        }
+      }
+    ]
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
 
 // Azure Bastion Host
 var bastionHostName = 'bas-${solutionSuffix}'
@@ -437,6 +532,7 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
     location: dataCollectionRulesLocation
     dataCollectionRuleProperties: {
       kind: 'Windows'
+      dataCollectionEndpointResourceId: dataCollectionEndpoint!.outputs.resourceId
       dataSources: {
         performanceCounters: [
           {
@@ -495,26 +591,6 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
             name: 'perfCounterDataSource60'
           }
         ]
-        windowsEventLogs: [
-          {
-            name: 'SecurityAuditEvents'
-            streams: [
-              'Microsoft-WindowsEvent'
-            ]
-            eventLogName: 'Security'
-            eventTypes: [
-              {
-                eventType: 'Audit Success'
-              }
-              {
-                eventType: 'Audit Failure'
-              }
-            ]
-            xPathQueries: [
-              'Security!*[System[(EventID=4624 or EventID=4625)]]'
-            ]
-          }
-        ]
       }
       destinations: {
         logAnalytics: [
@@ -532,8 +608,6 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           destinations: [
             'la-${dataCollectionRulesResourceName}'
           ]
-          transformKql: 'source'
-          outputStream: 'Microsoft-Perf'
         }
       ]
     }
