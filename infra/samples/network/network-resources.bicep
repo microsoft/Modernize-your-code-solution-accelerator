@@ -75,7 +75,7 @@ module jumpbox 'jumpbox.bicep' = if (!empty(jumpboxConfiguration)) {
   params: {
     name: jumpboxConfiguration.?name ?? 'vm-jumpbox-${resourcesName}'
     vnetName: virtualNetwork.outputs.name
-    size: jumpboxConfiguration.?size ?? 'Standard_D2s_v3'
+    size: jumpboxConfiguration.?size ?? 'Standard_D2s_v5'
     logAnalyticsWorkspaceId: logAnalyticsWorkSpaceResourceId
     location: location
     subnet: jumpboxConfiguration.?subnet
