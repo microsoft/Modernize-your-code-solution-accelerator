@@ -14619,7 +14619,7 @@
             "value": "Windows"
           },
           "vmSize": {
-            "value": "[coalesce(parameters('vmSize'), 'Standard_D2s_v3')]"
+            "value": "[coalesce(parameters('vmSize'), 'Standard_D2s_v5')]"
           },
           "adminUsername": {
             "value": "[coalesce(parameters('vmAdminUsername'), 'JumpboxAdminUser')]"

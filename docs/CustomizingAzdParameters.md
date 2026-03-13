@@ -23,6 +23,7 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_COSMOS_SECONDARY_LOCATION`  | string  | *(not set by default)*      | Specifies the secondary region for Cosmos DB. Required if `enableRedundancy` is `true`. |
 | `AZURE_EXISTING_AI_PROJECT_RESOURCE_ID`  | string  | *(not set by default)*      | Specifies the existing AI Foundry Project Resource ID if it needs to be reused. |
 | `AZURE_ENV_ACR_NAME`                              | string  | `cmsacontainerreg.azurecr.io`     | Specifies the Azure Container Registry name to use for container images. |
+| `AZURE_ENV_VM_SIZE`                        | string  | `Standard_D2s_v5`          | Overrides the jumpbox VM size (private networking only). Default: `Standard_D2s_v5`. |
 
 ---
 

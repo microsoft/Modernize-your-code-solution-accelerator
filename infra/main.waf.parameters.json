@@ -47,6 +47,9 @@
     "vmAdminPassword": {
       "value": "${AZURE_ENV_JUMPBOX_ADMIN_PASSWORD}"
     },
+    "vmSize": {
+      "value": "${AZURE_ENV_VM_SIZE}"
+    },
     "backendExists": {
       "value": "${SERVICE_BACKEND_RESOURCE_EXISTS=false}"
     },

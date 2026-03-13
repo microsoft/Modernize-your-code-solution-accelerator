@@ -110,7 +110,7 @@ import { jumpBoxConfigurationType } from 'network/jumpbox.bicep'
 @description('Optional. Configuration for the Jumpbox VM. Leave null to omit Jumpbox creation.')
 param jumpboxConfiguration jumpBoxConfigurationType = {
   name: 'vm-jumpbox-${resourcesName}'
-  size: 'Standard_D2s_v3' // Default size, can be overridden
+  size: 'Standard_D2s_v5' // Default size, can be overridden
   username: vmAdminUsername
   password: vmAdminPassword 
   subnet: {
