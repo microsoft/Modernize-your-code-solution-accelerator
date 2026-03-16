@@ -3,8 +3,9 @@ import logging
 import os
 
 # Third-party
-from applicationinsights import TelemetryClient
 from dotenv import load_dotenv
+
+from applicationinsights import TelemetryClient
 
 load_dotenv()
 
@@ -53,7 +54,7 @@ def track_event_if_configured(event_name: str, event_data: dict):
 
                 # Track the custom event
                 client.track_event(event_name, properties=properties)
-                
+
                 # Flush to ensure events are sent immediately
                 client.flush()
 
