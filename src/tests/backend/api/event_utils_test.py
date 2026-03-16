@@ -20,6 +20,7 @@ class TestTrackEventIfConfigured:
                 track_event_if_configured("TestEvent", {"key": "value"})
 
                 mock_client.track_event.assert_called_once_with("TestEvent", properties={"key": "value"})
+                mock_client.flush.assert_called_once()
 
     def test_track_event_without_instrumentation_key(self):
         """Test tracking event when instrumentation key is not set."""
@@ -44,6 +45,7 @@ class TestTrackEventIfConfigured:
                 track_event_if_configured("TestEvent", {})
 
                 mock_client.track_event.assert_called_once_with("TestEvent", properties={})
+                mock_client.flush.assert_called_once()
 
     def test_track_event_with_complex_data(self):
         """Test tracking event with complex data."""
@@ -71,6 +73,7 @@ class TestTrackEventIfConfigured:
                 }
 
                 mock_client.track_event.assert_called_once_with("ComplexEvent", properties=expected_properties)
+                mock_client.flush.assert_called_once()
 
     def test_track_event_client_returns_none(self):
         """Test tracking event when client initialization fails."""
