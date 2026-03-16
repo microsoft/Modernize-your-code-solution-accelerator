@@ -4,8 +4,6 @@ import os
 
 # Third-party
 from applicationinsights import TelemetryClient
-from applicationinsights.channel import SynchronousQueue, SynchronousSender, TelemetryChannel
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,12 +26,8 @@ def _get_telemetry_client():
                 instrumentation_key = parts.get('InstrumentationKey')
 
                 if instrumentation_key:
-                    # Create a synchronous channel for immediate sending
-                    sender = SynchronousSender()
-                    queue = SynchronousQueue(sender)
-                    channel = TelemetryChannel(None, queue)
-
-                    _telemetry_client = TelemetryClient(instrumentation_key, channel)
+                    # Use the default (buffered/async) channel configuration
+                    _telemetry_client = TelemetryClient(instrumentation_key)
                     logging.info("Application Insights TelemetryClient initialized successfully")
                 else:
                     logging.error("Could not extract InstrumentationKey from connection string")
@@ -59,7 +53,9 @@ def track_event_if_configured(event_name: str, event_data: dict):
 
                 # Track the custom event
                 client.track_event(event_name, properties=properties)
-                client.flush()  # Ensure immediate sending
+                
+                # Flush to ensure events are sent immediately
+                client.flush()
 
                 logging.debug(f"Tracked custom event: {event_name} with data: {event_data}")
             else:

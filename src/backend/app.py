@@ -161,8 +161,11 @@ def create_app() -> FastAPI:
         set_logger_provider(logger_provider)
 
         # Attach OpenTelemetry handler to Python's root logger
-        handler = LoggingHandler(logger_provider=logger_provider)
-        logging.getLogger().addHandler(handler)
+        # Guard against duplicate handlers in hot-reload or test scenarios
+        root_logger = logging.getLogger()
+        if not any(isinstance(h, LoggingHandler) for h in root_logger.handlers):
+            handler = LoggingHandler(logger_provider=logger_provider)
+            root_logger.addHandler(handler)
 
         # Instrument ONLY FastAPI for HTTP request/response tracing
         # This is safe because it only wraps HTTP handlers, not internal async operations
