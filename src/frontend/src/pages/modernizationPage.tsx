@@ -497,7 +497,6 @@ const ModernizationPage = () => {
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
-  const [progressPercentage, setProgressPercentage] = useState(0);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
@@ -1014,16 +1013,16 @@ useEffect(() => {
     };
   }, [handleWebSocketMessage]);
 
-  // Set a timeout for initial loading - if no progress after 30 seconds, show error
+  // Set a timeout for initial loading - if still loading after 30 seconds, show a warning message
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
-      if (progressPercentage < 5 && showLoading) {
+      if (showLoading) {
         setLoadingError('Processing is taking longer than expected. You can continue waiting or try again later.');
       }
     }, 30000);
 
     return () => clearTimeout(loadingTimeout);
-  }, [progressPercentage, showLoading]);
+  }, [showLoading]);
 
   // Add timeout mechanism to navigate if no activity for 30 seconds
   useEffect(() => {

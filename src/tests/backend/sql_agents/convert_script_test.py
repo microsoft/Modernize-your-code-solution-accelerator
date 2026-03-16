@@ -187,7 +187,7 @@ class TestConvertScript:
                         mock_sql_agents
                     )
                 except RuntimeError:
-                    pass
+                    pass  # Expected exception; verifying cleanup below
 
                 # Cleanup should be called even on exception
                 mock_comms_manager.cleanup.assert_called_once()

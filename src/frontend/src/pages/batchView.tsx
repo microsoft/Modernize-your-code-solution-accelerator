@@ -73,7 +73,6 @@ const BatchStoryPage = () => {
   const [selectedFileId, setSelectedFileId] = useState<string>("");
   const [expandedSections, setExpandedSections] = useState(["errors"]);
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(null);
-  const [selectedFileContent, setSelectedFileContent] = useState<string>("");
   const [selectedFileTranslatedContent, setSelectedFileTranslatedContent] = useState<string>("");
 
 
@@ -195,7 +194,6 @@ const BatchStoryPage = () => {
         const data = await response.json();
 
         if (data) {
-          setSelectedFileContent(data.content || "");
           setSelectedFileTranslatedContent(data.translated_content || "");
         }
 
