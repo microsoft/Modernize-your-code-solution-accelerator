@@ -4,6 +4,7 @@ import os
 
 # Third-party
 from applicationinsights import TelemetryClient
+
 from dotenv import load_dotenv
 
 load_dotenv()
