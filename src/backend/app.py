@@ -170,9 +170,9 @@ def create_app() -> FastAPI:
                 # Close the handler to release any associated exporter/background resources
                 try:
                     handler.close()
-                except AttributeError:
-                    # Some handlers may not have a close method
-                    pass
+                except Exception as exc:
+                    # Guard against unexpected close failures
+                    logging.error("Error while closing logging handler %r: %s", handler, exc)
         # Add a fresh handler bound to the current logger_provider
         root_logger.addHandler(LoggingHandler(logger_provider=logger_provider))
 

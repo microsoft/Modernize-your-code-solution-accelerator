@@ -1,17 +1,12 @@
 # pylint: disable=redefined-outer-name
 """Tests for the FastAPI application."""
 
-import logging
-import os
-
 from backend.app import create_app
 
 from fastapi import FastAPI
 
 from httpx import ASGITransport
 from httpx import AsyncClient
-
-from opentelemetry.sdk._logs import LoggingHandler
 
 import pytest
 
