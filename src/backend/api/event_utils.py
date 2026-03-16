@@ -3,9 +3,8 @@ import logging
 import os
 
 # Third-party
-from dotenv import load_dotenv
-
 from applicationinsights import TelemetryClient
+from dotenv import load_dotenv
 
 load_dotenv()
 
