@@ -44,7 +44,8 @@ async def test_backend_routes_exist(app: FastAPI):
 def test_logging_handler_deduplication():
     """Test that creating multiple apps doesn't accumulate LoggingHandler instances."""
     # Set up Application Insights connection string to trigger telemetry setup
-    connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+    # Use a valid UUID format for the instrumentation key
+    connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
     original_env = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
 
     try:

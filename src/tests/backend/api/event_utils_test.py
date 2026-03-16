@@ -11,7 +11,7 @@ class TestTrackEventIfConfigured:
 
     def test_track_event_with_instrumentation_key(self):
         """Test tracking event when instrumentation key is set."""
-        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+        connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}):
             with patch("backend.api.event_utils._get_telemetry_client") as mock_get_client:
                 mock_client = MagicMock()
@@ -36,7 +36,7 @@ class TestTrackEventIfConfigured:
 
     def test_track_event_with_empty_data(self):
         """Test tracking event with empty data."""
-        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+        connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}):
             with patch("backend.api.event_utils._get_telemetry_client") as mock_get_client:
                 mock_client = MagicMock()
@@ -49,7 +49,7 @@ class TestTrackEventIfConfigured:
 
     def test_track_event_with_complex_data(self):
         """Test tracking event with complex data."""
-        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+        connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}):
             with patch("backend.api.event_utils._get_telemetry_client") as mock_get_client:
                 mock_client = MagicMock()
@@ -77,7 +77,7 @@ class TestTrackEventIfConfigured:
 
     def test_track_event_client_returns_none(self):
         """Test tracking event when client initialization fails."""
-        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+        connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}):
             with patch("backend.api.event_utils._get_telemetry_client") as mock_get_client:
                 mock_get_client.return_value = None
@@ -88,7 +88,7 @@ class TestTrackEventIfConfigured:
 
     def test_track_event_with_exception(self):
         """Test tracking event when an exception occurs."""
-        connection_string = "InstrumentationKey=test-key;IngestionEndpoint=https://test.com"
+        connection_string = "InstrumentationKey=12345678-1234-5678-1234-567812345678;IngestionEndpoint=https://test.com"
         with patch.dict(os.environ, {"APPLICATIONINSIGHTS_CONNECTION_STRING": connection_string}):
             with patch("backend.api.event_utils._get_telemetry_client") as mock_get_client:
                 mock_client = MagicMock()
