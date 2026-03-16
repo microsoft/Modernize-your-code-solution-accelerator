@@ -56,11 +56,11 @@ def test_logging_handler_deduplication():
         initial_handler_count = sum(1 for h in root_logger.handlers if isinstance(h, LoggingHandler))
 
         # Create first app
-        app1 = create_app()
+        create_app()
         handler_count_after_first = sum(1 for h in root_logger.handlers if isinstance(h, LoggingHandler))
 
         # Create second app
-        app2 = create_app()
+        create_app()
         handler_count_after_second = sum(1 for h in root_logger.handlers if isinstance(h, LoggingHandler))
 
         # Assert only one LoggingHandler exists after multiple create_app() calls
@@ -76,7 +76,10 @@ def test_logging_handler_deduplication():
                 try:
                     handler.close()
                 except Exception:
-                    pass
+                    logging.getLogger(__name__).debug(
+                        "Failed to close LoggingHandler during test cleanup",
+                        exc_info=True,
+                    )
     finally:
         # Restore original environment
         if original_env is not None:
