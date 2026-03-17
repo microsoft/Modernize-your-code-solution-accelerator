@@ -20,6 +20,16 @@
     "gptModelVersion": {
       "value": "${AZURE_ENV_MODEL_VERSION}"
     },
+    "aiModelDeployments": {
+      "value": [
+        {
+          "deploymentType": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}",
+          "modelName": "${AZURE_ENV_MODEL_NAME}",
+          "modelCapacity": "${AZURE_ENV_MODEL_CAPACITY}",
+          "modelVersion": "${AZURE_ENV_MODEL_VERSION}"
+        }
+      ]
+    },
     "imageVersion": {
       "value": "${AZURE_ENV_IMAGETAG=latest}"
     },
