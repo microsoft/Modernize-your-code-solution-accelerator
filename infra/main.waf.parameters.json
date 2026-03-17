@@ -23,15 +23,15 @@
     "aiModelDeployments": {
       "value": [
         {
-          "name": "${AZURE_ENV_MODEL_NAME=gpt-4o}",
+          "name": "gpt-4o",
           "model": {
-            "name": "${AZURE_ENV_MODEL_NAME=gpt-4o}",
-            "version": "${AZURE_ENV_MODEL_VERSION=2024-08-06}",
+            "name": "gpt-4o",
+            "version": "2024-08-06",
             "format": "OpenAI"
           },
           "sku": {
-            "name": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE=GlobalStandard}",
-            "capacity": "${AZURE_ENV_MODEL_CAPACITY=150}"
+            "name": "GlobalStandard",
+            "capacity": 150
           }
         }
       ]
