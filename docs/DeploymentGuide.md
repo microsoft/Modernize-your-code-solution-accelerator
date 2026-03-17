@@ -91,7 +91,18 @@ Important instructions:
 6. If a step fails, suggest solutions based on the error message.
 ```
 
-Once you paste this prompt, GitHub Copilot will interactively guide you through the remaining deployment steps.
+During the deployment, you will be prompted with the following questions:
+
+WAF / Non-WAF:
+1. Yes - will implement WAF configuration
+2. No - will perform non-WAF deployment
+
+Advanced Configuration Changes:
+1. Yes - will implement advanced changes to deafult parameter configurations and resources
+2. No - will keep default values
+
+Authentication Configuration:
+1. Provides you with the navigation steps in Azure portal to be configured
 
 ## Step 3: Choose Your Deployment Environment
 
