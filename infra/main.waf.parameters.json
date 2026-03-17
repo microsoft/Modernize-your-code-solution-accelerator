@@ -23,10 +23,16 @@
     "aiModelDeployments": {
       "value": [
         {
-          "deploymentType": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}",
-          "modelName": "${AZURE_ENV_MODEL_NAME}",
-          "modelCapacity": "${AZURE_ENV_MODEL_CAPACITY}",
-          "modelVersion": "${AZURE_ENV_MODEL_VERSION}"
+          "name": "${AZURE_ENV_MODEL_NAME}",
+          "model": {
+            "name": "${AZURE_ENV_MODEL_NAME}",
+            "version": "${AZURE_ENV_MODEL_VERSION}",
+            "format": "OpenAI"
+          },
+          "sku": {
+            "name": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}",
+            "capacity": "${AZURE_ENV_MODEL_CAPACITY}"
+          }
         }
       ]
     },
