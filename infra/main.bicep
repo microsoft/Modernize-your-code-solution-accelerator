@@ -1155,6 +1155,14 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
             name: 'APP_ENV'
             value: 'prod'
           }
+          {
+            name: 'REACT_APP_MSAL_POST_REDIRECT_URL'
+            value: '/'
+          }
+          {
+            name: 'REACT_APP_MSAL_REDIRECT_URL'
+            value: '/'
+          }
         ]
         image: '${acrName}/cmsafrontend:${imageVersion}'
         name: 'cmsafrontend'
