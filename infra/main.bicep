@@ -56,8 +56,9 @@ var replicaRegionPairs = {
 }
 var replicaLocation = replicaRegionPairs[resourceGroup().location]
 
-@description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
-param gptModelCapacity int = 150
+@description('Optional. AI model deployment token capacity (thousands of tokens per minute). Must not exceed your subscription GlobalStandard quota. Reduce if provisioning fails with InsufficientQuota.')
+@minValue(1)
+param gptModelCapacity int = 30
 
 @description('Optional. Enable monitoring for the resources. This will enable Application Insights and Log Analytics. Defaults to false.')
 param enableMonitoring bool = false 
@@ -77,14 +78,12 @@ param enablePrivateNetworking bool = false
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
 param vmSize string? 
 
-@description('Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@description('Required when enablePrivateNetworking is true. Admin username for the Jumpbox VM. Must be provided — no default for security.')
 @secure()
-//param vmAdminUsername string = take(newGuid(), 20)
 param vmAdminUsername string?
 
-@description('Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true.')
+@description('Required when enablePrivateNetworking is true. Admin password for the Jumpbox VM. Must meet Azure complexity requirements (12+ chars, uppercase, lowercase, number, special char). Must be provided — no default for security.')
 @secure()
-//param vmAdminPassword string = newGuid()
 param vmAdminPassword string?
 
 @description('Optional. Specifies the resource tags for all the resources. Tag "azd-env-name" is automatically added to all resources.')
@@ -637,8 +636,8 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.20.0' = if (e
     computerName: take(virtualMachineResourceName, 15)
     osType: 'Windows'
     vmSize: !empty(vmSize) ? vmSize : 'Standard_D2s_v5'
-    adminUsername: !empty(vmAdminUsername) ? vmAdminUsername : 'JumpboxAdminUser'
-    adminPassword: !empty(vmAdminPassword) ? vmAdminPassword : 'JumpboxAdminP@ssw0rd1234!'
+    adminUsername: vmAdminUsername!
+    adminPassword: vmAdminPassword!
     managedIdentities: {
       systemAssigned: true
     }

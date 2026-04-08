@@ -198,16 +198,18 @@ Copy the contents from the production configuration file to your main parameters
 5. Select all existing content (Ctrl+A) and paste the copied content (Ctrl+V)
 6. Save the file (Ctrl+S)
 
-### 3.2 Set VM Credentials (Optional - Production Deployment Only)
+### 3.2 Set VM Credentials (Required for Production Deployment)
 
 > **Note:** This section only applies if you selected **Production** deployment type in section 3.1. VMs are not deployed in the default Development/Testing configuration.
 
-By default, hard-coded fallback values are used for VM credentials (`JumpboxAdminUser` / `JumpboxAdminP@ssw0rd1234!`). To set custom credentials:
+VM credentials must be explicitly provided when deploying with private networking enabled. No default credentials are used for security reasons.
 
 ```shell
 azd env set AZURE_ENV_JUMPBOX_ADMIN_USERNAME <your-username>
 azd env set AZURE_ENV_JUMPBOX_ADMIN_PASSWORD <your-password>
 ```
+
+> **Password requirements:** 12+ characters, at least one uppercase, one lowercase, one number, and one special character.
 
 ### 3.3 Advanced Configuration (Optional)
 

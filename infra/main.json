@@ -66,9 +66,10 @@
     },
     "gptModelCapacity": {
       "type": "int",
-      "defaultValue": 150,
+      "defaultValue": 30,
+      "minValue": 1,
       "metadata": {
-        "description": "Optional. AI model deployment token capacity. Defaults to 150K tokens per minute."
+        "description": "Optional. AI model deployment token capacity (thousands of tokens per minute). Must not exceed your subscription GlobalStandard quota. Reduce if provisioning fails with InsufficientQuota."
       }
     },
     "enableMonitoring": {
@@ -117,14 +118,14 @@
       "type": "securestring",
       "nullable": true,
       "metadata": {
-        "description": "Optional. Admin username for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true."
+        "description": "Required when enablePrivateNetworking is true. Admin username for the Jumpbox VM. Must be provided — no default for security."
       }
     },
     "vmAdminPassword": {
       "type": "securestring",
       "nullable": true,
       "metadata": {
-        "description": "Optional. Admin password for the Jumpbox Virtual Machine. Set to custom value if enablePrivateNetworking is true."
+        "description": "Required when enablePrivateNetworking is true. Admin password for the Jumpbox VM. Must meet Azure complexity requirements (12+ chars, uppercase, lowercase, number, special char). Must be provided — no default for security."
       }
     },
     "tags": {
@@ -16618,8 +16619,8 @@
             "value": "Windows"
           },
           "vmSize": "[if(not(empty(parameters('vmSize'))), createObject('value', parameters('vmSize')), createObject('value', 'Standard_D2s_v5'))]",
-          "adminUsername": "[if(not(empty(parameters('vmAdminUsername'))), createObject('value', parameters('vmAdminUsername')), createObject('value', 'JumpboxAdminUser'))]",
-          "adminPassword": "[if(not(empty(parameters('vmAdminPassword'))), createObject('value', parameters('vmAdminPassword')), createObject('value', 'JumpboxAdminP@ssw0rd1234!'))]",
+          "adminUsername": "[createObject('value', parameters('vmAdminUsername'))]",
+          "adminPassword": "[createObject('value', parameters('vmAdminPassword'))]",
           "managedIdentities": {
             "value": {
               "systemAssigned": true
