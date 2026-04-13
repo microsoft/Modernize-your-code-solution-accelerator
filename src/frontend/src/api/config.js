@@ -15,6 +15,9 @@ export let config = {
 export function setApiUrl(url) {
   if (url) {
     API_URL = `${url}/api`;
+  } else {
+    // Empty URL indicates WAF mode: use relative path through frontend proxy
+    API_URL = '/api';
   }
 }
 

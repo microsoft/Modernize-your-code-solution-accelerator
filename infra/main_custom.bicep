@@ -1063,7 +1063,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
       }
     ]
     ingressTargetPort: 8000
-    ingressExternal: true
+    ingressExternal: enablePrivateNetworking ? false : true // Internal-only ingress for WAF deployment; traffic proxied through frontend
     scaleSettings: {
       // maxReplicas: enableScalability ? 3 : 1
       maxReplicas: 1 // maxReplicas set to 1 (not 3) due to multiple agents created per type during WAF deployment
@@ -1107,16 +1107,26 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.19.0' = {
     ]
     containers: [
       {
-        env: [
-          {
-            name: 'API_URL'
-            value: 'https://${containerAppBackend.outputs.fqdn}'
-          }
-          {
-            name: 'APP_ENV'
-            value: 'prod'
-          }
-        ]
+        env: concat(
+          [
+            {
+              name: 'API_URL'
+              value: enablePrivateNetworking ? '' : 'https://${containerAppBackend.outputs.fqdn}'
+            }
+            {
+              name: 'APP_ENV'
+              value: 'prod'
+            }
+          ]
+          enablePrivateNetworking
+            ? [
+                {
+                  name: 'BACKEND_API_URL'
+                  value: 'https://${containerAppBackend.outputs.fqdn}'
+                }
+              ]
+            : []
+        )
         image: !empty(frontendImageName) ? frontendImageName : 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageTag}'
         name: 'cmsafrontend'
         resources: {
