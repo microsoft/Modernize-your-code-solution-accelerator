@@ -1063,7 +1063,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.19.0' = {
       }
     ]
     ingressTargetPort: 8000
-    ingressExternal: true
+    ingressExternal: !enablePrivateNetworking
     scaleSettings: {
       // maxReplicas: enableScalability ? 3 : 1
       maxReplicas: 1 // maxReplicas set to 1 (not 3) due to multiple agents created per type during WAF deployment
