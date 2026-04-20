@@ -1,14 +1,21 @@
+import asyncio
 import os
 
+import httpx
 import uvicorn
+import websockets
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Internal backend URL used by the server-side proxy.
+# The browser never contacts this URL directly.
+BACKEND_API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
 
 app = FastAPI()
 
@@ -38,7 +45,11 @@ async def serve_index():
 @app.get("/config")
 async def get_config():
     config = {
-        "API_URL": os.getenv("API_URL", "API_URL not set"),
+        # Return empty string so the browser uses relative /api/* paths
+        # which are proxied server-side to BACKEND_API_URL. This ensures
+        # backend Container Apps with internal-only ingress are never
+        # contacted directly from the browser.
+        "API_URL": "",
         "REACT_APP_MSAL_AUTH_CLIENTID": os.getenv(
             "REACT_APP_MSAL_AUTH_CLIENTID", "Client ID not set"
         ),
@@ -55,6 +66,104 @@ async def get_config():
     }
     return config
 
+
+# ---------------------------------------------------------------------------
+# Reverse proxy: WebSocket  (must be declared before the HTTP catch-all below)
+# ---------------------------------------------------------------------------
+
+@app.websocket("/api/socket/{batch_id}")
+async def proxy_websocket(websocket: WebSocket, batch_id: str):
+    """Proxy WebSocket connections from the browser to the internal backend."""
+    await websocket.accept()
+
+    backend_ws_url = (
+        BACKEND_API_URL
+        .replace("https://", "wss://")
+        .replace("http://", "ws://")
+    )
+    backend_ws_url = f"{backend_ws_url}/api/socket/{batch_id}"
+
+    try:
+        async with websockets.connect(backend_ws_url) as backend_ws:
+
+            async def forward_to_backend():
+                try:
+                    while True:
+                        data = await websocket.receive_text()
+                        await backend_ws.send(data)
+                except (WebSocketDisconnect, Exception):
+                    pass
+
+            async def forward_to_client():
+                try:
+                    async for message in backend_ws:
+                        await websocket.send_text(message)
+                except (WebSocketDisconnect, Exception):
+                    pass
+
+            await asyncio.gather(forward_to_backend(), forward_to_client())
+    except Exception:
+        pass
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
+
+
+# ---------------------------------------------------------------------------
+# Reverse proxy: HTTP  (all /api/* routes proxied to the internal backend)
+# ---------------------------------------------------------------------------
+
+_PROXY_CLIENT = httpx.AsyncClient(timeout=300.0)
+
+
+@app.api_route(
+    "/api/{path:path}",
+    methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"],
+)
+async def proxy_api(request: Request, path: str):
+    """Proxy HTTP API requests from the browser to the internal backend."""
+    target_url = f"{BACKEND_API_URL}/api/{path}"
+    if request.url.query:
+        target_url = f"{target_url}?{request.url.query}"
+
+    # Forward all headers except 'host' (would confuse the backend)
+    headers = {
+        k: v for k, v in request.headers.items()
+        if k.lower() != "host"
+    }
+
+    body = await request.body()
+
+    response = await _PROXY_CLIENT.request(
+        method=request.method,
+        url=target_url,
+        headers=headers,
+        content=body,
+    )
+
+    # Strip hop-by-hop headers that must not be forwarded
+    excluded_headers = {
+        "content-encoding", "transfer-encoding", "connection",
+        "keep-alive", "proxy-authenticate", "proxy-authorization",
+        "te", "trailers", "upgrade",
+    }
+    forwarded_headers = {
+        k: v for k, v in response.headers.items()
+        if k.lower() not in excluded_headers
+    }
+
+    return Response(
+        content=response.content,
+        status_code=response.status_code,
+        headers=forwarded_headers,
+    )
+
+
+# ---------------------------------------------------------------------------
+# SPA catch-all (must be last)
+# ---------------------------------------------------------------------------
 
 @app.get("/{full_path:path}")
 async def serve_app(full_path: str):

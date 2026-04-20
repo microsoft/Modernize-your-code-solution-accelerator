@@ -49,8 +49,11 @@ export function getApiUrl() {
   }
 
   if (!API_URL) {
-    console.warn('API URL not yet configured');
-    return null;
+    // API_URL is not configured (e.g. WAF deployment where the backend is
+    // internal-only). Fall back to the browser's own origin so that all
+    // /api/* requests are routed through the frontend server's reverse proxy
+    // instead of attempting to reach the internal backend URL directly.
+    return `${window.location.origin}/api`;
   }
 
   return API_URL;
