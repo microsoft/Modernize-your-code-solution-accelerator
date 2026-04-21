@@ -1,64 +1,107 @@
-import { getApiUrl } from '../api/config';
+import { getApiUrl, headerBuilder } from '../api/config';
 
-// WebSocketService.ts
+// Polling-based status stream service that preserves the existing event interface.
 type EventHandler = (data: any) => void;
 
 class WebSocketService {
-  private socket: WebSocket | null = null;
+  private pollInterval: ReturnType<typeof setInterval> | null = null;
+  private isConnected = false;
+  private activeBatchId: string | null = null;
+  private lastKnownStatus: Record<string, string> = {};
   private eventHandlers: Record<string, EventHandler[]> = {};
 
-  connect(batch_id: string): void {
-    let apiUrl = getApiUrl();
-    console.log('API URL: websocket', apiUrl);
-    if (apiUrl) {
-      apiUrl = apiUrl.replace(/^https?/, match => match === "https" ? "wss" : "ws");
-    } else {
-      throw new Error('API URL is null');
+  private async pollBatchSummary(batchId: string): Promise<void> {
+    const apiUrl = getApiUrl();
+    if (!apiUrl) {
+      this._emit('error', new Error('API URL is null'));
+      return;
     }
-    console.log('Connecting to WebSocket:', apiUrl);
-    if (this.socket) return; // Prevent duplicate connections
-    this.socket = new WebSocket(`${apiUrl}/socket/${batch_id}`);
 
-    this.socket.onopen = () => {
-      console.log('WebSocket connection opened.');
-      this._emit('open', undefined);
-    };
+    try {
+      const response = await fetch(`${apiUrl}/batch-summary/${batchId}`, {
+        headers: headerBuilder({}),
+      });
 
-    this.socket.onmessage = (event: MessageEvent) => {
-      try {
-        const data = JSON.parse(event.data);
-        this._emit('message', data);
-      } catch (err) {
-        console.error('Error parsing message:', err);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch batch status: ${response.status}`);
       }
-    };
 
-    this.socket.onerror = (error: Event) => {
-      console.error('WebSocket error:', error);
+      const payload = await response.json();
+      const files = payload?.files || [];
+      let allFilesTerminal = files.length > 0;
+
+      for (const file of files) {
+        const fileId = file?.file_id;
+        const status = (file?.status || '').toLowerCase();
+        if (!fileId || !status) {
+          continue;
+        }
+
+        if (!['completed', 'failed', 'error'].includes(status)) {
+          allFilesTerminal = false;
+        }
+
+        const previousStatus = this.lastKnownStatus[fileId];
+        if (previousStatus !== status) {
+          this.lastKnownStatus[fileId] = status;
+
+          this._emit('message', {
+            batch_id: batchId,
+            file_id: fileId,
+            agent_type: 'Polling agent',
+            agent_message: `Status changed to ${status}`,
+            process_status: status,
+            file_result: file?.file_result || null,
+          });
+        }
+      }
+
+      if (allFilesTerminal) {
+        this.disconnect();
+      }
+    } catch (error) {
       this._emit('error', error);
-    };
+    }
+  }
 
-    this.socket.onclose = (event: CloseEvent) => {
-      console.log('WebSocket closed:', event);
-      this._emit('close', event);
-      this.socket = null;
-    };
+  connect(batch_id: string): void {
+    if (this.isConnected && this.activeBatchId === batch_id) return;
+
+    this.disconnect();
+
+    this.isConnected = true;
+    this.activeBatchId = batch_id;
+    this.lastKnownStatus = {};
+    this._emit('open', undefined);
+
+    // Poll once immediately, then at a fixed interval.
+    void this.pollBatchSummary(batch_id);
+    this.pollInterval = setInterval(() => {
+      if (this.isConnected && this.activeBatchId) {
+        void this.pollBatchSummary(this.activeBatchId);
+      }
+    }, 3000);
   }
 
   disconnect(): void {
-    if (this.socket) {
-      this.socket.close();
-      this.socket = null;
-      console.log('WebSocket connection closed manually.');
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+
+    const wasConnected = this.isConnected;
+    this.isConnected = false;
+    this.activeBatchId = null;
+    this.lastKnownStatus = {};
+
+    if (wasConnected) {
+      this._emit('close', { reason: 'polling_stopped' });
     }
   }
 
   send(data: any): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(JSON.stringify(data));
-    } else {
-      console.error('WebSocket is not open. Cannot send:', data);
-    }
+    // Polling transport is read-only from client perspective.
+    console.debug('send() is ignored in polling mode:', data);
   }
 
   on(event: string, handler: EventHandler): void {
