@@ -1,5 +1,7 @@
 import React from "react";
 import { Subtitle2 } from "@fluentui/react-components";
+import UserProfile from "./UserProfile";
+
 /**
  * @component
  * @name Header
@@ -14,6 +16,16 @@ type HeaderProps = {
   title?: string;
   subtitle?: string;
   children?: React.ReactNode;
+};
+
+// Determine once whether MSAL authentication is enabled, so the hooks inside
+// UserProfile (which require MsalProvider in the tree) are only mounted when safe.
+const isAuthEnabled = (): boolean => {
+  // window.appConfig is set in main.jsx after fetching /config
+  // Falls back to false when the config has not loaded or auth is disabled.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cfg = (typeof window !== "undefined" ? (window as any).appConfig : null);
+  return Boolean(cfg && cfg.ENABLE_AUTH);
 };
 
 const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }) => {
@@ -57,7 +69,16 @@ const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }
       </div>
 
       {/* HEADER TOOLBAR (rendered only if passed as a child) */}
-      {children}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        }}
+      >
+        {children}
+        {isAuthEnabled() && <UserProfile />}
+      </div>
     </header>
   );
 };
