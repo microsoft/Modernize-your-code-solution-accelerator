@@ -181,8 +181,6 @@ Ensures consistent query translation across the organization.
 
 ### Security guidelines
 
-This template uses Azure Key Vault for use by AI Foundry.
-
 This template uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for all Azure service communication.
 
 To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
