@@ -13,7 +13,11 @@ export default defineConfig({
       },
       '/config': {
         target: 'http://localhost:3000',
-        changeOrigin: true
+        changeOrigin: true,
+        // Only proxied when the Python frontend_server is running locally
+        configure: (proxy) => {
+          proxy.on('error', () => {});
+        }
       }
     }
   }

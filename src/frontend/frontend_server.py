@@ -1,5 +1,7 @@
 import asyncio
+import logging
 import os
+from contextlib import asynccontextmanager
 
 import httpx
 import uvicorn
@@ -7,17 +9,30 @@ import websockets
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 # Load environment variables from .env file
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+
 # Internal backend URL used by the server-side proxy.
 # The browser never contacts this URL directly.
 BACKEND_API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
 
-app = FastAPI()
+_proxy_client: httpx.AsyncClient | None = None
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global _proxy_client
+    _proxy_client = httpx.AsyncClient(timeout=300.0)
+    yield
+    await _proxy_client.aclose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,22 +106,36 @@ async def proxy_websocket(websocket: WebSocket, batch_id: str):
                     while True:
                         data = await websocket.receive_text()
                         await backend_ws.send(data)
-                except (WebSocketDisconnect, Exception):
-                    pass
+                except WebSocketDisconnect:
+                    logger.debug("Client disconnected from WebSocket proxy")
+                except Exception as exc:
+                    logger.warning("Error forwarding to backend WS: %s", exc)
 
             async def forward_to_client():
                 try:
                     async for message in backend_ws:
                         await websocket.send_text(message)
-                except (WebSocketDisconnect, Exception):
-                    pass
+                except WebSocketDisconnect:
+                    logger.debug("Client disconnected while forwarding from backend")
+                except Exception as exc:
+                    logger.warning("Error forwarding to client WS: %s", exc)
 
-            await asyncio.gather(forward_to_backend(), forward_to_client())
-    except Exception:
-        pass
+            tasks = [
+                asyncio.create_task(forward_to_backend()),
+                asyncio.create_task(forward_to_client()),
+            ]
+            # When one direction finishes, cancel the other
+            done, pending = await asyncio.wait(
+                tasks, return_when=asyncio.FIRST_COMPLETED
+            )
+            for task in pending:
+                task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+    except Exception as exc:
+        logger.error("WebSocket proxy error for batch %s: %s", batch_id, exc)
     finally:
         try:
-            await websocket.close()
+            await websocket.close(code=1000, reason="proxy closed")
         except Exception:
             pass
 
@@ -114,8 +143,6 @@ async def proxy_websocket(websocket: WebSocket, batch_id: str):
 # ---------------------------------------------------------------------------
 # Reverse proxy: HTTP  (all /api/* routes proxied to the internal backend)
 # ---------------------------------------------------------------------------
-
-_PROXY_CLIENT = httpx.AsyncClient(timeout=300.0)
 
 
 @app.api_route(
@@ -136,26 +163,27 @@ async def proxy_api(request: Request, path: str):
 
     body = await request.body()
 
-    response = await _PROXY_CLIENT.request(
+    response = await _proxy_client.request(
         method=request.method,
         url=target_url,
         headers=headers,
         content=body,
     )
 
-    # Strip hop-by-hop headers that must not be forwarded
+    # Strip hop-by-hop and content-encoding/length headers that must not be
+    # forwarded (httpx decodes content-encoding, so lengths may not match).
     excluded_headers = {
-        "content-encoding", "transfer-encoding", "connection",
-        "keep-alive", "proxy-authenticate", "proxy-authorization",
-        "te", "trailers", "upgrade",
+        "content-encoding", "content-length", "transfer-encoding",
+        "connection", "keep-alive", "proxy-authenticate",
+        "proxy-authorization", "te", "trailers", "upgrade",
     }
     forwarded_headers = {
         k: v for k, v in response.headers.items()
         if k.lower() not in excluded_headers
     }
 
-    return Response(
-        content=response.content,
+    return StreamingResponse(
+        content=response.iter_bytes(),
         status_code=response.status_code,
         headers=forwarded_headers,
     )
