@@ -58,13 +58,13 @@ async def serve_index():
 
 
 @app.get("/config")
-async def get_config():
+async def get_config(request: Request):
+    # The browser receives the frontend's own origin as the API base so that
+    # all /api/* requests (including /api/health) route through the frontend
+    # reverse proxy rather than hitting the internal backend directly.
+    browser_api_url = str(request.base_url).rstrip("/")
     config = {
-        # Return empty string so the browser uses relative /api/* paths
-        # which are proxied server-side to BACKEND_API_URL. This ensures
-        # backend Container Apps with internal-only ingress are never
-        # contacted directly from the browser.
-        "API_URL": "",
+        "API_URL": browser_api_url,
         "REACT_APP_MSAL_AUTH_CLIENTID": os.getenv(
             "REACT_APP_MSAL_AUTH_CLIENTID", "Client ID not set"
         ),
@@ -133,7 +133,11 @@ async def proxy_websocket(websocket: WebSocket, batch_id: str):
             await asyncio.gather(*pending, return_exceptions=True)
     except Exception as exc:
         logger.error("WebSocket proxy error for batch %s: %s", batch_id, exc)
-    finally:
+        try:
+            await websocket.close(code=1011, reason="backend connection error")
+        except Exception:
+            pass
+    else:
         try:
             await websocket.close(code=1000, reason="proxy closed")
         except Exception:

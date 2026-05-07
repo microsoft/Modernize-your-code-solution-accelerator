@@ -10,14 +10,6 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-      },
-      '/config': {
-        target: 'http://localhost:3000',
-        changeOrigin: true,
-        // Only proxied when the Python frontend_server is running locally
-        configure: (proxy) => {
-          proxy.on('error', () => {});
-        }
       }
     }
   }
