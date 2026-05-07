@@ -6,19 +6,19 @@
       "value": "${AZURE_ENV_NAME}"
     },
     "location": {
-      "value": "${AZURE_LOCATION23}"
+      "value": "${AZURE_LOCATION}"
     },
     "deploymentType": {
       "value": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}"
     },
-    "gptModelNa23me": {
+    "gptModelName": {
       "value": "${AZURE_ENV_GPT_MODEL_NAME}"
     },
-    "gptDeploymentCapacity23": {
+    "gptDeploymentCapacity": {
       "value": "${AZURE_ENV_GPT_MODEL_CAPACITY}"
     },
     "gptModelVersion": {
-      "value": "${AZURE_ENV_GPT_MODEL_VERSION23}"
+      "value": "${AZURE_ENV_GPT_MODEL_VERSION}"
     },
     "imageTag": {
       "value": "${AZURE_ENV_IMAGE_TAG=latest}"

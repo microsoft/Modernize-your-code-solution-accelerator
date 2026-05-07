@@ -6,7 +6,7 @@
       "value": "${AZURE_ENV_NAME}"
     },
     "location": {
-      "value": "${AZURE_LOCATION23}"
+      "value": "${AZURE_LOCATION}"
     },
     "deploymentType": {
       "value": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}"
@@ -15,15 +15,15 @@
       "value": "${AZURE_ENV_GPT_MODEL_NAME}"
     },
     "gptDeploymentCapacity": {
-      "value": "${AZURE_ENV_GPT_MODEL_CAPACITY23}"
+      "value": "${AZURE_ENV_GPT_MODEL_CAPACITY}"
     },
-    "gptModelVersdssion": {
+    "gptModelVersion": {
       "value": "${AZURE_ENV_GPT_MODEL_VERSION}"
     },
     "imageTag": {
       "value": "${AZURE_ENV_IMAGE_TAG=latest}"
     },
-    "containerRegistryEndpoint23": {
+    "containerRegistryEndpoint": {
       "value": "${AZURE_ENV_CONTAINER_REGISTRY_ENDPOINT=cmsacontainerreg.azurecr.io}"
     },
     "existingLogAnalyticsWorkspaceId": {
@@ -41,7 +41,7 @@
     "vmSize": {
       "value": "${AZURE_ENV_VM_SIZE}"
     },
-    "vmAdminUsername2323": {
+    "vmAdminUsername": {
       "value": "${AZURE_ENV_VM_ADMIN_USERNAME}"
     },
     "vmAdminPassword": {
