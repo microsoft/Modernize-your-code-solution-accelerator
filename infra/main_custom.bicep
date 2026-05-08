@@ -317,7 +317,6 @@ var privateDnsZones = [
   'privatelink.openai.azure.com'
   'privatelink.services.ai.azure.com'
   'privatelink.documents.azure.com'
-  'privatelink.vaultcore.azure.net'
   'privatelink.blob.${environment().suffixes.storage}'
   'privatelink.file.${environment().suffixes.storage}'
 ]
@@ -328,9 +327,8 @@ var dnsZoneIndex = {
   openAI: 1
   aiServices: 2
   cosmosDB: 3
-  keyVault: 4
-  storageBlob: 5
-  storageFile: 6
+  storageBlob: 4
+  storageFile: 5
 }
 
 // ===================================================
@@ -794,34 +792,6 @@ resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-
     principalId: appIdentity.outputs.principalId
     principalType: 'ServicePrincipal'
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d') // AcrPull
-  }
-}
-
-module keyVault 'modules/keyVault.bicep' = {
-  name: take('module.keyVault.${solutionSuffix}', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
-  params: {
-    name: take('kv-${solutionSuffix}', 24)
-    location: location
-    sku: 'standard'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    privateNetworking: enablePrivateNetworking
-      ? {
-          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.keyVault]!.outputs.resourceId
-        }
-      : null
-    roleAssignments: [
-      {
-        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? appIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Administrator'
-      }
-    ]
-    tags: allTags
-    enableTelemetry: enableTelemetry
   }
 }
 
