@@ -64,7 +64,7 @@ const UserProfile: React.FC = () => {
   return (
     <Menu positioning="below-end">
       <MenuTrigger disableButtonEnhancement>
-        <Tooltip content={email || name} relationship="label">
+        <Tooltip content={`Signed in as ${name}`} relationship="label">
           <Button
             appearance="subtle"
             shape="circular"
