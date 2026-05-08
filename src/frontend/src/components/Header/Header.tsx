@@ -20,15 +20,17 @@ type HeaderProps = {
 
 // Determine once whether MSAL authentication is enabled, so the hooks inside
 // UserProfile (which require MsalProvider in the tree) are only mounted when safe.
+// window.appConfig is set in main.jsx after fetching /config; falls back to
+// false when the config has not loaded or auth is disabled.
 const isAuthEnabled = (): boolean => {
-  // window.appConfig is set in main.jsx after fetching /config
-  // Falls back to false when the config has not loaded or auth is disabled.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const cfg = (typeof window !== "undefined" ? (window as any).appConfig : null);
-  return Boolean(cfg && cfg.ENABLE_AUTH);
+  if (typeof window === "undefined") return false;
+  return Boolean(window.appConfig && window.appConfig.ENABLE_AUTH);
 };
 
 const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }) => {
+  const authEnabled = isAuthEnabled();
+  const hasToolbarContent = React.Children.count(children) > 0 || authEnabled;
+
   return (
     <header
       style={{
@@ -68,17 +70,20 @@ const Header: React.FC<HeaderProps> = ({ title = "Contoso", subtitle, children }
         </Subtitle2>
       </div>
 
-      {/* HEADER TOOLBAR (rendered only if passed as a child) */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        {children}
-        {isAuthEnabled() && <UserProfile />}
-      </div>
+      {/* HEADER TOOLBAR (rendered only when there is toolbar content
+          or the auth-enabled user profile menu to display) */}
+      {hasToolbarContent && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          {children}
+          {authEnabled && <UserProfile />}
+        </div>
+      )}
     </header>
   );
 };
