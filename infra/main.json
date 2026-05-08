@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.43.8.12551",
-      "templateHash": "4572051835005912799"
+      "templateHash": "10586044166511921089"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -13103,11 +13103,11 @@
       },
       "dependsOn": [
         "applicationInsights",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -32421,9 +32421,9 @@
       },
       "dependsOn": [
         "aiServices",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "virtualNetwork"
       ]
     },
@@ -40888,8 +40888,8 @@
       },
       "dependsOn": [
         "appIdentity",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
@@ -51099,7 +51099,7 @@
           "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsWorkspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value), 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, reference('logAnalyticsWorkspace').outputs.logAnalyticsWorkspaceId.value), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2025-07-01').primarySharedKey, listOutputsWithSecureValues('logAnalyticsWorkspace', '2025-04-01').primarySharedKey)))), createObject('value', null()))]",
           "workloadProfiles": "[if(parameters('enablePrivateNetworking'), createObject('value', createArray(createObject('name', 'Consumption', 'workloadProfileType', 'Consumption'))), createObject('value', createArray()))]",
           "tags": {
-            "value": "[shallowMerge(createArray(resourceGroup().tags, variables('allTags'), createObject('TemplateName', 'Code Modernization', 'Type', if(parameters('enablePrivateNetworking'), 'WAF', 'Non-WAF'), 'CreatedBy', parameters('createdBy'), 'DeploymentName', deployment().name)))]"
+            "value": "[shallowMerge(createArray(resourceGroup().tags, variables('existingTags'), variables('allTags'), parameters('tags')))]"
           },
           "enableTelemetry": {
             "value": "[parameters('enableTelemetry')]"
