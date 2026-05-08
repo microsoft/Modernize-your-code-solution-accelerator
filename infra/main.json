@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.39.26.7824",
-      "templateHash": "4809612702927835067"
+      "version": "0.43.8.12551",
+      "templateHash": "4572051835005912799"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -5095,8 +5095,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "15009691488369627296"
+              "version": "0.43.8.12551",
+              "templateHash": "14487392921976794826"
             }
           },
           "definitions": {
@@ -13104,9 +13104,9 @@
       "dependsOn": [
         "applicationInsights",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
@@ -26170,8 +26170,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "11834228529475584401"
+              "version": "0.43.8.12551",
+              "templateHash": "14906568425252680703"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -27507,8 +27507,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.39.26.7824",
-                      "templateHash": "16634905127625208251"
+                      "version": "0.43.8.12551",
+                      "templateHash": "16530911718603724547"
                     }
                   },
                   "definitions": {
@@ -28484,7 +28484,7 @@
                       "condition": "[and(not(empty(coalesce(parameters('lock'), createObject()))), not(equals(tryGet(parameters('lock'), 'kind'), 'None')))]",
                       "type": "Microsoft.Authorization/locks",
                       "apiVersion": "2020-05-01",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(parameters('lock'), 'name'), format('lock-{0}', parameters('name')))]",
                       "properties": {
                         "level": "[coalesce(tryGet(parameters('lock'), 'kind'), '')]",
@@ -28498,7 +28498,7 @@
                       },
                       "type": "Microsoft.Insights/diagnosticSettings",
                       "apiVersion": "2021-05-01-preview",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(coalesce(parameters('diagnosticSettings'), createArray())[copyIndex()], 'name'), format('{0}-diagnosticSettings', parameters('name')))]",
                       "properties": {
                         "copy": [
@@ -28536,7 +28536,7 @@
                       },
                       "type": "Microsoft.Authorization/roleAssignments",
                       "apiVersion": "2022-04-01",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()], 'name'), guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].principalId, coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].roleDefinitionId))]",
                       "properties": {
                         "roleDefinitionId": "[coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].roleDefinitionId]",
@@ -29243,8 +29243,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.39.26.7824",
-                              "templateHash": "15137713459703311595"
+                              "version": "0.43.8.12551",
+                              "templateHash": "6748139957584741236"
                             }
                           },
                           "definitions": {
@@ -29397,8 +29397,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.39.26.7824",
-                              "templateHash": "12656937822859269391"
+                              "version": "0.43.8.12551",
+                              "templateHash": "9014582203949799641"
                             }
                           },
                           "definitions": {
@@ -29615,8 +29615,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.39.26.7824",
-                      "templateHash": "16634905127625208251"
+                      "version": "0.43.8.12551",
+                      "templateHash": "16530911718603724547"
                     }
                   },
                   "definitions": {
@@ -30592,7 +30592,7 @@
                       "condition": "[and(not(empty(coalesce(parameters('lock'), createObject()))), not(equals(tryGet(parameters('lock'), 'kind'), 'None')))]",
                       "type": "Microsoft.Authorization/locks",
                       "apiVersion": "2020-05-01",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(parameters('lock'), 'name'), format('lock-{0}', parameters('name')))]",
                       "properties": {
                         "level": "[coalesce(tryGet(parameters('lock'), 'kind'), '')]",
@@ -30606,7 +30606,7 @@
                       },
                       "type": "Microsoft.Insights/diagnosticSettings",
                       "apiVersion": "2021-05-01-preview",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(coalesce(parameters('diagnosticSettings'), createArray())[copyIndex()], 'name'), format('{0}-diagnosticSettings', parameters('name')))]",
                       "properties": {
                         "copy": [
@@ -30644,7 +30644,7 @@
                       },
                       "type": "Microsoft.Authorization/roleAssignments",
                       "apiVersion": "2022-04-01",
-                      "scope": "[format('Microsoft.CognitiveServices/accounts/{0}', parameters('name'))]",
+                      "scope": "[resourceId('Microsoft.CognitiveServices/accounts', parameters('name'))]",
                       "name": "[coalesce(tryGet(coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()], 'name'), guid(resourceId('Microsoft.CognitiveServices/accounts', parameters('name')), coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].principalId, coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].roleDefinitionId))]",
                       "properties": {
                         "roleDefinitionId": "[coalesce(variables('formattedRoleAssignments'), createArray())[copyIndex()].roleDefinitionId]",
@@ -31351,8 +31351,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.39.26.7824",
-                              "templateHash": "15137713459703311595"
+                              "version": "0.43.8.12551",
+                              "templateHash": "6748139957584741236"
                             }
                           },
                           "definitions": {
@@ -31505,8 +31505,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.39.26.7824",
-                              "templateHash": "12656937822859269391"
+                              "version": "0.43.8.12551",
+                              "templateHash": "9014582203949799641"
                             }
                           },
                           "definitions": {
@@ -32421,9 +32421,9 @@
       },
       "dependsOn": [
         "aiServices",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "virtualNetwork"
       ]
     },
@@ -32479,8 +32479,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "78196139117756556"
+              "version": "0.43.8.12551",
+              "templateHash": "12228537903958998388"
             }
           },
           "definitions": {
@@ -40938,8 +40938,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "7162569703426678426"
+              "version": "0.43.8.12551",
+              "templateHash": "17453447807793095031"
             }
           },
           "definitions": {
@@ -44801,8 +44801,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "13948751655369256846"
+              "version": "0.43.8.12551",
+              "templateHash": "15722739321567421405"
             }
           },
           "definitions": {
@@ -51099,7 +51099,7 @@
           "appLogsConfiguration": "[if(parameters('enableMonitoring'), createObject('value', createObject('destination', 'log-analytics', 'logAnalyticsWorkspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value), 'logAnalyticsConfiguration', createObject('customerId', if(variables('useExistingLogAnalytics'), reference('existingLogAnalyticsWorkspace').customerId, reference('logAnalyticsWorkspace').outputs.logAnalyticsWorkspaceId.value), 'sharedKey', if(variables('useExistingLogAnalytics'), listKeys('existingLogAnalyticsWorkspace', '2025-07-01').primarySharedKey, listOutputsWithSecureValues('logAnalyticsWorkspace', '2025-04-01').primarySharedKey)))), createObject('value', null()))]",
           "workloadProfiles": "[if(parameters('enablePrivateNetworking'), createObject('value', createArray(createObject('name', 'Consumption', 'workloadProfileType', 'Consumption'))), createObject('value', createArray()))]",
           "tags": {
-            "value": "[shallowMerge(createArray(resourceGroup().tags, variables('allTags')))]"
+            "value": "[shallowMerge(createArray(resourceGroup().tags, variables('allTags'), createObject('TemplateName', 'Code Modernization', 'Type', if(parameters('enablePrivateNetworking'), 'WAF', 'Non-WAF'), 'CreatedBy', parameters('createdBy'), 'DeploymentName', deployment().name)))]"
           },
           "enableTelemetry": {
             "value": "[parameters('enableTelemetry')]"

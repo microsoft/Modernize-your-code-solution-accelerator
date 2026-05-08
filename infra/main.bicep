@@ -946,6 +946,10 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.
     tags: {
       ...resourceGroup().tags
       ...allTags
+      TemplateName: 'Code Modernization'
+      Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
+      CreatedBy: createdBy
+      DeploymentName: deployment().name
     }
     enableTelemetry: enableTelemetry
   }
