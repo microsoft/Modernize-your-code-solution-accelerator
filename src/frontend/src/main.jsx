@@ -6,7 +6,7 @@ import { FluentProvider, webLightTheme } from '@fluentui/react-components';
 import { Provider } from 'react-redux';
 import { store } from './store/store';
 import AuthProvider from './msal-auth/AuthProvider';
-import { setEnvData, setApiUrl, config as defaultConfig } from './api/config';
+import { setEnvData, setApiUrl, getApiUrl, config as defaultConfig } from './api/config';
 import { initializeMsalInstance } from './msal-auth/msalInstance';
 
 const Main = () => {
@@ -47,10 +47,10 @@ const Main = () => {
   async function checkConnection() {
     if (!config) return;
 
-    const baseURL = config.API_URL.replace(/\/api$/, ''); // Remove '/api' if it appears at the end
-    console.log('Checking connection to:', baseURL);
+    const healthUrl = `${getApiUrl()}/health`;
+    console.log('Checking connection to:', healthUrl);
     try {
-      await fetch(`${baseURL}/health`);
+      await fetch(healthUrl);
     } catch (error) {
       console.error('Error connecting to backend:', error);
     }

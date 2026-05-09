@@ -12,10 +12,41 @@ export let config = {
   ENABLE_AUTH: false,
 };
 
-export function setApiUrl(url) {
-  if (url) {
-    API_URL = `${url}/api`;
+function resolveBrowserApiUrl(url) {
+  if (!url || typeof url !== "string") {
+    return null;
   }
+
+  const trimmedUrl = url.trim();
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  const normalizedInput = trimmedUrl.replace(/\/+$/, "");
+
+  try {
+    const parsed = new URL(normalizedInput, window.location.origin);
+
+    if (parsed.origin !== window.location.origin) {
+      const backendIsLocal = parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1";
+      const browserIsLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+      // In deployed environments, enforce same-origin API access so requests
+      // flow through the frontend reverse proxy instead of direct backend calls.
+      if (!(backendIsLocal && browserIsLocal)) {
+        return null;
+      }
+    }
+
+    const normalizedParsed = parsed.toString().replace(/\/+$/, "");
+    return normalizedParsed.endsWith("/api") ? normalizedParsed : `${normalizedParsed}/api`;
+  } catch {
+    return null;
+  }
+}
+
+export function setApiUrl(url) {
+  API_URL = resolveBrowserApiUrl(url);
 }
 
 export function setEnvData(configData) {
@@ -49,8 +80,11 @@ export function getApiUrl() {
   }
 
   if (!API_URL) {
-    console.warn('API URL not yet configured');
-    return null;
+    // API_URL is not configured (e.g. WAF deployment where the backend is
+    // internal-only). Fall back to the browser's own origin so that all
+    // /api/* requests are routed through the frontend server's reverse proxy
+    // instead of attempting to reach the internal backend URL directly.
+    return `${window.location.origin}/api`;
   }
 
   return API_URL;
