@@ -363,14 +363,16 @@ jobs:
           if [ "$rg_exists" = "false" ]; then
             echo "📦 Resource group does not exist. Creating new resource group '$RESOURCE_GROUP_NAME' in location '$AZURE_LOCATION'..."
             RG_TAGS="${{ env.RG_TAGS }}"
+            echo "🏷️  Adding owner tag: owner=${{ github.actor }}"
             if [ -n "$RG_TAGS" ]; then
-              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags "$RG_TAGS" || { echo "❌ Error creating resource group"; exit 1; }
+              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags $RG_TAGS "owner=${{ github.actor }}" || { echo "❌ Error creating resource group"; exit 1; }
             else
-              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION || { echo "❌ Error creating resource group"; exit 1; }
+              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags "owner=${{ github.actor }}" || { echo "❌ Error creating resource group"; exit 1; }
             fi
             echo "✅ Resource group '$RESOURCE_GROUP_NAME' created successfully."
           else
-            echo "✅ Resource group '$RESOURCE_GROUP_NAME' already exists. Deploying to existing resource group."
+            echo "✅ Resource group '$RESOURCE_GROUP_NAME' already exists. Updating owner tag to '${{ github.actor }}'."
+            az group update --name "$RESOURCE_GROUP_NAME" --set tags.owner="${{ github.actor }}" >/dev/null || echo "⚠️  Warning: failed to update owner tag on existing resource group."
           fi
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV

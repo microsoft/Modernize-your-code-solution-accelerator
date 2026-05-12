@@ -175,6 +175,13 @@ jobs:
                   <div style="background:#fff5f5; border-radius:8px; padding:14px 20px; margin-bottom:24px; border-left:4px solid #ef4444;">
                     <span style="font-size:13px; color:#742a2a;">Please resolve the quota issue and retry the deployment.</span>
                   </div>
+                  <h3 style="margin:0 0 14px; font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:#6b7280; border-bottom:2px solid #e5e7eb; padding-bottom:8px;">Deployment Details</h3>
+                  <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280; width:140px;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
+                  </table>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0;">
                     <a href="${RUN_URL}" style="display:inline-block; background:#dc2626; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:4px; font-size:13px; font-weight:600; letter-spacing:0.3px;">VIEW PIPELINE RUN</a>
                   </td></tr></table>
@@ -248,6 +255,10 @@ jobs:
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280; width:140px;">Resource Group</td>
                         <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${RESOURCE_GROUP}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
                   </table>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0;">
                     <a href="${RUN_URL}" style="display:inline-block; background:#dc2626; color:#ffffff; text-decoration:none; padding:12px 28px; border-radius:4px; font-size:13px; font-weight:600; letter-spacing:0.3px;">INVESTIGATE FAILURE</a>
@@ -337,6 +348,10 @@ jobs:
                         <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${RESOURCE_GROUP}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Web App URL</td>
                         <td style="padding:8px 0; font-size:13px;"><a href="${WEBAPP_URL}" style="color:#2563eb; text-decoration:none; font-family:'Cascadia Code','Courier New',monospace;">${WEBAPP_URL}</a></td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
                     ${TEST_DETAIL_ROWS}
                   </table>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:8px 0;">
@@ -417,6 +432,10 @@ jobs:
                         <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${RESOURCE_GROUP}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Web App URL</td>
                         <td style="padding:8px 0; font-size:13px;"><a href="${WEBAPP_URL}" style="color:#2563eb; text-decoration:none; font-family:'Cascadia Code','Courier New',monospace;">${WEBAPP_URL}</a></td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Test Suite</td>
                         <td style="padding:8px 0; font-size:13px; color:#111827;">${TEST_SUITE_NAME}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Test Report</td>
@@ -500,6 +519,10 @@ jobs:
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280; width:140px;">Target URL</td>
                         <td style="padding:8px 0; font-size:13px;"><a href="${EXISTING_URL}" style="color:#2563eb; text-decoration:none; font-family:'Cascadia Code','Courier New',monospace;">${EXISTING_URL}</a></td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Test Suite</td>
                         <td style="padding:8px 0; font-size:13px; color:#111827;">${TEST_SUITE_NAME}</td></tr>
                     ${REPORT_ROW}
@@ -582,6 +605,10 @@ jobs:
                   <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280; width:140px;">Target URL</td>
                         <td style="padding:8px 0; font-size:13px;"><a href="${EXISTING_URL}" style="color:#2563eb; text-decoration:none; font-family:'Cascadia Code','Courier New',monospace;">${EXISTING_URL}</a></td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Triggered By</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827;">${{ github.actor }}</td></tr>
+                    <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Branch</td>
+                        <td style="padding:8px 0; font-size:13px; color:#111827; font-family:'Cascadia Code','Courier New',monospace;">${{ env.BRANCH_NAME }}</td></tr>
                     <tr><td style="padding:8px 0; font-size:13px; color:#6b7280;">Test Suite</td>
                         <td style="padding:8px 0; font-size:13px; color:#111827;">${TEST_SUITE_NAME}</td></tr>
                     ${REPORT_ROW}
