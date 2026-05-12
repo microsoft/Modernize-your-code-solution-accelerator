@@ -152,7 +152,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Failed &mdash; Insufficient Quota</h1>
@@ -163,7 +163,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>The <strong>${ACCELERATOR_NAME}</strong> deployment has <span style="color:#dc2626; font-weight:700;">failed due to insufficient quota</span>.</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>The <strong>${ACCELERATOR_NAME}</strong> deployment has <span style="color:#dc2626; font-weight:700;">failed due to insufficient quota</span>.</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
@@ -228,7 +228,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Failed</h1>
@@ -239,7 +239,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>The <strong>${ACCELERATOR_NAME}</strong> deployment has <span style="color:#dc2626; font-weight:700;">failed</span>. Please investigate at your earliest convenience.</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>The <strong>${ACCELERATOR_NAME}</strong> deployment has <span style="color:#dc2626; font-weight:700;">failed</span>. Please investigate at your earliest convenience.</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
@@ -322,7 +322,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#10b981; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Succeeded</h1>
@@ -333,7 +333,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>${INTRO}</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>${INTRO}</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
@@ -406,7 +406,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">E2E Tests Failed</h1>
@@ -417,7 +417,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>The <strong>${ACCELERATOR_NAME}</strong> test automation has <span style="color:#dc2626; font-weight:700;">failed</span>. Please investigate at your earliest convenience.</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>The <strong>${ACCELERATOR_NAME}</strong> test automation has <span style="color:#dc2626; font-weight:700;">failed</span>. Please investigate at your earliest convenience.</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
@@ -495,7 +495,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#10b981; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Succeeded</h1>
@@ -506,7 +506,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>The <strong>${ACCELERATOR_NAME}</strong> pipeline executed against the specified Target URL and test automation has completed successfully.</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>The <strong>${ACCELERATOR_NAME}</strong> pipeline executed against the specified Target URL and test automation has completed successfully.</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
@@ -581,7 +581,7 @@ jobs:
           BODY_HTML=$(cat <<HTML
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.08);">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">E2E Tests Failed</h1>
@@ -592,7 +592,7 @@ jobs:
                   </tr></table>
                 </td></tr>
                 <tr><td style="padding:32px 40px;">
-                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br><br>The <strong>${ACCELERATOR_NAME}</strong> pipeline executed against the specified Target URL and test automation has <span style="color:#dc2626; font-weight:700;">failed</span>.</p>
+                  <p style="color:#374151; font-size:14px; line-height:1.7; margin:0 0 28px;">Dear Team,<br>The <strong>${ACCELERATOR_NAME}</strong> pipeline executed against the specified Target URL and test automation has <span style="color:#dc2626; font-weight:700;">failed</span>.</p>
                   <div style="background:#f8f9fb; border-radius:8px; padding:20px; margin-bottom:24px;">
                     <h3 style="margin:0 0 16px; color:#1a1a2e; font-size:14px; text-transform:uppercase; letter-spacing:0.5px;">Status Summary</h3>
                     <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">
