@@ -23,7 +23,7 @@ on:
           - 'Local'
         default: 'codespace'
       azure_location:
-        description: 'Azure Location For Deployment'
+        description: 'Azure Region (Non-AI Services)'
         required: false
         default: 'australiaeast'
         type: choice
@@ -41,28 +41,29 @@ on:
         required: false
         default: ''
         type: string
-      waf_enabled:
-        description: 'Enable WAF'
+      
+      build_docker_image:
+        description: 'Build & Use Custom Images (Optional)'
         required: false
         default: false
         type: boolean
-      enable_scalability:
-        description: 'Enable Scalability (only applies when WAF is enabled)'
+      waf_enabled:
+        description: 'Deploy WAF'
         required: false
         default: false
         type: boolean
       EXP:
-        description: 'Enable EXP'
+        description: 'Deploy EXP'
         required: false
         default: false
         type: boolean
-      build_docker_image:
-        description: 'Build & Push Docker Image (Optional)'
+      enable_scalability:
+        description: 'Enable Scalability'
         required: false
         default: false
         type: boolean
       cleanup_resources:
-        description: 'Cleanup Deployed Resources'
+        description: 'Auto Delete RG'
         required: false
         default: false
         type: boolean
@@ -76,12 +77,12 @@ on:
           - 'Smoke-Testing'
           - 'None'
       AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID:
-        description: 'Log Analytics Workspace Resource ID (Optional)'
+        description: 'Existing Log Analytics Workspace Resource ID (Optional)'
         required: false
         default: ''
         type: string
       AZURE_EXISTING_AIPROJECT_RESOURCE_ID:
-        description: 'Foundry Project Resource ID (Optional)'
+        description: 'Existing AI Project Resource ID (Optional)'
         required: false
         default: ''
         type: string
