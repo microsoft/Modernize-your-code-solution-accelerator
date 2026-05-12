@@ -28,6 +28,10 @@ on:
         required: false
         type: string
         default: 'false'
+      ENABLE_SCALABILITY:
+        required: false
+        type: string
+        default: 'false'
       AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID:
         required: false
         type: string
@@ -188,10 +192,16 @@ jobs:
         shell: bash
         env: 
           INPUT_WAF_ENABLED: ${{ inputs.WAF_ENABLED }}
+          INPUT_ENABLE_SCALABILITY: ${{ inputs.ENABLE_SCALABILITY }}
         run: |
           if [[ "$INPUT_WAF_ENABLED" == "true" ]]; then
             cp infra/main.waf.parameters.json infra/main.parameters.json
             echo "✅ Successfully copied WAF parameters to main parameters file"
+            SCALABILITY_VALUE="${INPUT_ENABLE_SCALABILITY:-false}"
+            echo "🔧 Setting enableScalability=${SCALABILITY_VALUE} in main.parameters.json"
+            tmpfile=$(mktemp)
+            jq --argjson v "$SCALABILITY_VALUE" '.parameters.enableScalability.value = $v' infra/main.parameters.json > "$tmpfile" && mv "$tmpfile" infra/main.parameters.json
+            echo "✅ enableScalability set to ${SCALABILITY_VALUE}"
           else
             echo "🔧 Configuring Non-WAF deployment - using default main.parameters.json..."
           fi
