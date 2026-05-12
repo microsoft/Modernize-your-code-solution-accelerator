@@ -331,7 +331,6 @@ var privateDnsZones = [
   'privatelink.openai.azure.com'
   'privatelink.services.ai.azure.com'
   'privatelink.documents.azure.com'
-  'privatelink.vaultcore.azure.net'
   'privatelink.blob.${environment().suffixes.storage}'
   'privatelink.file.${environment().suffixes.storage}'
   'privatelink.monitor.azure.com'                       // Azure Monitor global endpoints (App Insights, DCE)
@@ -346,13 +345,12 @@ var dnsZoneIndex = {
   openAI: 1
   aiServices: 2
   cosmosDB: 3
-  keyVault: 4
-  storageBlob: 5
-  storageFile: 6
-  monitor: 7
-  oms: 8
-  ods: 9
-  agentSvc: 10
+  storageBlob: 4
+  storageFile: 5
+  monitor: 6
+  oms: 7
+  ods: 8
+  agentSvc: 9
 }
 
 // ===================================================
@@ -850,34 +848,6 @@ module storageAccount 'modules/storageAccount.bicep' = {
         roleDefinitionIdOrName: 'Storage Blob Data Contributor'
       }
     ]
-    enableTelemetry: enableTelemetry
-  }
-}
-
-module keyVault 'modules/keyVault.bicep' = {
-  name: take('module.keyVault.${solutionSuffix}', 64)
-  #disable-next-line no-unnecessary-dependson
-  dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
-  params: {
-    name: take('kv-${solutionSuffix}', 24)
-    location: location
-    sku: 'standard'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    privateNetworking: enablePrivateNetworking
-      ? {
-          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.keyVault]!.outputs.resourceId
-        }
-      : null
-    roleAssignments: [
-      {
-        principalId: aiServices.outputs.?systemAssignedMIPrincipalId ?? appIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Key Vault Administrator'
-      }
-    ]
-    tags: allTags
     enableTelemetry: enableTelemetry
   }
 }
