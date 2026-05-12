@@ -31,11 +31,13 @@ on:
           - 'australiaeast'
           - 'centralus'
           - 'eastasia'
+          - 'eastus'
           - 'eastus2'
           - 'japaneast'
           - 'northeurope'
           - 'southeastasia'
           - 'uksouth'
+          - 'westeurope'
       resource_group_name:
         description: 'Resource Group Name (Optional)'
         required: false
@@ -87,7 +89,7 @@ on:
         default: ''
         type: string
       existing_webapp_url:
-        description: 'Existing Container WebApp URL (Skips Deployment)'
+        description: 'Run Tests Against Existing RG (Provide Web App URL)'
         required: false
         default: ''
         type: string
