@@ -150,9 +150,9 @@ jobs:
           E2E_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x23ED;&#xFE0F; SKIPPED</span>"
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Failed &mdash; Insufficient Quota</h1>
@@ -226,9 +226,9 @@ jobs:
           E2E_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x23ED;&#xFE0F; SKIPPED</span>"
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Failed</h1>
@@ -320,9 +320,9 @@ jobs:
           fi
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#10b981; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Succeeded</h1>
@@ -404,9 +404,9 @@ jobs:
           E2E_PILL="<span style=\"${PILL_BASE} background:#f8d7da; color:#721c24;\">&#x274C; FAILED</span>"
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">E2E Tests Failed</h1>
@@ -493,9 +493,9 @@ jobs:
           fi
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#10b981; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">Pipeline Succeeded</h1>
@@ -579,9 +579,9 @@ jobs:
           fi
 
           BODY_HTML=$(cat <<HTML
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#1a1a2e; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#ffffff; padding:40px 20px; font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
             <tr><td align="center">
-              <table role="presentation" width="640" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
+              <table role="presentation" width="800" cellpadding="0" cellspacing="0" style="background-color:#ffffff; border-radius:8px; overflow:hidden;">
                 <tr><td style="background-color:#ef4444; padding:24px 40px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td><h1 style="margin:0; color:#ffffff; font-size:20px; font-weight:700;">E2E Tests Failed</h1>

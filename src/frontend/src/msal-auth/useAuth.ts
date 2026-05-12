@@ -76,9 +76,9 @@ const useAuth = () => {
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     if (!msalInstance) {
-      console.error("MSAL Instance is not available for sign out.");
+      console.error("MSAL Instance is not available for logout.");
       return;
     }
 
@@ -89,10 +89,10 @@ const useAuth = () => {
         });
         localStorage.removeItem('token');
       } else {
-        console.warn("No active account found for sign out.");
+        console.warn("No active account found for logout.");
       }
     } catch (error) {
-      console.error("Sign out failed:", error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -130,7 +130,7 @@ const useAuth = () => {
   return {
     isAuthenticated,
     login,
-    signOut,
+    logout,
     user,
     accounts,
     inProgress,
