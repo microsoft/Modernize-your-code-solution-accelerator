@@ -913,7 +913,12 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.
           }
         ]
       : []
-    tags: allTags
+    tags: {
+      ...resourceGroup().tags
+      ...existingTags
+      ...allTags
+      ...tags
+    }
     enableTelemetry: enableTelemetry
   }
 }
