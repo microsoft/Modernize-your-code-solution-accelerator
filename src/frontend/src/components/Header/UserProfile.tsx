@@ -19,7 +19,7 @@ import useAuth from "../../msal-auth/useAuth";
 /**
  * @component UserProfile
  * @description Renders an avatar in the header. Clicking opens a menu showing
- *   the signed-in user's name and email along with a Logout option.
+ *   the signed-in user's name and email along with a Sign out option.
  *   Designed to be rendered only when MSAL authentication is enabled.
  */
 const getInitials = (name?: string, username?: string): string => {
@@ -45,7 +45,7 @@ const getInitials = (name?: string, username?: string): string => {
 };
 
 const UserProfile: React.FC = () => {
-  const { isAuthenticated, accounts, logout } = useAuth();
+  const { isAuthenticated, accounts, signOut } = useAuth();
 
   if (!isAuthenticated || !accounts || accounts.length === 0) {
     return null;
@@ -56,9 +56,9 @@ const UserProfile: React.FC = () => {
   const email = account?.username || "";
   const initials = getInitials(account?.name, account?.username);
 
-  const handleLogout = (e: React.MouseEvent) => {
+  const handleSignOut = (e: React.MouseEvent) => {
     e.stopPropagation();
-    logout();
+    signOut();
   };
 
   return (
@@ -124,8 +124,8 @@ const UserProfile: React.FC = () => {
             </div>
           </MenuItem>
           <MenuDivider />
-          <MenuItem icon={<SignOut20Regular />} onClick={handleLogout}>
-            Logout
+          <MenuItem icon={<SignOut20Regular />} onClick={handleSignOut}>
+            Sign out
           </MenuItem>
         </MenuList>
       </MenuPopover>
