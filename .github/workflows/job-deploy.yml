@@ -367,7 +367,7 @@ jobs:
           rg_exists=$(az group exists --name $RESOURCE_GROUP_NAME)
           if [ "$rg_exists" = "false" ]; then
             echo "📦 Resource group does not exist. Creating new resource group '$RESOURCE_GROUP_NAME' in location '$AZURE_LOCATION'..."
-            RG_TAGS="${{ env.RG_TAGS }}"
+            RG_TAGS="${{ vars.RG_TAGS }}"
             echo "🏷️  Adding owner tag: Owner=${{ github.actor }}"
             if [ -n "$RG_TAGS" ]; then
               az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags $RG_TAGS "Owner=${{ github.actor }}" || { echo "❌ Error creating resource group"; exit 1; }

@@ -302,10 +302,14 @@ jobs:
           CLEANUP_PILL: ${{ steps.cleanup.outputs.CLEANUP_PILL }}
           TEST_SUITE_NAME: ${{ steps.test_suite.outputs.TEST_SUITE_NAME }}
         run: |
+          # HTML-escape values that get embedded into the email template to avoid HTML/attribute injection from workflow inputs.
+          html_escape() {
+            printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g"
+          }
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          WEBAPP_URL="${INPUT_CONTAINER_WEB_APPURL:-$INPUT_EXISTING_WEBAPP_URL}"
-          RESOURCE_GROUP="$INPUT_RESOURCE_GROUP_NAME"
-          TEST_REPORT_URL="$INPUT_TEST_REPORT_URL"
+          WEBAPP_URL="$(html_escape "${INPUT_CONTAINER_WEB_APPURL:-$INPUT_EXISTING_WEBAPP_URL}")"
+          RESOURCE_GROUP="$(html_escape "$INPUT_RESOURCE_GROUP_NAME")"
+          TEST_REPORT_URL="$(html_escape "$INPUT_TEST_REPORT_URL")"
           PILL_BASE="display:inline-block; min-width:70px; text-align:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; line-height:1.4;"
           DEPLOY_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x2705; SUCCESS</span>"
 
@@ -395,10 +399,14 @@ jobs:
           CONFIG_LABEL: ${{ steps.config.outputs.CONFIG_LABEL }}
           TEST_SUITE_NAME: ${{ steps.test_suite.outputs.TEST_SUITE_NAME }}
         run: |
+          # HTML-escape values that get embedded into the email template to avoid HTML/attribute injection from workflow inputs.
+          html_escape() {
+            printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g"
+          }
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          WEBAPP_URL="${INPUT_CONTAINER_WEB_APPURL:-$INPUT_EXISTING_WEBAPP_URL}"
-          RESOURCE_GROUP="$INPUT_RESOURCE_GROUP_NAME"
-          TEST_REPORT_URL="$INPUT_TEST_REPORT_URL"
+          WEBAPP_URL="$(html_escape "${INPUT_CONTAINER_WEB_APPURL:-$INPUT_EXISTING_WEBAPP_URL}")"
+          RESOURCE_GROUP="$(html_escape "$INPUT_RESOURCE_GROUP_NAME")"
+          TEST_REPORT_URL="$(html_escape "$INPUT_TEST_REPORT_URL")"
           PILL_BASE="display:inline-block; min-width:70px; text-align:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; line-height:1.4;"
           DEPLOY_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x2705; SUCCESS</span>"
           E2E_PILL="<span style=\"${PILL_BASE} background:#f8d7da; color:#721c24;\">&#x274C; FAILED</span>"
@@ -480,9 +488,13 @@ jobs:
           CONFIG_LABEL: ${{ steps.config.outputs.CONFIG_LABEL }}
           TEST_SUITE_NAME: ${{ steps.test_suite.outputs.TEST_SUITE_NAME }}
         run: |
+          # HTML-escape values that get embedded into the email template to avoid HTML/attribute injection from workflow inputs.
+          html_escape() {
+            printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g"
+          }
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          EXISTING_URL="$INPUT_EXISTING_WEBAPP_URL"
-          TEST_REPORT_URL="$INPUT_TEST_REPORT_URL"
+          EXISTING_URL="$(html_escape "$INPUT_EXISTING_WEBAPP_URL")"
+          TEST_REPORT_URL="$(html_escape "$INPUT_TEST_REPORT_URL")"
           PILL_BASE="display:inline-block; min-width:70px; text-align:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; line-height:1.4;"
           DEPLOY_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x23ED;&#xFE0F; SKIPPED</span>"
           E2E_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x2705; SUCCESS</span>"
@@ -566,9 +578,13 @@ jobs:
           CONFIG_LABEL: ${{ steps.config.outputs.CONFIG_LABEL }}
           TEST_SUITE_NAME: ${{ steps.test_suite.outputs.TEST_SUITE_NAME }}
         run: |
+          # HTML-escape values that get embedded into the email template to avoid HTML/attribute injection from workflow inputs.
+          html_escape() {
+            printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' -e 's/"/\&quot;/g' -e "s/'/\&#39;/g"
+          }
           RUN_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          EXISTING_URL="$INPUT_EXISTING_WEBAPP_URL"
-          TEST_REPORT_URL="$INPUT_TEST_REPORT_URL"
+          EXISTING_URL="$(html_escape "$INPUT_EXISTING_WEBAPP_URL")"
+          TEST_REPORT_URL="$(html_escape "$INPUT_TEST_REPORT_URL")"
           PILL_BASE="display:inline-block; min-width:70px; text-align:center; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; line-height:1.4;"
           DEPLOY_PILL="<span style=\"${PILL_BASE} background:#d4edda; color:#155724;\">&#x23ED;&#xFE0F; SKIPPED</span>"
           E2E_PILL="<span style=\"${PILL_BASE} background:#f8d7da; color:#721c24;\">&#x274C; FAILED</span>"

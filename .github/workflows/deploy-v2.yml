@@ -192,7 +192,20 @@ jobs:
             echo "✅ EXP: '$EXP_ENABLED' is valid"
           fi
           
+          # Validate enable_scalability (boolean)
           ENABLE_SCALABILITY="${INPUT_ENABLE_SCALABILITY:-false}"
+          if [[ "$ENABLE_SCALABILITY" != "true" && "$ENABLE_SCALABILITY" != "false" ]]; then
+            echo "❌ ERROR: enable_scalability must be 'true' or 'false', got: '$ENABLE_SCALABILITY'"
+            VALIDATION_FAILED=true
+          else
+            echo "✅ enable_scalability: '$ENABLE_SCALABILITY' is valid"
+          fi
+
+          # enable_scalability only applies when waf_enabled=true; auto-disable otherwise
+          if [[ "$WAF_ENABLED" != "true" && "$ENABLE_SCALABILITY" == "true" ]]; then
+            echo "⚠️  enable_scalability=true is only supported with waf_enabled=true. Forcing enable_scalability=false."
+            ENABLE_SCALABILITY="false"
+          fi
 
           # Validate build_docker_image (boolean)
           BUILD_DOCKER="${INPUT_BUILD_DOCKER_IMAGE:-false}"
