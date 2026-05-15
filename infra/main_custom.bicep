@@ -422,12 +422,27 @@ module maintenanceConfiguration 'br/public:avm/res/maintenance/maintenance-confi
   }
 }
 
+resource securitySolution 'Microsoft.OperationsManagement/solutions@2015-11-01-preview' = if (enablePrivateNetworking && enableMonitoring) {
+  name: 'Security(log-${solutionSuffix})'
+  location: location
+  plan: {
+    name: 'Security(log-${solutionSuffix})'
+    publisher: 'Microsoft'
+    product: 'OMSGallery/Security'
+    promotionCode: ''
+  }
+  properties: {
+    workspaceResourceId: logAnalyticsWorkspaceResourceId
+  }
+}
+
 var dataCollectionRulesResourceName = 'dcr-${solutionSuffix}'
 var dataCollectionRulesLocation = useExistingLogAnalytics
   ? existingLogAnalyticsWorkspace!.location
   : logAnalyticsWorkspace!.outputs.location
 module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-rule:0.11.0' = if (enablePrivateNetworking && enableMonitoring) {
   name: take('avm.res.insights.data-collection-rule.${dataCollectionRulesResourceName}', 64)
+  dependsOn: [securitySolution]
   params: {
     name: dataCollectionRulesResourceName
     tags: tags
@@ -497,7 +512,7 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           {
             name: 'SecurityAuditEvents'
             streams: [
-              'Microsoft-WindowsEvent'
+              'Microsoft-SecurityEvent'
             ]
             xPathQueries: [
               'Security!*[System[(EventID=4624 or EventID=4625)]]'
@@ -523,6 +538,14 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           ]
           transformKql: 'source'
           outputStream: 'Microsoft-Perf'
+        }
+        {
+          streams: [
+            'Microsoft-SecurityEvent'
+          ]
+          destinations: [
+            'la-${dataCollectionRulesResourceName}'
+          ]
         }
       ]
     }

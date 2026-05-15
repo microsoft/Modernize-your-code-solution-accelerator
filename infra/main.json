@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "1333265003476738511"
+      "templateHash": "16804124823752948659"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -307,6 +307,25 @@
       "subscriptionId": "[variables('existingLawSubscription')]",
       "resourceGroup": "[variables('existingLawResourceGroup')]",
       "name": "[variables('existingLawName')]"
+    },
+    "securitySolution": {
+      "condition": "[and(parameters('enablePrivateNetworking'), parameters('enableMonitoring'))]",
+      "type": "Microsoft.OperationsManagement/solutions",
+      "apiVersion": "2015-11-01-preview",
+      "name": "[format('Security(log-{0})', variables('solutionSuffix'))]",
+      "location": "[parameters('location')]",
+      "plan": {
+        "name": "[format('Security(log-{0})', variables('solutionSuffix'))]",
+        "publisher": "Microsoft",
+        "product": "OMSGallery/Security",
+        "promotionCode": ""
+      },
+      "properties": {
+        "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]"
+      },
+      "dependsOn": [
+        "logAnalyticsWorkspace"
+      ]
     },
     "appIdentity": {
       "type": "Microsoft.Resources/deployments",
@@ -13101,11 +13120,11 @@
       },
       "dependsOn": [
         "applicationInsights",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -15351,6 +15370,17 @@
                     ],
                     "name": "perfCounterDataSource60"
                   }
+                ],
+                "windowsEventLogs": [
+                  {
+                    "name": "SecurityAuditEvents",
+                    "streams": [
+                      "Microsoft-SecurityEvent"
+                    ],
+                    "xPathQueries": [
+                      "Security!*[System[(EventID=4624 or EventID=4625)]]"
+                    ]
+                  }
                 ]
               },
               "destinations": {
@@ -15365,6 +15395,14 @@
                 {
                   "streams": [
                     "Microsoft-Perf"
+                  ],
+                  "destinations": [
+                    "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                  ]
+                },
+                {
+                  "streams": [
+                    "Microsoft-SecurityEvent"
                   ],
                   "destinations": [
                     "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
@@ -16578,7 +16616,8 @@
       "dependsOn": [
         "dataCollectionEndpoint",
         "existingLogAnalyticsWorkspace",
-        "logAnalyticsWorkspace"
+        "logAnalyticsWorkspace",
+        "securitySolution"
       ]
     },
     "proximityPlacementGroup": {
@@ -32018,8 +32057,8 @@
       "dependsOn": [
         "aiServices",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "virtualNetwork"
       ]
     },
@@ -32076,7 +32115,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.42.1.51946",
-              "templateHash": "3598447245043879538"
+              "templateHash": "15460841004653840446"
             }
           },
           "definitions": {
@@ -32314,7 +32353,7 @@
                     "value": "TLS1_2"
                   },
                   "requireInfrastructureEncryption": {
-                    "value": false
+                    "value": true
                   },
                   "keyType": {
                     "value": "Service"
