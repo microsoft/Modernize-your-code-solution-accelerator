@@ -253,10 +253,10 @@ az role assignment create \
   --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.CognitiveServices/accounts/<azure-openai-name>
 ```
 ```bash
-# Assign Azure AI User role
+# Assign Foundry User role
 az role assignment create \
   --assignee <aad-user-upn> \
-  --role "Azure AI User" \
+  --role "Foundry User" \
   --scope /subscriptions/<subscription-id>/resourceGroups/<resource-group-name>/providers/Microsoft.CognitiveServices/accounts/<azure-openai-name>
 ```
 
