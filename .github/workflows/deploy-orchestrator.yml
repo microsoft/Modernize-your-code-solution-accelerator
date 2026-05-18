@@ -22,6 +22,11 @@ on:
         required: false
         default: false
         type: boolean
+      enable_scalability:
+        description: 'Enable Scalability (only applies when WAF is enabled)'
+        required: false
+        default: false
+        type: boolean
       EXP:
         description: 'Enable EXP'
         required: false
@@ -83,6 +88,7 @@ jobs:
       azure_location: ${{ inputs.azure_location }}
       resource_group_name: ${{ inputs.resource_group_name }}
       waf_enabled: ${{ inputs.waf_enabled }}
+      enable_scalability: ${{ inputs.enable_scalability }}
       EXP: ${{ inputs.EXP }}
       build_docker_image: ${{ inputs.build_docker_image }}
       existing_webapp_url: ${{ inputs.existing_webapp_url }}

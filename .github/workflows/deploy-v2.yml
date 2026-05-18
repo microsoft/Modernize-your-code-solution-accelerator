@@ -23,7 +23,7 @@ on:
           - 'Local'
         default: 'codespace'
       azure_location:
-        description: 'Azure Location For Deployment'
+        description: 'Azure Region (Non-AI Services)'
         required: false
         default: 'australiaeast'
         type: choice
@@ -31,33 +31,41 @@ on:
           - 'australiaeast'
           - 'centralus'
           - 'eastasia'
+          - 'eastus'
           - 'eastus2'
           - 'japaneast'
           - 'northeurope'
           - 'southeastasia'
           - 'uksouth'
+          - 'westeurope'
       resource_group_name:
         description: 'Resource Group Name (Optional)'
         required: false
         default: ''
         type: string
+      
+      build_docker_image:
+        description: 'Build & Use Custom Images (Optional)'
+        required: false
+        default: false
+        type: boolean
       waf_enabled:
-        description: 'Enable WAF'
+        description: 'Deploy WAF'
         required: false
         default: false
         type: boolean
       EXP:
-        description: 'Enable EXP'
+        description: 'Deploy EXP'
         required: false
         default: false
         type: boolean
-      build_docker_image:
-        description: 'Build & Push Docker Image (Optional)'
+      enable_scalability:
+        description: 'Enable Scalability'
         required: false
         default: false
         type: boolean
       cleanup_resources:
-        description: 'Cleanup Deployed Resources'
+        description: 'Auto Delete RG'
         required: false
         default: false
         type: boolean
@@ -71,17 +79,17 @@ on:
           - 'Smoke-Testing'
           - 'None'
       AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID:
-        description: 'Log Analytics Workspace Resource ID (Optional)'
+        description: 'Existing Log Analytics Workspace Resource ID (Optional)'
         required: false
         default: ''
         type: string
       AZURE_EXISTING_AIPROJECT_RESOURCE_ID:
-        description: 'Foundry Project Resource ID (Optional)'
+        description: 'Existing AI Project Resource ID (Optional)'
         required: false
         default: ''
         type: string
       existing_webapp_url:
-        description: 'Existing Container WebApp URL (Skips Deployment)'
+        description: 'Run Tests Against Existing RG (Provide Web App URL)'
         required: false
         default: ''
         type: string
@@ -99,6 +107,7 @@ jobs:
       resource_group_name: ${{ steps.validate.outputs.resource_group_name }}
       waf_enabled: ${{ steps.validate.outputs.waf_enabled }}
       exp: ${{ steps.validate.outputs.exp }}
+      enable_scalability: ${{ steps.validate.outputs.enable_scalability }}
       build_docker_image: ${{ steps.validate.outputs.build_docker_image }}
       cleanup_resources: ${{ steps.validate.outputs.cleanup_resources }}
       run_e2e_tests: ${{ steps.validate.outputs.run_e2e_tests }}
@@ -115,6 +124,7 @@ jobs:
           INPUT_RESOURCE_GROUP_NAME: ${{ github.event.inputs.resource_group_name }}
           INPUT_WAF_ENABLED: ${{ github.event.inputs.waf_enabled }}
           INPUT_EXP: ${{ github.event.inputs.EXP }}
+          INPUT_ENABLE_SCALABILITY: ${{ github.event.inputs.enable_scalability }}
           INPUT_BUILD_DOCKER_IMAGE: ${{ github.event.inputs.build_docker_image }}
           INPUT_CLEANUP_RESOURCES: ${{ github.event.inputs.cleanup_resources }}
           INPUT_RUN_E2E_TESTS: ${{ github.event.inputs.run_e2e_tests }}
@@ -182,6 +192,21 @@ jobs:
             echo "✅ EXP: '$EXP_ENABLED' is valid"
           fi
           
+          # Validate enable_scalability (boolean)
+          ENABLE_SCALABILITY="${INPUT_ENABLE_SCALABILITY:-false}"
+          if [[ "$ENABLE_SCALABILITY" != "true" && "$ENABLE_SCALABILITY" != "false" ]]; then
+            echo "❌ ERROR: enable_scalability must be 'true' or 'false', got: '$ENABLE_SCALABILITY'"
+            VALIDATION_FAILED=true
+          else
+            echo "✅ enable_scalability: '$ENABLE_SCALABILITY' is valid"
+          fi
+
+          # enable_scalability only applies when waf_enabled=true; auto-disable otherwise
+          if [[ "$WAF_ENABLED" != "true" && "$ENABLE_SCALABILITY" == "true" ]]; then
+            echo "⚠️  enable_scalability=true is only supported with waf_enabled=true. Forcing enable_scalability=false."
+            ENABLE_SCALABILITY="false"
+          fi
+
           # Validate build_docker_image (boolean)
           BUILD_DOCKER="${INPUT_BUILD_DOCKER_IMAGE:-false}"
           if [[ "$BUILD_DOCKER" != "true" && "$BUILD_DOCKER" != "false" ]]; then
@@ -266,6 +291,7 @@ jobs:
           echo "resource_group_name=$INPUT_RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
           echo "waf_enabled=$WAF_ENABLED" >> $GITHUB_OUTPUT
           echo "exp=$EXP_ENABLED" >> $GITHUB_OUTPUT
+          echo "enable_scalability=$ENABLE_SCALABILITY" >> $GITHUB_OUTPUT
           echo "build_docker_image=$BUILD_DOCKER" >> $GITHUB_OUTPUT
           echo "cleanup_resources=$CLEANUP_RESOURCES" >> $GITHUB_OUTPUT
           echo "run_e2e_tests=$TEST_OPTION" >> $GITHUB_OUTPUT
@@ -283,6 +309,7 @@ jobs:
       resource_group_name: ${{ needs.validate-inputs.outputs.resource_group_name || '' }}
       waf_enabled: ${{ needs.validate-inputs.outputs.waf_enabled == 'true' }}
       EXP: ${{ needs.validate-inputs.outputs.exp == 'true' }}
+      enable_scalability: ${{ needs.validate-inputs.outputs.enable_scalability == 'true' }}
       build_docker_image: ${{ needs.validate-inputs.outputs.build_docker_image == 'true' }}
       cleanup_resources: ${{ needs.validate-inputs.outputs.cleanup_resources == 'true' }}
       run_e2e_tests: ${{ needs.validate-inputs.outputs.run_e2e_tests || 'GoldenPath-Testing' }}
