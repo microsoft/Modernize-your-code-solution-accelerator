@@ -497,10 +497,10 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           {
             name: 'SecurityAuditEvents'
             streams: [
-              'Microsoft-WindowsEvent'
+              'Microsoft-Event'
             ]
             xPathQueries: [
-              'Security!*[System[(EventID=4624 or EventID=4625)]]'
+              'Security!*[System[(band(Keywords,13510798882111488)) and (EventID != 4624)]]'
             ]
           }
         ]
@@ -523,6 +523,16 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           ]
           transformKql: 'source'
           outputStream: 'Microsoft-Perf'
+        }
+        {
+          streams: [
+            'Microsoft-Event'
+          ]
+          destinations: [
+            'la-${dataCollectionRulesResourceName}'
+          ]
+          transformKql: 'source'
+          outputStream: 'Microsoft-Event'
         }
       ]
     }

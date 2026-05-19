@@ -586,6 +586,17 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
             name: 'perfCounterDataSource60'
           }
         ]
+        windowsEventLogs: [
+          {
+            name: 'SecurityAuditEvents'
+            streams: [
+              'Microsoft-Event'
+            ]
+            xPathQueries: [
+              'Security!*[System[(band(Keywords,13510798882111488)) and (EventID != 4624)]]'
+            ]
+          }
+        ]
       }
       destinations: {
         logAnalytics: [
@@ -603,6 +614,16 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
           destinations: [
             'la-${dataCollectionRulesResourceName}'
           ]
+        }
+        {
+          streams: [
+            'Microsoft-Event'
+          ]
+          destinations: [
+            'la-${dataCollectionRulesResourceName}'
+          ]
+          transformKql: 'source'
+          outputStream: 'Microsoft-Event'
         }
       ]
     }
