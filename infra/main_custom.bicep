@@ -686,7 +686,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
       {
         principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User
+        roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
       }
     ]
     tags: allTags
