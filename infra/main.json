@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.42.1.51946",
-      "templateHash": "16719390237009495333"
+      "templateHash": "18156607440911418905"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -15368,7 +15368,7 @@
                 "logAnalytics": [
                   {
                     "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]",
-                    "name": "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                    "name": "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
                   }
                 ]
               },
@@ -15378,7 +15378,7 @@
                     "Microsoft-Perf"
                   ],
                   "destinations": [
-                    "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                    "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
                   ]
                 },
                 {
@@ -15386,7 +15386,7 @@
                     "Microsoft-Event"
                   ],
                   "destinations": [
-                    "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                    "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
                   ],
                   "transformKql": "source",
                   "outputStream": "Microsoft-Event"
@@ -32039,8 +32039,8 @@
       "dependsOn": [
         "aiServices",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "virtualNetwork"
       ]
     },
@@ -47998,6 +47998,9 @@
           "ingressExternal": {
             "value": true
           },
+          "ingressAllowInsecure": {
+            "value": false
+          },
           "scaleSettings": {
             "value": {
               "maxReplicas": 1,
@@ -49571,6 +49574,9 @@
           },
           "ingressExternal": {
             "value": true
+          },
+          "ingressAllowInsecure": {
+            "value": false
           },
           "scaleSettings": {
             "value": {
