@@ -309,7 +309,7 @@ param subnets subnetType[] = [
 // /******************************************************************************************************************/
 //  Create Log Analytics Workspace for monitoring and diagnostics 
 // /******************************************************************************************************************/
-module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.11.2' = {
+module logAnalyticsWorkspace 'br/public:avm/res/operational-insights/workspace:0.15.0' = {
   name: take('log-analytics-${resourcesName}-deployment', 64)
   params: {
     name: 'log-${resourcesName}'

@@ -55,21 +55,6 @@
     },
     "enableScalability": {
       "value": true
-    },
-    "aiModelDeployments": {
-      "value": [
-        {
-          "name": "${AZURE_ENV_GPT_MODEL_NAME}",
-          "model": {
-            "name": "${AZURE_ENV_GPT_MODEL_NAME}",
-            "version": "${AZURE_ENV_GPT_MODEL_VERSION}"
-          },
-          "sku": {
-            "name": "${AZURE_ENV_MODEL_DEPLOYMENT_TYPE}",
-            "capacity": "${AZURE_ENV_GPT_MODEL_CAPACITY}"
-          }
-        }
-      ]
     }
   }
 }

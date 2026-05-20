@@ -5,25 +5,24 @@ Welcome to the *Modernize your code* solution accelerator, designed to help cust
 When dealing with legacy code, users often face significant challenges, including the absence of proper documentation, loss of knowledge of outdated languages, and missing business logic that explains functional requirements.
 
 The Modernize your code solution accelerator allows users to specify a group of SQL queries and the target SQL dialect for translation. It then initiates a batch process where each query is translated using a group of Large Language Model (LLM) agents. This automation not only saves time but also ensures accuracy and consistency in query translation.
-<br/>
 
-<div align="center">
 
-[**SOLUTION OVERVIEW**](#solution-overview) \| [**QUICK DEPLOY**](#quick-deploy) \| [**BUSINESS SCENARIO**](#business-scenario) \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
+---
 
-</div>
-<br/>
+[**SOLUTION OVERVIEW**](#solution-overview)  \| [**QUICK DEPLOY**](#quick-deploy)  \| [**BUSINESS SCENARIO**](#business-scenario)  \| [**SUPPORTING DOCUMENTATION**](#supporting-documentation)
 
- **Note:** With any AI solutions you create using these templates, you are responsible for assessing all associated risks and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
-<br/>
+---
 
-<h2><img src="./docs/images/read_me/solution-overview.png" width="48" />
-Solution overview
-</h2>
+**Note:** With any AI solutions you create using these templates, you are responsible for assessing all associated risks and for complying with all applicable laws and safety standards. Learn more in the transparency documents for [Agent Service](https://learn.microsoft.com/en-us/azure/ai-foundry/responsible-ai/agents/transparency-note) and [Agent Framework](https://github.com/microsoft/agent-framework/blob/main/TRANSPARENCY_FAQ.md).
+
+<img src="./docs/images/read_me/solution-overview.png" width="48" />
+
+## Solution overview
 
 The solution leverages Azure AI Foundry, Azure OpenAI Service, Azure Container Apps, Azure Cosmos DB, and Azure Storage to create an intelligent code modernization pipeline. It uses a multi-agent approach where specialized AI agents work together to translate, validate, and optimize SQL queries for the target environment.
 
 ### Solution architecture
+
 |![image](./docs/images/read_me/solArchitecture.png)|
 |---|
 
@@ -34,15 +33,12 @@ This architecture will be deployed with the 'sandbox' setting of our deployment 
 |![image](./docs/images/read_me/agentArchitecture.png)|
 |---|
 
-### How to customize
+### Additional resources
 If you'd like to customize the solution accelerator, here are some common areas to start:
 
 [Custom scenario](./docs/CustomizingScenario.md)
 
-
-<br/>
-
-### Additional resources
+For detailed technical information, see the component documentation:
 
 [Azure AI Foundry documentation](https://learn.microsoft.com/en-us/azure/ai-studio/)
 
@@ -50,62 +46,75 @@ If you'd like to customize the solution accelerator, here are some common areas 
 
 [Azure OpenAI Service Documentation](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/use-your-data)
 
-<br/>
+---
+
+## Features
 
 ### Key features
+
 <details open>
-  <summary>Click to learn more about the key features this solution enables</summary>
 
-  - **Code language modernization** <br/>
-    Modernizing outdated code ensures compatibility with current technologies, reduces reliance on legacy expertise, and keeps businesses competitive.
-  
-  - **Summary and review of new code** <br/>
-    Generating summaries and translating code files keeps humans in the loop, enhances their understanding, and facilitates timely interventions, ensuring the files are ready to export.
+<summary>Click to learn more about the key features this solution enables</summary>
 
-  - **Business logic analysis** <br/>
-    Leveraging AI to decipher business logic from legacy code helps minimizes the risk of human error.
+- **Code language modernization**  
+  Modernizing outdated code ensures compatibility with current technologies, reduces reliance on legacy expertise, and keeps businesses competitive.
 
-  - **Efficient code transformation** <br/>
-    Streamlining the process of analyzing, converting, and iterative error testing reduces time and effort required to modernize the systems.
+- **Summary and review of new code**  
+  Generating summaries and translating code files keeps humans in the loop, enhances their understanding, and facilitates timely interventions, ensuring the files are ready to export.
+
+- **Business logic analysis**  
+  Leveraging AI to decipher business logic from legacy code helps minimizes the risk of human error.
+
+- **Efficient code transformation**  
+  Streamlining the process of analyzing, converting, and iterative error testing reduces time and effort required to modernize the systems.
 
 </details>
 
-<br /><br />
-<h2><img src="./docs/images/read_me/quick-deploy.png" width="48" />
-Quick deploy
-</h2>
+---
 
-### How to install or deploy
+## Getting Started
+
+<img src="./docs/images/read_me/quick-deploy.png" width="48" />
+
+### Quick deploy
+
+#### How to install or deploy
+
 Follow the quick deploy steps on the deployment guide to deploy this solution to your own Azure subscription.
 
 > **Note:** This solution accelerator requires **Azure Developer CLI (azd) version 1.18.0 or higher**. Please ensure you have the latest version installed before proceeding with deployment. [Download azd here](https://learn.microsoft.com/en-us/azure/developer/azure-developer-cli/install-azd).
 
+> **Note:** This solution accelerator also requires **Bicep CLI version 0.33.0 or higher** for compiling infrastructure templates. [Install Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install).
+
 [Click here to launch the deployment guide](./docs/DeploymentGuide.md)
-<br/><br/>
 
-| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==) | 
+| [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Dev Containers](https://img.shields.io/static/v1?style=for-the-badge&label=Dev%20Containers&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator) | [![Open in Visual Studio Code Web](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20(Web)&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9taWNyb3NvZnQvTW9kZXJuaXplLXlvdXItY29kZS1zb2x1dGlvbi1hY2NlbGVyYXRvci9yZWZzL2hlYWRzL21haW4vaW5mcmEvdnNjb2RlX3dlYiIsICJpbmRleFVybCI6ICIvaW5kZXguanNvbiIsICJ2YXJpYWJsZXMiOiB7ImFnZW50SWQiOiAiIiwgImNvbm5lY3Rpb25TdHJpbmciOiAiIiwgInRocmVhZElkIjogIiIsICJ1c2VyTWVzc2FnZSI6ICIiLCAicGxheWdyb3VuZE5hbWUiOiAiIiwgImxvY2F0aW9uIjogIiIsICJzdWJzY3JpcHRpb25JZCI6ICIiLCAicmVzb3VyY2VJZCI6ICIiLCAicHJvamVjdFJlc291cmNlSWQiOiAiIiwgImVuZHBvaW50IjogIiJ9LCAiY29kZVJvdXRlIjogWyJhaS1wcm9qZWN0cy1zZGsiLCAicHl0aG9uIiwgImRlZmF1bHQtYXp1cmUtYXV0aCIsICJlbmRwb2ludCJdfQ==) |
 |---|---|---|
-
 <br/>
 
 > **Note**: Some tenants may have additional security restrictions that run periodically and could impact the application (e.g., blocking public network access). If you experience issues or the application stops working, check if these restrictions are the cause. In such cases, consider deploying the WAF-supported version to ensure compliance. To configure, [Click here](./docs/DeploymentGuide.md#31-choose-deployment-type-optional).
 
-> ⚠️ **Important: Check Azure OpenAI Quota Availability**
- <br/>To ensure sufficient quota is available in your subscription, please follow [quota check instructions guide](./docs/quota_check.md) before you deploy the solution.
+> ⚠️ **Important: Check Azure OpenAI Quota Availability**  
+> To ensure sufficient quota is available in your subscription, please follow [quota check instructions guide](./docs/quota_check.md) before you deploy the solution.
 
-<br/>
+## Guidance
 
-### Prerequisites and Costs
+### Prerequisites and costs
 
 To deploy this solution accelerator, ensure you have access to an [Azure subscription](https://azure.microsoft.com/free/) with the necessary permissions to create **resource groups, resources, app registrations, and assign roles at the resource group level**. This should include Contributor role at the subscription level and Role Based Access Control role on the subscription and/or resource group level. Follow the steps in [Azure Account Set Up](./docs/AzureAccountSetUp.md).
 
-Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available: Azure AI Foundry, Azure OpenAI Service, and GPT Model Capacity.
-
 Here are some example regions where the services are available: East US, East US2, Japan East, UK South, Sweden Central.
+
+Check the [Azure Products by Region](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=all&regions=all) page and select a **region** where the following services are available: Azure AI Foundry, Azure OpenAI Service, and GPT Model Capacity.
 
 Pricing varies per region and usage, so it isn't possible to predict exact costs for your usage. The majority of the Azure resources used in this infrastructure are on usage-based pricing tiers. However, Azure Container Registry has a fixed cost per registry per day.
 
 Use the [Azure pricing calculator](https://azure.microsoft.com/en-us/pricing/calculator) to calculate the cost of this solution in your subscription.
+
+>⚠️ **Important:** To avoid unnecessary costs, remember to take down your app if it's no longer in use,
+either by deleting the resource group in the Portal or running `azd down`.
+
+## Resources
 
 | Product | Description | Cost |
 |---|---|---|
@@ -116,20 +125,14 @@ Use the [Azure pricing calculator](https://azure.microsoft.com/en-us/pricing/cal
 | [Azure Storage Account](https://learn.microsoft.com/azure/storage/) | Stores SQL files and processing artifacts | [Pricing](https://azure.microsoft.com/pricing/details/storage/blobs/) |
 | [Azure Container Registry](https://learn.microsoft.com/azure/container-registry/) | Stores container images for deployment | [Pricing](https://azure.microsoft.com/pricing/details/container-registry/) |
 
-<br/>
+---
 
->⚠️ **Important:** To avoid unnecessary costs, remember to take down your app if it's no longer in use,
-either by deleting the resource group in the Portal or running `azd down`.
+<img src="./docs/images/read_me/business-scenario.png" width="48" />
 
-<br /><br />
-<h2><img src="./docs/images/read_me/business-scenario.png" width="48" />
-Business Scenario
-</h2>
+## Business scenario
 
 |![image](./docs/images/read_me/webappHero.png)|
 |---|
-
-<br/>
 
 Companies maintaining and modernizing their data estates often face large migration projects. They may have volumes of files in various dialects, which need to be translated into a modern alternative. Some of the challenges they face include:
 
@@ -142,62 +145,64 @@ By using the *Modernize your code* solution accelerator, users can automate this
 
 For an in-depth look at the applicability of using multiple agents for this code modernization use case, please see the [supporting AI Research paper](./docs/modernize_report.pdf).
 
-The sample data used in this repository is synthetic and generated using Azure Open AI service. The data is intended for use as sample data only.
-
 ⚠️ The sample data used in this repository is synthetic and generated using Azure OpenAI service. The data is intended for use as sample data only.
 
 ### Business value
+
 <details>
+
   <summary>Click to learn more about what value this solution provides</summary>
 
-  - **Accelerated Migration** <br/>
-    Automate the translation of SQL queries, significantly reducing migration time and effort.
+  - **Accelerated Migration**
 
-  - **Error Reduction** <br/>
-    Multi-agent validation ensures accurate translations and maintains data integrity.
+Automate the translation of SQL queries, significantly reducing migration time and effort.
 
-  - **Knowledge Preservation** <br/>
-    Captures and preserves business logic during the modernization process.
+- **Error Reduction**
 
-  - **Cost Efficiency** <br/>
-    Reduces reliance on specialized legacy system expertise and manual translation efforts.
+Multi-agent validation ensures accurate translations and maintains data integrity.
 
-  - **Standardization** <br/>
-    Ensures consistent query translation across the organization.
+- **Knowledge Preservation**
+
+Captures and preserves business logic during the modernization process.
+
+- **Cost Efficiency**
+
+Reduces reliance on specialized legacy system expertise and manual translation efforts.
+
+- **Standardization**
+
+Ensures consistent query translation across the organization.
 
 </details>
 
-<br /><br />
+---
 
-<h2><img src="./docs/images/read_me/supporting-documentation.png" width="48" />
-Supporting documentation
-</h2>
+<img src="./docs/images/read_me/supporting-documentation.png" width="48" />
+
+## Supporting documentation
 
 ### Security guidelines
-
-This template uses Azure Key Vault for use by AI Foundry.
 
 This template uses [Managed Identity](https://learn.microsoft.com/entra/identity/managed-identities-azure-resources/overview) for all Azure service communication.
 
 To ensure continued best practices in your own repository, we recommend that anyone creating solutions based on our templates ensure that the [Github secret scanning](https://docs.github.com/code-security/secret-scanning/about-secret-scanning) setting is enabled.
 
-You may want to consider additional security measures, such as:
+Additional security considerations include:
 
-* Enabling Microsoft Defender for Cloud to [secure your Azure resources](https://learn.microsoft.com/en-us/azure/defender-for-cloud/).
-* Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
-
-<br/>
+- Enabling [Microsoft Defender for Cloud](https://learn.microsoft.com/en-us/azure/defender-for-cloud/) to monitor and secure Azure resources.
+- Protecting the Azure Container Apps instance with a [firewall](https://learn.microsoft.com/azure/container-apps/waf-app-gateway) and/or [Virtual Network](https://learn.microsoft.com/azure/container-apps/networking?tabs=workload-profiles-env%2Cazure-cli).
 
 ### Cross references
+
 Check out similar solution accelerators
 
 | Solution Accelerator | Description |
 |---|---|
-| [Documen Knowledge Mining](https://github.com/microsoft/Document-Knowledge-Mining-Solution-Accelerator) | Extract structured information from unstructured documents using AI |
+| [Document Knowledge Mining](https://github.com/microsoft/Document-Knowledge-Mining-Solution-Accelerator) | Extract structured information from unstructured documents using AI |
 | [Multi Agent Custom Automation Engine Solution Accelerator](https://github.com/microsoft/Multi-Agent-Custom-Automation-Engine-Solution-Accelerator/tree/main) | An AI-driven orchestration system that manages a group of AI agents to accomplish tasks based on user input |
 | [Conversation Knowledge Mining](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) | Enable organizations to derive insights from volumes of conversational data using generative AI |
 
-<br/>   
+<br/>
 
 💡 Want to get familiar with Microsoft's AI Engineering best practices? Check out our playbook to learn more
 
@@ -211,21 +216,18 @@ Check out similar solution accelerators
 
 Have questions, find a bug, or want to request a feature? [Submit a new issue](https://github.com/microsoft/Modernize-your-Code-Solution-Accelerator/issues) on this repo and we'll connect.
 
-<br/>
+## Responsible AI Transparency FAQ
 
-## Responsible AI Transparency FAQ 
 Please refer to [Transparency FAQ](./TRANSPARENCY_FAQS.md) for responsible AI transparency details of this solution accelerator.
-
-<br/>
 
 ## Disclaimers
 
-To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services. 
+To the extent that the Software includes components or code used in or derived from Microsoft products or services, including without limitation Microsoft Azure Services (collectively, "Microsoft Products and Services"), you must also comply with the Product Terms applicable to such Microsoft Products and Services. You acknowledge and agree that the license governing the Software does not grant you a license or other right to use Microsoft Products and Services. Nothing in the license or this ReadMe file will serve to supersede, amend, terminate or modify any terms in the Product Terms for any Microsoft Products and Services.
 
-You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting. 
+You must also comply with all domestic and international export laws and regulations that apply to the Software, which include restrictions on destinations, end users, and end use. For further information on export restrictions, visit https://aka.ms/exporting.
 
-You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services. 
+You acknowledge that the Software and Microsoft Products and Services (1) are not designed, intended or made available as a medical device(s), and (2) are not designed or intended to be a substitute for professional medical advice, diagnosis, treatment, or judgment and should not be used to replace or as a substitute for professional medical advice, diagnosis, treatment, or judgment. Customer is solely responsible for displaying and/or obtaining appropriate consents, warnings, disclaimers, and acknowledgements to end users of Customer's implementation of the Online Services.
 
-You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgement of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.  
+You acknowledge the Software is not subject to SOC 1 and SOC 2 compliance audits. No Microsoft technology, nor any of its component technologies, including the Software, is intended or made available as a substitute for the professional advice, opinion, or judgement of a certified financial services professional. Do not use the Software to replace, substitute, or provide professional financial advice or judgment.
 
-BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, "HIGH-RISK USE"), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK. 
+BY ACCESSING OR USING THE SOFTWARE, YOU ACKNOWLEDGE THAT THE SOFTWARE IS NOT DESIGNED OR INTENDED TO SUPPORT ANY USE IN WHICH A SERVICE INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE COULD RESULT IN THE DEATH OR SERIOUS BODILY INJURY OF ANY PERSON OR IN PHYSICAL OR ENVIRONMENTAL DAMAGE (COLLECTIVELY, "HIGH-RISK USE"), AND THAT YOU WILL ENSURE THAT, IN THE EVENT OF ANY INTERRUPTION, DEFECT, ERROR, OR OTHER FAILURE OF THE SOFTWARE, THE SAFETY OF PEOPLE, PROPERTY, AND THE ENVIRONMENT ARE NOT REDUCED BELOW A LEVEL THAT IS REASONABLY, APPROPRIATE, AND LEGAL, WHETHER IN GENERAL OR IN A SPECIFIC INDUSTRY. BY ACCESSING THE SOFTWARE, YOU FURTHER ACKNOWLEDGE THAT YOUR HIGH-RISK USE OF THE SOFTWARE IS AT YOUR OWN RISK.

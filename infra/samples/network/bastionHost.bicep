@@ -30,7 +30,7 @@ param subnet subnetType?
 // 1. Create AzureBastionSubnet NSG 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
-module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
+module nsg 'br/public:avm/res/network/network-security-group:0.5.3' = if (!empty(subnet)) {
   name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
   params: {
     name: '${subnet.?networkSecurityGroup.name}-${vnetName}'
@@ -43,7 +43,7 @@ module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty
 
 // 2. Create Azure Bastion Host using AVM Subnet Module with special config for Azure Bastion Subnet
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
-module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnet)) {
+module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.3' = if (!empty(subnet)) {
   name: take('bastionSubnet-${vnetName}', 64)
   params: {
     virtualNetworkName: vnetName
@@ -57,7 +57,7 @@ module bastionSubnet 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = 
 // 3. Create Azure Bastion Host in AzureBastionsubnetSubnet using AVM Bastion Host module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/bastion-host
 
-module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
+module bastionHost 'br/public:avm/res/network/bastion-host:0.8.2' = {
   name: take('bastionHost-${vnetName}-${name}', 64)
   params: {
     name: name
@@ -80,7 +80,7 @@ module bastionHost 'br/public:avm/res/network/bastion-host:0.6.1' = {
     enableTelemetry: enableTelemetry
     publicIPAddressObject: {
       name: 'pip-${name}'
-      zones: []
+      availabilityZones: []
     }
   }
   dependsOn: [

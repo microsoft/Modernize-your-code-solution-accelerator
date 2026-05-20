@@ -2,6 +2,7 @@ name: Test Workflow with Coverage - Code-Gen
 permissions:
   contents: read
   actions: read
+  pull-requests: write
 on:
   push:
     branches:
@@ -112,9 +113,21 @@ jobs:
         if: env.skip_backend_tests == 'false'
         run: |
           cd src
-          pytest tests/backend --cov=backend --cov-report=term-missing --cov-report=xml --cov-fail-under=80
+          pytest tests/backend --cov=backend --cov-report=term-missing --cov-report=xml --cov-fail-under=80 --junitxml=pytest.xml
 
 
+
+      - name: Pytest Coverage Comment
+        if: |
+          always() &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.fork == false &&
+          env.skip_backend_tests == 'false'
+        uses: MishaKav/pytest-coverage-comment@26f986d2599c288bb62f623d29c2da98609e9cd4  # v1.6.0
+        with:
+          pytest-xml-coverage-path: src/coverage.xml
+          junitxml-path: src/pytest.xml
+          report-only-changed-files: true
 
       - name: Skip Backend Tests
         if: env.skip_backend_tests == 'true'

@@ -26,7 +26,7 @@ import {
   Warning24Regular
 } from "@fluentui/react-icons"
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter"
-import sql from "react-syntax-highlighter/dist/esm/languages/hljs/sql"
+import sqlLang from "react-syntax-highlighter/dist/esm/languages/hljs/sql"
 import { vs } from "react-syntax-highlighter/dist/esm/styles/hljs"
 import PanelRightToggles from "../components/Header/PanelRightToggles";
 import PanelRight from "../components/Panels/PanelRight";
@@ -38,6 +38,7 @@ export const History = bundleIcon(HistoryFilled, HistoryRegular);
 import { format } from "sql-formatter";
 
 
+const sql = typeof sqlLang === "function" ? sqlLang : sqlLang.default;
 SyntaxHighlighter.registerLanguage("sql", sql)
 
 

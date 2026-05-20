@@ -39,6 +39,13 @@
     "@azure/msal-browser": "^5.9.0",
     "@azure/msal-react": "^5.3.2"
   },
+  "overrides": {
+    "follow-redirects": "^1.16.0",
+    "minimatch": "^3.1.5",
+    "flatted": "3.4.2",
+    "js-yaml": "4.1.1",
+    "picomatch": "4.0.4"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/react": "^19.2.14",

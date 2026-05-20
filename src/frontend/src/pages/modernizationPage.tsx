@@ -4,7 +4,6 @@ import Header from "../components/Header/Header";
 import HeaderTools from "../components/Header/HeaderTools";
 import PanelLeft from "../components/Panels/PanelLeft";
 import webSocketService from "../api/WebSocketService";
-import { useSelector } from 'react-redux';
 import {
   Button,
   Text,
@@ -29,9 +28,9 @@ import {
 } from "@fluentui/react-icons"
 import { Light as SyntaxHighlighter } from "react-syntax-highlighter"
 import { vs } from "react-syntax-highlighter/dist/esm/styles/hljs"
-import sql from "react-syntax-highlighter/dist/cjs/languages/hljs/sql"
+import sqlLang from "react-syntax-highlighter/dist/esm/languages/hljs/sql"
 import { useNavigate, useParams } from "react-router-dom"
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { getApiUrl, headerBuilder } from '../api/config';
 import BatchHistoryPanel from "../components/batchHistoryPanel"
 import PanelRight from "../components/Panels/PanelRight";
@@ -42,6 +41,7 @@ import { format } from "sql-formatter";
 
 export const History = bundleIcon(HistoryFilled, HistoryRegular);
 
+const sql = typeof sqlLang === "function" ? sqlLang : sqlLang.default;
 SyntaxHighlighter.registerLanguage("sql", sql)
 
 const useStyles = makeStyles({
@@ -478,9 +478,6 @@ const getPrintFileStatus = (status: string): string => {
 const ModernizationPage = () => {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
-
-  // Redux state to listen for start processing completion
-  const batchState = useSelector((state: any) => state.batch);
   
   const [batchSummary, setBatchSummary] = useState<BatchSummary | null>(null);
   const styles = useStyles();
@@ -497,10 +494,10 @@ const ModernizationPage = () => {
   const [fileId, setFileId] = React.useState<string>("");
   const [expandedSections, setExpandedSections] = React.useState<string[]>([]);
   const [allFilesCompleted, setAllFilesCompleted] = useState(false);
-  const [progressPercentage, setProgressPercentage] = useState(0);
   const [isZipButtonDisabled, setIsZipButtonDisabled] = useState(true);
   const [fileLoading, setFileLoading] = useState(false);
   const [lastActivityTime, setLastActivityTime] = useState<number>(Date.now());
+  const hasNavigatedRef = useRef(false);
   //const [pageLoadTime] = useState<number>(Date.now());
 
   // Fetch file content when a file is selected
@@ -514,7 +511,7 @@ const ModernizationPage = () => {
         const selectedFile = files.find((f) => f.id === selectedFileId);
         if (!selectedFile || !selectedFile.translatedCode) {
           setFileLoading(true);
-          const newFileUpdate = await fetchFileFromAPI(selectedFile?.fileId || "");
+          await fetchFileFromAPI(selectedFile?.fileId || "");
           setFileLoading(false);
         } else {
 
@@ -536,11 +533,21 @@ const ModernizationPage = () => {
       setBatchSummary(data);
       if (data) {
 
-        const batchCompleted = data.status?.toLowerCase() === "completed" || data.status === "failed";
-        if (batchCompleted) {
+        const batchCompleted = data.status?.toLowerCase() === "completed" || data.status?.toLowerCase() === "failed";
+        const allFilesTerminal = data.files.every((file: any) =>
+          ["completed", "failed", "error"].includes(file.status?.toLowerCase() || "")
+        );
+
+        if (batchCompleted || allFilesTerminal) {
           setAllFilesCompleted(true);
           if (data.hasFiles > 0) {
             setIsZipButtonDisabled(false);
+          }
+          // Batch already finished (e.g., all files were harmful content) — navigate directly
+          if (!hasNavigatedRef.current) {
+            hasNavigatedRef.current = true;
+            navigate(`/batch-view/${batchId}`);
+            return;
           }
         }
         // Transform the server response to an array of your FileItem objects
@@ -725,7 +732,10 @@ const ModernizationPage = () => {
   // Update files state when Redux fileList changes
   useEffect(() => {
     if (reduxFileList && reduxFileList.length > 0) {
-      setAllFilesCompleted(false);
+      // Only reset completion state if not already finalized
+      if (!allFilesCompleted) {
+        setAllFilesCompleted(false);
+      }
       // Map the Redux fileList to our FileItem format
       const fileItems: FileItem[] = reduxFileList.filter(file => file.type !== 'summary').map((file: any, index: number) => ({
 
@@ -832,8 +842,11 @@ const ModernizationPage = () => {
         });
 
         // Navigate only after all files have reached terminal states.
-        console.log("Processing complete (all files done), navigating to batch view page");
-        navigate(`/batch-view/${batchId}`);
+        if (!hasNavigatedRef.current) {
+          hasNavigatedRef.current = true;
+          console.log("Processing complete (all files done), navigating to batch view page");
+          navigate(`/batch-view/${batchId}`);
+        }
       }
     } catch (err) {
       console.error("Failed to update summary status:", err);
@@ -970,13 +983,13 @@ useEffect(() => {
   // Set a timeout for initial loading - if no progress after 30 seconds, show error
   useEffect(() => {
     const loadingTimeout = setTimeout(() => {
-      if (progressPercentage < 5 && showLoading) {
+      if (showLoading) {
         setLoadingError('Processing is taking longer than expected. You can continue waiting or try again later.');
       }
     }, 30000);
 
     return () => clearTimeout(loadingTimeout);
-  }, [progressPercentage, showLoading]);
+  }, [showLoading]);
 
   // Poll summary status during inactivity, but do not force completion/navigation by timeout.
   useEffect(() => {
@@ -995,6 +1008,43 @@ useEffect(() => {
 
     return () => clearInterval(checkInactivity);
   }, [lastActivityTime, files, allFilesCompleted, updateSummaryStatus, navigate, batchId]);
+
+  // Fallback polling: periodically re-fetch batch summary to catch cases where
+  // WebSocket events were missed (e.g., all files were harmful and processed
+  // before WebSocket connected). Polls every 5 seconds until all files are done.
+  useEffect(() => {
+    if (allFilesCompleted || !batchId || hasNavigatedRef.current) return;
+
+    const pollInterval = setInterval(async () => {
+      if (hasNavigatedRef.current || allFilesCompleted) {
+        clearInterval(pollInterval);
+        return;
+      }
+      try {
+        const data = await fetchBatchSummary(batchId);
+        if (!data) return;
+
+        const batchTerminal = ["completed", "failed"].includes(data.status?.toLowerCase() || "");
+        const allTerminal = data.files.every((file: any) =>
+          ["completed", "failed", "error"].includes(file.status?.toLowerCase() || "")
+        );
+
+        if (batchTerminal || allTerminal) {
+          console.log("Fallback poll detected batch completion, navigating to batch view");
+          clearInterval(pollInterval);
+          setAllFilesCompleted(true);
+          if (!hasNavigatedRef.current) {
+            hasNavigatedRef.current = true;
+            navigate(`/batch-view/${batchId}`);
+          }
+        }
+      } catch (err) {
+        console.error("Fallback poll error:", err);
+      }
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
+  }, [batchId, allFilesCompleted, navigate]);
 
 
   useEffect(() => {

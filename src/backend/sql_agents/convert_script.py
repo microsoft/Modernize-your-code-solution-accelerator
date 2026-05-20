@@ -271,7 +271,6 @@ async def convert_script(
                         FileResult.ERROR,
                     ),
                 )
-                is_complete = True
                 break
 
             if comms_manager.group_chat.is_complete:

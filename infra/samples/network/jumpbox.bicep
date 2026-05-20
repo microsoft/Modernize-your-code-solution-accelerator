@@ -37,7 +37,7 @@ param enableTelemetry bool = true
 // 1. Create Jumpbox NSG 
 // using AVM Network Security Group module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
-module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty(subnet)) {
+module nsg 'br/public:avm/res/network/network-security-group:0.5.3' = if (!empty(subnet)) {
   name: '${vnetName}-${subnet.?networkSecurityGroup.name}'
   params: {
     name: '${subnet.?networkSecurityGroup.name}-${vnetName}'
@@ -51,7 +51,7 @@ module nsg 'br/public:avm/res/network/network-security-group:0.5.1' = if (!empty
 // 2. Create Jumpbox subnet as part of the existing VNet 
 // using AVM Virtual Network Subnet module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network/subnet
-module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' = if (!empty(subnet)) {
+module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.3' = if (!empty(subnet)) {
   name: subnet.?name ?? '${vnetName}-jumpbox-subnet'
   params: {
     virtualNetworkName: vnetName
@@ -67,7 +67,7 @@ module subnetResource 'br/public:avm/res/network/virtual-network/subnet:0.1.2' =
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/compute/virtual-machine
 var vmName = take(name, 15) // Shorten VM name to 15 characters to avoid Azure limits
 
-module vm 'br/public:avm/res/compute/virtual-machine:0.15.0' = {
+module vm 'br/public:avm/res/compute/virtual-machine:0.22.0' = {
   name: take('${vmName}-jumpbox', 64)
   params: {
     name: vmName

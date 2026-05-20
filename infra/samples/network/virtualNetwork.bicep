@@ -27,7 +27,7 @@ param enableTelemetry bool = true
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/network-security-group
 
 @batchSize(1)
-module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
+module nsgs 'br/public:avm/res/network/network-security-group:0.5.3' = [
   for (subnet, i) in subnets: if (!empty(subnet.?networkSecurityGroup)) {
     name: take('${name}-${subnet.?networkSecurityGroup.name}-networksecuritygroup', 64)
     params: {
@@ -44,7 +44,7 @@ module nsgs 'br/public:avm/res/network/network-security-group:0.5.1' = [
 // using AVM Virtual Network module
 // https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/network/virtual-network
 
-module virtualNetwork 'br/public:avm/res/network/virtual-network:0.7.0' =  {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.8.0' =  {
   name: take('${name}-virtualNetwork', 64)
   params: {
     name: name

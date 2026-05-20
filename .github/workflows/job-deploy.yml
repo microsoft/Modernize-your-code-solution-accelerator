@@ -26,6 +26,11 @@ on:
         required: false
         default: false
         type: boolean
+      enable_scalability:
+        description: 'Enable Scalability (only applies when WAF is enabled)'
+        required: false
+        default: false
+        type: boolean
       EXP:
         description: 'Enable EXP'
         required: false
@@ -362,15 +367,17 @@ jobs:
           rg_exists=$(az group exists --name $RESOURCE_GROUP_NAME)
           if [ "$rg_exists" = "false" ]; then
             echo "📦 Resource group does not exist. Creating new resource group '$RESOURCE_GROUP_NAME' in location '$AZURE_LOCATION'..."
-            RG_TAGS="${{ env.RG_TAGS }}"
+            RG_TAGS="${{ vars.RG_TAGS }}"
+            echo "🏷️  Adding owner tag: Owner=${{ github.actor }}"
             if [ -n "$RG_TAGS" ]; then
-              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags "$RG_TAGS" || { echo "❌ Error creating resource group"; exit 1; }
+              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags $RG_TAGS "Owner=${{ github.actor }}" || { echo "❌ Error creating resource group"; exit 1; }
             else
-              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION || { echo "❌ Error creating resource group"; exit 1; }
+              az group create --name $RESOURCE_GROUP_NAME --location $AZURE_LOCATION --tags "Owner=${{ github.actor }}" || { echo "❌ Error creating resource group"; exit 1; }
             fi
             echo "✅ Resource group '$RESOURCE_GROUP_NAME' created successfully."
           else
-            echo "✅ Resource group '$RESOURCE_GROUP_NAME' already exists. Deploying to existing resource group."
+            echo "✅ Resource group '$RESOURCE_GROUP_NAME' already exists. Updating Owner tag to '${{ github.actor }}'."
+            az group update --name "$RESOURCE_GROUP_NAME" --set tags.Owner="${{ github.actor }}" >/dev/null || echo "⚠️  Warning: failed to update Owner tag on existing resource group."
           fi
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_OUTPUT
           echo "RESOURCE_GROUP_NAME=$RESOURCE_GROUP_NAME" >> $GITHUB_ENV
@@ -484,6 +491,7 @@ jobs:
       BUILD_DOCKER_IMAGE: ${{ inputs.build_docker_image || 'false' }}
       EXP: ${{ needs.azure-setup.outputs.EXP_ENABLED }}
       WAF_ENABLED: ${{ inputs.waf_enabled == true && 'true' || 'false' }}
+      ENABLE_SCALABILITY: ${{ inputs.enable_scalability == true && 'true' || 'false' }}
       AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID: ${{ inputs.AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID }}
       AZURE_EXISTING_AIPROJECT_RESOURCE_ID: ${{ inputs.AZURE_EXISTING_AIPROJECT_RESOURCE_ID }}
     secrets: inherit
@@ -502,6 +510,7 @@ jobs:
       BUILD_DOCKER_IMAGE: ${{ inputs.build_docker_image || 'false' }}
       EXP: ${{ needs.azure-setup.outputs.EXP_ENABLED }}
       WAF_ENABLED: ${{ inputs.waf_enabled == true && 'true' || 'false' }}
+      ENABLE_SCALABILITY: ${{ inputs.enable_scalability == true && 'true' || 'false' }}
       AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID: ${{ inputs.AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID }}
       AZURE_EXISTING_AIPROJECT_RESOURCE_ID: ${{ inputs.AZURE_EXISTING_AIPROJECT_RESOURCE_ID }}
     secrets: inherit
