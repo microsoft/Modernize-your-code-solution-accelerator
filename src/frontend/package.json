@@ -9,6 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@fluentui/react": "^8.125.5",
     "@fluentui/react-components": "^9.73.8",
