@@ -5,11 +5,11 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.43.8.12551",
-      "templateHash": "2263929965524886405"
+      "version": "0.42.1.51946",
+      "templateHash": "18156607440911418905"
     },
     "name": "Modernize Your Code Solution Accelerator",
-    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \n"
+    "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
   },
   "parameters": {
     "solutionName": {
@@ -5093,8 +5093,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.43.8.12551",
-              "templateHash": "14487392921976794826"
+              "version": "0.42.1.51946",
+              "templateHash": "15922750226218572834"
             }
           },
           "definitions": {
@@ -13101,11 +13101,11 @@
       },
       "dependsOn": [
         "applicationInsights",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -15351,13 +15351,24 @@
                     ],
                     "name": "perfCounterDataSource60"
                   }
+                ],
+                "windowsEventLogs": [
+                  {
+                    "name": "SecurityAuditEvents",
+                    "streams": [
+                      "Microsoft-Event"
+                    ],
+                    "xPathQueries": [
+                      "Security!*[System[(band(Keywords,13510798882111488)) and (EventID != 4624)]]"
+                    ]
+                  }
                 ]
               },
               "destinations": {
                 "logAnalytics": [
                   {
                     "workspaceResourceId": "[if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value)]",
-                    "name": "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                    "name": "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
                   }
                 ]
               },
@@ -15367,8 +15378,18 @@
                     "Microsoft-Perf"
                   ],
                   "destinations": [
-                    "[format('la-{0}', variables('dataCollectionRulesResourceName'))]"
+                    "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
                   ]
+                },
+                {
+                  "streams": [
+                    "Microsoft-Event"
+                  ],
+                  "destinations": [
+                    "[format('la-{0}-destination', if(variables('useExistingLogAnalytics'), variables('existingLawName'), reference('logAnalyticsWorkspace').outputs.name.value))]"
+                  ],
+                  "transformKql": "source",
+                  "outputStream": "Microsoft-Event"
                 }
               ]
             }
@@ -26168,8 +26189,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.43.8.12551",
-              "templateHash": "5833130864503278162"
+              "version": "0.42.1.51946",
+              "templateHash": "7788164101952925462"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -27466,8 +27487,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.43.8.12551",
-                      "templateHash": "427786211377533956"
+                      "version": "0.42.1.51946",
+                      "templateHash": "3451497265231138743"
                     }
                   },
                   "definitions": {
@@ -29176,8 +29197,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.43.8.12551",
-                              "templateHash": "9014582203949799641"
+                              "version": "0.42.1.51946",
+                              "templateHash": "6439859910553532577"
                             }
                           },
                           "definitions": {
@@ -29391,8 +29412,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.43.8.12551",
-                      "templateHash": "427786211377533956"
+                      "version": "0.42.1.51946",
+                      "templateHash": "3451497265231138743"
                     }
                   },
                   "definitions": {
@@ -31101,8 +31122,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.43.8.12551",
-                              "templateHash": "9014582203949799641"
+                              "version": "0.42.1.51946",
+                              "templateHash": "6439859910553532577"
                             }
                           },
                           "definitions": {
@@ -32017,9 +32038,9 @@
       },
       "dependsOn": [
         "aiServices",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "virtualNetwork"
       ]
     },
@@ -32075,8 +32096,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.43.8.12551",
-              "templateHash": "12228537903958998388"
+              "version": "0.42.1.51946",
+              "templateHash": "15460841004653840446"
             }
           },
           "definitions": {
@@ -32314,7 +32335,7 @@
                     "value": "TLS1_2"
                   },
                   "requireInfrastructureEncryption": {
-                    "value": false
+                    "value": true
                   },
                   "keyType": {
                     "value": "Service"
@@ -40529,8 +40550,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.43.8.12551",
-              "templateHash": "9897457440526781857"
+              "version": "0.42.1.51946",
+              "templateHash": "9745767047675020484"
             }
           },
           "definitions": {
@@ -47977,6 +47998,9 @@
           "ingressExternal": {
             "value": true
           },
+          "ingressAllowInsecure": {
+            "value": false
+          },
           "scaleSettings": {
             "value": {
               "maxReplicas": 1,
@@ -49550,6 +49574,9 @@
           },
           "ingressExternal": {
             "value": true
+          },
+          "ingressAllowInsecure": {
+            "value": false
           },
           "scaleSettings": {
             "value": {
