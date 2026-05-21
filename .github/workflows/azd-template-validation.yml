@@ -24,7 +24,7 @@ jobs:
 
       - name: Validate Azure Template
         id: validation
-        uses: microsoft/template-validation-action@v0.4.3
+        uses: microsoft/template-validation-action@v0.4.4
         with:
           validateAzd: ${{ vars.TEMPLATE_VALIDATE_AZD }}
           validateTests: ${{ vars.TEMPLATE_VALIDATE_TESTS }}
