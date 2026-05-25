@@ -58,7 +58,7 @@ module storageAccount 'br/public:avm/res/storage/storage-account:0.32.0' = {
     allowSharedKeyAccess: false
     allowCrossTenantReplication: false
     minimumTlsVersion: 'TLS1_2'
-    requireInfrastructureEncryption: false
+    requireInfrastructureEncryption: true
     keyType: 'Service'
     enableHierarchicalNamespace: false
     enableNfsV3: false

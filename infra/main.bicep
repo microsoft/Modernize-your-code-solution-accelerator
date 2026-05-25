@@ -518,6 +518,7 @@ var dataCollectionRulesResourceName = 'dcr-${solutionSuffix}'
 var dataCollectionRulesLocation = useExistingLogAnalytics
   ? existingLogAnalyticsWorkspace!.location
   : logAnalyticsWorkspace!.outputs.location
+var dcrLogAnalyticsDestinationName = 'la-${logAnalyticsWorkspaceName}-destination'
 module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-rule:0.11.0' = if (enablePrivateNetworking && enableMonitoring) {
   name: take('avm.res.insights.data-collection-rule.${dataCollectionRulesResourceName}', 64)
   params: {
@@ -586,12 +587,23 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
             name: 'perfCounterDataSource60'
           }
         ]
+        windowsEventLogs: [
+          {
+            name: 'SecurityAuditEvents'
+            streams: [
+              'Microsoft-Event'
+            ]
+            xPathQueries: [
+              'Security!*[System[(band(Keywords,13510798882111488)) and (EventID != 4624)]]'
+            ]
+          }
+        ]
       }
       destinations: {
         logAnalytics: [
           {
             workspaceResourceId: logAnalyticsWorkspaceResourceId
-            name: 'la-${dataCollectionRulesResourceName}'
+            name: dcrLogAnalyticsDestinationName
           }
         ]
       }
@@ -601,8 +613,18 @@ module windowsVmDataCollectionRules 'br/public:avm/res/insights/data-collection-
             'Microsoft-Perf'
           ]
           destinations: [
-            'la-${dataCollectionRulesResourceName}'
+            dcrLogAnalyticsDestinationName
           ]
+        }
+        {
+          streams: [
+            'Microsoft-Event'
+          ]
+          destinations: [
+            dcrLogAnalyticsDestinationName
+          ]
+          transformKql: 'source'
+          outputStream: 'Microsoft-Event'
         }
       ]
     }
@@ -766,7 +788,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
       {
         principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Azure AI User
+        roleDefinitionIdOrName: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
       }
     ]
     tags: allTags
@@ -1077,6 +1099,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
     ]
     ingressTargetPort: 8000
     ingressExternal: true
+    ingressAllowInsecure: false
     scaleSettings: {
       // maxReplicas: enableScalability ? 3 : 1
       maxReplicas: 1 // maxReplicas set to 1 (not 3) due to multiple agents created per type during WAF deployment
@@ -1132,6 +1155,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
     ]
     ingressTargetPort: 3000
     ingressExternal: true
+    ingressAllowInsecure: false
     scaleSettings: {
       maxReplicas: enableScalability ? 3 : 1
       minReplicas: 1
