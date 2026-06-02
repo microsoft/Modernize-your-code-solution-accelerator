@@ -458,6 +458,33 @@ Now that your deployment is complete and tested, explore these resources to enha
 
 ## Advanced: Deploy Local Changes
 
+### Infra Flavor Selection
+
+The deployment entry templates now support a `deploymentFlavor` parameter with these values:
+
+- `bicep`
+- `avm`
+- `avm-waf`
+
+Use this parameter in your deployment command or environment parameters to align with the selected deployment path.
+
+### Core Module Governance
+
+- Keep shared core modules in `infra/modules` unchanged during GSA customization.
+- Apply accelerator-specific changes in flavor/main entry files (for example, `infra/avm/main.bicep`, `infra/bicep/main.bicep`, or root entry templates) and parameter values.
+- If a core module change is required, route the request through designated core module maintainers.
+
+### Infra Scripts Layout
+
+The infra folder now also includes a standardized scripts layout under `infra/scripts`:
+
+- `build`
+- `pre-provision`
+- `post-provision`
+- `utilities`
+
+Use `infra/scripts/post-provision/validate_role_assignments.ps1` or `infra/scripts/post-provision/validate_role_assignments.sh` to inspect role assignments after deployment.
+
 If you've made local modifications to the code and want to deploy them to Azure, follow these steps to swap the configuration files:
 
 > **Note:** To set up and run the application locally for development, see the [Local Setup Guide](./LocalSetupGuide.md).

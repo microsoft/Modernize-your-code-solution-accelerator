@@ -9,6 +9,9 @@ parameters:
   azureAiServiceLocation:
     type: string
     default: japaneast
+  deploymentFlavor:
+    type: string
+    default: avm
 
 services:
   backend:

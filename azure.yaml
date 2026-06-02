@@ -9,6 +9,9 @@ parameters:
   AzureAiServiceLocation:
     type: string
     default: japaneast
+  deploymentFlavor:
+    type: string
+    default: avm
   Prefix:
     type: string
     default: azdtemp
@@ -20,5 +23,6 @@ deployment:
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
   parameters:
     AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
+    deploymentFlavor: ${{ parameters.deploymentFlavor }}
     Prefix: ${{ parameters.Prefix }}
     baseUrl: ${{ parameters.baseUrl }}
