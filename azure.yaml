@@ -9,20 +9,14 @@ parameters:
   AzureAiServiceLocation:
     type: string
     default: japaneast
-  deploymentFlavor:
-    type: string
-    default: avm
   Prefix:
     type: string
     default: azdtemp
   baseUrl:
     type: string
     default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
-deployment:
-  mode: Incremental
-  template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
-  parameters:
-    AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
-    deploymentFlavor: ${{ parameters.deploymentFlavor }}
-    Prefix: ${{ parameters.Prefix }}
-    baseUrl: ${{ parameters.baseUrl }}
+infra:
+  provider: bicep
+  path: infra
+  module: main
+  parameters: infra/main.parameters.json

@@ -320,7 +320,7 @@ module dataCollectionEndpoint 'br/public:avm/res/insights/data-collection-endpoi
 
 
 // Virtual Network with NSGs and Subnets
-module virtualNetwork '../modules/virtualNetwork.bicep' = if (enablePrivateNetworking) {
+module virtualNetwork './modules/networking/virtual-network.bicep' = if (enablePrivateNetworking) {
   name: take('module.virtualNetwork.${solutionSuffix}', 64)
   params: {
     name: 'vnet-${solutionSuffix}'
@@ -754,7 +754,7 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (e
   }
 }
 
-module aiServices '../modules/ai-foundry/aifoundry.bicep' = {
+module aiServices './modules/ai/ai-foundry-project.bicep' = {
   name: take('module.aifoundry.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
@@ -845,7 +845,7 @@ module aiFoundryPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12
 
 var appStorageContainerName = 'appstorage'
 
-module storageAccount '../modules/storageAccount.bicep' = {
+module storageAccount './modules/data/storage-account.bicep' = {
   name: take('module.storageAccount.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
@@ -882,7 +882,7 @@ module storageAccount '../modules/storageAccount.bicep' = {
   }
 }
 
-module cosmosDb '../modules/cosmosDb.bicep' = {
+module cosmosDb './modules/data/cosmos-db.bicep' = {
   name: take('module.cosmosDb.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
