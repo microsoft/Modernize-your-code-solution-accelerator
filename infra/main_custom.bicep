@@ -111,8 +111,8 @@ param frontendImageName string = ''
 param imageTag string = 'latest'
 
 @minLength(1)
-@description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
-param gptModelVersion string = '2024-08-06'
+@description('Optional. Version of the GPT model to deploy. Defaults to 2024-11-20.')
+param gptModelVersion string = '2024-11-20'
 
 @description('Optional. Use this parameter to use an existing AI project resource ID. Defaults to empty string.')
 param existingFoundryProjectResourceId string = ''
@@ -687,7 +687,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
       {
         principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+        roleDefinitionIdOrName: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd' // Cognitive Services OpenAI User
       }
       {
         principalId: appIdentity.outputs.principalId
