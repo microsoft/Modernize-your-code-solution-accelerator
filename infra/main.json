@@ -5,8 +5,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.42.1.51946",
-      "templateHash": "18156607440911418905"
+      "version": "0.44.1.10279",
+      "templateHash": "3504230210727330834"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -174,10 +174,10 @@
     },
     "gptModelVersion": {
       "type": "string",
-      "defaultValue": "2024-08-06",
+      "defaultValue": "2024-11-20",
       "minLength": 1,
       "metadata": {
-        "description": "Optional. Version of the GPT model to deploy. Defaults to 2024-08-06."
+        "description": "Optional. Version of the GPT model to deploy. Defaults to 2024-11-20."
       }
     },
     "existingFoundryProjectResourceId": {
@@ -5093,8 +5093,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.42.1.51946",
-              "templateHash": "15922750226218572834"
+              "version": "0.44.1.10279",
+              "templateHash": "12666388833640590711"
             }
           },
           "definitions": {
@@ -13102,10 +13102,10 @@
       "dependsOn": [
         "applicationInsights",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -26161,7 +26161,7 @@
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
                 "principalType": "ServicePrincipal",
-                "roleDefinitionIdOrName": "Cognitive Services OpenAI Contributor"
+                "roleDefinitionIdOrName": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
               },
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
@@ -26189,8 +26189,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.42.1.51946",
-              "templateHash": "7788164101952925462"
+              "version": "0.44.1.10279",
+              "templateHash": "7796390788683636674"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -27487,8 +27487,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.42.1.51946",
-                      "templateHash": "3451497265231138743"
+                      "version": "0.44.1.10279",
+                      "templateHash": "15798298565583456780"
                     }
                   },
                   "definitions": {
@@ -29197,8 +29197,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.42.1.51946",
-                              "templateHash": "6439859910553532577"
+                              "version": "0.44.1.10279",
+                              "templateHash": "13008301984486295222"
                             }
                           },
                           "definitions": {
@@ -29412,8 +29412,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.42.1.51946",
-                      "templateHash": "3451497265231138743"
+                      "version": "0.44.1.10279",
+                      "templateHash": "15798298565583456780"
                     }
                   },
                   "definitions": {
@@ -31122,8 +31122,8 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.42.1.51946",
-                              "templateHash": "6439859910553532577"
+                              "version": "0.44.1.10279",
+                              "templateHash": "13008301984486295222"
                             }
                           },
                           "definitions": {
@@ -32081,7 +32081,7 @@
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
                 "principalType": "ServicePrincipal",
-                "roleDefinitionIdOrName": "Storage Blob Data Contributor"
+                "roleDefinitionIdOrName": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
               }
             ]
           },
@@ -32096,8 +32096,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.42.1.51946",
-              "templateHash": "15460841004653840446"
+              "version": "0.44.1.10279",
+              "templateHash": "17237339939537137976"
             }
           },
           "definitions": {
@@ -40550,8 +40550,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.42.1.51946",
-              "templateHash": "9745767047675020484"
+              "version": "0.44.1.10279",
+              "templateHash": "8524856574515803596"
             }
           },
           "definitions": {
