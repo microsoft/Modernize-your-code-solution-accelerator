@@ -4,6 +4,7 @@ fastapi
 uvicorn[standard]
 python-multipart
 pydantic[email]
+werkzeug>=3.1.6
 
 # Azure SDK Core
 azure-core
