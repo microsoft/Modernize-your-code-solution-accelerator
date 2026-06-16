@@ -882,7 +882,7 @@ module storageAccount './modules/data/storage-account.bicep' = {
   }
 }
 
-module cosmosDb './modules/data/cosmos-db.bicep' = {
+module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
   name: take('module.cosmosDb.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency

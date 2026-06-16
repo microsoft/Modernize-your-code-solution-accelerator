@@ -1,0 +1,1 @@
+Write-Host "App authentication setup hook is available for custom implementation."

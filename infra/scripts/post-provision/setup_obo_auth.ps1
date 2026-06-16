@@ -1,0 +1,1 @@
+Write-Host "On-behalf-of auth setup hook is available for custom implementation."

@@ -92,15 +92,12 @@ param deploymentType string = 'GlobalStandard'
 @description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
 param gptModelName string = 'gpt-4o'
 
-@description('Optional. Container image name for backend service. Used by azd for container deployments.')
-param backendImageName string = ''
-
-@description('Optional. Container image name for frontend service. Used by azd for container deployments.')
-param frontendImageName string = ''
-
 @minLength(1)
 @description('Optional. Set the Image tag.')
 param imageTag string = 'latest'
+
+@description('Optional. Azure Container Registry endpoint.')
+param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
@@ -118,7 +115,7 @@ param createdBy string = contains(deployer(), 'userPrincipalName') ? split(deplo
 var isBicep = deploymentFlavor == 'bicep'
 var isAvmWaf = deploymentFlavor == 'avm-waf'
 
-module bicepDeployment './bicep/main_custom.bicep' = if (isBicep) {
+module bicepDeployment './bicep/main.bicep' = if (isBicep) {
   name: take('module.bicep.custom.${solutionName}', 64)
   params: {
     deploymentFlavor: 'bicep'
@@ -139,9 +136,8 @@ module bicepDeployment './bicep/main_custom.bicep' = if (isBicep) {
     enableTelemetry: enableTelemetry
     deploymentType: deploymentType
     gptModelName: gptModelName
-    backendImageName: backendImageName
-    frontendImageName: frontendImageName
     imageTag: imageTag
+    containerRegistryEndpoint: containerRegistryEndpoint
     gptModelVersion: gptModelVersion
     existingFoundryProjectResourceId: existingFoundryProjectResourceId
     existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
@@ -149,7 +145,7 @@ module bicepDeployment './bicep/main_custom.bicep' = if (isBicep) {
   }
 }
 
-module avmDeployment './avm/main_custom.bicep' = if (!isBicep) {
+module avmDeployment './avm/main.bicep' = if (!isBicep) {
   name: take('module.avm.custom.${solutionName}', 64)
   params: {
     deploymentFlavor: deploymentFlavor
@@ -170,9 +166,8 @@ module avmDeployment './avm/main_custom.bicep' = if (!isBicep) {
     enableTelemetry: enableTelemetry
     deploymentType: deploymentType
     gptModelName: gptModelName
-    backendImageName: backendImageName
-    frontendImageName: frontendImageName
     imageTag: imageTag
+    containerRegistryEndpoint: containerRegistryEndpoint
     gptModelVersion: gptModelVersion
     existingFoundryProjectResourceId: existingFoundryProjectResourceId
     existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
@@ -185,7 +180,8 @@ output WEB_APP_URL string = isBicep ? bicepDeployment!.outputs.WEB_APP_URL : avm
 output COSMOSDB_ENDPOINT string = isBicep ? bicepDeployment!.outputs.COSMOSDB_ENDPOINT : avmDeployment!.outputs.COSMOSDB_ENDPOINT
 output AZURE_BLOB_ACCOUNT_NAME string = isBicep ? bicepDeployment!.outputs.AZURE_BLOB_ACCOUNT_NAME : avmDeployment!.outputs.AZURE_BLOB_ACCOUNT_NAME
 output AZURE_BLOB_ENDPOINT string = isBicep ? bicepDeployment!.outputs.AZURE_BLOB_ENDPOINT : avmDeployment!.outputs.AZURE_BLOB_ENDPOINT
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = isBicep ? bicepDeployment!.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT : avmDeployment!.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistryEndpoint
+output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = isBicep ? bicepDeployment!.outputs.AZURE_AI_AGENT_PROJECT_CONNECTION_STRING : avmDeployment!.outputs.AZURE_AI_AGENT_PROJECT_CONNECTION_STRING
 output AZURE_AI_AGENT_PROJECT_NAME string = isBicep ? bicepDeployment!.outputs.AZURE_AI_AGENT_PROJECT_NAME : avmDeployment!.outputs.AZURE_AI_AGENT_PROJECT_NAME
 output AZURE_AI_AGENT_ENDPOINT string = isBicep ? bicepDeployment!.outputs.AZURE_AI_AGENT_ENDPOINT : avmDeployment!.outputs.AZURE_AI_AGENT_ENDPOINT
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = isBicep ? bicepDeployment!.outputs.AZURE_AI_AGENT_RESOURCE_GROUP_NAME : avmDeployment!.outputs.AZURE_AI_AGENT_RESOURCE_GROUP_NAME
