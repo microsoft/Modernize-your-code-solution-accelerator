@@ -648,6 +648,9 @@ module proximityPlacementGroup 'br/public:avm/res/compute/proximity-placement-gr
     tags: tags
     enableTelemetry: enableTelemetry
     availabilityZone: enableRedundancy ? 1 : -1
+    intent: {
+      vmSizes: [!empty(vmSize) ? vmSize! : 'Standard_D2s_v5']
+    }
   }
 }
 
