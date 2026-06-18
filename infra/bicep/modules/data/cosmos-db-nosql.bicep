@@ -30,6 +30,9 @@ param containers array = [
 @description('Optional. Managed identity configuration for the resource.')
 param identity object = { type: 'SystemAssigned' }
 
+@description('Optional. Enable serverless capability for new Cosmos accounts. Keep false to avoid immutable capability conflicts on existing accounts.')
+param enableServerless bool = false
+
 // ============================================================================
 // Resource Deployment
 // ============================================================================
@@ -52,7 +55,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {
     enableAutomaticFailover: false
     enableMultipleWriteLocations: false
     disableLocalAuth: true
-    capabilities: [ { name: 'EnableServerless' } ]
+    capabilities: enableServerless ? [ { name: 'EnableServerless' } ] : []
   }
 }
 

@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "1733665596528982793"
+      "templateHash": "12468581031691171762"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -228,6 +228,13 @@
       "westeurope": "northeurope"
     },
     "replicaLocation": "[variables('replicaRegionPairs')[resourceGroup().location]]",
+    "cosmosZoneRedundancyUnsupportedLocations": [
+      "australiasoutheast",
+      "eastus",
+      "eastus2"
+    ],
+    "cosmosHaLocation": "[if(not(empty(parameters('secondaryLocation'))), parameters('secondaryLocation'), variables('replicaLocation'))]",
+    "cosmosZoneRedundancyEnabled": "[and(and(parameters('enableRedundancy'), not(contains(variables('cosmosZoneRedundancyUnsupportedLocations'), toLower(parameters('location'))))), not(contains(variables('cosmosZoneRedundancyUnsupportedLocations'), toLower(variables('cosmosHaLocation')))))]",
     "existingTags": "[coalesce(resourceGroup().tags, createObject())]",
     "allTags": "[union(createObject('azd-env-name', parameters('solutionName')), parameters('tags'))]",
     "solutionSuffix": "[toLower(trim(replace(replace(replace(replace(replace(replace(format('{0}{1}', parameters('solutionName'), parameters('solutionUniqueToken')), '-', ''), '_', ''), '.', ''), '/', ''), ' ', ''), '*', '')))]",
@@ -13123,11 +13130,11 @@
       },
       "dependsOn": [
         "applicationInsights",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -17081,7 +17088,7 @@
                 "ipConfigurations": [
                   {
                     "name": "[format('{0}-nic01-ipconfig01', variables('virtualMachineResourceName'))]",
-                    "subnetResourceId": "[reference('virtualNetwork').outputs.bastionSubnetResourceId.value]",
+                    "subnetResourceId": "[reference('virtualNetwork').outputs.administrationSubnetResourceId.value]",
                     "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value))), null())]"
                   }
                 ]
@@ -29603,8 +29610,8 @@
       },
       "dependsOn": [
         "aiServices",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "virtualNetwork"
       ]
@@ -29623,7 +29630,7 @@
             "value": "[variables('solutionSuffix')]"
           },
           "name": {
-            "value": "[take('st', 24)]"
+            "value": "[take(format('st{0}', variables('solutionSuffix')), 24)]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -38057,8 +38064,8 @@
       },
       "dependsOn": [
         "appIdentity",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
@@ -38077,7 +38084,7 @@
             "value": "[variables('solutionSuffix')]"
           },
           "name": {
-            "value": "[take('cosmos-', 44)]"
+            "value": "[take(format('cosmos-{0}', variables('solutionSuffix')), 44)]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -38086,9 +38093,9 @@
             "value": "cmsadb"
           },
           "zoneRedundant": {
-            "value": "[parameters('enableRedundancy')]"
+            "value": "[variables('cosmosZoneRedundancyEnabled')]"
           },
-          "haLocation": "[if(and(parameters('enableRedundancy'), not(empty(parameters('secondaryLocation')))), createObject('value', parameters('secondaryLocation')), createObject('value', ''))]",
+          "haLocation": "[if(variables('cosmosZoneRedundancyEnabled'), createObject('value', variables('cosmosHaLocation')), createObject('value', ''))]",
           "publicNetworkAccess": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Disabled'), createObject('value', 'Enabled'))]",
           "enablePrivateNetworking": {
             "value": "[parameters('enablePrivateNetworking')]"
@@ -44292,7 +44299,7 @@
           "publicNetworkAccess": {
             "value": "Enabled"
           },
-          "infrastructureSubnetResourceId": "[if(parameters('enablePrivateNetworking'), createObject('value', reference('virtualNetwork').outputs.webserverfarmSubnetResourceId.value), createObject('value', null()))]",
+          "infrastructureSubnetResourceId": "[if(parameters('enablePrivateNetworking'), createObject('value', reference('virtualNetwork').outputs.containerSubnetResourceId.value), createObject('value', null()))]",
           "managedIdentities": {
             "value": {
               "userAssignedResourceIds": [

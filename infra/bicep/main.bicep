@@ -706,7 +706,7 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (e
         ipConfigurations: [
           {
             name: '${virtualMachineResourceName}-nic01-ipconfig01'
-            subnetResourceId: virtualNetwork!.outputs.bastionSubnetResourceId
+            subnetResourceId: virtualNetwork!.outputs.administrationSubnetResourceId
             diagnosticSettings: enableMonitoring //WAF aligned configuration for Monitoring
               ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
               : null
@@ -824,7 +824,7 @@ module storageAccount './modules/data/storage-account.bicep' = {
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
       params: {
         solutionName: solutionSuffix
-        name: take('st', 24)
+        name: take('st${solutionSuffix}', 24)
         location: location
         tags: allTags
         skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
@@ -846,7 +846,7 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
       params: {
         solutionName: solutionSuffix
-        name: take('cosmos-', 44)
+        name: take('cosmos-${solutionSuffix}', 44)
         location: location
         databaseName: 'cmsadb'
         tags: allTags
@@ -868,7 +868,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled' // public access required for frontend
-    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : null
+    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.containerSubnetResourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId

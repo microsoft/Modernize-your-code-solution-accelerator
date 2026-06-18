@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "17218742944903379658"
+      "templateHash": "468196840914522097"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -13123,11 +13123,11 @@
       },
       "dependsOn": [
         "applicationInsights",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -17081,7 +17081,7 @@
                 "ipConfigurations": [
                   {
                     "name": "[format('{0}-nic01-ipconfig01', variables('virtualMachineResourceName'))]",
-                    "subnetResourceId": "[reference('virtualNetwork').outputs.bastionSubnetResourceId.value]",
+                    "subnetResourceId": "[reference('virtualNetwork').outputs.administrationSubnetResourceId.value]",
                     "diagnosticSettings": "[if(parameters('enableMonitoring'), createArray(createObject('workspaceResourceId', if(variables('useExistingLogAnalytics'), parameters('existingLogAnalyticsWorkspaceId'), reference('logAnalyticsWorkspace').outputs.resourceId.value))), null())]"
                   }
                 ]
@@ -27046,9 +27046,9 @@
       },
       "dependsOn": [
         "aiServices",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "virtualNetwork"
       ]
     },
@@ -27066,7 +27066,7 @@
             "value": "[variables('solutionSuffix')]"
           },
           "name": {
-            "value": "[take('st', 24)]"
+            "value": "[take(format('st{0}', variables('solutionSuffix')), 24)]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -27096,7 +27096,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "8930515437418349925"
+              "templateHash": "17656900860519556442"
             }
           },
           "parameters": {
@@ -27197,7 +27197,7 @@
           "resources": [
             {
               "type": "Microsoft.Storage/storageAccounts",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-08-01",
               "name": "[parameters('name')]",
               "location": "[parameters('location')]",
               "tags": "[parameters('tags')]",
@@ -27229,7 +27229,7 @@
             },
             {
               "type": "Microsoft.Storage/storageAccounts/blobServices",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-08-01",
               "name": "[format('{0}/{1}', parameters('name'), 'default')]",
               "dependsOn": [
                 "[resourceId('Microsoft.Storage/storageAccounts', parameters('name'))]"
@@ -27241,7 +27241,7 @@
                 "count": "[length(parameters('containers'))]"
               },
               "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
-              "apiVersion": "2022-09-01",
+              "apiVersion": "2025-08-01",
               "name": "[format('{0}/{1}/{2}', parameters('name'), 'default', parameters('containers')[copyIndex()].name)]",
               "properties": {
                 "publicAccess": "[parameters('containers')[copyIndex()].publicAccess]"
@@ -27271,14 +27271,14 @@
               "metadata": {
                 "description": "Primary blob endpoint."
               },
-              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('name')), '2022-09-01').primaryEndpoints.blob]"
+              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('name')), '2025-08-01').primaryEndpoints.blob]"
             },
             "serviceEndpoints": {
               "type": "object",
               "metadata": {
                 "description": "All service endpoints."
               },
-              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('name')), '2022-09-01').primaryEndpoints]"
+              "value": "[reference(resourceId('Microsoft.Storage/storageAccounts', parameters('name')), '2025-08-01').primaryEndpoints]"
             }
           }
         }
@@ -27302,7 +27302,7 @@
             "value": "[variables('solutionSuffix')]"
           },
           "name": {
-            "value": "[take('cosmos-', 44)]"
+            "value": "[take(format('cosmos-{0}', variables('solutionSuffix')), 44)]"
           },
           "location": {
             "value": "[parameters('location')]"
@@ -27522,7 +27522,7 @@
           "publicNetworkAccess": {
             "value": "Enabled"
           },
-          "infrastructureSubnetResourceId": "[if(parameters('enablePrivateNetworking'), createObject('value', reference('virtualNetwork').outputs.webserverfarmSubnetResourceId.value), createObject('value', null()))]",
+          "infrastructureSubnetResourceId": "[if(parameters('enablePrivateNetworking'), createObject('value', reference('virtualNetwork').outputs.containerSubnetResourceId.value), createObject('value', null()))]",
           "managedIdentities": {
             "value": {
               "userAssignedResourceIds": [

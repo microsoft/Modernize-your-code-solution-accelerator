@@ -66,6 +66,9 @@ param haLocation string = ''
 @description('Optional. Managed identities for the resource.')
 param managedIdentities object = { systemAssigned: true }
 
+@description('Optional. Enable serverless capability for new Cosmos accounts. Keep false to avoid immutable capability conflicts on existing accounts.')
+param enableServerless bool = false
+
 // ============================================================================
 // AVM Module Deployment
 // ============================================================================
@@ -76,7 +79,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.19.0' = {
     location: location
     tags: tags
     enableTelemetry: enableTelemetry
-    capabilitiesToAdd: zoneRedundant ? [] : ['EnableServerless']
+    capabilitiesToAdd: enableServerless ? ['EnableServerless'] : []
     sqlDatabases: [
       {
         name: databaseName
@@ -108,16 +111,16 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.19.0' = {
     zoneRedundant: zoneRedundant
     enableAutomaticFailover: enableAutomaticFailover
     managedIdentities: managedIdentities
-    failoverLocations: zoneRedundant
+    failoverLocations: enableAutomaticFailover
       ? [
           {
             failoverPriority: 0
-            isZoneRedundant: true
+            isZoneRedundant: zoneRedundant
             locationName: location
           }
           {
             failoverPriority: 1
-            isZoneRedundant: true
+            isZoneRedundant: zoneRedundant
             locationName: haLocation
           }
         ]

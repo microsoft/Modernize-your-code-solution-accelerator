@@ -64,6 +64,10 @@ var replicaRegionPairs = {
 }
 var replicaLocation = replicaRegionPairs[resourceGroup().location]
 
+var cosmosHaLocation = !empty(secondaryLocation) ? secondaryLocation : replicaLocation
+var cosmosEnableAutomaticFailover = enableRedundancy && !empty(cosmosHaLocation)
+var cosmosZoneRedundancyEnabled = false
+
 @description('Optional. AI model deployment token capacity. Defaults to 150K tokens per minute.')
 param gptDeploymentCapacity int = 150
 
@@ -706,7 +710,7 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (e
         ipConfigurations: [
           {
             name: '${virtualMachineResourceName}-nic01-ipconfig01'
-            subnetResourceId: virtualNetwork!.outputs.bastionSubnetResourceId
+            subnetResourceId: virtualNetwork!.outputs.administrationSubnetResourceId
             diagnosticSettings: enableMonitoring //WAF aligned configuration for Monitoring
               ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
               : null
@@ -842,7 +846,7 @@ module storageAccount './modules/data/storage-account.bicep' = {
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
       params: {
         solutionName: solutionSuffix
-        name: take('st', 24)
+        name: take('st${solutionSuffix}', 24)
         location: location
         tags: allTags
         skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
@@ -878,11 +882,12 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
       params: {
         solutionName: solutionSuffix
-        name: take('cosmos-', 44)
+        name: take('cosmos-${solutionSuffix}', 44)
         location: location
         databaseName: 'cmsadb'
-        zoneRedundant: enableRedundancy
-        haLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+        zoneRedundant: cosmosZoneRedundancyEnabled
+        enableAutomaticFailover: cosmosEnableAutomaticFailover
+        haLocation: cosmosEnableAutomaticFailover ? cosmosHaLocation : ''
         publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
         enablePrivateNetworking: enablePrivateNetworking
         privateEndpointSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.administrationSubnetResourceId : ''
@@ -904,7 +909,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled' // public access required for frontend
-    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : null
+    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.containerSubnetResourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId
