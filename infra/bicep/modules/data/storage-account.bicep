@@ -1,7 +1,7 @@
 // ============================================================================
 // Module: Storage Account
 // Description: Creates an Azure Storage Account with blob container
-// API: Microsoft.Storage/storageAccounts@2022-09-01
+// API: Microsoft.Storage/storageAccounts@2025-08-01
 // ============================================================================
 
 @description('Solution name suffix used to derive the resource name.')
@@ -46,25 +46,10 @@ param containers array = [
 @description('Optional. Managed identity configuration for the resource.')
 param identity object = { type: 'SystemAssigned' }
 
-@description('Optional. Public network access setting.')
-param publicNetworkAccess string = 'Enabled'
-
-@description('Optional. Enable private networking.')
-param enablePrivateNetworking bool = false
-
-@description('Optional. Subnet resource ID for private endpoint.')
-param privateEndpointSubnetId string = ''
-
-@description('Optional. Private DNS zone resource IDs.')
-param privateDnsZoneResourceIds array = []
-
-@description('Optional. Role assignments.')
-param roleAssignments array = []
-
 // ============================================================================
 // Resource Deployment
 // ============================================================================
-resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2025-08-01' = {
   name: name
   location: location
   tags: tags
@@ -80,7 +65,6 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
     minimumTlsVersion: 'TLS1_2'
     supportsHttpsTrafficOnly: true
     isHnsEnabled: enableHierarchicalNamespace
-    publicNetworkAccess: publicNetworkAccess
     encryption: {
       services: {
         blob: {
@@ -96,12 +80,12 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2022-09-01' = {
   }
 }
 
-resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2022-09-01' = {
+resource blobService 'Microsoft.Storage/storageAccounts/blobServices@2025-08-01' = {
   parent: storageAccount
   name: 'default'
 }
 
-resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2022-09-01' = [for container in containers: {
+resource blobContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-08-01' = [for container in containers: {
   parent: blobService
   name: container.name
   properties: {

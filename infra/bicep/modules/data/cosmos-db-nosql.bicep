@@ -1,7 +1,7 @@
 // ============================================================================
 // Module: Cosmos DB
 // Description: Creates an Azure Cosmos DB (NoSQL) account with database/container
-// API: Microsoft.DocumentDB/databaseAccounts@2024-05-15
+// API: Microsoft.DocumentDB/databaseAccounts@2025-10-15
 // ============================================================================
 
 @description('Solution name suffix used to derive the resource name.')
@@ -33,7 +33,7 @@ param identity object = { type: 'SystemAssigned' }
 // ============================================================================
 // Resource Deployment
 // ============================================================================
-resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2025-10-15' = {
   name: name
   location: location
   tags: tags
@@ -56,7 +56,7 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   }
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2025-10-15' = {
   parent: cosmos
   name: databaseName
   properties: {
