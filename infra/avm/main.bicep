@@ -323,7 +323,7 @@ module dataCollectionEndpoint 'br/public:avm/res/insights/data-collection-endpoi
 module virtualNetwork './modules/networking/virtual-network.bicep' = if (enablePrivateNetworking) {
   name: take('module.virtualNetwork.${solutionSuffix}', 64)
   params: {
-    name: 'vnet-${solutionSuffix}'
+    solutionName: solutionSuffix
     addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
     location: location
     tags: tags
@@ -427,7 +427,7 @@ module azureMonitorPrivateLinkScope 'br/public:avm/res/insights/private-link-sco
     privateEndpoints: [
       {
         name: 'pep-ampls-${solutionSuffix}'
-        subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+        subnetResourceId: virtualNetwork!.outputs.administrationSubnetResourceId
         privateDnsZoneGroup: {
           privateDnsZoneGroupConfigs: [
             {
@@ -706,7 +706,7 @@ module virtualMachine 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (e
         ipConfigurations: [
           {
             name: '${virtualMachineResourceName}-nic01-ipconfig01'
-            subnetResourceId: virtualNetwork!.outputs.jumpboxSubnetResourceId
+            subnetResourceId: virtualNetwork!.outputs.bastionSubnetResourceId
             diagnosticSettings: enableMonitoring //WAF aligned configuration for Monitoring
               ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }]
               : null
@@ -762,29 +762,17 @@ module aiServices './modules/ai/ai-foundry-project.bicep' = {
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
   params: {
+    solutionName: solutionSuffix
     name: 'aif-${solutionSuffix}'
     location: azureAiServiceLocation
-    sku: 'S0'
-    kind: 'AIServices'
-    deployments: [ modelDeployment ]
+    skuName: 'S0'
     projectName: 'proj-${solutionSuffix}'
-    projectDescription: 'proj-${solutionSuffix}'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    privateNetworking: null // Private endpoint is handled by the standalone aiFoundryPrivateEndpoint module
-    existingFoundryProjectResourceId: existingFoundryProjectResourceId
     disableLocalAuth: true //Should be set to true for WAF aligned configuration
-    apiProperties: {
-      //staticsEnabled: false
-    }
     managedIdentities: {
       systemAssigned: true
     }
-    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow'
-    }
-    privateEndpoints: []
+        publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+        networkAclsDefaultAction: 'Allow'
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
@@ -842,7 +830,7 @@ module aiFoundryPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12
         }
       ]
     }
-    subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+    subnetResourceId: virtualNetwork!.outputs.administrationSubnetResourceId
   }
 }
 
@@ -852,28 +840,27 @@ module storageAccount './modules/data/storage-account.bicep' = {
   name: take('module.storageAccount.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
-  params: {
-    name: take('st${solutionSuffix}', 24)
-    location: location
-    tags: allTags
-    skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    privateNetworking: enablePrivateNetworking
-      ? {
-          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          blobPrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageBlob]!.outputs.resourceId
-          filePrivateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.storageFile]!.outputs.resourceId
-        }
-      : null
-    containers: [
-      {
-        name: appStorageContainerName
-        properties: {
-          publicAccess: 'None'
-        }
-      }
-    ]
+      params: {
+        solutionName: solutionSuffix
+        name: take('st', 24)
+        location: location
+        tags: allTags
+        skuName: enableRedundancy ? 'Standard_GZRS' : 'Standard_LRS'
+        publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+        enablePrivateNetworking: enablePrivateNetworking
+        privateEndpointSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.administrationSubnetResourceId : ''
+        privateDnsZoneResourceIds: enablePrivateNetworking
+          ? [
+              avmPrivateDnsZones[dnsZoneIndex.storageBlob]!.outputs.resourceId
+              avmPrivateDnsZones[dnsZoneIndex.storageFile]!.outputs.resourceId
+            ]
+          : []
+        containers: [
+          {
+            name: appStorageContainerName
+            publicAccess: 'None'
+          }
+        ]
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
@@ -889,22 +876,19 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
   name: take('module.cosmosDb.${solutionSuffix}', 64)
   #disable-next-line no-unnecessary-dependson
   dependsOn: [logAnalyticsWorkspace, virtualNetwork] // required due to optional flags that could change dependency
-  params: {
-    name: take('cosmos-${solutionSuffix}', 44)
-    location: location
-    dataAccessIdentityPrincipalId: appIdentity.outputs.principalId
-    logAnalyticsWorkspaceResourceId: enableMonitoring ? logAnalyticsWorkspaceResourceId : ''
-    zoneRedundant: enableRedundancy
-    secondaryLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
-    privateNetworking: enablePrivateNetworking
-      ? {
-          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-          subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.cosmosDB]!.outputs.resourceId
-        }
-      : null
-    tags: allTags
-    enableTelemetry: enableTelemetry
+      params: {
+        solutionName: solutionSuffix
+        name: take('cosmos-', 44)
+        location: location
+        databaseName: 'cmsadb'
+        zoneRedundant: enableRedundancy
+        haLocation: enableRedundancy && !empty(secondaryLocation) ? secondaryLocation : ''
+        publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+        enablePrivateNetworking: enablePrivateNetworking
+        privateEndpointSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.administrationSubnetResourceId : ''
+        privateDnsZoneResourceIds: enablePrivateNetworking ? [avmPrivateDnsZones[dnsZoneIndex.cosmosDB]!.outputs.resourceId] : []
+        tags: allTags
+        enableTelemetry: enableTelemetry
   }
 }
 
@@ -920,7 +904,7 @@ module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.
     location: location
     zoneRedundant: enableRedundancy && enablePrivateNetworking
     publicNetworkAccess: 'Enabled' // public access required for frontend
-    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.webSubnetResourceId : null
+    infrastructureSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : null
     managedIdentities: {
       userAssignedResourceIds: [
         appIdentity.outputs.resourceId
@@ -980,15 +964,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
             }
             {
               name: 'COSMOSDB_BATCH_CONTAINER'
-              value: cosmosDb.outputs.containerNames.batch
+              value: cosmosDb.outputs.containerName
             }
             {
               name: 'COSMOSDB_FILE_CONTAINER'
-              value: cosmosDb.outputs.containerNames.file
+              value: cosmosDb.outputs.containerName
             }
             {
               name: 'COSMOSDB_LOG_CONTAINER'
-              value: cosmosDb.outputs.containerNames.log
+              value: cosmosDb.outputs.containerName
             }
             {
               name: 'AZURE_BLOB_ACCOUNT_NAME'
@@ -1033,15 +1017,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
             }
             {
               name: 'AI_PROJECT_ENDPOINT'
-              value: aiServices.outputs.aiProjectInfo.apiEndpoint // or equivalent
+              value: aiServices.outputs.projectEndpoint // or equivalent
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING' // This was not really used in code.
-              value: aiServices.outputs.aiProjectInfo.apiEndpoint
+              value: aiServices.outputs.projectEndpoint
             }
             {
               name: 'AZURE_AI_AGENT_PROJECT_NAME'
-              value: aiServices.outputs.aiProjectInfo.name
+              value: aiServices.outputs.projectName
             }
             {
               name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME'
@@ -1053,7 +1037,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
             }
             {
               name: 'AZURE_AI_AGENT_ENDPOINT'
-              value: aiServices.outputs.aiProjectInfo.apiEndpoint
+              value: aiServices.outputs.projectEndpoint
             }
             {
               name: 'AZURE_CLIENT_ID'
@@ -1194,19 +1178,19 @@ output WEB_APP_URL string = 'https://${containerAppFrontend.outputs.fqdn}'
 output COSMOSDB_ENDPOINT string = cosmosDb.outputs.endpoint
 output AZURE_BLOB_ACCOUNT_NAME string = storageAccount.outputs.name
 output AZURE_BLOB_ENDPOINT string = 'https://${storageAccount.outputs.name}.blob.${environment().suffixes.storage}/'
-output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.aiProjectInfo.name
-output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
-output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.aiProjectInfo.apiEndpoint
+output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.projectName
+output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.projectEndpoint
+output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.projectEndpoint
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = resourceGroup().name
 output AZURE_AI_AGENT_SUBSCRIPTION_ID string = subscription().subscriptionId
-output AI_PROJECT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
+output AI_PROJECT_ENDPOINT string = aiServices.outputs.projectEndpoint
 output AZURE_CLIENT_ID string = appIdentity.outputs.clientId
 output AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME string = modelDeployment.name
 output AZURE_BLOB_CONTAINER_NAME string = appStorageContainerName
 output COSMOSDB_DATABASE string = cosmosDb.outputs.databaseName
-output COSMOSDB_BATCH_CONTAINER string = cosmosDb.outputs.containerNames.batch
-output COSMOSDB_FILE_CONTAINER string = cosmosDb.outputs.containerNames.file
-output COSMOSDB_LOG_CONTAINER string = cosmosDb.outputs.containerNames.log
+output COSMOSDB_BATCH_CONTAINER string = cosmosDb.outputs.containerName
+output COSMOSDB_FILE_CONTAINER string = cosmosDb.outputs.containerName
+output COSMOSDB_LOG_CONTAINER string = cosmosDb.outputs.containerName
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = enableMonitoring ? applicationInsights!.outputs.connectionString : ''
 output MIGRATOR_AGENT_MODEL_DEPLOY string = modelDeployment.name
 output PICKER_AGENT_MODEL_DEPLOY string = modelDeployment.name
