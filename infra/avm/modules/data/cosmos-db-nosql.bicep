@@ -1,63 +1,150 @@
-@description('Required. Name of the Cosmos DB Account.')
-param name string
+// ============================================================================
+// Module: Cosmos DB
+// Description: AVM wrapper for Azure Cosmos DB (NoSQL) with WAF alignment
+// AVM Module: avm/res/document-db/database-account:0.19.0
+// WAF: https://learn.microsoft.com/azure/well-architected/service-guides/cosmos-db
+// ============================================================================
 
-@description('Required. Specifies the location for all the Azure resources.')
+@description('Solution name suffix used to derive the resource name.')
+param solutionName string
+
+@description('Name of the Cosmos DB account.')
+param name string = 'cosmos-${solutionName}'
+
+@description('Azure region for the resource.')
 param location string
 
-@description('Optional. Tags to be applied to the resources.')
+@description('Tags to apply to the resource.')
 param tags object = {}
 
-@description('Required. Managed Identity principal to assign data plane roles for the Cosmos DB Account.')
-param dataAccessIdentityPrincipalId string
+@description('Database name.')
+param databaseName string = 'db_conversation_history'
 
-@description('Optional. The resource ID of an existing Log Analytics workspace to associate with AI Foundry for monitoring.')
-param logAnalyticsWorkspaceResourceId string?
-
-@description('Required. Indicates whether the single-region account is zone redundant. This property is ignored for multi-region accounts.')
-param zoneRedundant bool
-
-@description('Optional. The secondary location for the Cosmos DB Account for failover and multiple writes.')
-param secondaryLocation string?
-
-import { resourcePrivateNetworkingType } from 'custom-types.bicep'
-@description('Optional. Values to establish private networking for the Cosmos DB resource.')
-param privateNetworking resourcePrivateNetworkingType?
-
-import { roleAssignmentType } from 'br/public:avm/utl/types/avm-common-types:0.7.0'
-@description('Optional. Array of role assignments to create.')
-param roleAssignments roleAssignmentType[]?
+@description('Container definitions.')
+param containers array = [
+  {
+    name: 'conversations'
+    partitionKeyPath: '/userId'
+  }
+]
 
 @description('Optional. Enable/Disable usage telemetry for module.')
 param enableTelemetry bool = true
 
-// Compatibility wrapper for reference-aligned naming while preserving base implementation.
-module cosmosDb './cosmos-db.bicep' = {
-  name: 'cosmosDbNosql'
+// --- WAF: Monitoring ---
+@description('Diagnostic settings for monitoring.')
+param diagnosticSettings array = []
+
+// --- WAF: Private Networking ---
+@description('Public network access setting.')
+param publicNetworkAccess string = 'Enabled'
+
+@description('Whether to enable private networking.')
+param enablePrivateNetworking bool = false
+
+@description('Subnet resource ID for the private endpoint.')
+param privateEndpointSubnetId string = ''
+
+@description('Private DNS zone resource IDs for Cosmos DB.')
+param privateDnsZoneResourceIds array = []
+
+var privateDnsZoneConfigs = [for (zoneId, i) in privateDnsZoneResourceIds: {
+  name: 'dns-zone-${i}'
+  privateDnsZoneResourceId: zoneId
+}]
+
+// --- WAF: Redundancy ---
+@description('Enable zone redundancy.')
+param zoneRedundant bool = false
+
+@description('Enable automatic failover.')
+param enableAutomaticFailover bool = false
+
+@description('Optional. HA paired region for multi-region failover when redundancy is enabled.')
+param haLocation string = ''
+
+@description('Optional. Managed identities for the resource.')
+param managedIdentities object = { systemAssigned: true }
+
+// ============================================================================
+// AVM Module Deployment
+// ============================================================================
+module cosmosAccount 'br/public:avm/res/document-db/database-account:0.19.0' = {
+  name: take('avm.res.document-db.database-account.${name}', 64)
   params: {
     name: name
     location: location
     tags: tags
-    dataAccessIdentityPrincipalId: dataAccessIdentityPrincipalId
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
-    zoneRedundant: zoneRedundant
-    secondaryLocation: secondaryLocation
-    privateNetworking: privateNetworking
-    roleAssignments: roleAssignments
     enableTelemetry: enableTelemetry
+    capabilitiesToAdd: zoneRedundant ? [] : ['EnableServerless']
+    sqlDatabases: [
+      {
+        name: databaseName
+        containers: [for container in containers: {
+          name: container.name
+          paths: [container.partitionKeyPath]
+          kind: 'Hash'
+          version: 2
+        }]
+      }
+    ]
+    sqlRoleAssignments: []
+    diagnosticSettings: !empty(diagnosticSettings) ? diagnosticSettings : []
+    networkRestrictions: {
+      networkAclBypass: 'None'
+      publicNetworkAccess: publicNetworkAccess
+    }
+    privateEndpoints: enablePrivateNetworking ? [
+      {
+        name: 'pep-${name}'
+        customNetworkInterfaceName: 'nic-${name}'
+        subnetResourceId: privateEndpointSubnetId
+        service: 'Sql'
+        privateDnsZoneGroup: {
+          privateDnsZoneGroupConfigs: privateDnsZoneConfigs
+        }
+      }
+    ] : []
+    zoneRedundant: zoneRedundant
+    enableAutomaticFailover: enableAutomaticFailover
+    managedIdentities: managedIdentities
+    failoverLocations: zoneRedundant
+      ? [
+          {
+            failoverPriority: 0
+            isZoneRedundant: true
+            locationName: location
+          }
+          {
+            failoverPriority: 1
+            isZoneRedundant: true
+            locationName: haLocation
+          }
+        ]
+      : [
+          {
+            locationName: location
+            failoverPriority: 0
+            isZoneRedundant: false
+          }
+        ]
   }
 }
 
-@description('Name of the Cosmos DB Account resource.')
-output name string = cosmosDb.outputs.name
+// ============================================================================
+// Outputs
+// ============================================================================
+@description('Resource ID of the Cosmos DB account.')
+output resourceId string = cosmosAccount.outputs.resourceId
 
-@description('Resource ID of the Cosmos DB Account.')
-output resourceId string = cosmosDb.outputs.resourceId
+@description('Name of the Cosmos DB account.')
+output name string = cosmosAccount.outputs.name
 
-@description('Endpoint of the Cosmos DB Account.')
-output endpoint string = cosmosDb.outputs.endpoint
+@description('Endpoint of the Cosmos DB account.')
+output endpoint string = 'https://${name}.documents.azure.com:443/'
 
-@description('Name of the Cosmos DB database.')
-output databaseName string = cosmosDb.outputs.databaseName
+@description('Database name.')
+output databaseName string = databaseName
 
-@description('Complex object containing the names of the Cosmos DB containers.')
-output containerNames object = cosmosDb.outputs.containerNames
+@description('Container name (first container).')
+output containerName string = containers[0].name
