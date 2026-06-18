@@ -92,7 +92,7 @@ class CosmosDBClient(DatabaseBase):
                 for attempt in range(3):
                     try:
                         batchexists = await self.batch_container.read_item(
-                            item=str(batch_id), partition_key=user_id
+                            item=str(batch_id), partition_key=str(batch_id)
                         )
                     except CosmosResourceNotFoundError:
                         if attempt < 2:
@@ -182,7 +182,7 @@ class CosmosDBClient(DatabaseBase):
             ]
             batch = None
             async for item in self.batch_container.query_items(
-                query=query, parameters=params, partition_key=user_id
+                query=query, parameters=params, partition_key=batch_id
             ):
                 batch = item
 
