@@ -176,7 +176,7 @@ resource resourceGroupTags 'Microsoft.Resources/tags@2025-04-01' = {
       allTags,
       {
         TemplateName: 'Code Modernization'
-        Type: enablePrivateNetworking ? 'WAF' : 'Non-WAF'
+        Type: deploymentFlavor
         CreatedBy: createdBy
       }
     )
