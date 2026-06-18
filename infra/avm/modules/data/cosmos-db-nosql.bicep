@@ -97,7 +97,7 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.19.0' = {
     sqlRoleAssignments: !empty(appPrincipalId) ? [
       {
         principalId: appPrincipalId
-        roleDefinitionIdOrName: '00000000-0000-0000-0000-000000000002' // Cosmos DB Built-in Data Contributor
+        roleDefinitionId: resourceId('Microsoft.DocumentDB/databaseAccounts/sqlRoleDefinitions', name, '00000000-0000-0000-0000-000000000002')
       }
     ] : []
     diagnosticSettings: !empty(diagnosticSettings) ? diagnosticSettings : []
