@@ -69,6 +69,9 @@ param managedIdentities object = { systemAssigned: true }
 @description('Optional. Enable serverless capability for new Cosmos accounts. Keep false to avoid immutable capability conflicts on existing accounts.')
 param enableServerless bool = false
 
+@description('Optional. Principal ID of the app managed identity to grant Cosmos DB Built-in Data Contributor role.')
+param appPrincipalId string = ''
+
 // ============================================================================
 // AVM Module Deployment
 // ============================================================================
@@ -91,7 +94,12 @@ module cosmosAccount 'br/public:avm/res/document-db/database-account:0.19.0' = {
         }]
       }
     ]
-    sqlRoleAssignments: []
+    sqlRoleAssignments: !empty(appPrincipalId) ? [
+      {
+        principalId: appPrincipalId
+        roleDefinitionIdOrName: '00000000-0000-0000-0000-000000000002' // Cosmos DB Built-in Data Contributor
+      }
+    ] : []
     diagnosticSettings: !empty(diagnosticSettings) ? diagnosticSettings : []
     networkRestrictions: {
       networkAclBypass: 'None'

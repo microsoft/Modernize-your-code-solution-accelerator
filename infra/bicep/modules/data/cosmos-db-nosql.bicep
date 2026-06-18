@@ -33,6 +33,9 @@ param identity object = { type: 'SystemAssigned' }
 @description('Optional. Enable serverless capability for new Cosmos accounts. Keep false to avoid immutable capability conflicts on existing accounts.')
 param enableServerless bool = false
 
+@description('Optional. Principal ID of the app managed identity to grant Cosmos DB Built-in Data Contributor role.')
+param appPrincipalId string = ''
+
 // ============================================================================
 // Resource Deployment
 // ============================================================================
@@ -81,6 +84,17 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2025-10-15
 // ============================================================================
 // Outputs
 // ============================================================================
+// Role assignment: grant app identity Cosmos DB Built-in Data Contributor
+resource cosmosRoleAssignment 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2025-10-15' = if (!empty(appPrincipalId)) {
+  parent: cosmos
+  name: guid(cosmos.id, appPrincipalId, '00000000-0000-0000-0000-000000000002')
+  properties: {
+    principalId: appPrincipalId
+    roleDefinitionId: '${cosmos.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002'
+    scope: cosmos.id
+  }
+}
+
 @description('Resource ID of the Cosmos DB account.')
 output resourceId string = cosmos.id
 

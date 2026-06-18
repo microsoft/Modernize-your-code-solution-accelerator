@@ -894,6 +894,7 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
         privateDnsZoneResourceIds: enablePrivateNetworking ? [avmPrivateDnsZones[dnsZoneIndex.cosmosDB]!.outputs.resourceId] : []
         tags: allTags
         enableTelemetry: enableTelemetry
+        appPrincipalId: appIdentity.outputs.principalId
   }
 }
 

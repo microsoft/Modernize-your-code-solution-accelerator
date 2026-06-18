@@ -849,6 +849,7 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
         name: take('cosmos-${solutionSuffix}', 44)
         location: location
         databaseName: 'cmsadb'
+        appPrincipalId: appIdentity.outputs.principalId
         tags: allTags
         identity: {
           type: 'SystemAssigned'
