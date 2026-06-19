@@ -839,6 +839,9 @@ module aiFoundryPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12
 }
 
 var appStorageContainerName = 'appstorage'
+var cosmosBatchContainerName = 'cmsabatch'
+var cosmosFileContainerName = 'cmsafile'
+var cosmosLogContainerName = 'cmsalog'
 
 module storageAccount './modules/data/storage-account.bicep' = {
   name: take('module.storageAccount.${solutionSuffix}', 64)
@@ -885,6 +888,20 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
         name: take('cosmos-${solutionSuffix}', 44)
         location: location
         databaseName: 'cmsadb'
+        containers: [
+          {
+            name: cosmosBatchContainerName
+            partitionKeyPath: '/batch_id'
+          }
+          {
+            name: cosmosFileContainerName
+            partitionKeyPath: '/file_id'
+          }
+          {
+            name: cosmosLogContainerName
+            partitionKeyPath: '/file_id'
+          }
+        ]
         zoneRedundant: cosmosZoneRedundancyEnabled
         enableAutomaticFailover: cosmosEnableAutomaticFailover
         haLocation: cosmosEnableAutomaticFailover ? cosmosHaLocation : ''
@@ -970,15 +987,15 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
             }
             {
               name: 'COSMOSDB_BATCH_CONTAINER'
-              value: cosmosDb.outputs.containerName
+              value: cosmosBatchContainerName
             }
             {
               name: 'COSMOSDB_FILE_CONTAINER'
-              value: cosmosDb.outputs.containerName
+              value: cosmosFileContainerName
             }
             {
               name: 'COSMOSDB_LOG_CONTAINER'
-              value: cosmosDb.outputs.containerName
+              value: cosmosLogContainerName
             }
             {
               name: 'AZURE_BLOB_ACCOUNT_NAME'
@@ -1194,9 +1211,9 @@ output AZURE_CLIENT_ID string = appIdentity.outputs.clientId
 output AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME string = modelDeployment.name
 output AZURE_BLOB_CONTAINER_NAME string = appStorageContainerName
 output COSMOSDB_DATABASE string = cosmosDb.outputs.databaseName
-output COSMOSDB_BATCH_CONTAINER string = cosmosDb.outputs.containerName
-output COSMOSDB_FILE_CONTAINER string = cosmosDb.outputs.containerName
-output COSMOSDB_LOG_CONTAINER string = cosmosDb.outputs.containerName
+output COSMOSDB_BATCH_CONTAINER string = cosmosBatchContainerName
+output COSMOSDB_FILE_CONTAINER string = cosmosFileContainerName
+output COSMOSDB_LOG_CONTAINER string = cosmosLogContainerName
 output APPLICATIONINSIGHTS_CONNECTION_STRING string = enableMonitoring ? applicationInsights!.outputs.connectionString : ''
 output MIGRATOR_AGENT_MODEL_DEPLOY string = modelDeployment.name
 output PICKER_AGENT_MODEL_DEPLOY string = modelDeployment.name
