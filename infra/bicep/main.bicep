@@ -110,11 +110,30 @@ param deploymentType string = 'GlobalStandard'
 param gptModelName string = 'gpt-4o'
 
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
-param imageTag string = 'latest_2025-11-10_599'
+@description('Optional. Image tag for the backend container. Defaults to latest_2025-11-10_599. Set AZURE_ENV_BACKEND_IMAGE_TAG to override without rebuilding.')
+param backendImageTag string = 'latest_2025-11-10_599'
 
-@description('Optional. Azure Container Registry endpoint. Defaults to cmsacontainerreg.azurecr.io')
+@minLength(1)
+@description('Optional. Image tag for the frontend container. Defaults to latest_2025-11-10_599. Set AZURE_ENV_FRONTEND_IMAGE_TAG to override without rebuilding.')
+param frontendImageTag string = 'latest_2025-11-10_599'
+
+@description('Optional. Azure Container Registry endpoint for pre-built images. Defaults to cmsacontainerreg.azurecr.io')
 param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
+
+@description('Optional. Enable Microsoft Entra authentication in the frontend. Defaults to false.')
+param enableAuth bool = false
+
+@description('Optional. MSAL client ID for frontend authentication.')
+param msalAuthClientId string = ''
+
+@description('Optional. MSAL authority URL, for example https://login.microsoftonline.com/<tenant-id>.')
+param msalAuthAuthority string = ''
+
+@description('Optional. MSAL redirect URL. Defaults to /.')
+param msalRedirectUrl string = '/'
+
+@description('Optional. MSAL post logout redirect URL. Defaults to /.')
+param msalPostRedirectUrl string = '/'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
@@ -145,15 +164,19 @@ var solutionSuffix = toLower(trim(replace(
   ''
 )))
 
+var effectiveDeploymentType = empty(trim(deploymentType)) ? 'GlobalStandard' : deploymentType
+var effectiveGptModelName = empty(trim(gptModelName)) ? 'gpt-4o' : gptModelName
+var effectiveGptModelVersion = empty(trim(gptModelVersion)) ? '2024-08-06' : gptModelVersion
+
 var modelDeployment = {
-  name: gptModelName
+  name: effectiveGptModelName
   model: {
-    name: gptModelName
+    name: effectiveGptModelName
     format: 'OpenAI'
-    version: gptModelVersion
+    version: effectiveGptModelVersion
   }
   sku: {
-    name: deploymentType
+    name: effectiveDeploymentType
     capacity: gptDeploymentCapacity
   }
   raiPolicyName: 'Microsoft.Default'
@@ -874,6 +897,35 @@ module cosmosDb './modules/data/cosmos-db-nosql.bicep' = {
   }
 }
 
+module appIdentityRoleAssignments './modules/identity/role-assignments.bicep' = {
+  name: take('module.appIdentityRoleAssignments.${solutionSuffix}', 64)
+  params: {
+    storageAccountName: storageAccount.outputs.name
+    aiServicesAccountName: aiServices.outputs.name
+    aiProjectName: aiServices.outputs.projectName
+    roleAssignments: [
+      {
+        scopeType: 'storage'
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor
+      }
+      {
+        scopeType: 'aiAccount'
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionId: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
+      }
+      {
+        scopeType: 'aiProject'
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionId: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
+      }
+    ]
+  }
+}
+
 var containerAppsEnvironmentName = 'cae-${solutionSuffix}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.1' = {
@@ -933,7 +985,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
     containers: [
       {
         name: 'cmsabackend'
-        image: '${containerRegistryEndpoint}/cmsabackend:${imageTag}'
+        image: '${containerRegistryEndpoint}/cmsabackend:${backendImageTag}'
         env: concat(
           [
             {
@@ -1121,8 +1173,28 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
             name: 'APP_ENV'
             value: 'prod'
           }
+          {
+            name: 'ENABLE_AUTH'
+            value: string(enableAuth)
+          }
+          {
+            name: 'REACT_APP_MSAL_AUTH_CLIENTID'
+            value: msalAuthClientId
+          }
+          {
+            name: 'REACT_APP_MSAL_AUTH_AUTHORITY'
+            value: msalAuthAuthority
+          }
+          {
+            name: 'REACT_APP_MSAL_REDIRECT_URL'
+            value: msalRedirectUrl
+          }
+          {
+            name: 'REACT_APP_MSAL_POST_REDIRECT_URL'
+            value: msalPostRedirectUrl
+          }
         ]
-        image: '${containerRegistryEndpoint}/cmsafrontend:${imageTag}'
+        image: '${containerRegistryEndpoint}/cmsafrontend:${frontendImageTag}'
         name: 'cmsafrontend'
         resources: {
           cpu: 1

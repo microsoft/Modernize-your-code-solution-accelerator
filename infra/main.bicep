@@ -93,11 +93,30 @@ param deploymentType string = 'GlobalStandard'
 param gptModelName string = 'gpt-4o'
 
 @minLength(1)
-@description('Optional. Set the Image tag.')
-param imageTag string = 'latest_2025-11-10_599'
+@description('Optional. Image tag for the backend container. Defaults to latest_2025-11-10_599.')
+param backendImageTag string = 'latest_2025-11-10_599'
+
+@minLength(1)
+@description('Optional. Image tag for the frontend container. Defaults to latest_2025-11-10_599.')
+param frontendImageTag string = 'latest_2025-11-10_599'
 
 @description('Optional. Azure Container Registry endpoint.')
 param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
+
+@description('Optional. Enable Microsoft Entra authentication in the frontend. Defaults to false.')
+param enableAuth bool = false
+
+@description('Optional. MSAL client ID for frontend authentication.')
+param msalAuthClientId string = ''
+
+@description('Optional. MSAL authority URL, for example https://login.microsoftonline.com/<tenant-id>.')
+param msalAuthAuthority string = ''
+
+@description('Optional. MSAL redirect URL. Defaults to /.')
+param msalRedirectUrl string = '/'
+
+@description('Optional. MSAL post logout redirect URL. Defaults to /.')
+param msalPostRedirectUrl string = '/'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
@@ -136,8 +155,14 @@ module bicepDeployment './bicep/main.bicep' = if (isBicep) {
     enableTelemetry: enableTelemetry
     deploymentType: deploymentType
     gptModelName: gptModelName
-    imageTag: imageTag
+    backendImageTag: backendImageTag
+    frontendImageTag: frontendImageTag
     containerRegistryEndpoint: containerRegistryEndpoint
+    enableAuth: enableAuth
+    msalAuthClientId: msalAuthClientId
+    msalAuthAuthority: msalAuthAuthority
+    msalRedirectUrl: msalRedirectUrl
+    msalPostRedirectUrl: msalPostRedirectUrl
     gptModelVersion: gptModelVersion
     existingFoundryProjectResourceId: existingFoundryProjectResourceId
     existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
@@ -166,8 +191,14 @@ module avmDeployment './avm/main.bicep' = if (!isBicep) {
     enableTelemetry: enableTelemetry
     deploymentType: deploymentType
     gptModelName: gptModelName
-    imageTag: imageTag
+    backendImageTag: backendImageTag
+    frontendImageTag: frontendImageTag
     containerRegistryEndpoint: containerRegistryEndpoint
+    enableAuth: enableAuth
+    msalAuthClientId: msalAuthClientId
+    msalAuthAuthority: msalAuthAuthority
+    msalRedirectUrl: msalRedirectUrl
+    msalPostRedirectUrl: msalPostRedirectUrl
     gptModelVersion: gptModelVersion
     existingFoundryProjectResourceId: existingFoundryProjectResourceId
     existingLogAnalyticsWorkspaceId: existingLogAnalyticsWorkspaceId
