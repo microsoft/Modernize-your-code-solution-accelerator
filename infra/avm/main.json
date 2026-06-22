@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "9788521874377861149"
+      "templateHash": "14527911924408024623"
     }
   },
   "parameters": {
@@ -243,11 +243,11 @@
     "cosmosContainers": [
       {
         "name": "processes",
-        "partitionKeyPath": "/_partitionKey"
+        "partitionKeyPath": "/batch_id"
       },
       {
         "name": "agent_telemetry",
-        "partitionKeyPath": "/_partitionKey"
+        "partitionKeyPath": "/log_id"
       },
       {
         "name": "processcontrol",
@@ -255,7 +255,7 @@
       },
       {
         "name": "files",
-        "partitionKeyPath": "/_partitionKey"
+        "partitionKeyPath": "/file_id"
       },
       {
         "name": "process_statuses",
@@ -277,7 +277,7 @@
       "apiVersion": "2023-07-01",
       "name": "default",
       "properties": {
-        "tags": "[union(variables('existingTags'), parameters('tags'), createObject('TemplateName', 'Container Migration', 'CreatedBy', variables('createdBy'), 'DeploymentName', deployment().name, 'Type', if(parameters('enablePrivateNetworking'), 'WAF', 'Non-WAF')))]"
+        "tags": "[union(variables('existingTags'), parameters('tags'), createObject('TemplateName', 'Container Migration', 'CreatedBy', variables('createdBy'), 'DeploymentName', deployment().name, 'Type', if(parameters('enablePrivateNetworking'), 'WAF', 'Non-WAF'), 'DeploymentFlavor', if(parameters('enablePrivateNetworking'), 'avm-waf', 'avm')))]"
       }
     },
     "log_analytics": {
@@ -21381,7 +21381,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "15183605406224107229"
+              "templateHash": "2466111588097525447"
             }
           },
           "parameters": {
@@ -21476,12 +21476,7 @@
             },
             "workloadProfiles": {
               "type": "array",
-              "defaultValue": [
-                {
-                  "name": "Consumption",
-                  "workloadProfileType": "Consumption"
-                }
-              ],
+              "defaultValue": [],
               "metadata": {
                 "description": "Workload profiles configuration (e.g., Consumption or dedicated D4 profiles)."
               }
@@ -22748,7 +22743,7 @@
             "value": true
           },
           "ingressTargetPort": {
-            "value": 80
+            "value": 8000
           },
           "enableTelemetry": {
             "value": "[parameters('enableTelemetry')]"
@@ -22760,72 +22755,80 @@
                 "image": "[format('{0}/cmsabackend:{1}', parameters('containerRegistryEndpoint'), parameters('imageTag'))]",
                 "env": [
                   {
-                    "name": "AZURE_OPENAI_ENDPOINT",
-                    "value": "[if(variables('useExistingAIProject'), reference('existing_project_setup').outputs.cognitiveServicesEndpoint.value, reference('ai_foundry_project').outputs.cognitiveServicesEndpoint.value)]"
-                  },
-                  {
-                    "name": "AZURE_OPENAI_CHAT_DEPLOYMENT_NAME",
-                    "value": "[parameters('gptModelName')]"
-                  },
-                  {
-                    "name": "AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME",
-                    "value": "[parameters('embeddingModel')]"
-                  },
-                  {
-                    "name": "AZURE_OPENAI_API_VERSION",
-                    "value": "2025-03-01-preview"
-                  },
-                  {
-                    "name": "COSMOS_DB_ACCOUNT_URL",
+                    "name": "COSMOSDB_ENDPOINT",
                     "value": "[reference('cosmosDBModule').outputs.endpoint.value]"
                   },
                   {
-                    "name": "COSMOS_DB_DATABASE_NAME",
+                    "name": "COSMOSDB_DATABASE",
                     "value": "[variables('cosmosDatabaseName')]"
                   },
                   {
-                    "name": "COSMOS_DB_CONTAINER_NAME",
-                    "value": "agent_telemetry"
-                  },
-                  {
-                    "name": "COSMOS_DB_CONTROL_CONTAINER_NAME",
-                    "value": "processcontrol"
-                  },
-                  {
-                    "name": "COSMOS_DB_PROCESS_CONTAINER",
+                    "name": "COSMOSDB_BATCH_CONTAINER",
                     "value": "processes"
                   },
                   {
-                    "name": "COSMOS_DB_PROCESS_LOG_CONTAINER",
+                    "name": "COSMOSDB_FILE_CONTAINER",
+                    "value": "files"
+                  },
+                  {
+                    "name": "COSMOSDB_LOG_CONTAINER",
                     "value": "agent_telemetry"
                   },
                   {
-                    "name": "STORAGE_ACCOUNT_BLOB_URL",
-                    "value": "[reference('storage_account').outputs.blobEndpoint.value]"
-                  },
-                  {
-                    "name": "STORAGE_ACCOUNT_NAME",
+                    "name": "AZURE_BLOB_ACCOUNT_NAME",
                     "value": "[reference('storage_account').outputs.name.value]"
                   },
                   {
-                    "name": "STORAGE_ACCOUNT_PROCESS_CONTAINER",
-                    "value": "[variables('processBlobContainerName')]"
+                    "name": "AZURE_BLOB_CONTAINER_NAME",
+                    "value": "data"
                   },
                   {
-                    "name": "STORAGE_ACCOUNT_PROCESS_QUEUE",
-                    "value": "[variables('processQueueName')]"
+                    "name": "AI_PROJECT_ENDPOINT",
+                    "value": "[if(variables('useExistingAIProject'), reference('existing_project_setup').outputs.projectEndpoint.value, reference('ai_foundry_project').outputs.projectEndpoint.value)]"
                   },
                   {
-                    "name": "STORAGE_ACCOUNT_QUEUE_URL",
-                    "value": "[format('{0}', reference('storage_account').outputs.serviceEndpoints.value.queue)]"
+                    "name": "AZURE_AI_AGENT_ENDPOINT",
+                    "value": "[if(variables('useExistingAIProject'), reference('existing_project_setup').outputs.projectEndpoint.value, reference('ai_foundry_project').outputs.projectEndpoint.value)]"
                   },
                   {
-                    "name": "GLOBAL_LLM_SERVICE",
-                    "value": "AzureOpenAI"
+                    "name": "AZURE_AI_AGENT_PROJECT_NAME",
+                    "value": "[if(variables('useExistingAIProject'), split(parameters('existingFoundryProjectResourceId'), '/')[10], reference('ai_foundry_project').outputs.projectName.value)]"
                   },
                   {
-                    "name": "PROCESSOR_CONTROL_URL",
-                    "value": "[format('https://{0}.internal.{1}', variables('processorContainerAppName'), reference('containerAppEnv').outputs.defaultDomain.value)]"
+                    "name": "AZURE_AI_AGENT_RESOURCE_GROUP_NAME",
+                    "value": "[variables('aiServiceResourceGroup')]"
+                  },
+                  {
+                    "name": "AZURE_AI_AGENT_SUBSCRIPTION_ID",
+                    "value": "[variables('aiServiceSubscription')]"
+                  },
+                  {
+                    "name": "AZURE_AI_AGENT_PROJECT_CONNECTION_STRING",
+                    "value": "[if(variables('useExistingAIProject'), reference('existing_project_setup').outputs.projectEndpoint.value, reference('ai_foundry_project').outputs.projectEndpoint.value)]"
+                  },
+                  {
+                    "name": "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME",
+                    "value": "[parameters('gptModelName')]"
+                  },
+                  {
+                    "name": "MIGRATOR_AGENT_MODEL_DEPLOY",
+                    "value": "[parameters('gptModelName')]"
+                  },
+                  {
+                    "name": "PICKER_AGENT_MODEL_DEPLOY",
+                    "value": "[parameters('gptModelName')]"
+                  },
+                  {
+                    "name": "FIXER_AGENT_MODEL_DEPLOY",
+                    "value": "[parameters('gptModelName')]"
+                  },
+                  {
+                    "name": "SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY",
+                    "value": "[parameters('gptModelName')]"
+                  },
+                  {
+                    "name": "SYNTAX_CHECKER_AGENT_MODEL_DEPLOY",
+                    "value": "[parameters('gptModelName')]"
                   },
                   {
                     "name": "APP_ENV",

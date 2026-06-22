@@ -43,12 +43,7 @@ param enableRedundancy bool = false
 param infrastructureResourceGroupName string = '${resourceGroup().name}-infra'
 
 @description('Workload profiles configuration (e.g., Consumption or dedicated D4 profiles).')
-param workloadProfiles array = [
-  {
-    name: 'Consumption'
-    workloadProfileType: 'Consumption'
-  }
-]
+param workloadProfiles array = []
 
 // ============================================================================
 // Container Apps Environment (AVM)

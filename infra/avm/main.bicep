@@ -172,10 +172,10 @@ var aiModelDeployments = [
 
 var cosmosDatabaseName = 'migration_db'
 var cosmosContainers = [
-  { name: 'processes', partitionKeyPath: '/_partitionKey' }
-  { name: 'agent_telemetry', partitionKeyPath: '/_partitionKey' }
+  { name: 'processes', partitionKeyPath: '/batch_id' }
+  { name: 'agent_telemetry', partitionKeyPath: '/log_id' }
   { name: 'processcontrol', partitionKeyPath: '/_partitionKey' }
-  { name: 'files', partitionKeyPath: '/_partitionKey' }
+  { name: 'files', partitionKeyPath: '/file_id' }
   { name: 'process_statuses', partitionKeyPath: '/_partitionKey' }
 ]
 
@@ -337,30 +337,36 @@ module ca_backend_api './modules/compute/container-app.bicep' = {
     environmentResourceId: containerAppEnv.outputs.resourceId
     managedIdentities: { systemAssigned: true }
     ingressExternal: true
-    ingressTargetPort: 80
+    ingressTargetPort: 8000
     enableTelemetry: enableTelemetry
     containers: [
       {
         name: 'cmsabackend'
         image: '${containerRegistryEndpoint}/cmsabackend:${imageTag}'
         env: [
-          { name: 'AZURE_OPENAI_ENDPOINT', value: aiFoundryEndpoint }
-          { name: 'AZURE_OPENAI_CHAT_DEPLOYMENT_NAME', value: gptModelName }
-          { name: 'AZURE_OPENAI_EMBEDDING_DEPLOYMENT_NAME', value: embeddingModel }
-          { name: 'AZURE_OPENAI_API_VERSION', value: '2025-03-01-preview' }
-          { name: 'COSMOS_DB_ACCOUNT_URL', value: cosmosDBModule.outputs.endpoint }
-          { name: 'COSMOS_DB_DATABASE_NAME', value: cosmosDatabaseName }
-          { name: 'COSMOS_DB_CONTAINER_NAME', value: 'agent_telemetry' }
-          { name: 'COSMOS_DB_CONTROL_CONTAINER_NAME', value: 'processcontrol' }
-          { name: 'COSMOS_DB_PROCESS_CONTAINER', value: 'processes' }
-          { name: 'COSMOS_DB_PROCESS_LOG_CONTAINER', value: 'agent_telemetry' }
-          { name: 'STORAGE_ACCOUNT_BLOB_URL', value: storage_account.outputs.blobEndpoint }
-          { name: 'STORAGE_ACCOUNT_NAME', value: storage_account.outputs.name }
-          { name: 'STORAGE_ACCOUNT_PROCESS_CONTAINER', value: processBlobContainerName }
-          { name: 'STORAGE_ACCOUNT_PROCESS_QUEUE', value: processQueueName }
-          { name: 'STORAGE_ACCOUNT_QUEUE_URL', value: '${storage_account.outputs.serviceEndpoints.queue}' }
-          { name: 'GLOBAL_LLM_SERVICE', value: 'AzureOpenAI' }
-          { name: 'PROCESSOR_CONTROL_URL', value: 'https://${processorContainerAppName}.internal.${containerAppEnv.outputs.defaultDomain}' }
+          // CosmosDB — names read by config.py
+          { name: 'COSMOSDB_ENDPOINT', value: cosmosDBModule.outputs.endpoint }
+          { name: 'COSMOSDB_DATABASE', value: cosmosDatabaseName }
+          { name: 'COSMOSDB_BATCH_CONTAINER', value: 'processes' }
+          { name: 'COSMOSDB_FILE_CONTAINER', value: 'files' }
+          { name: 'COSMOSDB_LOG_CONTAINER', value: 'agent_telemetry' }
+          // Storage — names read by config.py
+          { name: 'AZURE_BLOB_ACCOUNT_NAME', value: storage_account.outputs.name }
+          { name: 'AZURE_BLOB_CONTAINER_NAME', value: 'data' }
+          // AI Foundry / agents — names read by config.py
+          { name: 'AI_PROJECT_ENDPOINT', value: projectEndpoint }
+          { name: 'AZURE_AI_AGENT_ENDPOINT', value: projectEndpoint }
+          { name: 'AZURE_AI_AGENT_PROJECT_NAME', value: aiProjectResourceName }
+          { name: 'AZURE_AI_AGENT_RESOURCE_GROUP_NAME', value: aiServiceResourceGroup }
+          { name: 'AZURE_AI_AGENT_SUBSCRIPTION_ID', value: aiServiceSubscription }
+          { name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING', value: projectEndpoint }
+          { name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME', value: gptModelName }
+          { name: 'MIGRATOR_AGENT_MODEL_DEPLOY', value: gptModelName }
+          { name: 'PICKER_AGENT_MODEL_DEPLOY', value: gptModelName }
+          { name: 'FIXER_AGENT_MODEL_DEPLOY', value: gptModelName }
+          { name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY', value: gptModelName }
+          { name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY', value: gptModelName }
+          // App config
           { name: 'APP_ENV', value: 'Prod' }
         ]
         resources: {
