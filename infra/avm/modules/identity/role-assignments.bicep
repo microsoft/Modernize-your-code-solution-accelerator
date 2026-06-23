@@ -59,6 +59,7 @@ var existingAIFoundryResourceGroup = useExistingAIProject ? split(existingFoundr
 
 var roleDefinitions = {
   azureAiUser: '53ca6127-db72-4b80-b1b0-d745d6d5456d' // Foundry User
+  azureAiDeveloper: '64702f94-c441-49e6-a78b-ef80e0188fee' // Azure AI Developer
   cognitiveServicesUser: 'a97b65f3-24c7-4388-baec-2e87135dc908'
   cognitiveServicesOpenAIUser: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
   searchIndexDataReader: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
@@ -132,6 +133,28 @@ resource backendAppAiUserAssignment 'Microsoft.Authorization/roleAssignments@202
   }
 }
 
+// Backend App Service → Azure AI Developer on AI Foundry (new project, same RG)
+resource backendAppAiDeveloperAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingAIProject && !empty(aiFoundryResourceId) && !empty(backendAppServicePrincipalId)) {
+  name: guid(solutionName, aiFoundryAccount.id, backendAppServicePrincipalId, roleDefinitions.azureAiDeveloper)
+  scope: aiFoundryAccount
+  properties: {
+    principalId: backendAppServicePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.azureAiDeveloper)
+    principalType: 'ServicePrincipal'
+  }
+}
+
+// Backend App Service → Cognitive Services OpenAI User on AI Foundry (new project, same RG)
+resource backendAppCogOpenAIUserAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingAIProject && !empty(aiFoundryResourceId) && !empty(backendAppServicePrincipalId)) {
+  name: guid(solutionName, aiFoundryAccount.id, backendAppServicePrincipalId, roleDefinitions.cognitiveServicesOpenAIUser)
+  scope: aiFoundryAccount
+  properties: {
+    principalId: backendAppServicePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.cognitiveServicesOpenAIUser)
+    principalType: 'ServicePrincipal'
+  }
+}
+
 // Backend App Service → Foundry User on existing AI Foundry (cross-scope)
 module backendAppAiUserExisting './cross-scope-role-assignment.bicep' = if (useExistingAIProject && !empty(backendAppServicePrincipalId)) {
   name: 'assignAiUserRoleToBackendExisting'
@@ -140,6 +163,30 @@ module backendAppAiUserExisting './cross-scope-role-assignment.bicep' = if (useE
     principalId: backendAppServicePrincipalId
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.azureAiUser)
     roleAssignmentName: guid(solutionName, existingAIFoundryName, backendAppServicePrincipalId, roleDefinitions.azureAiUser)
+    aiFoundryName: existingAIFoundryName
+  }
+}
+
+// Backend App Service → Azure AI Developer on existing AI Foundry (cross-scope)
+module backendAppAiDeveloperExisting './cross-scope-role-assignment.bicep' = if (useExistingAIProject && !empty(backendAppServicePrincipalId)) {
+  name: 'assignAiDeveloperRoleToBackendExisting'
+  scope: resourceGroup(existingAIFoundrySubscription, existingAIFoundryResourceGroup)
+  params: {
+    principalId: backendAppServicePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.azureAiDeveloper)
+    roleAssignmentName: guid(solutionName, existingAIFoundryName, backendAppServicePrincipalId, roleDefinitions.azureAiDeveloper)
+    aiFoundryName: existingAIFoundryName
+  }
+}
+
+// Backend App Service → Cognitive Services OpenAI User on existing AI Foundry (cross-scope)
+module backendAppCogOpenAIUserExisting './cross-scope-role-assignment.bicep' = if (useExistingAIProject && !empty(backendAppServicePrincipalId)) {
+  name: 'assignCogOpenAIUserRoleToBackendExisting'
+  scope: resourceGroup(existingAIFoundrySubscription, existingAIFoundryResourceGroup)
+  params: {
+    principalId: backendAppServicePrincipalId
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', roleDefinitions.cognitiveServicesOpenAIUser)
+    roleAssignmentName: guid(solutionName, existingAIFoundryName, backendAppServicePrincipalId, roleDefinitions.cognitiveServicesOpenAIUser)
     aiFoundryName: existingAIFoundryName
   }
 }

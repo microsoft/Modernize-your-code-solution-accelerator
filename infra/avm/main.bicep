@@ -243,7 +243,7 @@ module existing_project_setup './modules/ai/existing-project-setup.bicep' = if (
   }
 }
 
-module foundry_storage_connection './modules/ai/ai-foundry-connection.bicep' = {
+module foundry_storage_connection './modules/ai/ai-foundry-connection.bicep' = if (!useExistingAIProject) {
   name: take('module.foundry-storage-conn.${solutionName}', 64)
   scope: resourceGroup(aiServiceSubscription, aiServiceResourceGroup)
   params: {
@@ -366,8 +366,13 @@ module ca_backend_api './modules/compute/container-app.bicep' = {
           { name: 'FIXER_AGENT_MODEL_DEPLOY', value: gptModelName }
           { name: 'SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY', value: gptModelName }
           { name: 'SYNTAX_CHECKER_AGENT_MODEL_DEPLOY', value: gptModelName }
+          { name: 'SELECTION_MODEL_DEPLOY', value: gptModelName }
+          { name: 'TERMINATION_MODEL_DEPLOY', value: gptModelName }
           // App config
           { name: 'APP_ENV', value: 'Prod' }
+          { name: 'AZURE_BASIC_LOGGING_LEVEL', value: 'INFO' }
+          { name: 'AZURE_PACKAGE_LOGGING_LEVEL', value: 'WARNING' }
+          { name: 'AZURE_LOGGING_PACKAGES', value: '' }
         ]
         resources: {
           cpu: json('1')
