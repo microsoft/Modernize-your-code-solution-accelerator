@@ -101,14 +101,12 @@ param deploymentType string = 'GlobalStandard'
 @description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
 param gptModelName string = 'gpt-4o'
 
-@description('Optional. Container image name for backend service. Used by azd for container deployments.')
-param backendImageName string = ''
-@description('Optional. Container image name for frontend service. Used by azd for container deployments.')
-param frontendImageName string = ''
+@description('Optional. Azure Container Registry endpoint. Defaults to cmsacontainerreg.azurecr.io')
+param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
 
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest')
-param imageTag string = 'latest'
+@description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
+param imageTag string = 'latest_2025-11-10_599'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-11-20.')
@@ -894,7 +892,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
     containers: [
       {
         name: 'cmsabackend'
-        image: !empty(backendImageName) ? backendImageName : 'cmsacontainerreg.azurecr.io/cmsabackend:${imageTag}'
+        image: '${containerRegistryEndpoint}/cmsabackend:${imageTag}'
         env: concat(
           [
             {
@@ -1087,7 +1085,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
             value: 'prod'
           }
         ]
-        image: !empty(frontendImageName) ? frontendImageName : 'cmsacontainerreg.azurecr.io/cmsafrontend:${imageTag}'
+        image: '${containerRegistryEndpoint}/cmsafrontend:${imageTag}'
         name: 'cmsafrontend'
         resources: {
           cpu: 1
@@ -1130,6 +1128,7 @@ output AZURE_BLOB_ENDPOINT string = 'https://${storageAccount.outputs.name}.blob
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.properties.loginServer
 output AZURE_AI_AGENT_PROJECT_NAME string = aiServices.outputs.aiProjectInfo.name
 output AZURE_AI_AGENT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint
+output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = aiServices.outputs.aiProjectInfo.apiEndpoint
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = resourceGroup().name
 output AZURE_AI_AGENT_SUBSCRIPTION_ID string = subscription().subscriptionId
 output AI_PROJECT_ENDPOINT string = aiServices.outputs.aiProjectInfo.apiEndpoint

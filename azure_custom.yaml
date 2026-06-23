@@ -9,6 +9,9 @@ parameters:
   azureAiServiceLocation:
     type: string
     default: japaneast
+  containerRegistryEndpoint:
+    type: string
+    default: 'cmsacontainerreg.azurecr.io'
 
 services:
   backend:
@@ -29,3 +32,4 @@ services:
 infra:
   provider: bicep
   path: infra
+  module: main

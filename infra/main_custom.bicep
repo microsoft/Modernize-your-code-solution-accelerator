@@ -81,15 +81,12 @@ param deploymentType string = 'GlobalStandard'
 @description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
 param gptModelName string = 'gpt-4o'
 
-@description('Optional. Container image name for backend service. Used by azd for container deployments.')
-param backendImageName string = ''
-
-@description('Optional. Container image name for frontend service. Used by azd for container deployments.')
-param frontendImageName string = ''
+@description('Optional. Azure Container Registry endpoint. Defaults to cmsacontainerreg.azurecr.io')
+param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
 
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest')
-param imageTag string = 'latest'
+@description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
+param imageTag string = 'latest_2025-11-10_599'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy. Defaults to 2024-11-20.')
@@ -124,8 +121,7 @@ module orchestrator './bicep/main_custom.bicep' = {
     enableTelemetry: enableTelemetry
     deploymentType: deploymentType
     gptModelName: gptModelName
-    backendImageName: backendImageName
-    frontendImageName: frontendImageName
+    containerRegistryEndpoint: containerRegistryEndpoint
     imageTag: imageTag
     gptModelVersion: gptModelVersion
     existingFoundryProjectResourceId: existingFoundryProjectResourceId
@@ -142,6 +138,7 @@ output AZURE_BLOB_ENDPOINT string = orchestrator.outputs.AZURE_BLOB_ENDPOINT
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = orchestrator.outputs.AZURE_CONTAINER_REGISTRY_ENDPOINT
 output AZURE_AI_AGENT_PROJECT_NAME string = orchestrator.outputs.AZURE_AI_AGENT_PROJECT_NAME
 output AZURE_AI_AGENT_ENDPOINT string = orchestrator.outputs.AZURE_AI_AGENT_ENDPOINT
+output AZURE_AI_AGENT_PROJECT_CONNECTION_STRING string = orchestrator.outputs.AZURE_AI_AGENT_PROJECT_CONNECTION_STRING
 output AZURE_AI_AGENT_RESOURCE_GROUP_NAME string = orchestrator.outputs.AZURE_AI_AGENT_RESOURCE_GROUP_NAME
 output AZURE_AI_AGENT_SUBSCRIPTION_ID string = orchestrator.outputs.AZURE_AI_AGENT_SUBSCRIPTION_ID
 output AI_PROJECT_ENDPOINT string = orchestrator.outputs.AI_PROJECT_ENDPOINT
