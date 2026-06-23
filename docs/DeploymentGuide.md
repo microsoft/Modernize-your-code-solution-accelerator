@@ -6,7 +6,7 @@ This guide walks you through deploying the Modernize Your Code Solution Accelera
 
 🆘 **Need Help?** If you encounter any issues during deployment, check our [Troubleshooting Guide](./TroubleShootingSteps.md) for solutions to common problems.
 
-> **Note**: Some tenants may have additional security restrictions that run periodically and could impact the application (e.g., blocking public network access). If you experience issues or the application stops working, check if these restrictions are the cause. In such cases, consider deploying the WAF-supported version to ensure compliance. To configure, [Click here](#31-choose-deployment-type-optional).
+> **Note**: Some tenants may have additional security restrictions that run periodically and could impact the application (e.g., blocking public network access). If you experience issues or the application stops working, check if these restrictions are the cause. In such cases, consider deploying the WAF-supported version to ensure compliance. To configure, [Click here](#31-choose-deployment-flavor-required).
 
 ## Step 1: Prerequisites & Setup
 
@@ -179,20 +179,42 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 Review the configuration options below. You can customize any settings that meet your needs, or leave them as defaults to proceed with a standard deployment.
 
-### 3.1 Choose Deployment Type (Optional)
+### 3.1 Choose Deployment Flavor (Required)
 
-| **Aspect** | **Development/Testing (Default)** | **Production** |
-|------------|-----------------------------------|----------------|
-| **Configuration File** | `main.parameters.json` (sandbox) | Copy `main.waf.parameters.json` to `main.parameters.json` |
-| **Security Controls** | Minimal (for rapid iteration) | Enhanced (production best practices) |
-| **Cost** | Lower costs | Cost optimized |
-| **Use Case** | POCs, development, testing | Production workloads |
-| **Framework** | Basic configuration | [Well-Architected Framework](https://learn.microsoft.com/en-us/azure/well-architected/) |
-| **Features** | Core functionality | Reliability, security, operational excellence |
+The solution supports three deployment flavors. Choose the one that fits your scenario:
 
-**To use production configuration:**
+| **Flavor** | **Best For** | **Networking** | **Monitoring** | **VM / Bastion** |
+|------------|--------------|----------------|----------------|------------------|
+| **`bicep`** (default) | Development, POCs, testing | Public | Optional | No |
+| **`avm`** | Staging, general production | Public | Optional | No |
+| **`avm-waf`** | Enterprise production | Private (VNet) | Always on | Yes (Jumpbox) |
 
-Copy the contents from the production configuration file to your main parameters file:
+#### Option 1: Bicep (Default)
+
+No changes needed. `infra/main.parameters.json` already has the default flavor set:
+
+```json
+"deploymentFlavor": {
+  "value": "bicep"
+}
+```
+
+#### Option 2: AVM
+
+1. Open `infra/main.parameters.json` in a text editor
+2. Find the `deploymentFlavor` value and change `"bicep"` to `"avm"`:
+   ```json
+   "deploymentFlavor": {
+     "value": "avm"
+   }
+   ```
+3. Save the file
+
+> **Note:** The AVM flavor also deploys a `text-embedding-3-large` model (capacity 500 TPM) in addition to the GPT model. Ensure your chosen AI service region has sufficient quota. See [Supported AI Service Regions](#ai-service-location-note) below.
+
+#### Option 3: AVM-WAF (Production)
+
+Copy the full WAF parameters file over `main.parameters.json`:
 
 1. Navigate to the `infra` folder in your project
 2. Open `main.waf.parameters.json` in a text editor (like Notepad, VS Code, etc.)
@@ -201,16 +223,28 @@ Copy the contents from the production configuration file to your main parameters
 5. Select all existing content (Ctrl+A) and paste the copied content (Ctrl+V)
 6. Save the file (Ctrl+S)
 
-### 3.2 Set VM Credentials (Optional - Production Deployment Only)
+> **Note:** AVM-WAF deploys a private VNet, Bastion host, and Jumpbox VM. You must also set [VM credentials](#32-set-vm-credentials-avm-waf-only) and ensure your region supports `Standard_D2s_v5` VMs and Cosmos DB with Availability Zones.
 
-> **Note:** This section only applies if you selected **Production** deployment type in section 3.1. VMs are not deployed in the default Development/Testing configuration.
+#### AI Service Location Note
 
-By default, hard-coded fallback values are used for VM credentials (`JumpboxAdminUser` / `JumpboxAdminP@ssw0rd1234!`). To set custom credentials:
+For **AVM** and **AVM-WAF** flavors, the `azureAiServiceLocation` must be one of these supported regions:
+
+`australiaeast` · `eastus` · `eastus2` · `francecentral` · `japaneast` · `norwayeast` · `southindia` · `swedencentral` · `uksouth` · `westus` · `westus3`
+
+> ⚠️ **Quota:** AVM/AVM-WAF deploys both a GPT model and `text-embedding-3-large` (500K TPM each). Avoid regions already at quota limit for these models. Regions with full availability: `eastus2`, `norwayeast`, `westus`.
+
+### 3.2 Set VM Credentials (AVM-WAF Only)
+
+> **Note:** This section only applies if you selected the **AVM-WAF** flavor in section 3.1. VMs are not deployed in the `bicep` or `avm` flavors.
+
+Set custom credentials for the Jumpbox VM before deploying:
 
 ```shell
-azd env set AZURE_ENV_JUMPBOX_ADMIN_USERNAME <your-username>
-azd env set AZURE_ENV_JUMPBOX_ADMIN_PASSWORD <your-password>
+azd env set AZURE_ENV_VM_ADMIN_USERNAME <your-username>
+azd env set AZURE_ENV_VM_ADMIN_PASSWORD <your-password>
 ```
+
+> ⚠️ **Required:** AVM-WAF deployment will fail if these are not set before running `azd up`.
 
 ### 3.3 Advanced Configuration (Optional)
 
