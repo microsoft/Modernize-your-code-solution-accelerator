@@ -30,7 +30,13 @@ async def test_health_check(app: FastAPI):
 @pytest.mark.asyncio
 async def test_backend_routes_exist(app: FastAPI):
     """Ensure /api routes are available (smoke test)."""
-    # Check available routes include /api prefix from backend_router
-    routes = [route.path for route in app.router.routes]
-    backend_routes = [r for r in routes if r.startswith("/api")]
+    # Check available routes include /api prefix from backend_router.
+    # Newer FastAPI/Starlette versions wrap included routers in objects
+    # (e.g. _IncludedRouter / Mount) that expose `prefix` instead of `path`,
+    # so fall back to either attribute when collecting route identifiers.
+    routes = [
+        getattr(route, "path", None) or getattr(route, "prefix", "")
+        for route in app.router.routes
+    ]
+    backend_routes = [r for r in routes if r and r.startswith("/api")]
     assert backend_routes, "No backend routes found under /api prefix"
