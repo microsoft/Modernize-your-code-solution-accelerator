@@ -28,7 +28,7 @@ This repository is an Azure solution accelerator for SQL modernization. It combi
 - Quota-related helper: `./scripts/quota_check_params.sh`.
 
 ### Testing and linting
-- Backend tests: run from `src/backend` with `pytest`.
+- Backend tests: run from `src/backend` with `pytest`. Requires `pytest-asyncio` (in requirements.txt) for async test collection.
 - Frontend lint: run from `src/frontend` with `npm run lint`.
 - End-to-end tests live in `tests/e2e-test/` and use Playwright + pytest.
 
