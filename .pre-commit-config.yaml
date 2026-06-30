@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.2.0
+    hooks:
+      - id: black
+        language_version: python3
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 7.0.0
+    hooks:
+      - id: flake8
+        args: [--extend-ignore=E501]
+
+  - repo: local
+    hooks:
+      - id: bicep
+        name: bicep
+        description: Lint and build Bicep files
+        entry: ./scripts/generate_arm_templates.sh
+        language: script
+        files: \.bicep$
+        require_serial: true
+        args: # Bicep files that we want to generate ARM templates from
+          - -f=./deploy/main.bicep

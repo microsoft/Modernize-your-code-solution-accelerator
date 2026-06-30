@@ -1,0 +1,33 @@
+.batch-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.batch-item {
+    display: flex;
+    align-items: left;
+    justify-content: space-between;
+    cursor: pointer;
+    background-color: #f9f7f7;
+    background-color: transparent;
+    box-shadow: none;
+    border: none;
+}
+
+.batch-item span {
+    margin-right: -8px;
+}
+
+.batch-item:hover {
+    background: #c7c6c6;
+}
+
+.batch-details-time{
+    margin-right: 15px;
+}

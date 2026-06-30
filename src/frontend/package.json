@@ -1,0 +1,66 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fluentui/react": "^8.125.5",
+    "@fluentui/react-components": "^9.73.8",
+    "@fluentui/react-file-type-icons": "^8.17.0",
+    "@fluentui/react-icons": "^2.0.325",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@reduxjs/toolkit": "^2.11.2",
+    "@tailwindcss/vite": "^4.2.4",
+    "autoprefixer": "^10.5.0",
+    "axios": "^1.15.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.14.0",
+    "postcss": "^8.5.13",
+    "@tailwindcss/postcss": "^4.2.4",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "react-dropzone": "^15.0.0",
+    "react-icons": "^5.6.0",
+    "react-redux": "^9.1.2",
+    "react-router-dom": "^7.14.2",
+    "react-syntax-highlighter": "^16.1.1",
+    "sql-formatter": "^15.7.3",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss": "^4.1.11",
+    "uuid": "^14.0.0",
+    "@azure/msal-browser": "^5.9.0",
+    "@azure/msal-react": "^5.3.2"
+  },
+  "overrides": {
+    "follow-redirects": "^1.16.0",
+    "minimatch": "^3.1.5",
+    "flatted": "3.4.2",
+    "js-yaml": "4.1.1",
+    "picomatch": "4.0.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^9.39.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "rollup": "^4.60.2",
+    "rollup-plugin-dts": "^6.4.1",
+    "vite": "^8.0.10",
+    "vite-plugin-svgr": "^5.2.0"
+  }
+}

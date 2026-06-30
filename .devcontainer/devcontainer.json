@@ -1,0 +1,33 @@
+{
+    "name": "azd-template",
+    "build": {
+        "dockerfile": "Dockerfile"
+    },   
+    "forwardPorts": [50505],
+    "features": {
+        "ghcr.io/azure/azure-dev/azd:latest": {},
+        "ghcr.io/devcontainers/features/azure-cli:1": {
+			"installBicep": true,
+			"version": "latest",
+			"bicepVersion": "latest"
+		}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.azure-dev",
+                "ms-azuretools.vscode-azcli",
+                "ms-azuretools.vscode-bicep",
+                "ms-python.python",
+                "ms-toolsai.jupyter",
+                "GitHub.vscode-github-actions"
+            ]
+        }
+    },
+    "postCreateCommand": "sudo chmod +x ./scripts/quota_check_params.sh",
+    "postStartCommand": "git pull origin main && python3 -m pip install -r ./src/frontend/requirements.txt && python3 -m pip install -r ./src/backend/requirements.txt",
+    "remoteUser": "vscode",
+    "hostRequirements": {
+        "memory": "4gb"
+    }
+}

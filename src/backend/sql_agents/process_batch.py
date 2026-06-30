@@ -1,0 +1,175 @@
+﻿"""
+This script demonstrates how to use the backend agents to migrate
+a query from one SQL dialect to another.
+It is the main entry point for the SQL migration process.
+"""
+
+from api.status_updates import send_status_update
+
+from common.logger.app_logger import AppLogger
+from common.models.api import (
+    FileProcessUpdate,
+    FileRecord,
+    FileResult,
+    LogType,
+    ProcessStatus,
+)
+from common.services.batch_service import BatchService
+from common.storage.blob_factory import BlobStorageFactory
+
+from fastapi import HTTPException
+
+from semantic_kernel.contents import AuthorRole
+from semantic_kernel.exceptions.service_exceptions import ServiceResponseException
+
+from sql_agents.agent_manager import get_sql_agents, update_agent_config
+from sql_agents.convert_script import convert_script
+from sql_agents.helpers.models import AgentType
+from sql_agents.helpers.utils import is_text
+
+logger = AppLogger("ProcessBatch")
+
+
+# Walk through batch structure processing each file
+async def process_batch_async(
+    batch_id: str, convert_from: str = "informix", convert_to: str = "tsql"
+):
+    """Central batch processing function to process each file in the batch"""
+    logger.info("Processing batch", batch_id=batch_id)
+    storage = await BlobStorageFactory.get_storage()
+    batch_service = BatchService()
+    await batch_service.initialize_database()
+
+    try:
+        batch_files = await batch_service.database.get_batch_files(batch_id)
+        if not batch_files:
+            raise HTTPException(status_code=404, detail="Batch not found")
+        logger.info("Batch files found", batch_id=batch_id, file_count=len(batch_files))
+        # Retrieve list of file paths
+        await batch_service.update_batch(batch_id, ProcessStatus.IN_PROGRESS)
+    except Exception as exc:
+        logger.error("Error updating batch status", batch_id=batch_id, error=str(exc))
+        # Mark batch as failed and stop further processing if initialization fails
+        await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
+        return
+
+    # Get the global SQL agents instance
+    sql_agents = get_sql_agents()
+    if not sql_agents:
+        logger.error("SQL agents not initialized", exc_info=False, batch_id=batch_id)
+        await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
+        return
+
+    # Update agent configuration for this batch's conversion requirements
+    await update_agent_config(convert_from, convert_to)
+
+    # Walk through each file name and retrieve it from blob storage
+    # Send file to the agents for processing
+    # Send status update to the client of type in progress, completed, or failed
+    for file in batch_files:
+        # Get the file from blob storage
+        try:
+            file_record = FileRecord.fromdb(file)
+            # Update the file status
+            try:
+                file_record.status = ProcessStatus.IN_PROGRESS
+                await batch_service.update_file_record(file_record)
+            except Exception as exc:
+                logger.error("Error updating file status", batch_id=batch_id, file_id=str(file_record.file_id), error=str(exc))
+
+            sql_in_file = await storage.get_file(file_record.blob_path)
+
+            # split into base validation routine
+            # Check if the file is a valid text file <--
+            if not is_text(sql_in_file):
+                logger.error("File is not a valid text file. Skipping.", exc_info=False, batch_id=batch_id, file_id=str(file_record.file_id))
+                # insert data base write to file record stating invalid file
+                await batch_service.create_file_log(
+                    str(file_record.file_id),
+                    "File is not a valid text file. Skipping.",
+                    "",
+                    LogType.ERROR,
+                    AgentType.ALL,
+                    AuthorRole.ASSISTANT,
+                )
+                # send status update to the client of type failed
+                send_status_update(
+                    status=FileProcessUpdate(
+                        file_record.batch_id,
+                        file_record.file_id,
+                        ProcessStatus.COMPLETED,
+                        file_result=FileResult.ERROR,
+                    ),
+                )
+                file_record.file_result = FileResult.ERROR
+                file_record.status = ProcessStatus.COMPLETED
+                file_record.error_count = 1
+                await batch_service.update_file_record(file_record)
+                continue
+            else:
+                logger.info("File content loaded", file_id=str(file_record.file_id), batch_id=batch_id)
+
+            # Convert the file
+            converted_query = await convert_script(
+                sql_in_file,
+                file_record,
+                batch_service,
+                sql_agents,
+            )
+            if converted_query:
+                # Add RAI disclaimer to the converted query
+                converted_query = add_rai_disclaimer(converted_query)
+                await batch_service.create_candidate(
+                    file["file_id"], converted_query
+                )
+            else:
+                await batch_service.update_file_counts(file["file_id"])
+        except UnicodeDecodeError as ucde:
+            logger.error("Error decoding file", batch_id=batch_id, file_id=str(file_record.file_id), error=str(ucde))
+            await process_error(ucde, file_record, batch_service)
+        except ServiceResponseException as sre:
+            logger.error("Error processing file", batch_id=batch_id, file_id=str(file_record.file_id), error=str(sre))
+            # insert data base write to file record stating invalid file
+            await process_error(sre, file_record, batch_service)
+        except Exception as exc:
+            logger.error("Error processing file", batch_id=batch_id, file_id=str(file_record.file_id), error=str(exc))
+            # insert data base write to file record stating invalid file
+            await process_error(exc, file_record, batch_service)
+
+    # Update batch status to completed or failed
+    try:
+        await batch_service.batch_files_final_update(batch_id)
+        await batch_service.update_batch(batch_id, ProcessStatus.COMPLETED)
+    except Exception as exc:
+        await batch_service.update_batch(batch_id, ProcessStatus.FAILED)
+        logger.error("Error updating final batch status", batch_id=batch_id, error=str(exc))
+    logger.info("Batch processing complete", batch_id=batch_id)
+
+
+async def process_error(
+    ex: Exception, file_record: FileRecord, batch_service: BatchService
+):
+    """Insert data base write to file record stating invalid file and send ws notification"""
+    await batch_service.create_file_log(
+        file_id=str(file_record.file_id),
+        description=f"Error processing file {ex}",
+        last_candidate="",
+        log_type=LogType.ERROR,
+        agent_type=AgentType.ALL,
+        author_role=AuthorRole.ASSISTANT,
+    )
+    # send status update to the client of type failed
+    send_status_update(
+        status=FileProcessUpdate(
+            file_record.batch_id,
+            file_record.file_id,
+            ProcessStatus.COMPLETED,
+            file_result=FileResult.ERROR,
+        ),
+    )
+
+
+def add_rai_disclaimer(converted_query: str) -> str:
+    """Add RAI disclaimer to the converted query."""
+    rai_disclaimer = "/*\n -- AI-generated content may be incorrect\n */\n"
+    return rai_disclaimer + converted_query

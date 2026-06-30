@@ -1,0 +1,20 @@
+.dismissal-120 .ms-Button-icon {
+    /* display: inline-block; */
+    width: 16px;
+    height: 16px;
+  }
+
+  .uploadFile-message-bar .ms-MessageBar-icon {
+    color: #37a04c !important; 
+    font-size: 14px !important; 
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: bolder !important;
+  }
+  
+  .uploadFile-message-bar .ms-MessageBar-icon svg {
+    stroke-width: 8.5px; 
+    width: 14px !important; 
+    height: 14px !important;
+  }
