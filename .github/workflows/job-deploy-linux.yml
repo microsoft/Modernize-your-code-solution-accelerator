@@ -53,7 +53,7 @@ jobs:
       WEBAPP_URL: ${{ steps.get_output_linux.outputs.WEBAPP_URL }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Validate Workflow Input Parameters
         shell: bash
