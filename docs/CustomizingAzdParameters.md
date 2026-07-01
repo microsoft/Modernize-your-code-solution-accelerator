@@ -16,13 +16,12 @@ By default this template will use the environment name as the prefix to prevent 
 | `AZURE_ENV_GPT_MODEL_VERSION`          | string  | `2024-08-06`     | Set the Azure model version (allowed values: 2024-08-06)    |
 | `AZURE_ENV_GPT_MODEL_CAPACITY`         | integer | `150`            | Set the Model Capacity (choose a number based on available GPT model capacity in your subscription). |
 | `AZURE_ENV_EXISTING_LOG_ANALYTICS_WORKSPACE_RID`| string  | Guide to get your [Existing Workspace ID](/docs/re-use-log-analytics.md)     | Set this if you want to reuse an existing Log Analytics Workspace instead of creating a new one.     |
-| `AZURE_ENV_IMAGE_TAG`                  | string  | `latest`         | Set the Image tag Like (allowed values: latest, dev, hotfix)    |
+| `AZURE_ENV_IMAGE_TAG`                  | string  | `latest`         | Tag applied to the backend/frontend images that are built remotely and pushed to the deployment's Azure Container Registry.    |
 | `AZURE_ENV_VM_SIZE`                    | string  | `Standard_D2s_v5`         | Specifies the size of the Jumpbox Virtual Machine (e.g., `Standard_D2s_v5`, `Standard_D2s_v4`). Set a custom value if `enablePrivateNetworking` is `true`.    |
 | `AZURE_ENV_JUMPBOX_ADMIN_USERNAME`     | string  | `JumpboxAdminUser`          | Specifies the administrator username for the Jumpbox Virtual Machine.      |
 | `AZURE_ENV_JUMPBOX_ADMIN_PASSWORD`     | string  | `JumpboxAdminP@ssw0rd1234!` | Specifies the administrator password for the Jumpbox Virtual Machine.      |
 | `AZURE_ENV_COSMOS_SECONDARY_LOCATION`  | string  | *(not set by default)*      | Specifies the secondary region for Cosmos DB. Required if `enableRedundancy` is `true`. |
 | `AZURE_EXISTING_AIPROJECT_RESOURCE_ID` | string  | *(not set by default)*      | Specifies the existing AI Foundry Project Resource ID if it needs to be reused. |
-| `AZURE_ENV_CONTAINER_REGISTRY_ENDPOINT`| string  | *(not set by default)*      | Specifies the Azure Container Registry endpoint to use for container images. |
 
 ---
 

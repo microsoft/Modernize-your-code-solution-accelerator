@@ -98,19 +98,16 @@ param enableTelemetry bool = true
 param deploymentType string = 'GlobalStandard'
 
 @minLength(1)
-@description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
-param gptModelName string = 'gpt-4o'
+@description('Optional. Name of the GPT model to deploy. Defaults to gpt-5.1.')
+param gptModelName string = 'gpt-5.1'
 
 @minLength(1)
-@description('Optional. Set the Image tag. Defaults to latest_2025-11-10_599.')
-param imageTag string = 'latest_2025-11-10_599'
-
-@description('Optional. Azure Container Registry endpoint. Defaults to cmsacontainerreg.azurecr.io')
-param containerRegistryEndpoint string = 'cmsacontainerreg.azurecr.io'
+@description('Optional. Image tag applied to the backend/frontend images that are built remotely and pushed to the deployment\'s Azure Container Registry by the post-provision script. Defaults to latest.')
+param imageTag string = 'latest'
 
 @minLength(1)
-@description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
-param gptModelVersion string = '2024-08-06'
+@description('Optional. Version of the GPT model to deploy. Defaults to 2025-11-13.')
+param gptModelVersion string = '2025-11-13'
 
 @description('Optional. Use this parameter to use an existing AI project resource ID. Defaults to empty string.')
 param existingFoundryProjectResourceId string = ''
@@ -897,6 +894,35 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
   }
 }
 
+// ========== Azure Container Registry ========== //
+// A dedicated Azure Container Registry is provisioned with every deployment.
+// The container apps are initially created with a public "hello world" placeholder
+// image; the post-provision script (scripts/build_and_push_images.*) builds the
+// backend/frontend images remotely with 'az acr build', pushes them to this registry,
+// and then updates the container apps to run the freshly built images.
+var placeholderContainerImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
+  name: take('avm.res.container-registry.registry.${solutionSuffix}', 64)
+  params: {
+    #disable-next-line BCP334 // solutionSuffix always yields a name of sufficient length at deployment time
+    name: take('cr${solutionSuffix}', 50)
+    location: location
+    acrSku: enableRedundancy ? 'Premium' : 'Standard'
+    acrAdminUserEnabled: false
+    zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
+    roleAssignments: [
+      {
+        principalId: appIdentity.outputs.principalId
+        principalType: 'ServicePrincipal'
+        roleDefinitionIdOrName: 'AcrPull'
+      }
+    ]
+    tags: allTags
+    enableTelemetry: enableTelemetry
+  }
+}
+
 var containerAppsEnvironmentName = 'cae-${solutionSuffix}'
 
 module containerAppsEnvironment 'br/public:avm/res/app/managed-environment:0.13.1' = {
@@ -953,10 +979,17 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
         appIdentity.outputs.resourceId
       ]
     }
+    registries: [
+      {
+        server: containerRegistry.outputs.loginServer
+        identity: appIdentity.outputs.resourceId
+      }
+    ]
     containers: [
       {
         name: 'cmsabackend'
-        image: '${containerRegistryEndpoint}/cmsabackend:${imageTag}'
+        // Placeholder image; replaced with the ACR image by scripts/build_and_push_images.*
+        image: placeholderContainerImage
         env: concat(
           [
             {
@@ -1133,6 +1166,12 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
         appIdentity.outputs.resourceId
       ]
     }
+    registries: [
+      {
+        server: containerRegistry.outputs.loginServer
+        identity: appIdentity.outputs.resourceId
+      }
+    ]
     containers: [
       {
         env: [
@@ -1145,7 +1184,8 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
             value: 'prod'
           }
         ]
-        image: '${containerRegistryEndpoint}/cmsafrontend:${imageTag}'
+        // Placeholder image; replaced with the ACR image by scripts/build_and_push_images.*
+        image: placeholderContainerImage
         name: 'cmsafrontend'
         resources: {
           cpu: 1
@@ -1202,3 +1242,18 @@ output PICKER_AGENT_MODEL_DEPLOY string = modelDeployment.name
 output FIXER_AGENT_MODEL_DEPLOY string = modelDeployment.name
 output SEMANTIC_VERIFIER_AGENT_MODEL_DEPLOY string = modelDeployment.name
 output SYNTAX_CHECKER_AGENT_MODEL_DEPLOY string = modelDeployment.name  
+
+// ========== Container Registry / image build outputs ========== //
+// Consumed by the post-provision script (scripts/build_and_push_images.*) to build
+// and push the application images and update the container apps.
+@description('Login server of the Azure Container Registry provisioned for this deployment.')
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
+@description('Name of the Azure Container Registry provisioned for this deployment.')
+output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+@description('Image tag used when building and pushing the backend/frontend images.')
+output AZURE_ENV_IMAGE_TAG string = imageTag
+@description('Name of the backend container app to update with the freshly built image.')
+output BACKEND_CONTAINER_APP_NAME string = containerAppBackend.outputs.name
+@description('Name of the frontend container app to update with the freshly built image.')
+output FRONTEND_CONTAINER_APP_NAME string = containerAppFrontend.outputs.name
+

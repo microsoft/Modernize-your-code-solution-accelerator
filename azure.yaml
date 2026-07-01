@@ -1,6 +1,6 @@
 name: modernize-your-code-solution-accelerator
-metadata:
-    template: modernize-your-code-solution-accelerator@1.0
+# metadata:
+#     template: modernize-your-code-solution-accelerator@1.0
 
 requiredVersions:
   azd: '>= 1.18.0 != 1.23.9'
@@ -22,3 +22,18 @@ deployment:
     AzureAiServiceLocation: ${{ parameters.AzureAiServiceLocation }}
     Prefix: ${{ parameters.Prefix }}
     baseUrl: ${{ parameters.baseUrl }}
+
+# After provisioning, build the backend/frontend images remotely in the newly
+# provisioned Azure Container Registry and update the container apps to use them.
+hooks:
+  postprovision:
+    windows:
+      shell: pwsh
+      run: ./scripts/build_and_push_images.ps1
+      continueOnError: false
+      interactive: true
+    posix:
+      shell: sh
+      run: ./scripts/build_and_push_images.sh
+      continueOnError: false
+      interactive: true

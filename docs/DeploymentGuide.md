@@ -286,7 +286,11 @@ azd up
 3. **Azure region** - Select a region with available GPT model quota
 4. **Resource group** selection (create new or use existing)
 
-**Expected Duration:** 6-9 minutes for default configuration
+**Expected Duration:** 9-14 minutes for default configuration (includes remotely building and pushing the container images)
+
+> **ℹ️ How the application images are built:** Every deployment provisions its own **Azure Container Registry (ACR)**. The container apps are first created with a public "hello world" placeholder image, then a `postprovision` hook runs [`scripts/build_and_push_images.sh`](../scripts/build_and_push_images.sh) (or [`scripts/build_and_push_images.ps1`](../scripts/build_and_push_images.ps1) on Windows). This script builds the backend and frontend images **remotely** in your ACR using `az acr build` (no local Docker required), pushes them, and updates the container apps to run the freshly built images.
+>
+> **Azure CLI sign-in required:** The post-provision hook uses the Azure CLI. In addition to `azd auth login`, make sure you are signed in with `az login` (and `az account set --subscription <id>` if you have multiple subscriptions) before running `azd up`. In GitHub Codespaces and Dev Containers the Azure CLI is preinstalled.
 
 **⚠️ Deployment Issues:** If you encounter errors or timeouts, try a different region as there may be capacity constraints. For detailed error solutions, see our [Troubleshooting Guide](./TroubleShootingSteps.md).
 

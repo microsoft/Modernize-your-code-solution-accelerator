@@ -98,8 +98,8 @@ param enableTelemetry bool = true
 param deploymentType string = 'GlobalStandard'
 
 @minLength(1)
-@description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
-param gptModelName string = 'gpt-4o'
+@description('Optional. Name of the GPT model to deploy. Defaults to gpt-5.1.')
+param gptModelName string = 'gpt-5.1'
 
 @description('Optional. Container image name for backend service. Used by azd for container deployments.')
 param backendImageName string = ''
