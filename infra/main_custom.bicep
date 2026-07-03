@@ -34,7 +34,7 @@ param location string = resourceGroup().location
   azd : {
     type: 'location'
     usageName : [
-      'OpenAI.GlobalStandard.gpt-4o, 150'
+      'OpenAI.GlobalStandard.gpt-5.1, 150'
     ]
   }
 })
@@ -111,8 +111,8 @@ param frontendImageName string = ''
 param imageTag string = 'latest'
 
 @minLength(1)
-@description('Optional. Version of the GPT model to deploy. Defaults to 2024-08-06.')
-param gptModelVersion string = '2024-08-06'
+@description('Optional. Version of the GPT model to deploy. Defaults to 2025-11-13.')
+param gptModelVersion string = '2025-11-13'
 
 @description('Optional. Use this parameter to use an existing AI project resource ID. Defaults to empty string.')
 param existingFoundryProjectResourceId string = ''

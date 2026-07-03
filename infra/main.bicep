@@ -34,7 +34,7 @@ param location string = resourceGroup().location
   azd : {
     type: 'location'
     usageName : [
-      'OpenAI.GlobalStandard.gpt-4o, 150'
+      'OpenAI.GlobalStandard.gpt-5.1, 150'
     ]
   }
 })
