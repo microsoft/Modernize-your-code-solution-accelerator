@@ -280,6 +280,22 @@ azd config set provision.preflight off
 azd up
 ```
 
+## Step 5: Post-Deployment Configuration
+### 5.1 Run Post Deployment Script
+ 
+1. You can run the ACR build and push script from the project root. Use the appropriate command for your shell:
+ 
+   - For Bash (Linux/macOS/WSL):
+ 
+     ```bash
+     bash infra/scripts/build_and_push_images.sh
+     ```
+ 
+   - For PowerShell (Windows):
+ 
+     ```powershell
+     infra\scripts\build_and_push_images.ps1
+
 **During deployment, you'll be prompted for:**
 1. **Environment name** (e.g., "cmsaapp") - Must be 3-16 characters long, alphanumeric only
 2. **Azure subscription** selection
@@ -288,13 +304,9 @@ azd up
 
 **Expected Duration:** 9-14 minutes for default configuration (includes remotely building and pushing the container images)
 
-> **ℹ️ How the application images are built:** Every deployment provisions its own **Azure Container Registry (ACR)**. The container apps are first created with a public "hello world" placeholder image, then a `postprovision` hook runs [`scripts/build_and_push_images.sh`](../scripts/build_and_push_images.sh) (or [`scripts/build_and_push_images.ps1`](../scripts/build_and_push_images.ps1) on Windows). This script builds the backend and frontend images **remotely** in your ACR using `az acr build` (no local Docker required), pushes them, and updates the container apps to run the freshly built images.
->
-> **Azure CLI sign-in required:** The post-provision hook uses the Azure CLI. In addition to `azd auth login`, make sure you are signed in with `az login` (and `az account set --subscription <id>` if you have multiple subscriptions) before running `azd up`. In GitHub Codespaces and Dev Containers the Azure CLI is preinstalled.
-
 **⚠️ Deployment Issues:** If you encounter errors or timeouts, try a different region as there may be capacity constraints. For detailed error solutions, see our [Troubleshooting Guide](./TroubleShootingSteps.md).
 
-### 4.3 Get Application URL
+### 5.2 Get Application URL
 
 After successful deployment:
 1. Open [Azure Portal](https://portal.azure.com/)
@@ -302,24 +314,24 @@ After successful deployment:
 3. Find the Container App with "frontend" in the name
 4. Copy the **Application URI**
 
-⚠️ **Important:** Complete [Post-Deployment Steps](#step-5-post-deployment-configuration) before accessing the application.
+⚠️ **Important:** Complete [Post-Deployment Steps](#step-6-post-deployment-configuration) before accessing the application.
 
-## Step 5: Post-Deployment Configuration
+## Step 6: Post-Deployment Configuration
 
-### 5.1 Configure Authentication (Required)
+### 6.1 Configure Authentication (Required)
 
 **This step is mandatory for application access:**
 
 1. Follow [App Authentication Configuration](./AddAuthentication.md)
 2. Wait up to 10 minutes for authentication changes to take effect
 
-### 5.2 Verify Deployment
+### 6.2 Verify Deployment
 
-1. Access your application using the URL from Step 4.3
+1. Access your application using the URL from Step 5.2
 2. Confirm the application loads successfully
 3. Verify you can sign in with your authenticated account
 
-### 5.3 Test the Application
+### 6.3 Test the Application
 
 Follow the detailed workflow to test the migration functionality:
 
@@ -333,7 +345,7 @@ Follow the detailed workflow to test the migration functionality:
 
 📖 **Detailed Instructions:** See the complete [Sample Workflow](./SampleWorkflow.md) guide for step-by-step testing procedures.
 
-## Step 6: Clean Up (Optional)
+## Step 7: Clean Up (Optional)
 
 ### Remove All Resources
 ```shell
