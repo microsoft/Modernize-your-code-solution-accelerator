@@ -280,21 +280,22 @@ azd config set provision.preflight off
 azd up
 ```
 
-## Step 5: Post-Deployment Configuration
-### 5.1 Run Post Deployment Script
+## Step 5: Build and Push Container Images
+### 5.1 Run Image Build Script
  
 1. You can run the ACR build and push script from the project root. Use the appropriate command for your shell:
  
    - For Bash (Linux/macOS/WSL):
  
      ```bash
-     bash infra/scripts/build_and_push_images.sh
+     bash scripts/build_and_push_images.sh
      ```
  
    - For PowerShell (Windows):
  
-     ```powershell
-     infra\scripts\build_and_push_images.ps1
+     ```
+     .\scripts\build_and_push_images.ps1
+     ```
 
 **During deployment, you'll be prompted for:**
 1. **Environment name** (e.g., "cmsaapp") - Must be 3-16 characters long, alphanumeric only
@@ -314,7 +315,7 @@ After successful deployment:
 3. Find the Container App with "frontend" in the name
 4. Copy the **Application URI**
 
-⚠️ **Important:** Complete [Post-Deployment Steps](#step-6-post-deployment-configuration) before accessing the application.
+⚠️ **Important:** Complete Step 5.1 and Step 6.1 before accessing the application.
 
 ## Step 6: Post-Deployment Configuration
 
