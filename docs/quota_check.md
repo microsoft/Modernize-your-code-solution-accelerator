@@ -1,7 +1,7 @@
 ## Check Quota Availability Before Deployment
 
 Before deploying the accelerator, **ensure sufficient quota availability** for the required model.
-> **For Global Standard | GPT-5.1 - the capacity to at least 200K tokens for optimal performance.**
+> **For Global Standard | GPT-5.1 - ensure capacity is at least 200K tokens for optimal performance.**
 
 ### Login if you have not done so already
 ```
