@@ -21,6 +21,7 @@ azure-functions
 # Development tools
 pytest
 pytest-mock
+pytest-asyncio
 black
 pylint
 flake8

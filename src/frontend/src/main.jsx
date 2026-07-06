@@ -9,6 +9,7 @@ import AuthProvider from './msal-auth/AuthProvider';
 import { setEnvData, setApiUrl, config as defaultConfig } from './api/config';
 import { initializeMsalInstance } from './msal-auth/msalInstance';
 
+// eslint-disable-next-line react-refresh/only-export-components
 const Main = () => {
   const [isConfigLoaded, setIsConfigLoaded] = useState(false);
   const [msalInstance, setMsalInstance] = useState(null);
@@ -44,19 +45,19 @@ const Main = () => {
 
     initMsal(); // Call the async function inside useEffect
   }, []);
-  async function checkConnection() {
-    if (!config) return;
-
-    const baseURL = config.API_URL.replace(/\/api$/, ''); // Remove '/api' if it appears at the end
-    console.log('Checking connection to:', baseURL);
-    try {
-      await fetch(`${baseURL}/health`);
-    } catch (error) {
-      console.error('Error connecting to backend:', error);
-    }
-  }
 
   useEffect(() => {
+    async function checkConnection() {
+      if (!config) return;
+
+      const baseURL = config.API_URL.replace(/\/api$/, '');
+      console.log('Checking connection to:', baseURL);
+      try {
+        await fetch(`${baseURL}/health`);
+      } catch (error) {
+        console.error('Error connecting to backend:', error);
+      }
+    }
     if (config) {
       checkConnection();
     }
