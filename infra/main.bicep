@@ -902,24 +902,27 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
 // and then updates the container apps to run the freshly built images.
 var placeholderContainerImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
-  name: take('avm.res.container-registry.registry.${solutionSuffix}', 64)
-  params: {
-    #disable-next-line BCP334 // solutionSuffix always yields a name of sufficient length at deployment time
-    name: take('cr${solutionSuffix}', 50)
-    location: location
-    acrSku: enableRedundancy ? 'Premium' : 'Standard'
-    acrAdminUserEnabled: false
-    zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
-    roleAssignments: [
-      {
-        principalId: appIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'AcrPull'
-      }
-    ]
-    tags: allTags
-    enableTelemetry: enableTelemetry
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2025-11-01' = {
+  name: take('cr${solutionSuffix}${take(uniqueString(resourceGroup().id), 4)}', 50)
+  location: location
+  sku: {
+    name: enablePrivateNetworking || enableRedundancy ? 'Premium' : 'Standard'
+  }
+  properties: {
+    adminUserEnabled: false
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    zoneRedundancy: enableRedundancy && enablePrivateNetworking ? 'Enabled' : 'Disabled'
+  }
+  tags: allTags
+}
+
+resource acrPullRoleAssignment 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(subscription().subscriptionId, resourceGroup().id, containerRegistry.name, 'AcrPull')
+  scope: containerRegistry
+  properties: {
+    principalId: appIdentity.outputs.principalId
+    principalType: 'ServicePrincipal'
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '7f951dda-4ed3-4680-a7ca-43fe172d538d')
   }
 }
 
@@ -981,7 +984,7 @@ module containerAppBackend 'br/public:avm/res/app/container-app:0.22.0' = {
     }
     registries: [
       {
-        server: containerRegistry.outputs.loginServer
+        server: containerRegistry.properties.loginServer
         identity: appIdentity.outputs.resourceId
       }
     ]
@@ -1168,7 +1171,7 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
     }
     registries: [
       {
-        server: containerRegistry.outputs.loginServer
+        server: containerRegistry.properties.loginServer
         identity: appIdentity.outputs.resourceId
       }
     ]
@@ -1247,9 +1250,9 @@ output SYNTAX_CHECKER_AGENT_MODEL_DEPLOY string = modelDeployment.name
 // Consumed by the post-provision script (scripts/build_and_push_images.*) to build
 // and push the application images and update the container apps.
 @description('Login server of the Azure Container Registry provisioned for this deployment.')
-output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.outputs.loginServer
+output AZURE_CONTAINER_REGISTRY_ENDPOINT string = containerRegistry.properties.loginServer
 @description('Name of the Azure Container Registry provisioned for this deployment.')
-output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.outputs.name
+output AZURE_CONTAINER_REGISTRY_NAME string = containerRegistry.name
 @description('Image tag used when building and pushing the backend/frontend images.')
 output AZURE_ENV_IMAGE_TAG string = imageTag
 @description('Name of the backend container app to update with the freshly built image.')

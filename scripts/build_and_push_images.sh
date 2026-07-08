@@ -60,6 +60,31 @@ if [ -n "$missing" ]; then
   exit 1
 fi
 
+get_acr_public_network_access() {
+  az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --query "publicNetworkAccess" -o tsv 2>/dev/null || true
+}
+
+set_acr_public_network_access() {
+  local mode="$1"
+  echo "==> Setting ACR public network access to $mode"
+  az acr update --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" --public-network-access "$mode"
+}
+
+ORIGINAL_ACR_PUBLIC_ACCESS=$(get_acr_public_network_access)
+ACR_PUBLIC_ACCESS_REVERT=false
+if [ "$ORIGINAL_ACR_PUBLIC_ACCESS" = "Disabled" ]; then
+  set_acr_public_network_access "Enabled"
+  ACR_PUBLIC_ACCESS_REVERT=true
+fi
+
+cleanup() {
+  if [ "$ACR_PUBLIC_ACCESS_REVERT" = true ]; then
+    echo "==> Restoring ACR public network access to Disabled"
+    set_acr_public_network_access "Disabled"
+  fi
+}
+trap cleanup EXIT
+
 # Resolve the repository root (this script lives in <repo>/scripts).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
