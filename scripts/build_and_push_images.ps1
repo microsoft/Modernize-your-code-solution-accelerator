@@ -60,6 +60,33 @@ if ($missing.Count -gt 0) {
     exit 1
 }
 
+function Get-AcrPublicNetworkAccess {
+    $result = az acr show --name $AcrName --resource-group $ResourceGroup --query "publicNetworkAccess" -o tsv 2>$null
+    return $result
+}
+
+function Set-AcrPublicNetworkAccess {
+    param([string]$Mode)
+    Write-Host "==> Setting ACR public network access to $Mode"
+    az acr update --name $AcrName --resource-group $ResourceGroup --public-network-access $Mode | Out-Null
+}
+
+$AcrPublicAccess = Get-AcrPublicNetworkAccess
+$AcrPublicAccessRevert = $false
+if ($AcrPublicAccess -eq 'Disabled') {
+    Set-AcrPublicNetworkAccess -Mode 'Enabled'
+    $AcrPublicAccessRevert = $true
+}
+
+function Restore-AcrPublicNetworkAccess {
+    if ($AcrPublicAccessRevert) {
+        Write-Host "==> Restoring ACR public network access to Disabled"
+        Set-AcrPublicNetworkAccess -Mode 'Disabled'
+    }
+}
+
+Register-EngineEvent PowerShell.Exiting -Action { Restore-AcrPublicNetworkAccess } | Out-Null
+
 # Resolve the repository root (this script lives in <repo>/scripts).
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $BackendImage  = "cmsabackend:$ImageTag"
