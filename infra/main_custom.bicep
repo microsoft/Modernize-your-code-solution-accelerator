@@ -34,7 +34,7 @@ param location string = resourceGroup().location
   azd : {
     type: 'location'
     usageName : [
-      'OpenAI.GlobalStandard.gpt-4o, 150'
+      'OpenAI.GlobalStandard.gpt-5.1, 150'
     ]
   }
 })
@@ -98,8 +98,8 @@ param enableTelemetry bool = true
 param deploymentType string = 'GlobalStandard'
 
 @minLength(1)
-@description('Optional. Name of the GPT model to deploy. Defaults to gpt-4o.')
-param gptModelName string = 'gpt-4o'
+@description('Optional. Name of the GPT model to deploy. Defaults to gpt-5.1.')
+param gptModelName string = 'gpt-5.1'
 
 @description('Optional. Container image name for backend service. Used by azd for container deployments.')
 param backendImageName string = ''
@@ -111,8 +111,8 @@ param frontendImageName string = ''
 param imageTag string = 'latest'
 
 @minLength(1)
-@description('Optional. Version of the GPT model to deploy. Defaults to 2024-11-20.')
-param gptModelVersion string = '2024-11-20'
+@description('Optional. Version of the GPT model to deploy. Defaults to 2025-11-13.')
+param gptModelVersion string = '2025-11-13'
 
 @description('Optional. Use this parameter to use an existing AI project resource ID. Defaults to empty string.')
 param existingFoundryProjectResourceId string = ''
