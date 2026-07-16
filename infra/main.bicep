@@ -334,6 +334,7 @@ var privateDnsZones = [
   'privatelink.oms.opinsights.azure.com'                 // Log Analytics OMS endpoints
   'privatelink.ods.opinsights.azure.com'                 // Log Analytics ODS ingestion endpoints
   'privatelink.agentsvc.azure-automation.net'             // Agent service automation endpoints
+  'privatelink.azurecr.io'                               // Azure Container Registry
 ]
 
 // DNS Zone Index Constants
@@ -348,6 +349,7 @@ var dnsZoneIndex = {
   oms: 7
   ods: 8
   agentSvc: 9
+  containerRegistry: 10
 }
 
 // ===================================================
@@ -902,15 +904,16 @@ module cosmosDb 'modules/cosmosDb.bicep' = {
 // and then updates the container apps to run the freshly built images.
 var placeholderContainerImage = 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
-  name: take('avm.res.container-registry.registry.${solutionSuffix}', 64)
+module containerRegistry 'modules/containerRegistry.bicep' = {
+  name: take('module.container-registry.${solutionSuffix}', 64)
   params: {
-    #disable-next-line BCP334 // solutionSuffix always yields a name of sufficient length at deployment time
-    name: take('cr${solutionSuffix}', 50)
+    acrName: take('cr${solutionSuffix}', 50)
     location: location
-    acrSku: enableRedundancy ? 'Premium' : 'Standard'
-    acrAdminUserEnabled: false
-    zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
+    acrSku: (enableRedundancy || enablePrivateNetworking) ? 'Premium' : 'Standard'
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    enablePrivateNetworking: enablePrivateNetworking
+    backendSubnetResourceId: enablePrivateNetworking ? virtualNetwork!.outputs.pepsSubnetResourceId : ''
+    privateDnsZoneResourceId: enablePrivateNetworking ? avmPrivateDnsZones[dnsZoneIndex.containerRegistry]!.outputs.resourceId : ''
     roleAssignments: [
       {
         principalId: appIdentity.outputs.principalId
