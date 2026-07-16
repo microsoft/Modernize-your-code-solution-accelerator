@@ -777,7 +777,7 @@ module aiServices 'modules/ai-foundry/aifoundry.bicep' = {
       {
         principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Cognitive Services OpenAI Contributor'
+        roleDefinitionIdOrName: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd' // Cognitive Services OpenAI User
       }
       {
         principalId: appIdentity.outputs.principalId
@@ -866,7 +866,7 @@ module storageAccount 'modules/storageAccount.bicep' = {
       {
         principalId: appIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
+        roleDefinitionIdOrName: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe' // Storage Blob Data Contributor
       }
     ]
     enableTelemetry: enableTelemetry

@@ -30,6 +30,54 @@ def _fixed_response_to_str(response_format: Any) -> Optional[str]:
         return str(response_format)
 
 
+def _patch_fastapi_route_details():
+    """
+    Patch opentelemetry-instrumentation-fastapi's _get_route_details.
+
+    The bug: _get_route_details() iterates over app.routes and reads
+    `starlette_route.path`. With FastAPI >= 0.119.0, app.include_router()
+    leaves an `_IncludedRouter` object in app.routes that has no `.path`
+    attribute. This raises:
+        AttributeError: '_IncludedRouter' object has no attribute 'path'
+
+    It is triggered on requests where no concrete route matches FULL,
+    most notably CORS preflight `OPTIONS` requests from the frontend,
+    causing a 500 on the preflight and blocking the real request.
+
+    The fix: replace the module-level _get_route_details with a version
+    that uses getattr(..., "path", None) and ignores routes whose
+    matches() raises. _get_default_span_details references this function
+    as a module global, so patching the module attribute is sufficient.
+    """
+    try:
+        import opentelemetry.instrumentation.fastapi as fastapi_instr
+        from starlette.routing import Match
+    except ImportError:
+        logger.debug("opentelemetry.instrumentation.fastapi not installed, skipping patch")
+        return
+
+    try:
+        def _safe_get_route_details(scope: Any) -> Optional[str]:
+            app = scope["app"]
+            route = None
+            for starlette_route in app.routes:
+                try:
+                    match, _ = starlette_route.matches(scope)
+                except Exception:  # noqa: BLE001
+                    continue
+                if match == Match.FULL:
+                    route = getattr(starlette_route, "path", None)
+                    break
+                if match == Match.PARTIAL:
+                    route = getattr(starlette_route, "path", None)
+            return route
+
+        fastapi_instr._get_route_details = _safe_get_route_details
+        logger.info("Patched opentelemetry.instrumentation.fastapi._get_route_details")
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to patch opentelemetry.instrumentation.fastapi route details")
+
+
 def patch_instrumentors():
     """
     Patch Azure AI telemetry instrumentors to handle dict response_format.
@@ -60,3 +108,8 @@ def patch_instrumentors():
         logger.info("Patched azure.ai.projects instrumentor")
     except ImportError:
         logger.debug("azure.ai.projects telemetry not installed, skipping patch")
+
+    # Patch opentelemetry-instrumentation-fastapi to tolerate routes without a
+    # `.path` attribute (e.g. FastAPI >= 0.119.0 `_IncludedRouter`), which
+    # otherwise crashes span-name resolution on CORS preflight OPTIONS requests.
+    _patch_fastapi_route_details()
