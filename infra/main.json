@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.6.27763",
-      "templateHash": "16289228324296064708"
+      "templateHash": "9700625880548826628"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -5089,8 +5089,6 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.45.6.27763",
-              "templateHash": "278403134034191131"
               "version": "0.45.6.27763",
               "templateHash": "278403134034191131"
             }
@@ -13099,12 +13097,11 @@
       },
       "dependsOn": [
         "applicationInsights",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -26190,8 +26187,6 @@
               "name": "bicep",
               "version": "0.45.6.27763",
               "templateHash": "17695503720766712143"
-              "version": "0.45.6.27763",
-              "templateHash": "17695503720766712143"
             },
             "name": "AI Services and Project Module",
             "description": "This module creates an AI Services resource and an AI Foundry project within it. It supports private networking, OpenAI deployments, and role assignments."
@@ -27490,8 +27485,6 @@
                       "name": "bicep",
                       "version": "0.45.6.27763",
                       "templateHash": "5349372727764638433"
-                      "version": "0.45.6.27763",
-                      "templateHash": "5349372727764638433"
                     }
                   },
                   "definitions": {
@@ -29200,8 +29193,6 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.45.6.27763",
-                              "templateHash": "992342334639050267"
                               "version": "0.45.6.27763",
                               "templateHash": "992342334639050267"
                             }
@@ -29419,8 +29410,6 @@
                       "name": "bicep",
                       "version": "0.45.6.27763",
                       "templateHash": "5349372727764638433"
-                      "version": "0.45.6.27763",
-                      "templateHash": "5349372727764638433"
                     }
                   },
                   "definitions": {
@@ -31129,8 +31118,6 @@
                           "metadata": {
                             "_generator": {
                               "name": "bicep",
-                              "version": "0.45.6.27763",
-                              "templateHash": "992342334639050267"
                               "version": "0.45.6.27763",
                               "templateHash": "992342334639050267"
                             }
@@ -32105,8 +32092,6 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.45.6.27763",
-              "templateHash": "16329435452115246913"
               "version": "0.45.6.27763",
               "templateHash": "16329435452115246913"
             }
@@ -40518,7 +40503,6 @@
         "appIdentity",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
@@ -40562,8 +40546,6 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.45.6.27763",
-              "templateHash": "16140682139384730655"
               "version": "0.45.6.27763",
               "templateHash": "16140682139384730655"
             }
@@ -46868,7 +46850,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.6.27763",
-              "templateHash": "4265315615340631916"
+              "templateHash": "15515667313482710688"
             },
             "name": "Container Registry Module",
             "description": "Deploys Azure Container Registry with support for both WAF (private networking) and non-WAF deployments"
@@ -46948,26 +46930,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
               ]
-            },
-            {
-              "condition": "[parameters('enableTelemetry')]",
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2025-04-01",
-              "name": "[take(format('46d3xbcp.ptn.acr.{0}.{1}', replace('-..--..-', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4)), 64)]",
-              "properties": {
-                "mode": "Incremental",
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "resources": [],
-                  "outputs": {
-                    "telemetry": {
-                      "type": "String",
-                      "value": "For more information, see https://aka.ms/avm/TelemetryInfo"
-                    }
-                  }
-                }
-              }
             },
             {
               "condition": "[and(parameters('enablePrivateNetworking'), not(empty(parameters('privateDnsZoneResourceId'))))]",
