@@ -279,18 +279,34 @@ azd config set provision.preflight off
 ```shell
 azd up
 ```
-
 **During deployment, you'll be prompted for:**
 1. **Environment name** (e.g., "cmsaapp") - Must be 3-16 characters long, alphanumeric only
 2. **Azure subscription** selection
 3. **Azure region** - Select a region with available GPT model quota
 4. **Resource group** selection (create new or use existing)
 
-**Expected Duration:** 6-9 minutes for default configuration
+**Expected Duration:** 9-14 minutes for default configuration (includes remotely building and pushing the container images)
 
 **⚠️ Deployment Issues:** If you encounter errors or timeouts, try a different region as there may be capacity constraints. For detailed error solutions, see our [Troubleshooting Guide](./TroubleShootingSteps.md).
 
-### 4.3 Get Application URL
+## Step 5: Build and Push Container Images
+### 5.1 Run Image Build Script
+ 
+1. You can run the ACR build and push script from the project root. Use the appropriate command for your shell:
+ 
+   - For Bash (Linux/macOS/WSL):
+ 
+     ```bash
+     bash scripts/build_and_push_images.sh
+     ```
+ 
+   - For PowerShell (Windows):
+ 
+     ```
+     .\scripts\build_and_push_images.ps1
+     ```
+
+### 5.2 Get Application URL
 
 After successful deployment:
 1. Open [Azure Portal](https://portal.azure.com/)
@@ -298,24 +314,24 @@ After successful deployment:
 3. Find the Container App with "frontend" in the name
 4. Copy the **Application URI**
 
-⚠️ **Important:** Complete [Post-Deployment Steps](#step-5-post-deployment-configuration) before accessing the application.
+⚠️ **Important:** Complete Step 5.1 and Step 6.1 before accessing the application.
 
-## Step 5: Post-Deployment Configuration
+## Step 6: Post-Deployment Configuration
 
-### 5.1 Configure Authentication (Required)
+### 6.1 Configure Authentication (Required)
 
 **This step is mandatory for application access:**
 
 1. Follow [App Authentication Configuration](./AddAuthentication.md)
 2. Wait up to 10 minutes for authentication changes to take effect
 
-### 5.2 Verify Deployment
+### 6.2 Verify Deployment
 
-1. Access your application using the URL from Step 4.3
+1. Access your application using the URL from Step 5.2
 2. Confirm the application loads successfully
 3. Verify you can sign in with your authenticated account
 
-### 5.3 Test the Application
+### 6.3 Test the Application
 
 Follow the detailed workflow to test the migration functionality:
 
@@ -329,7 +345,7 @@ Follow the detailed workflow to test the migration functionality:
 
 📖 **Detailed Instructions:** See the complete [Sample Workflow](./SampleWorkflow.md) guide for step-by-step testing procedures.
 
-## Step 6: Clean Up (Optional)
+## Step 7: Clean Up (Optional)
 
 ### Remove All Resources
 ```shell
