@@ -297,13 +297,13 @@ azd up
      .\scripts\build_and_push_images.ps1
      ```
 
-**During deployment, you'll be prompted for:**
+**During Step 4.2 (`azd up`), you'll be prompted for:**
 1. **Environment name** (e.g., "cmsaapp") - Must be 3-16 characters long, alphanumeric only
 2. **Azure subscription** selection
 3. **Azure region** - Select a region with available GPT model quota
 4. **Resource group** selection (create new or use existing)
 
-**Expected Duration:** 9-14 minutes for default configuration (includes remotely building and pushing the container images)
+**Expected Duration (Steps 4-5):** 9-14 minutes for default configuration (includes remotely building and pushing the container images)
 
 **⚠️ Deployment Issues:** If you encounter errors or timeouts, try a different region as there may be capacity constraints. For detailed error solutions, see our [Troubleshooting Guide](./TroubleShootingSteps.md).
 
