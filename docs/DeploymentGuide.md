@@ -473,36 +473,6 @@ Now that your deployment is complete and tested, explore these resources to enha
 
 ---
 
-## Advanced: Deploy Local Changes
-
-If you've made local modifications to the code and want to deploy them to Azure, follow these steps to swap the configuration files:
-
-> **Note:** To set up and run the application locally for development, see the [Local Setup Guide](./LocalSetupGuide.md).
-
-### Step 1: Rename Azure Configuration Files
-
-**In the root directory:**
-1. Rename `azure.yaml` to `azure_custom2.yaml`
-2. Rename `azure_custom.yaml` to `azure.yaml`
-
-### Step 2: Rename Infrastructure Files
-
-**In the `infra` directory:**
-1. Rename `main.bicep` to `main_custom2.bicep`
-2. Rename `main_custom.bicep` to `main.bicep`
-
-### Step 3: Deploy Changes
-
-> ⚠️ **Critical: Redeployment Warning**  
-> If you have previously run `azd up` in this folder (i.e., a `.azure` folder exists), you must [create a fresh environment](#creating-a-new-environment) to avoid conflicts and deployment failures.
-
-Run the deployment command:
-```shell
-azd up
-```
-
-> **Note:** These custom files are configured to deploy your local code changes instead of pulling from the GitHub repository.
-
 ## Environment Configuration for Local Development & Debugging
 
 > Set APP_ENV in your .env file to control Azure authentication. Use dev to enable to use Azure CLI credential, Prod to enable Managed Identity (for production). **Ensure you're logged in via az login when using dev in local**.
