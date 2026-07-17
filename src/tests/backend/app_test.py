@@ -30,7 +30,12 @@ async def test_health_check(app: FastAPI):
 @pytest.mark.asyncio
 async def test_backend_routes_exist(app: FastAPI):
     """Ensure /api routes are available (smoke test)."""
-    # Check available routes include /api prefix from backend_router
-    routes = [route.path for route in app.router.routes]
-    backend_routes = [r for r in routes if r.startswith("/api")]
-    assert backend_routes, "No backend routes found under /api prefix"
+    # Use the OpenAPI schema rather than walking `app.router.routes`, because
+    # newer FastAPI versions wrap included routers in an `_IncludedRouter`
+    # object (no `.path` attribute) which makes direct route iteration fragile.
+    # The OpenAPI `paths` mapping is the stable public surface and always
+    # contains the fully-resolved paths including the `/api` prefix added by
+    # `app.include_router(backend_router, prefix="/api", ...)`.
+    paths = app.openapi().get("paths", {})
+    backend_paths = [p for p in paths if p.startswith("/api")]
+    assert backend_paths, "No backend routes found under /api prefix"

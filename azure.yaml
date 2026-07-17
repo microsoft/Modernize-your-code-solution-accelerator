@@ -15,6 +15,20 @@ parameters:
   baseUrl:
     type: string
     default: 'https://raw.githubusercontent.com/microsoft/Modernize-your-code-solution-accelerator'
+
+hooks:
+  preprovision:
+    windows:
+      run: |
+        Write-Host ""
+        Write-Host "  ---------------------------------------------------------------------------------------------------" -ForegroundColor Yellow
+        Write-Host "  Note: If deployment fails or you encounter an issue, please open an issue with the deployment logs." -ForegroundColor Yellow
+        Write-Host "  https://github.com/microsoft/Modernize-your-code-solution-accelerator/issues" -ForegroundColor Cyan
+        Write-Host "  ---------------------------------------------------------------------------------------------------" -ForegroundColor Yellow
+        Write-Host ""
+      shell: pwsh
+      interactive: true
+
 deployment:
   mode: Incremental
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
