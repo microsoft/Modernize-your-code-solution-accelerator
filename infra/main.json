@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.6.27763",
-      "templateHash": "16289228324296064708"
+      "templateHash": "9700625880548826628"
     },
     "name": "Modernize Your Code Solution Accelerator",
     "description": "CSA CTO Gold Standard Solution Accelerator for Modernize Your Code. \r\n"
@@ -13097,11 +13097,11 @@
       },
       "dependsOn": [
         "applicationInsights",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').agentSvc)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').monitor)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').ods)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').oms)]",
         "dataCollectionEndpoint",
         "logAnalyticsWorkspace",
         "virtualNetwork"
@@ -26157,7 +26157,7 @@
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
                 "principalType": "ServicePrincipal",
-                "roleDefinitionIdOrName": "Cognitive Services OpenAI Contributor"
+                "roleDefinitionIdOrName": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
               },
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
@@ -32077,7 +32077,7 @@
               {
                 "principalId": "[reference('appIdentity').outputs.principalId.value]",
                 "principalType": "ServicePrincipal",
-                "roleDefinitionIdOrName": "Storage Blob Data Contributor"
+                "roleDefinitionIdOrName": "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
               }
             ]
           },
@@ -46850,7 +46850,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.6.27763",
-              "templateHash": "4265315615340631916"
+              "templateHash": "15515667313482710688"
             },
             "name": "Container Registry Module",
             "description": "Deploys Azure Container Registry with support for both WAF (private networking) and non-WAF deployments"
@@ -46930,26 +46930,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.ContainerRegistry/registries', parameters('acrName'))]"
               ]
-            },
-            {
-              "condition": "[parameters('enableTelemetry')]",
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2025-04-01",
-              "name": "[take(format('46d3xbcp.ptn.acr.{0}.{1}', replace('-..--..-', '.', '-'), substring(uniqueString(deployment().name, parameters('location')), 0, 4)), 64)]",
-              "properties": {
-                "mode": "Incremental",
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "resources": [],
-                  "outputs": {
-                    "telemetry": {
-                      "type": "String",
-                      "value": "For more information, see https://aka.ms/avm/TelemetryInfo"
-                    }
-                  }
-                }
-              }
             },
             {
               "condition": "[and(parameters('enablePrivateNetworking'), not(empty(parameters('privateDnsZoneResourceId'))))]",
