@@ -1186,6 +1186,14 @@ module containerAppFrontend 'br/public:avm/res/app/container-app:0.22.0' = {
             name: 'APP_ENV'
             value: 'prod'
           }
+          {
+            name: 'REACT_APP_MSAL_POST_REDIRECT_URL'
+            value: '/'
+          }
+          {
+            name: 'REACT_APP_MSAL_REDIRECT_URL'
+            value: '/'
+          }
         ]
         // Placeholder image; replaced with the ACR image by scripts/build_and_push_images.*
         image: placeholderContainerImage
