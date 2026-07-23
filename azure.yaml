@@ -38,6 +38,39 @@ hooks:
         printf '\n'
       shell: sh
       interactive: true
+  postprovision:
+    windows:
+      run: |
+        Write-Host "===== Provisioning Complete =====" -ForegroundColor Green
+        Write-Host "=> Next step: build and push container images to the dedicated ACR (remote build):" -ForegroundColor Yellow
+        
+        # Check if running from bash/MINGW64 terminal
+        if ($env:SHELL -like "*bash*" -or $env:TERM_PROGRAM -like "*git*" -or $env:MSYSTEM -eq "MINGW64") {
+          Write-Host "  bash scripts/build_and_push_images.sh" -ForegroundColor Cyan
+        } else {
+          Write-Host "  .\scripts\build_and_push_images.ps1" -ForegroundColor Cyan
+        }
+        
+        Write-Host ""
+        $webAppUrl = $env:WEB_APP_URL
+        if ([string]::IsNullOrWhiteSpace($webAppUrl)) { $webAppUrl = azd env get-value WEB_APP_URL 2>$null }
+        Write-Host "Web app URL: " -NoNewline
+        Write-Host "$webAppUrl" -ForegroundColor Cyan
+      shell: pwsh
+      continueOnError: false
+      interactive: true
+    posix:
+      run: |
+        echo "===== Provisioning Complete ====="
+        echo "=> Next step: build and push container images to the dedicated ACR (remote build):"
+        echo "  bash scripts/build_and_push_images.sh"
+        echo ""
+        WEB_APP_URL_DISPLAY="$WEB_APP_URL"
+        if [ -z "$WEB_APP_URL_DISPLAY" ]; then WEB_APP_URL_DISPLAY=$(azd env get-value WEB_APP_URL 2>/dev/null); fi
+        echo "Web app URL: $WEB_APP_URL_DISPLAY"
+      shell: sh
+      continueOnError: false
+      interactive: true
 deployment:
   mode: Incremental
   template: ./infra/main.bicep  # Path to the main.bicep file inside the 'deployment' folder
