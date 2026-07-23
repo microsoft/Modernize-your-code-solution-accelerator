@@ -52,8 +52,10 @@ hooks:
         }
         
         Write-Host ""
+        $webAppUrl = $env:WEB_APP_URL
+        if ([string]::IsNullOrWhiteSpace($webAppUrl)) { $webAppUrl = azd env get-value WEB_APP_URL 2>$null }
         Write-Host "Web app URL: " -NoNewline
-        Write-Host "$env:WEB_APP_URL" -ForegroundColor Cyan
+        Write-Host "$webAppUrl" -ForegroundColor Cyan
       shell: pwsh
       continueOnError: false
       interactive: true
@@ -63,7 +65,9 @@ hooks:
         echo "=> Next step: build and push container images to the dedicated ACR (remote build):"
         echo "  bash scripts/build_and_push_images.sh"
         echo ""
-        echo "Web app URL: $WEB_APP_URL"
+        WEB_APP_URL_DISPLAY="$WEB_APP_URL"
+        if [ -z "$WEB_APP_URL_DISPLAY" ]; then WEB_APP_URL_DISPLAY=$(azd env get-value WEB_APP_URL 2>/dev/null); fi
+        echo "Web app URL: $WEB_APP_URL_DISPLAY"
       shell: sh
       continueOnError: false
       interactive: true
