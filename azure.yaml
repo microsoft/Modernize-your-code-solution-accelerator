@@ -46,9 +46,9 @@ hooks:
         
         # Check if running from bash/MINGW64 terminal
         if ($env:SHELL -like "*bash*" -or $env:TERM_PROGRAM -like "*git*" -or $env:MSYSTEM -eq "MINGW64") {
-          Write-Host "  bash ./scripts/build_and_push_images.sh" -ForegroundColor Cyan
+          Write-Host "  bash scripts/build_and_push_images.sh" -ForegroundColor Cyan
         } else {
-          Write-Host "  ./scripts/build_and_push_images.ps1" -ForegroundColor Cyan
+          Write-Host "  .\scripts\build_and_push_images.ps1" -ForegroundColor Cyan
         }
         
         Write-Host ""
@@ -61,7 +61,7 @@ hooks:
       run: |
         echo "===== Provisioning Complete ====="
         echo "=> Next step: build and push container images to the dedicated ACR (remote build):"
-        echo "  bash ./scripts/build_and_push_images.sh"
+        echo "  bash scripts/build_and_push_images.sh"
         echo ""
         echo "Web app URL: $WEB_APP_URL"
       shell: sh
