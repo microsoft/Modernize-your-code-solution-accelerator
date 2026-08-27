@@ -9,6 +9,7 @@ on:
       - main
       - dev
       - demo
+      - psl-vk-testagent
     paths:
       - 'src/backend/**/*.py'
       - 'src/tests/**'
