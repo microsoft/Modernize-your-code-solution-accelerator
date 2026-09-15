@@ -1,3 +1,9 @@
+<hr>
+<h3 align="center">
+     <b>⚠️ This repository is no longer maintained ⚠️</b>
+</h3>
+<hr>
+
 # Modernize your code solution accelerator
 
 Welcome to the *Modernize your code* solution accelerator, designed to help customers transition their SQL queries to new environments quickly and efficiently. This accelerator is particularly useful for organizations modernizing their data estates, as it simplifies the process of translating SQL queries from various dialects.
