@@ -53,7 +53,7 @@ jobs:
       WEBAPP_URL: ${{ steps.get_output_linux.outputs.WEBAPP_URL }}
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v6
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Validate Workflow Input Parameters
         shell: bash
@@ -217,10 +217,10 @@ jobs:
           fi
       
       - name: Install azd
-        uses: Azure/setup-azd@v2
+        uses: Azure/setup-azd@0b7e3a35ab00f2eee7080c845eb39c3f0ebfa553 # v2.4.0
           
       - name: Login to Azure
-        uses: azure/login@v3
+        uses: azure/login@a641126d1b8aa4d1fa005f4f92df94a3a4c4c906 # v3.1.0
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
