@@ -19,14 +19,15 @@ on:
 jobs:
   docker-build:
     runs-on: ubuntu-latest
-    environment: production
+    # Pull request runs (including forks) never use the production environment or Azure credentials.
+    environment: ${{ github.event_name != 'pull_request' && 'production' || '' }}
     steps:
 
     - name: Checkout
       uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
     - name: Login to Azure
-      if: ${{ inputs.push }}
+      if: ${{ inputs.push && github.event_name != 'pull_request' }}
       uses: azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -34,7 +35,7 @@ jobs:
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
     - name: Login to ACR
-      if: ${{ inputs.push }}
+      if: ${{ inputs.push && github.event_name != 'pull_request' }}
       run: az acr login --name ${{ inputs.registry }}
 
     - name: Set up Docker Buildx
